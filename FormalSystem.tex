@@ -188,7 +188,7 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
 \inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
+\inferrule{Γ   ⊢  t  :_{ρ} D  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
           {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\text{case}
 
 \inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢ u :_ρ C }
