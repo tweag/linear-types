@@ -1,0 +1,439 @@
+% Created 2016-09-15 tor 14:09
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{mathpartir}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont[]{DejaVu Sans}
+\newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}}
+\newcommand{\inl}{\mathsf{inl} }
+\newcommand{\inr}{\mathsf{inr} }
+\newcommand{\flet}[1][]{\mathsf{let}_{#1} }
+\newcommand{\fin}{ \mathsf{in} }
+\newcommand{\susp}[1]{⟦#1⟧}
+\author{Jean-Philippe Bernardy and Arnaud Spiwack}
+\date{\today}
+\title{Linear and unrestricted at the same time}
+\hypersetup{
+ pdfauthor={Jean-Philippe Bernardy and Arnaud Spiwack},
+ pdftitle={Linear and unrestricted at the same time},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 24.5.2 (Org mode 8.3.5)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+In this note we give an overview of a lambda calculus augmented with
+weights on variable (bindings). We argue briefly that the calculus is
+a generalisation of both:
+\begin{itemize}
+\item the simply-typed lambda calculus and
+\item the linear lambda calculus
+\end{itemize}
+
+We then provide an operational semantics which demonstrates how memory
+management of linear values can be simplified.
+
+\section{Statics}
+\label{sec:orgheadline8}
+\subsection{Weights}
+\label{sec:orgheadline1}
+
+The set of weights is the two-element set \{1,ω\}. Intuitively, 1
+represents \textbf{exactly one} instance, while ω represents any number of
+instances (including zero).  The metasyntactic variables \(π\) and \(ρ\)
+range over this set. Weights are equipped with + and ∙ operations:
+
+
+\begin{align*}
+1 · ω = ω \\
+ω · 1 = ω \\
+ω · ω = ω \\
+1 · 1 = 1
+\end{align*}
+
+\begin{align*}
+1 + ω &= ω \\
+ω + 1 &= ω \\
+1 + 1 &= ω \\
+ω + ω &= ω
+\end{align*}
+
+We equip weights we a partial order (written \(· ≤ ·\)) such that \(1 ≤ ω\).
+
+\emph{(An alternative which may be worth pursuing is to choose the set of
+weights to be \(ℕ∪{ω}\), in which case \(1+1=2\).)}
+
+\subsection{Types}
+\label{sec:orgheadline2}
+
+Let us consider a variant of simply typed λ-calculus where the types
+are:
+
+\begin{itemize}
+\item a weighted arrow: \(A →_π B\) (you can get a \(B\) if you can provide a
+quantity \(π\) of \(A\))
+\begin{itemize}
+\item \(A →_ω B\) is the intuitionistic arrow \(A → B\)
+\item \(A →_1 B\) is the linear arrow \(A ⊸ B\)
+\end{itemize}
+\item weighted ADTs.
+
+\begin{align*}
+\mathsf{data} D = c_k  π₁ A₁  …  π_{n_k} A_{n_k}
+\end{align*}
+(\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
+
+Note the following special cases:
+\begin{itemize}
+\item The type data Pair a b = Pair ωa ωb is isomorphic to the intuitionistic product (a×b)
+\item The type data Tensor a b = Pair 1a 1b is isomorphic to the linear tensor product (a⊗b)
+\item The type data Bang a = Box ωa is isomorphic to the exponential (!a)
+\end{itemize}
+\end{itemize}
+
+\begin{align*}
+  W &::= πA\\
+  C &::= constructor\\
+  γ &::= C  \vec{W}\\
+  decl &::= \mathsf{data } D = \vec{γ}\\
+  A,B &::= A →_π B \mid D
+\end{align*}
+
+\subsection{Terms}
+\label{sec:orgheadline3}
+
+Syntax for terms:
+
+\begin{align*}
+e,s,t,u & ::= \\
+    & |  x & \text{variable} \\
+    & |  λx. t & \text{abstraction} \\
+    & |  t s & \text{application} \\
+    & |  c t₁ … t_n & \text{data construction} \\
+    & |  \case t {c_k  x₁ … x_n → u_k}  & \text{case} \\
+    & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
+\end{align*}
+
+\subsection{Contexts}
+\label{sec:orgheadline6}
+
+Every variable binding in a context is equipped with a weight,
+additionally to the type:
+
+\begin{align*}
+Γ,Δ & ::= x :_π A, Γ \\
+    & |     & \text {empty context}
+\end{align*}
+
+\subsubsection{Context addition}
+\label{sec:orgheadline4}
+
+We define a context addition, written \(Γ+Δ\), as follows.
+
+\begin{itemize}
+\item When a variable appears on both input contexts, we add the weights in
+the result:
+
+\((x :_ρ A,Γ) + (x :_π A,Δ) = x :_{ρ+π} A, Γ+Δ\)
+
+\item otherwise we propagate:
+
+\((x :_ρ A,Γ) + Δ = x :_ρ A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
+\end{itemize}
+
+
+\subsubsection{Context scaling}
+\label{sec:orgheadline5}
+
+Contexts can be scaled by a weight:
+
+\begin{displaymath}
+ρ(x :_π A, Γ) =  x :_{πρ} A, ρΓ
+\end{displaymath}
+
+\subsection{Typing rules}
+\label{sec:orgheadline7}
+
+We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by the following rules.
+
+\begin{mathpar}
+\inferrule{ }{ωΓ + x :_ρ A ⊢ x :_ρ A}\text{variable}
+
+\inferrule{Γ, x :_{πρ} A  ⊢   t :_ρ B}
+          {Γ ⊢ λx. t  :_ρ  A  →_π  B}\text{abs}
+
+\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
+          {Γ+Δ ⊢ t u  :_ρ  B}\text{app}
+
+\inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
+          {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
+
+\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_n:_{π_nρ} A_n ⊢ u_k :_ρ C \\ \text{with $c_k$ as above}}
+          {Γ+Δ ⊢ \case t {c_k  x₁ … x_n → u_k} :_ρ C}\text{case}
+
+\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢  \\ Δ ⊢ u :_ρ C }
+          {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\text{let}
+
+
+\end{mathpar}
+
+Lemmas:
+\begin{enumerate}
+\item \(πΓ ⊢ t:_{πρ} A\) iff \(Γ ⊢ t:_ρ A\).
+\item erasure of weights preserves typing
+\end{enumerate}
+
+
+\section{Dynamics}
+\label{sec:orgheadline16}
+\subsection{(Extended) Launchbury semantics}
+\label{sec:orgheadline11}
+
+\subsubsection{Translation}
+\label{sec:orgheadline9}
+As Launchbury, we translate from terms to terms where values are
+always bound to variables. However, we must do so on typed terms in
+general, because we need the full info about weights.
+
+
+Nonetheless, a sub-part of the syntax does not need the weights, and
+we just write the translation rules in compact form, as Launchbury:
+\begin{align*}
+(λx. t)^* &= λx. (t)^* \\
+x^*       &= x \\
+(t₁ x )^* &= (t₁)^* x \\
+(\case y {c_k  x₁ … x_n → u_k})^* &= \case y {c_k  x₁ … x_n → (u_k)^*} \\
+\end{align*}
+
+For the application case where e₂ is not a variable, we need the
+weight information:
+\begin{mathpar}
+\left(\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
+          {Γ+Δ ⊢ t u  :_ρ  B}\right)^* =
+  \flet y =_{π} (u)^* \fin (t)^* y
+\end{mathpar}
+
+Constructors are treated similarly. The general case is as follows: \(c  t₁ … t_n = \flet x₁ =_{π_1} t₁,…, x_n =_{π_n} t_n \fin c x₁ …
+x_n\) (where \(π_i\) are the weights of the constructor arguments)
+As for the application, the translation does not need to bind arguments that are already
+variables. (We omit the simplified rules.)
+
+
+In case, we bind the intermediate results to a variable of the
+appropriate linearity:
+\begin{mathpar}
+\left(\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_n:_{π_nρ} A_n ⊢ u_k :_ρ C}
+          {Γ+Δ ⊢ \case t {c_k  x₁ … x_n → u_k} :_ρ C}\right)^* =
+
+          \flet y =_ρ (t)^* \fin \case y {c_k  x₁ … x_n → (u_k)^*}
+\end{mathpar}
+
+In $\flet$, the weights must be scaled too:
+\begin{mathpar}
+\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢  \\ Δ ⊢ u :_ρ C }
+          {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\right)^* =
+
+          \flet x₁ =_{ρπ_1} (t₁)^*,…, x_n =_{ρπ_n} (t_n)^* \fin (u)^* \\
+\end{mathpar}
+
+
+\subsubsection{Natural semantics}
+\label{sec:orgheadline10}
+Compared to Launchbury, we add a linear heap, ranged by Φ,Ψ,Ξ.  (GC'ed
+heap is ranged by Γ,Δ,Θ)
+
+
+\begin{mathpar}
+\inferrule{ }{Γ;Φ : λx. e ⇓ Γ;Φ : λx. e}\text{abs}
+
+
+\inferrule{Γ;Φ : e ⇓ Δ;Ψ : λy.e'   Δ;Ψ : e'[x/y] ⇓ Θ;Ξ : z}
+           {Γ;Ψ : e x ⇓ Θ;Ξ : z} \text{application}
+
+\inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
+
+
+     \inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}
+{(Γ;Φ,x ↦ e) : x ⇓ Δ;Ψ : z}\text{linear variable}
+
+
+\inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓ Δ;Ψ : z}
+{Γ,Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓ Δ;Ψ : z}\text{let}
+
+\text{where $i$ ranges over the subset of indices such that $πᵢ$ = ω,}
+
+\text{and $j$ ranges over the subset such that $π_j$ = 1.}
+
+
+\inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓ Γ;Φ : c  x₁ … x_n}\text{constructor}
+
+
+\inferrule{Γ;Φ:e ⇓ Δ,Ψ:c_k  x₁ … x_n    Δ,Ψ : e_k[xᵢ/yᵢ] ⇓ Θ,Ξ : z}
+   {Γ;Φ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ,Ξ : z}\text{case}
+\end{mathpar}
+
+Remark: the \emph{variable} rule finds out if things come from linear
+or unrestricted heap dynamically. This behaviour allows a linear
+occurence of a variable to work in an unrestricted contexts; thus
+justifying the $1 + ω = ω$ rule.
+
+Theorem: the unrestricted heap contains no references to the linear
+heap.
+
+\subsubsection{Will there be anything in the linear heap?}
+
+One may believe that if the top-level result of the program have
+weight ω, then all my inputs must have weight ω (otherwise we could
+produce something out of nothing). This line of thought is incorrect:
+data types can be copied. For any data type $D$, we will have a
+function $D ⊸ Bang D$ (this may be even efficiently implemented by
+copying a single pointer --- for example if we have a single array, or
+a notion of compact region).
+
+Thus, at any point where we have an intermediate result comprised of
+data only, we may switch to use the linear heap. In a second phase,
+this data may then be moved to the GC heap and used for general
+consumption.
+
+
+\subsection{{\bfseries\sffamily TODO} KAM}
+\label{sec:orgheadline14}
+
+Skip this section: it is not adapted yet to the syntax above.
+
+The dynamic semantics is given as a variant of Krivine's abstract
+machine, modified to support two environments. One environment is
+unrestricted, while the other is linear.
+
+\begin{itemize}
+\item As in Krivine's original, the abstract machine has a call-by-name
+evaluation strategy, not true laziness (that is, sharing of the
+intermediate results). This is sufficient to demonstrate the
+principles of linear logic memory management.
+
+\item We assume that the input terms are annotated with:
+\begin{itemize}
+\item weights (for variables)
+\item how the context is split (for terms where this happens)
+\end{itemize}
+
+\item The machine runs the same way in ω or 1 context. This means that we
+have 'weight polymorphism' at runtime. (The same code can run in
+linear or unrestricted environment.)
+\end{itemize}
+
+\begin{align*}
+state       &::= (t,σ,φ,ψ) & \text{machine state} \\
+ξ     &::= (t,φ,ψ) \mid \susp{t,φ,ψ} & \text{closure} \\
+σ       &::= [] \mid ξ:σ & \text{stack} \\
+φ &::= [] \mid (x↦ξ,φ) & \text{environment} \\
+ψ &::= [] \mid (x↦ξ,φ) & \text{linear environment}
+\end{align*}
+
+\begin{itemize}
+\item We write \(ψ/Γ\) for the environment restricted to the variables and
+weights in \(Γ\). We have the following property: if \(Γ = Δ₁+Δ₂\) and
+\(ψ : Γ\), then \(ψ = ψ/Δ₁ ⊎ ψ/Δ₂\) (because \(ψ\) is a linear
+environment, \(ψ/Δ₁\) and \(ψ/Δ₂\) have disjoint support).
+\end{itemize}
+
+\hspace{-4cm}\begin{minipage}{\textwidth}
+\begin{align*}
+(u_Γ t_Δ,σ,φ,ψ)                                                  &⟶ (u,((t,φ,ψ/Δ):σ),φ,ψ/Γ)\\
+(λx_ω.t,ξ:σ,φ,ψ)                                                    &⟶ (t,σ,((x↦ξ),φ),ψ)\\
+(λx_1.t,ξ:σ,φ,ψ)                                                    &⟶ (t,σ,φ,(x↦ξ),ψ)\\
+(x_1,σ,\_,[x↦(t,φ,ψ)])                                               &⟶ (t,σ,φ,ψ)\\
+(x_ω,σ,(x↦(t,φ,ψ):\_),[])                                            &⟶ (t,σ,φ,ψ)\\
+(\inl t,\susp{\case □ {\inl x → u; \inr y → u'}:σ,φ',ψ'},φ,ψ) &⟶ (u,σ,φ',(x↦(t,φ,ψ)):ψ')\\
+(\case t {\inl x → u; \inr y → u'},σ,φ,ψ)                        &⟶ (t, \susp{\case □ {\inl x → u; \inr y → u'},φ,ψ/Γ}:σ,φ,ψ/Δ)\\
+(\flet (x_π,y_ρ) = t \fin u,σ,φ,ψ)                                       &⟶ (t, \flet (x_π,y_ρ) = □ \fin u,φ,ψ/Γ):σ,φ,ψ/Δ)\\
+((t_Γ,u_Δ),\susp{\flet (x_π,y_ρ) = □ \fin v:σ,φ',ψ'},φ,ψ')         &⟶ (v,σ,φ', (x↦(t,φ,ψ/Γ)),(y↦(u,φ,ψ/Γ)),ψ')
+\end{align*}
+\end{minipage}
+
+\subsubsection{Theorems}
+\label{sec:orgheadline12}
+
+\begin{itemize}
+\item If \(Γ ⊢ t :_ρ A\), then \((t,[],[],[]) ⟶^* (u,\_,\_,\_)\) where \(u\) is in whnf.
+\item No part of the linear environment is ever duplicated (or shared).
+\end{itemize}
+
+\subsubsection{Remarks}
+\label{sec:orgheadline13}
+
+\begin{itemize}
+\item In the reduction \((u_Γ t_Δ,σ,φ,ψ)\), one may fear that we're
+putting a linear part of the environment \(Δ\) in a closure, which will
+end up being shared afterwards. The system is engineered so that
+this case cannot occur. Indeed
+\begin{itemize}
+\item when the weight of \(t\) is \(ω\), then \(Δ\) contains only \(ω\) weights; the
+linear part of \(Δ\) is empty, so is \(ψ/Δ\):
+
+\((u_Γ t_{ωΔ},σ,φ,ψ)          ⟶ (u,((t,φ,[]):σ),φ,ψ)\)
+
+\item when the weight of \(t\) is 1, then the closure will only be consumed
+by a linear λ --- it will not be duplicated.
+\end{itemize}
+
+\item Consequently, for every closure in the unrestricted environment, the
+linear environment embedded in the closure is empty.
+\end{itemize}
+
+
+\subsection{Examples of simple programs and their types}
+
+\begin{align*}
+λx. λy. x & : A ⊸ B → A \\
+          & : A → B → A \\
+λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
+            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
+            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\ 
+λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
+                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
+                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
+                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
+                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
+\end{align*}
+
+The subtyping relation that we have outlined before goes part of the
+way.  Yet, if we want the most general types of higher order
+functions, we need explicit quantification over weights. Still, this
+is somewhat simpler that what Morris presents in ``The best of both
+worlds'', because we do not need bounded quantification. Instead we
+use multiplication of weights.
+
+\section{Session types vs. linear types}
+
+A good resource explaining session types vs. linear types is Wadler's
+``Propositions as Sessions'' (even though it contains some subtle
+traps). In sum, session types type 'live' sessions with long-lived
+channels, whose type ``evolve'' over time. A contrario, linear types
+are well suited to giving types to a given bit of information. One can
+see thus that linear types are better suited to a language based on a
+lambda calculus, while session types are better suited for languages
+based on a pi-calculus and/or languages with effects. Yet; there is a
+simple encoding from session types to linear types (as Wadler
+demonstrates).
+
+
+
+\end{document}
