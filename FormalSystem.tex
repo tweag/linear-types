@@ -18,7 +18,7 @@
 \usepackage{fontspec}
 \usepackage{unicode-math}
 \setmainfont[]{DejaVu Sans}
-\newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}}
+\newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}^m_{k=1}}
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
@@ -96,7 +96,7 @@ quantity \(π\) of \(A\))
 \item weighted ADTs.
 
 \begin{align*}
-\mathsf{data} D = c_k  π₁ A₁  …  π_{n_k} A_{n_k}
+\mathsf{data} D = (c_k  π₁ A₁  …  π_{n_k} A_{n_k})^m_{k=1}
 \end{align*}
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
 
@@ -108,12 +108,14 @@ Note the following special cases:
 \end{itemize}
 \end{itemize}
 
+Syntax of types and type declarations ($c$ ranges over constructor names):
 \begin{align*}
-  W &::= πA\\
-  C &::= constructor\\
-  γ &::= C  \vec{W}\\
-  decl &::= \mathsf{data } D = \vec{γ}\\
-  A,B &::= A →_π B \mid D
+  W &::= πA &\text{weight-annotated type}\\
+  γ &::= c  \vec{W}&\text{constructor declaration}\\
+  decl &::= \mathsf{data } D = \vec{γ}&\text{data type declaration}\\
+  A,B &::=\\
+      & |  A →_π B &\text{function type}\\
+      & |  D &\text{data type}
 \end{align*}
 
 \subsection{Terms}
@@ -127,7 +129,7 @@ e,s,t,u & ::= \\
     & |  λx. t & \text{abstraction} \\
     & |  t s & \text{application} \\
     & |  c t₁ … t_n & \text{data construction} \\
-    & |  \case t {c_k  x₁ … x_n → u_k}  & \text{case} \\
+    & |  \case t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
 \end{align*}
 
@@ -138,7 +140,8 @@ Every variable binding in a context is equipped with a weight,
 additionally to the type:
 
 \begin{align*}
-Γ,Δ & ::= x :_π A, Γ \\
+  Γ,Δ & ::=\\
+    & |  x :_π A, Γ & \text{weight-annotated binder} \\
     & |     & \text {empty context}
 \end{align*}
 
@@ -151,7 +154,7 @@ We define a context addition, written \(Γ+Δ\), as follows.
 \item When a variable appears on both input contexts, we add the weights in
 the result:
 
-\((x :_ρ A,Γ) + (x :_π A,Δ) = x :_{ρ+π} A, Γ+Δ\)
+\((x :_ρ A,Γ) + (x :_π A,Δ) = x :_{ρ+π} A, (Γ+Δ)\)
 
 \item otherwise we propagate:
 
@@ -185,10 +188,10 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
 \inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_n:_{π_nρ} A_n ⊢ u_k :_ρ C \\ \text{with $c_k$ as above}}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_n → u_k} :_ρ C}\text{case}
+\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
+          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\text{case}
 
-\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢  \\ Δ ⊢ u :_ρ C }
+\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢ u :_ρ C }
           {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\text{let}
 
 
@@ -196,7 +199,7 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
 
 Lemmas:
 \begin{enumerate}
-\item \(πΓ ⊢ t:_{πρ} A\) iff \(Γ ⊢ t:_ρ A\).
+\item \(πΓ ⊢ t:_{πρ} A\) if \(Γ ⊢ t:_ρ A\).
 \item erasure of weights preserves typing
 \end{enumerate}
 
@@ -219,7 +222,7 @@ we just write the translation rules in compact form, as Launchbury:
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
 (t₁ x )^* &= (t₁)^* x \\
-(\case y {c_k  x₁ … x_n → u_k})^* &= \case y {c_k  x₁ … x_n → (u_k)^*} \\
+(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
 \end{align*}
 
 For the application case where e₂ is not a variable, we need the
@@ -227,27 +230,32 @@ weight information:
 \begin{mathpar}
 \left(\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
           {Γ+Δ ⊢ t u  :_ρ  B}\right)^* =
-  \flet y =_{π} (u)^* \fin (t)^* y
+  \flet y =_{πρ} (u)^* \fin (t)^* y
 \end{mathpar}
 
-Constructors are treated similarly. The general case is as follows: \(c  t₁ … t_n = \flet x₁ =_{π_1} t₁,…, x_n =_{π_n} t_n \fin c x₁ …
-x_n\) (where \(π_i\) are the weights of the constructor arguments)
-As for the application, the translation does not need to bind arguments that are already
+Constructors are treated similarly:
+\begin{mathpar}
+\left(\inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ}
+     {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\right)^* =
+
+     \flet x₁ =_{π_1ρ} (t₁)^*,…, x_n =_{π_nρ} (t_n)^* \fin c_k x₁ … x_n
+\end{mathpar}
+As for application, the translation does not need to bind arguments that are already
 variables. (We omit the simplified rules.)
 
 
 In case, we bind the intermediate results to a variable of the
 appropriate linearity:
 \begin{mathpar}
-\left(\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_n:_{π_nρ} A_n ⊢ u_k :_ρ C}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_n → u_k} :_ρ C}\right)^* =
+\left(\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_n ⊢ u_k :_ρ C}
+          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\right)^* =
 
-          \flet y =_ρ (t)^* \fin \case y {c_k  x₁ … x_n → (u_k)^*}
+          \flet y =_ρ (t)^* \fin \case y {c_k  x₁ … x_{n_k} → (u_k)^*}
 \end{mathpar}
 
 In $\flet$, the weights must be scaled too:
 \begin{mathpar}
-\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢  \\ Δ ⊢ u :_ρ C }
+\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢  \\ Δ ⊢ u :_ρ C }
           {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\right)^* =
 
           \flet x₁ =_{ρπ_1} (t₁)^*,…, x_n =_{ρπ_n} (t_n)^* \fin (u)^* \\
