@@ -293,7 +293,7 @@ heap is ranged by Γ,Δ,Θ)
 \inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓ Γ;Φ : c  x₁ … x_n}\text{constructor}
 
 
-\inferrule{Γ;Φ:e ⇓ Δ,Ψ:c_k  x₁ … x_n    Δ,Ψ : e_k[xᵢ/yᵢ] ⇓ Θ,Ξ : z}
+\inferrule{Γ;Φ:e ⇓ Δ,Ψ:c_k  x₁ … x_n \\   Δ,Ψ : e_k[xᵢ/yᵢ] ⇓ Θ,Ξ : z}
    {Γ;Φ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ,Ξ : z}\text{case}
 \end{mathpar}
 
