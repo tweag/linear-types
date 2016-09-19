@@ -218,12 +218,14 @@ premises have weight $πρ$, for some $π$.
 \subsubsection{Translation}
 \label{sec:orgheadline9}
 As Launchbury, we translate from terms to terms where values are
-always bound to variables. However, we must do so on typed terms in
-general, because we need the full info about weights.
+always bound to variables. Additionally, we propagate weight
+information. This propagation ensures that code being called in
+unrestricted contexts uses the unrestricted heap.
 
-
-Nonetheless, a sub-part of the syntax does not need the weights, and
-we just write the translation rules in compact form, as Launchbury:
+We must perform the translation on typed terms in general, because we
+need the full info about weights.  Nonetheless, a sub-part of the
+syntax does not need the weights, and we just write the translation
+rules in compact form, as Launchbury:
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
@@ -231,7 +233,7 @@ x^*       &= x \\
 (\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*}
 \end{align*}
 
-For the application case where e₂ is not a variable, we need the
+For the application case where $e₂$ is not a variable, we need the
 weight information:
 \begin{mathpar}
 \left(\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
@@ -270,7 +272,8 @@ In $\flet$, the weights must be scaled too:
 \subsubsection{Natural semantics}
 \label{sec:orgheadline10}
 Compared to Launchbury, we add a linear heap, ranged by Φ,Ψ,Ξ.  (GC'ed
-heap is ranged by Γ,Δ,Θ)
+heap is ranged by Γ,Δ,Θ) Otherwise, only the rule for \emph{variable}
+is changed.
 
 
 \begin{mathpar}
