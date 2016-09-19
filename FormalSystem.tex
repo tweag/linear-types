@@ -302,13 +302,20 @@ or unrestricted heap dynamically. This behaviour allows a linear
 occurence of a variable to work in an unrestricted contexts; thus
 justifying the $1 + ω = ω$ rule.
 
-\paragraph{Theorem}
+\paragraph{Lemma: unrestricted values need unrestricted contexts}
 
-The unrestricted heap contains no references to the linear heap.
+\(Γ ⊢ t :_ω A ~⇒~  ωΓ = Γ \)
 
-The following example may, at first glance, look like a counter
+Proof: in every rule, if the conclusion has weight $ρ$, then the
+premises have weight $πρ$, for some $π$.
+
+\paragraph{Theorem: The unrestricted heap contains no references to the linear heap}
+
+This is a corrolary of the previous lemma.
+
+Yet, the following example may, at first glance, look like a counter
 example where \verb|x| is in the non-GC heap while \verb|y| in the
-GC-heap points to \verb|x|.
+GC-heap points to \verb|x|:
 \begin{verbatim}
 data () = ()
 
@@ -319,46 +326,42 @@ in ()
 However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
 case rules gives the same weight to the case-expression than to the
 scrutinee (\verb|x| in this case). Therefore
-\verb|case x of { () -> ()}| has weight 1. Using the definition
+\verb|case x of { () -> ()}| has weight 1.
+
+Remark: for a program to turn a 1-weight into an ω-weight, one may use
+the following definition:
 \begin{verbatim}
 data Bang A = Box ωA
 \end{verbatim}
 The expression \verb|case x of { () -> Box ()}| has type
-\verb|Bang A|, but still with weight 1.
+\verb|Bang A|, but still with weight 1.  This pattern does not apply
+just to the unit type $()$, but to any data type $D$. Indeed, for such
+a type we will have a function $D ⊸ Bang D$ (this may be even
+efficiently implemented by copying a single pointer --- for example if
+we have a single array, or a notion of compact region).  Thus at any
+point where we have an intermediate result comprised of data only, we
+may switch to use the linear heap. In a second phase, this data may
+then be moved to the GC heap and used for general consumption.
 
-In that light, the only way to use a linear value from the GC-heap, is
-to force is first, and chain computations with case such as:
+In that light, the only way to use a linear value from the GC-heap is
+to force is first, and then chain computations with \verb|case|, for
+example as follows:
 \begin{verbatim}
 let x =_1 ()
 case ( case x of { () -> Box () }) of {
   Box y -> ()
 }
 \end{verbatim}
-This still doesn't create pointer from GC-heap to non-GC heap: by the
+This still does not create a pointer from GC-heap to non-GC heap: by the
 time \verb|y| is created, the linear value \verb|x| has been freed.
 
-If, on the other hand, \verb|x| had weight ω, then we would be in the
+If, on the other hand, \verb|x| had weight $ω$, then we would be in the
 usual Haskell case, and the following expression does type:
 \begin{verbatim}
 let x =_omega ()
 let y =_omega ( case x of { () -> () } )
 in ()
 \end{verbatim}
-
-\subsubsection{Will there be anything in the linear heap?}
-
-One may believe that if the top-level result of the program have
-weight ω, then all my inputs must have weight ω (otherwise we could
-produce something out of nothing). This line of thought is incorrect:
-data types can be copied. For any data type $D$, we will have a
-function $D ⊸ Bang D$ (this may be even efficiently implemented by
-copying a single pointer --- for example if we have a single array, or
-a notion of compact region).
-
-Thus, at any point where we have an intermediate result comprised of
-data only, we may switch to use the linear heap. In a second phase,
-this data may then be moved to the GC heap and used for general
-consumption.
 
 
 \subsection{{\bfseries\sffamily TODO} KAM}
@@ -450,6 +453,8 @@ linear environment embedded in the closure is empty.
 \subsection{Examples of simple programs and their types}
 
 \begin{align*}
+map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
+lmap & : (A ⊸ B) → f A ⊸ f B \text{This type guarantees that no element is lost or duplicated.} \\
 λx. λy. x & : A ⊸ B → A \\
           & : A → B → A \\
 λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
