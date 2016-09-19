@@ -17,6 +17,7 @@
 \usepackage{mathpartir}
 \usepackage{fontspec}
 \usepackage{unicode-math}
+\setmonofont{DejaVu Sans Mono}
 \setmainfont[]{DejaVu Sans}
 \newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}^m_{k=1}}
 \newcommand{\inl}{\mathsf{inl} }
@@ -32,7 +33,6 @@
  pdftitle={Linear and unrestricted at the same time},
  pdfkeywords={},
  pdfsubject={},
- pdfcreator={Emacs 24.5.2 (Org mode 8.3.5)}, 
  pdflang={English}}
 \begin{document}
 
@@ -55,10 +55,10 @@ management of linear values can be simplified.
 \subsection{Weights}
 \label{sec:orgheadline1}
 
-The set of weights is the two-element set \{1,ω\}. Intuitively, 1
-represents \textbf{exactly one} instance, while ω represents any number of
+The set of weights is the two-element set $\{1,ω\}$. Intuitively, 1
+represents \emph{exactly one} instance, while $ω$ represents any number of
 instances (including zero).  The metasyntactic variables \(π\) and \(ρ\)
-range over this set. Weights are equipped with + and ∙ operations:
+range over this set. Weights are equipped with + and $·$ operations:
 
 
 \begin{align*}
@@ -83,18 +83,18 @@ weights to be \(ℕ∪{ω}\), in which case \(1+1=2\).)}
 \subsection{Types}
 \label{sec:orgheadline2}
 
-Let us consider a variant of simply typed λ-calculus where the types
+We propose a variant of the simply typed λ-calculus where the types
 are:
 
 \begin{itemize}
 \item a weighted arrow: \(A →_π B\) (you can get a \(B\) if you can provide a
 quantity \(π\) of \(A\))
+In particular:
 \begin{itemize}
 \item \(A →_ω B\) is the intuitionistic arrow \(A → B\)
 \item \(A →_1 B\) is the linear arrow \(A ⊸ B\)
 \end{itemize}
-\item weighted ADTs.
-
+\item weighted ADTs:
 \begin{align*}
 \mathsf{data} D = (c_k  π₁ A₁  …  π_{n_k} A_{n_k})^m_{k=1}
 \end{align*}
@@ -108,7 +108,7 @@ Note the following special cases:
 \end{itemize}
 \end{itemize}
 
-Syntax of types and type declarations ($c$ ranges over constructor names):
+The syntax of types and type declarations is as follows ($c$ ranges over constructor names):
 \begin{align*}
   W &::= πA &\text{weight-annotated type}\\
   γ &::= c  \vec{W}&\text{constructor declaration}\\
@@ -121,7 +121,7 @@ Syntax of types and type declarations ($c$ ranges over constructor names):
 \subsection{Terms}
 \label{sec:orgheadline3}
 
-Syntax for terms:
+The syntax for terms is:
 
 \begin{align*}
 e,s,t,u & ::= \\
@@ -191,7 +191,7 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
 \inferrule{Γ   ⊢  t  :_{ρ} D  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
           {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\text{case}
 
-\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢ u :_ρ C }
+\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢ u :_ρ C }
           {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\text{let}
 
 
@@ -201,6 +201,12 @@ Lemmas:
 \begin{enumerate}
 \item \(πΓ ⊢ t:_{πρ} A\) if \(Γ ⊢ t:_ρ A\).
 \item erasure of weights preserves typing
+\item unrestricted values need unrestricted contexts
+
+\(Γ ⊢ t :_ω A ~⇒~  ωΓ = Γ \)
+
+Proof: in every rule, if the conclusion has weight $ρ$, then the
+premises have weight $πρ$, for some $π$.
 \end{enumerate}
 
 
@@ -222,7 +228,7 @@ we just write the translation rules in compact form, as Launchbury:
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
 (t₁ x )^* &= (t₁)^* x \\
-(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*}
 \end{align*}
 
 For the application case where e₂ is not a variable, we need the
@@ -255,12 +261,11 @@ appropriate linearity:
 
 In $\flet$, the weights must be scaled too:
 \begin{mathpar}
-\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢  \\ Δ ⊢ u :_ρ C }
+\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢ u :_ρ C }
           {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\right)^* =
 
           \flet x₁ =_{ρπ_1} (t₁)^*,…, x_n =_{ρπ_n} (t_n)^* \fin (u)^* \\
 \end{mathpar}
-
 
 \subsubsection{Natural semantics}
 \label{sec:orgheadline10}
@@ -272,13 +277,13 @@ heap is ranged by Γ,Δ,Θ)
 \inferrule{ }{Γ;Φ : λx. e ⇓ Γ;Φ : λx. e}\text{abs}
 
 
-\inferrule{Γ;Φ : e ⇓ Δ;Ψ : λy.e'   Δ;Ψ : e'[x/y] ⇓ Θ;Ξ : z}
+\inferrule{Γ;Φ : e ⇓ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓ Θ;Ξ : z}
            {Γ;Ψ : e x ⇓ Θ;Ξ : z} \text{application}
 
 \inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
 
 
-     \inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}
+\inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}
 {(Γ;Φ,x ↦ e) : x ⇓ Δ;Ψ : z}\text{linear variable}
 
 
@@ -302,16 +307,11 @@ or unrestricted heap dynamically. This behaviour allows a linear
 occurence of a variable to work in an unrestricted contexts; thus
 justifying the $1 + ω = ω$ rule.
 
-\paragraph{Lemma: unrestricted values need unrestricted contexts}
-
-\(Γ ⊢ t :_ω A ~⇒~  ωΓ = Γ \)
-
-Proof: in every rule, if the conclusion has weight $ρ$, then the
-premises have weight $πρ$, for some $π$.
 
 \paragraph{Theorem: The unrestricted heap contains no references to the linear heap}
+Proof: TODO
 
-This is a corrolary of the previous lemma.
+(This result is critical for heap consistency.)
 
 Yet, the following example may, at first glance, look like a counter
 example where \verb|x| is in the non-GC heap while \verb|y| in the
@@ -320,7 +320,7 @@ GC-heap points to \verb|x|:
 data () = ()
 
 let x =_1 ()
-let y =_omega ( case x of { () -> () })
+let y =_ω ( case x of { () -> () })
 in ()
 \end{verbatim}
 However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
@@ -335,8 +335,8 @@ data Bang A = Box ωA
 \end{verbatim}
 The expression \verb|case x of { () -> Box ()}| has type
 \verb|Bang A|, but still with weight 1.  This pattern does not apply
-just to the unit type $()$, but to any data type $D$. Indeed, for such
-a type we will have a function $D ⊸ Bang D$ (this may be even
+just to the unit type $()$, but to any data type \verb|D|. Indeed, for such
+a type we will have a function \verb|D ⊸ Bang D| (this may be even
 efficiently implemented by copying a single pointer --- for example if
 we have a single array, or a notion of compact region).  Thus at any
 point where we have an intermediate result comprised of data only, we
@@ -358,8 +358,8 @@ time \verb|y| is created, the linear value \verb|x| has been freed.
 If, on the other hand, \verb|x| had weight $ω$, then we would be in the
 usual Haskell case, and the following expression does type:
 \begin{verbatim}
-let x =_omega ()
-let y =_omega ( case x of { () -> () } )
+let x =_ω ()
+let y =_ω ( case x of { () -> () } )
 in ()
 \end{verbatim}
 
@@ -452,9 +452,10 @@ linear environment embedded in the closure is empty.
 
 \subsection{Examples of simple programs and their types}
 
+\hspace{-4cm}\begin{minipage}{\textwidth}
 \begin{align*}
 map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
-lmap & : (A ⊸ B) → f A ⊸ f B \text{This type guarantees that no element is lost or duplicated.} \\
+lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
 λx. λy. x & : A ⊸ B → A \\
           & : A → B → A \\
 λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
@@ -466,13 +467,14 @@ lmap & : (A ⊸ B) → f A ⊸ f B \text{This type guarantees that no element is
                     & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
                     & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
 \end{align*}
+\end{minipage}
 
-The subtyping relation that we have outlined before goes part of the
-way.  Yet, if we want the most general types of higher order
-functions, we need explicit quantification over weights. Still, this
-is somewhat simpler that what Morris presents in ``The best of both
-worlds'', because we do not need bounded quantification. Instead we
-use multiplication of weights.
+If we want the most general types of higher order functions, we need
+explicit quantification over weights. Still, this is somewhat simpler
+that what Morris presents in ``The best of both worlds'', because we
+do not need bounded quantification. Instead we use multiplication of
+weights. (There is also the possibility to add a subtyping relation as
+a middle ground.)
 
 \section{Linearity as a property of types vs. linearity as a property of bindings (variables)}
 
@@ -507,7 +509,7 @@ value into an unrestricted one. When linearity is captured in types,
 we must have two versions of every type that we intend to move between
 the heaps. Even though it is possible to provide this, it is somewhat
 annoying to duplicate every primitive type. (Possibly we could
-prescribe #Int to be linear, but this may break lots of existing
+prescribe \#Int to be linear, but this may break lots of existing
 programs.)
 
 \section{Session types vs. linear types}
