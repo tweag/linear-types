@@ -429,6 +429,42 @@ is somewhat simpler that what Morris presents in ``The best of both
 worlds'', because we do not need bounded quantification. Instead we
 use multiplication of weights.
 
+\section{Linearity as a property of types vs. linearity as a property of bindings (variables)}
+
+In several presentations (``linear types can change the world'',
+$F^o$, ``Best of both worlds''), programming languages incorporate
+linearity by dividing types into two kinds. A type is either linear
+or unrestricted. Unrestricted types typically includes primitive types
+(\texttt{Int}), and all (strictly positive) data types. Linear types
+include typically resources, effects, etc.
+
+A characteristic of this presentation is that linearity ``infects''
+every type containing a linear type. Consequently, if we want to make
+a pair of (say) an integer and an effect, the resulting type must be
+linear. This property means that polymorphic data structure can no
+longer be used ``as is'' to store linear values. Technically, one
+cannot unify a type variable of unrestricted kind to a linear
+type. One can escape the issue by having polymorphism over kinds;
+unfortunately to get principal types one must have subtyping between
+kinds and bounded polymorphism.
+
+In contrast, we have automatic scaling of linear types to unrestricted
+ones in unrestricted contexts. This feature already partially
+addresses the problem of explosion of types. In order to get principal
+types we need quantification over weights, and extension of the
+language of weights to products and sums.
+
+Another issue with the ``linearity in types'' presentation is that it
+is awkward at addressing the problem of ``simplified memory
+management'' that we aim to tackle. As we have seen, the ability to
+use an intermediate linear heap rests on the ability to turn a linear
+value into an unrestricted one. When linearity is captured in types,
+we must have two versions of every type that we intend to move between
+the heaps. Even though it is possible to provide this, it is somewhat
+annoying to duplicate every primitive type. (Possibly we could
+prescribe #Int to be linear, but this may break lots of existing
+programs.)
+
 \section{Session types vs. linear types}
 
 A good resource explaining session types vs. linear types is Wadler's
