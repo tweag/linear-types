@@ -314,7 +314,7 @@ source means to select if some more is available (\var{Cons}) or not
 
 data Source  a  where
   Nil :: Source a
-  Cons :: a -> N (Sink a) ⊸ Source a -- the elements themselves are unrestricted.
+  Cons :: a ⊸ N (Sink a) ⊸ Source a
 data Sink    a  where
   Full :: Sink a
   Cont :: (N (Source  a)) ⊸ Sink a
@@ -353,14 +353,12 @@ produced by a source. The second argument is the effect to run if no
 data is produced, and the third is the effect to run given the data
 and the remaining source.
 
-> await :: Source a ⊸ Eff ⊸ (a -> Source a ⊸ Eff) ⊸ Eff
+> await :: Source a ⊸ Either Eff (a ⊸ Source a ⊸ Eff) ⊸ Eff
 > await Nil eof _ = eof
 > await (Cons x cs) _ k = cs $ Cont $ \xs -> k x xs
 
-However, the above function breaks the linearity invariant, so we will
-refrain to use it as such. The pattern that it defines is still
-useful: it is valid when the second and third argument consume the
-same set of variables.  Indeed, this condition is often satisfied.
+However, the above function breaks the linearity invariant.
+Instead we will have to pattern match directly on Sources.
 
 \paragraph{Writing}
 One can send data to a sink. If the sink is full, the data is ignored.
@@ -678,12 +676,23 @@ Interleave two sources, and the dual.
 Forward data coming from the input source to the result source and to
 the second argument sink.
 
-> tee :: Src a ⊸ Snk a ⊸ Src a
+> tee :: Data a => Src a ⊸ Snk a ⊸ Src a
 
-Filter a source, and the dual.
+To perform this operation the type of elements must be able to support
+a copy operation. It is possible to perform such a copy for any data
+type, but not every type is copiable in such a way:
 
-> filterSrc :: (a ⊸ Bool) -> Src a ⊸ Src a
-> filterSnk :: (a ⊸ Bool) -> Snk a ⊸ Snk a
+> class Data a where
+>   copy :: a -> Many a
+> data Many a where
+>   a -> Many a  -- note the absence of linearity
+
+
+Likewise, filtering sources and sink require to examine the data
+several times.
+
+> filterSrc :: Data a => (a ⊸ Bool) -> Src a ⊸ Src a
+> filterSnk :: Data a => (a ⊸ Bool) -> Snk a ⊸ Snk a
 
 Turn a source of chunks of data into a single source; and the dual.
 
@@ -1187,15 +1196,17 @@ Thus, one may prefer to use Concurrent Haskell channels as a buffering
 means, as they are bounded only by the size of the memory and do not
 rely on any special feature of the operating system:
 
-> chanCoSnk :: Chan a -> CoSnk a
-> chanCoSnk _ Full = return ()
-> chanCoSnk h (Cont c) = c (Cons  (writeChan h)
->                                 (chanCoSnk h))
-
 > chanSrc :: Chan a -> Src a
 > chanSrc _ Full = return ()
 > chanSrc h (Cont c) = do  x <- readChan h
 >                          c (Cons x $ chanSrc h)
+
+> chanCoSnk :: Data => Chan a -> CoSnk a
+> chanCoSnk _ Full = return ()
+> chanCoSnk h (Cont c) = c (Cons  (writeChan h . copy)
+>                                 (chanCoSnk h))
+
+When moving sending linear data to a channel, we must however take a copy (and force) the data before sending it to the channel.
 
 > chanBuffer :: CoSrc a ⊸ Src a
 > chanBuffer f g = do
