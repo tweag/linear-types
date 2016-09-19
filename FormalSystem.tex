@@ -188,7 +188,7 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
 \inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
+\inferrule{Γ   ⊢  t  :_{ρ} D  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
           {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\text{case}
 
 \inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{nρ}} A_n ⊢ u :_ρ C }
@@ -302,8 +302,48 @@ or unrestricted heap dynamically. This behaviour allows a linear
 occurence of a variable to work in an unrestricted contexts; thus
 justifying the $1 + ω = ω$ rule.
 
-Theorem: the unrestricted heap contains no references to the linear
-heap.
+\paragraph{Theorem}
+
+The unrestricted heap contains no references to the linear heap.
+
+The following example may, at first glance, look like a counter
+example where \verb|x| is in the non-GC heap while \verb|y| in the
+GC-heap points to \verb|x|.
+\begin{verbatim}
+data () = ()
+
+let x =_1 ()
+let y =_omega ( case x of { () -> () })
+in ()
+\end{verbatim}
+However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
+case rules gives the same weight to the case-expression than to the
+scrutinee (\verb|x| in this case). Therefore
+\verb|case x of { () -> ()}| has weight 1. Using the definition
+\begin{verbatim}
+data Bang A = Box ωA
+\end{verbatim}
+The expression \verb|case x of { () -> Box ()}| has type
+\verb|Bang A|, but still with weight 1.
+
+In that light, the only way to use a linear value from the GC-heap, is
+to force is first, and chain computations with case such as:
+\begin{verbatim}
+let x =_1 ()
+case ( case x of { () -> Box () }) of {
+  Box y -> ()
+}
+\end{verbatim}
+This still doesn't create pointer from GC-heap to non-GC heap: by the
+time \verb|y| is created, the linear value \verb|x| has been freed.
+
+If, on the other hand, \verb|x| had weight ω, then we would be in the
+usual Haskell case, and the following expression does type:
+\begin{verbatim}
+let x =_omega ()
+let y =_omega ( case x of { () -> () } )
+in ()
+\end{verbatim}
 
 \subsubsection{Will there be anything in the linear heap?}
 
