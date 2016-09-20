@@ -37,7 +37,9 @@
 \begin{document}
 
 \maketitle
-\tableofcontents
+%% \tableofcontents
+
+\vskip
 
 In this note we give an overview of a lambda calculus augmented with
 weights on variable (bindings). We argue briefly that the calculus is
@@ -47,8 +49,14 @@ a generalisation of both:
 \item the linear lambda calculus
 \end{itemize}
 
-We then provide an operational semantics which demonstrates how memory
-management of linear values can be simplified.
+Additionally, we give
+\begin{itemize}
+\item an operational semantics which demonstrates how memory
+  management of linear values can be simplified.
+\item example types for a number of simple programs
+\item a brief comparison with alternative approaches to linearity
+  (tracking linearity in types; session types)
+\end{itemize}
 
 \section{Statics}
 \label{sec:orgheadline8}
@@ -222,10 +230,13 @@ always bound to variables. Additionally, we propagate weight
 information. This propagation ensures that code being called in
 unrestricted contexts uses the unrestricted heap.
 
-We must perform the translation on typed terms in general, because we
-need the full info about weights.  Nonetheless, a sub-part of the
+To perform this translation, we need the information of weights.  In a
+'real' implementation (such as in GHC), one would propably perform
+this recovery using a lightweight technique. Here, in the interest of
+minimizing the number of required concepts, we instead perform the
+translation over the typed terms.  Nonetheless, a subset of the
 syntax does not need the weights, and we just write the translation
-rules in compact form, as Launchbury:
+rules in compact form, as Launchbury does:
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
