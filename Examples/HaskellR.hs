@@ -13,13 +13,14 @@ type RContext
 -- IO), and finally return release the context and return a result:
 type R a = RContext ⊸ IO (RContext ⊗ a)
 
--- This type has a unit and a bind --- albeit linear ones, so it's not
--- an instance of Monad.
+-- This type has a unit and a bind. (No need for linearity here, we
+-- can reuse the standard Monad class)
 
-return x = \ctx -> return (ctx, x)
-k >>= f = \ctx -> do
-  (ctx,x) <- k
-  f x ctx
+instance Monad R where
+  return x = \ctx -> return (ctx, x)
+  k >>= f = \ctx -> do
+    (ctx,x) <- k
+    f x ctx
 
 
 -- If we were too add a primitive allowing to run an arbitrary R
@@ -37,12 +38,8 @@ rContext ::1 RContext
 doneWithR :: RContext ⊸ () -- not necessarily unique
 
 
--- note that the idea generalises to arbitrary 'single contexts':
+-- Note that the idea generalises to arbitrary 'single contexts' APIs:
 type S ctx a = ctx ⊸ (ctx ⊗ a)
 
 -- and we could even define
 type IO = S #RealWorld
-
-
-
-
