@@ -225,18 +225,19 @@ premises have weight $πρ$, for some $π$.
 
 \subsubsection{Translation}
 \label{sec:orgheadline9}
-As \textcite{launchbury_natural_1993}, we translate from terms to terms where values are
+As in \textcite{launchbury_natural_1993}, we translate from terms to terms where values are
 always bound to variables. Additionally, we propagate weight
 information. This propagation ensures that code being called in
 unrestricted contexts uses the unrestricted heap.
 
 To perform this translation, we need the information of weights.  In a
-'real' implementation (such as in GHC), one would propably perform
-this recovery using a lightweight technique. Here, in the interest of
-minimizing the number of required concepts, we instead perform the
-translation over the typed terms.  Nonetheless, a subset of the
-syntax does not need the weights, and we just write the translation
-rules in compact form, as Launchbury does:
+'real' implementation (such as in GHC), one would probably recover
+this information on the fly with only lightweight annotations in the terms.
+In the interest of a simple presentation, we choose here to instead perform the
+translation over the type derivations.
+
+We begin with the trivial cases, which are oblivious to weights, in
+the style of Launchbury:
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
@@ -263,7 +264,7 @@ As for application, the translation does not need to bind arguments that are alr
 variables. (We omit the simplified rules.)
 
 
-In case, we bind the intermediate results to a variable of the
+For the case analysis construct, we bind the intermediate results to a variable of the
 appropriate linearity:
 \begin{mathpar}
 \left(\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_n ⊢ u_k :_ρ C}
@@ -282,9 +283,9 @@ In $\flet$, the weights must be scaled too:
 
 \subsubsection{Natural semantics}
 \label{sec:orgheadline10}
-Compared to Launchbury, we add a linear heap, ranged by Φ,Ψ,Ξ.  (GC'ed
-heap is ranged by Γ,Δ,Θ) Otherwise, only the rule for \emph{variable}
-is changed.
+Compared to Launchbury, we add a linear heap, ranged over by Φ,Ψ,Ξ.
+(GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rule
+for \emph{variable} is changed.
 
 
 \begin{mathpar}
@@ -358,7 +359,7 @@ may switch to use the linear heap. In a second phase, this data may
 then be moved to the GC heap and used for general consumption.
 
 In that light, the only way to use a linear value from the GC-heap is
-to force is first, and then chain computations with \verb|case|, for
+to force it first, and then chain computations with \verb|case| --- for
 example as follows:
 \begin{verbatim}
 let x =_1 ()
@@ -381,7 +382,7 @@ in ()
 \subsection{{\bfseries\sffamily TODO} KAM}
 \label{sec:orgheadline14}
 
-Skip this section: it is not adapted yet to the syntax above.
+Skip this section: it has not yet been retrofitted with the syntax above.
 
 The dynamic semantics is given as a variant of Krivine's abstract
 machine, modified to support two environments. One environment is
@@ -485,7 +486,7 @@ lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost}
 
 If we want the most general types of higher order functions, we need
 explicit quantification over weights. Still, this is somewhat simpler
-that what Morris presents in ``The best of both worlds'', because we
+than what Morris presents in ``The best of both worlds'', because we
 do not need bounded quantification. Instead we use multiplication of
 weights. (There is also the possibility to add a subtyping relation as
 a middle ground.)
@@ -532,14 +533,17 @@ programs.)
 the relation between session types vs. linear types (even though the
 paper contains some subtle traps --- notably the explanation of par
 and tensor in LL does not match the semantics given later.). In sum,
-session types type 'live' sessions with long-lived channels, whose
-type ``evolve'' over time. A contrario, linear types are well suited
+session types classify 'live' sessions with long-lived channels, whose
+type ``evolves'' over time. In contrast, linear types are well suited
 to giving types to a given bit of information. One can see thus that
-linear types are better suited to a language based on a lambda
+linear types are better suited for a language based on a lambda
 calculus, while session types are better suited for languages based on
-a pi-calculus and/or languages with effects. Yet; there is a simple
+a pi-calculus and/or languages with effects. Or put another way,
+it's a matter of use cases: session types are particularly well-suited
+to naturally describe communication protocols, while linear types are
+well suited for describing data. One is communication centric. The
+other is data centric. Yet there is a simple
 encoding from session types to linear types (as Wadler demonstrates).
-
 
 \printbibliography
 \end{document}
