@@ -135,7 +135,7 @@ The syntax for terms is:
 e,s,t,u & ::= \\
     & |  x & \text{variable} \\
     & |  λx. t & \text{abstraction} \\
-    & |  t s & \text{application} \\
+    & |  t_π s & \text{application} \text{We sometimes omit the weight $π$ when it's obvious from the context} \\
     & |  c t₁ … t_n & \text{data construction} \\
     & |  \case t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
@@ -225,106 +225,71 @@ premises have weight $πρ$, for some $π$.
 
 \subsubsection{Translation}
 \label{sec:orgheadline9}
-As in \textcite{launchbury_natural_1993}, we translate from terms to terms where values are
-always bound to variables. Additionally, we propagate weight
-information. This propagation ensures that code being called in
-unrestricted contexts uses the unrestricted heap.
+As in \textcite{launchbury_natural_1993}, we translate from terms to
+terms where values are always bound to variables. 
 
-To perform this translation, we need the information of weights.  In a
-'real' implementation (such as in GHC), one would probably recover
-this information on the fly with only lightweight annotations in the terms.
-In the interest of a simple presentation, we choose here to instead perform the
-translation over the type derivations.
 
-We begin with the trivial cases, which are oblivious to weights, in
-the style of Launchbury:
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
-(t₁ x )^* &= (t₁)^* x \\
-(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*}
+  (t_π  x )^* &= (t)^*_π  x \\
+  (t_π  u )^* &= \flet y =_{π} (u)^* \fin (t)^*_π  y \\
+c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin c_k x₁ … x_n \\
+(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \flet y =_1 (t)^* \fin \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+(\flet x =_{π₁} t₁  …  x =_{π_n} t_n \fin u)^* & = \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin (u)^*
 \end{align*}
 
-For the application case where $e₂$ is not a variable, we need the
-weight information:
-\begin{mathpar}
-\left(\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
-          {Γ+Δ ⊢ t u  :_ρ  B}\right)^* =
-  \flet y =_{πρ} (u)^* \fin (t)^* y
-\end{mathpar}
-
-Constructors are treated similarly:
-\begin{mathpar}
-\left(\inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ}
-     {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\right)^* =
-
-     \flet x₁ =_{π_1ρ} (t₁)^*,…, x_n =_{π_nρ} (t_n)^* \fin c_k x₁ … x_n
-\end{mathpar}
-As for application, the translation does not need to bind arguments that are already
-variables. (We omit the simplified rules.)
-
-
-For the case analysis construct, we bind the intermediate results to a variable of the
-appropriate linearity:
-\begin{mathpar}
-\left(\inferrule{Γ   ⊢  t  :_{ρ} A  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_n ⊢ u_k :_ρ C}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\right)^* =
-
-          \flet y =_ρ (t)^* \fin \case y {c_k  x₁ … x_{n_k} → (u_k)^*}
-\end{mathpar}
-
-In $\flet$, the weights must be scaled too:
-\begin{mathpar}
-\left(\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢ u :_ρ C }
-          {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\right)^* =
-
-          \flet x₁ =_{ρπ_1} (t₁)^*,…, x_n =_{ρπ_n} (t_n)^* \fin (u)^* \\
-\end{mathpar}
-
 \subsubsection{Natural semantics}
-\label{sec:orgheadline10}
 Compared to Launchbury, we add a linear heap, ranged over by Φ,Ψ,Ξ.
 (GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rule
-for \emph{variable} is changed.
+for \emph{variable} and \emph{let} are changed. We also add the
+weight: the quantity of values to produce. (It is necessary to do so
+because let bindings written statically with weight 1 may endup being
+used several times if called from an ω context --- in particular when
+these bound variables end up in a data structure.)
 
 
 \begin{mathpar}
-\inferrule{ }{Γ;Φ : λx. e ⇓ Γ;Φ : λx. e}\text{abs}
+\inferrule{ }{Γ;Φ : λx. e ⇓_ρ Γ;Φ : λx. e}\text{abs}
 
 
-\inferrule{Γ;Φ : e ⇓ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓ Θ;Ξ : z}
-           {Γ;Ψ : e x ⇓ Θ;Ξ : z} \text{application}
+\inferrule{Γ;Φ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓_{πρ} Θ;Ξ : z}
+           {Γ;Ψ : e_π x ⇓_ρ Θ;Ξ : z} \text{application}
 
-\inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
-
-
-\inferrule{Γ;Φ : e ⇓ Δ;Ψ : z}
-{(Γ;Φ,x ↦ e) : x ⇓ Δ;Ψ : z}\text{linear variable}
+\inferrule{Γ;Φ : e  ⇓_ω  Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓_ρ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
 
 
-\inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓ Δ;Ψ : z}
-{Γ,Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓ Δ;Ψ : z}\text{let}
-
-\text{where $i$ ranges over the subset of indices such that $πᵢ$ = ω,}
-
-\text{and $j$ ranges over the subset such that $π_j$ = 1.}
+\inferrule{Γ;Φ : e ⇓_1 Δ;Ψ : z}
+{(Γ;Φ,x ↦ e) : x ⇓_1 Δ;Ψ : z}\text{linear variable}
 
 
-\inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓ Γ;Φ : c  x₁ … x_n}\text{constructor}
+\inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓_ρ Δ;Ψ : z}
+{Γ,Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
+
+\text{where $i$ ranges over the subset of indices such that $πᵢρ$ = ω,}
+
+\text{and $j$ ranges over the subset such that $π_jρ$ = 1.}
 
 
-\inferrule{Γ;Φ:e ⇓ Δ,Ψ:c_k  x₁ … x_n \\   Δ,Ψ : e_k[xᵢ/yᵢ] ⇓ Θ,Ξ : z}
-   {Γ;Φ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ,Ξ : z}\text{case}
+\inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓_ρ Γ;Φ : c  x₁ … x_n}\text{constructor}
+
+
+\inferrule{Γ;Φ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ,Ψ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ,Ξ :  z}
+   {Γ;Φ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ,Ξ :  z}\text{case}
 \end{mathpar}
 
-Remark: the \emph{variable} rule finds out if things come from linear
-or unrestricted heap dynamically. This behaviour allows a linear
-occurence of a variable to work in an unrestricted contexts; thus
-justifying the $1 + ω = ω$ rule.
+Remark: the \emph{unrestricted variable} rule also triggers when the
+weight is 1, thus effectively potentially triggering for linear
+variables. This behaviour allows an occurence of a linear variable to
+work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
+rule.
 
 
 \paragraph{Theorem: The unrestricted heap contains no references to the linear heap}
-Proof: TODO
+Proof: TODO.  (Uses simultaneously the property that when the weight
+is ω, then we have that the produced value has no reference to the
+linear heap)
 
 (This result is critical for heap consistency.)
 
