@@ -4,7 +4,7 @@
 -- It demonstrates how to encode protocols using linear types, in the
 -- flavour that we propose.
 
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators, GADTs #-}
 module Calculator where
 import Data.Monoid
 
@@ -20,11 +20,12 @@ pr = print
 
 type N a = a ⊸ Effect
 
-data Client
-  = Mul Double Double (N (Double ⊗ Server)) -- Client sends two 'Double' and
-                                            -- expects a double and a new server
-                                            -- session.
-  | Terminate
+data Client where
+  Mul :: Double -> Double -> (N (Double ⊗ Server)) -> Client
+         -- Client sends two 'Double' and
+         -- expects a double and a new server
+         -- session.
+  Terminate :: Client
 type Server = N Client
 
 
