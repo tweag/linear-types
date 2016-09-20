@@ -5,7 +5,7 @@ in stdenv.mkDerivation {
   buildInputs = [ # orgEmacs
                   (texlive.combine {
                     inherit (texlive)
-                      scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math;
+                      scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math capt-of;
                   })
                 ];
 }
