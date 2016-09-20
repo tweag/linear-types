@@ -1,6 +1,6 @@
 % Created 2016-09-15 tor 14:09
 \documentclass[11pt]{article}
-\usepackage[backend=biber,citestyle=authoryear]{biblatex}
+\usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
 \usepackage{fixltx2e}
 \usepackage{graphicx}
@@ -225,7 +225,7 @@ premises have weight $πρ$, for some $π$.
 
 \subsubsection{Translation}
 \label{sec:orgheadline9}
-As \citeauthor{launchbury_natural_1993}, we translate from terms to terms where values are
+As \textcite{launchbury_natural_1993}, we translate from terms to terms where values are
 always bound to variables. Additionally, we propagate weight
 information. This propagation ensures that code being called in
 unrestricted contexts uses the unrestricted heap.
@@ -528,7 +528,7 @@ programs.)
 
 \section{Session types vs. linear types}
 
-\Citeauthor{wadler_propositions_2012} provides a good explanation of
+\Textcite{wadler_propositions_2012} provides a good explanation of
 the relation between session types vs. linear types (even though the
 paper contains some subtle traps --- notably the explanation of par
 and tensor in LL does not match the semantics given later.). In sum,

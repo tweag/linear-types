@@ -2,7 +2,7 @@ all: FormalSystem.pdf
 
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules"
-        false
+	false
 
 %.pdf: %.tex PaperTools/bibtex/jp.bib
 	xelatex $*
