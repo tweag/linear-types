@@ -1,7 +1,7 @@
 % Created 2016-09-15 tor 14:09
 \documentclass[11pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+\usepackage[backend=biber,citestyle=authoryear]{biblatex}
+\bibliography{PaperTools/bibtex/jp.bib}
 \usepackage{fixltx2e}
 \usepackage{graphicx}
 \usepackage{grffile}
@@ -39,7 +39,7 @@
 \maketitle
 %% \tableofcontents
 
-\vskip
+\bigskip
 
 In this note we give an overview of a lambda calculus augmented with
 weights on variable (bindings). We argue briefly that the calculus is
@@ -225,7 +225,7 @@ premises have weight $πρ$, for some $π$.
 
 \subsubsection{Translation}
 \label{sec:orgheadline9}
-As Launchbury, we translate from terms to terms where values are
+As \citeauthor{launchbury_natural_1993}, we translate from terms to terms where values are
 always bound to variables. Additionally, we propagate weight
 information. This propagation ensures that code being called in
 unrestricted contexts uses the unrestricted heap.
@@ -492,8 +492,8 @@ a middle ground.)
 
 \section{Linearity as a property of types vs. linearity as a property of bindings (variables)}
 
-In several presentations (``linear types can change the world'',
-$F^o$, ``Best of both worlds''), programming languages incorporate
+In several presentations (\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
+programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
 or unrestricted. Unrestricted types typically includes primitive types
 (\texttt{Int}), and all (strictly positive) data types. Linear types
@@ -528,17 +528,18 @@ programs.)
 
 \section{Session types vs. linear types}
 
-A good resource explaining session types vs. linear types is Wadler's
-``Propositions as Sessions'' (even though it contains some subtle
-traps). In sum, session types type 'live' sessions with long-lived
-channels, whose type ``evolve'' over time. A contrario, linear types
-are well suited to giving types to a given bit of information. One can
-see thus that linear types are better suited to a language based on a
-lambda calculus, while session types are better suited for languages
-based on a pi-calculus and/or languages with effects. Yet; there is a
-simple encoding from session types to linear types (as Wadler
-demonstrates).
+\Citeauthor{wadler_propositions_2012} provides a good explanation of
+the relation between session types vs. linear types (even though the
+paper contains some subtle traps --- notably the explanation of par
+and tensor in LL does not match the semantics given later.). In sum,
+session types type 'live' sessions with long-lived channels, whose
+type ``evolve'' over time. A contrario, linear types are well suited
+to giving types to a given bit of information. One can see thus that
+linear types are better suited to a language based on a lambda
+calculus, while session types are better suited for languages based on
+a pi-calculus and/or languages with effects. Yet; there is a simple
+encoding from session types to linear types (as Wadler demonstrates).
 
 
-
+\printbibliography
 \end{document}

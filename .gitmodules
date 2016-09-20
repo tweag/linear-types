@@ -1,0 +1,3 @@
+[submodule "PaperTools"]
+	path = PaperTools
+	url = git@github.com:jyp/PaperTools.git
