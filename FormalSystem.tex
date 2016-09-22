@@ -235,8 +235,7 @@ x^*       &= x \\
   (t_π  x )^* &= (t)^*_π  x \\
   (t_π  u )^* &= \flet y =_{π} (u)^* \fin (t)^*_π  y \\
 c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin c_k x₁ … x_n \\
-(\case y {c_k  x₁ … x_{n_k} → u_k})^* &= \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \flet y =_1 (t)^* \fin \case y {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case (t)^* {c_k  x₁ … x_{n_k} → (u_k)^*} \\
 (\flet x =_{π₁} t₁  …  x =_{π_n} t_n \fin u)^* & = \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin (u)^*
 \end{align*}
 
