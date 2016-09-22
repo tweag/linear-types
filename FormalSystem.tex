@@ -191,7 +191,7 @@ We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by t
           {Γ ⊢ λx. t  :_ρ  A  →_π  B}\text{abs}
 
 \inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
-          {Γ+Δ ⊢ t u  :_ρ  B}\text{app}
+          {Γ+Δ ⊢ t_π u  :_ρ  B}\text{app}
 
 \inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
@@ -244,11 +244,20 @@ c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fi
 Compared to Launchbury, we add a linear heap, ranged over by Φ,Ψ,Ξ.
 (GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rule
 for \emph{variable} and \emph{let} are changed. We also add the
-weight: the quantity of values to produce. (It is necessary to do so
-because let bindings written statically with weight 1 may endup being
-used several times if called from an ω context --- in particular when
-these bound variables end up in a data structure.)
+weight: the quantity of values to produce.
 
+The weight is used to interpret $\flet =1 …$ bindings into bindings on
+the proper heap.  Indeed, in ω contexts, $\flet =1 …$ must go on the
+GC heap, not on the linear one. Consider the example:
+
+\begin{verbatim}
+let f =_ω (λy :_1 (). case y of () -> let z =_1 True in z) in
+let a =_ρ f ()
+\end{verbatim}
+
+The function f is a creates some data. When run in a linear context, f
+allocates $z$ on the linear heap. When run in an unrestricted context, it
+must allocate $z$ on the GC heap. So, its behaviour depends the value of ρ.
 
 \begin{mathpar}
 \inferrule{ }{Γ;Φ : λx. e ⇓_ρ Γ;Φ : λx. e}\text{abs}
