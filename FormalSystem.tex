@@ -265,7 +265,7 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 
 
 \inferrule{Γ;Φ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓_{πρ} Θ;Ξ : z}
-           {Γ;Ψ : e_π x ⇓_ρ Θ;Ξ : z} \text{application}
+           {Γ;Φ : e_π x ⇓_ρ Θ;Ξ : z} \text{application}
 
 \inferrule{Γ;Φ : e  ⇓_ω  Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓_ρ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
 
@@ -311,6 +311,7 @@ Lemmas:
   bound with weight 1.
 \item Corrollary: every variable bound statically with weight ω is
   bound in the GC heap.
+
 \item When $Γ ⊢ t :_ρ A$, then $Γ;Φ : t ⇓_ρ Δ;Ψ : z$.
 \end{itemize}
 
