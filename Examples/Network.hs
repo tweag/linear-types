@@ -29,7 +29,7 @@ type N a = a ⊸ (NodeId ⊗ Closure Computation)
 
 -- One would be able to evaluate remote computations like so:
 rpc :: RemoteComputation -> IO ()
-rpc (location,c) = send node c
+rpc (location,c) = send location c
 
 -- In this setting, the double negation of A represents the remote
 -- computation of A:
@@ -39,10 +39,11 @@ type NN a = (a ⊸ (Location1 ⊗ Computation)) ⊸ (Location2 ⊗ Computation)
 -- Location2 is the node which performs the RPC call, and Location1 is
 -- the node with recieves the result.
 
--- In the simplest case, the A in question is simply data stored on
--- Location2. Thus one can represent a distributed data structure by
--- inserting double-negations at appropriate places.  For example, a
--- distributed binary tree may look like this:
+-- thus, accessing remote data may look like so:
 
-data Tree a = Bin (NN (Tree a)) (NN (Tree a)) | Leaf a
+access :: NN a -> Computation
+access a = rpc (a $ \x -> onThisNode {- where 'print' has to run -} $ print x)
 
+
+remotely :: (a -> b) -> Node -> Computation
+remotely f n = rpc 

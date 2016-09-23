@@ -38,9 +38,8 @@
 
 \maketitle
 %% \tableofcontents
-
-\bigskip
-
+\begin{abstract}
+\noindent
 In this note we give an overview of a lambda calculus augmented with
 weights on variable (bindings). We argue briefly that the calculus is
 a generalisation of both:
@@ -48,7 +47,7 @@ a generalisation of both:
 \item the simply-typed lambda calculus and
 \item the linear lambda calculus
 \end{itemize}
-
+%
 Additionally, we give
 \begin{itemize}
 \item an operational semantics which demonstrates how memory
@@ -57,6 +56,7 @@ Additionally, we give
 \item a brief comparison with alternative approaches to linearity
   (tracking linearity in types; session types)
 \end{itemize}
+\end{abstract}
 
 \section{Statics}
 \label{sec:orgheadline8}
@@ -96,15 +96,14 @@ are:
 
 \begin{itemize}
 \item a weighted arrow: \(A →_π B\) (you can get a \(B\) if you can provide a
-quantity \(π\) of \(A\))
-In particular:
+quantity \(π\) of \(A\)). Consequently:
 \begin{itemize}
-\item \(A →_ω B\) is the intuitionistic arrow \(A → B\)
-\item \(A →_1 B\) is the linear arrow \(A ⊸ B\)
+\item \(A →_ω B\) is the intuitionistic arrow (\(A → B\))
+\item \(A →_1 B\) is the linear arrow (\(A ⊸ B\))
 \end{itemize}
 \item weighted ADTs:
 \begin{align*}
-\mathsf{data} D = (c_k  π₁ A₁  …  π_{n_k} A_{n_k})^m_{k=1}
+\mathsf{data} D = \left(c_k  π₁ A₁  …  π_{n_k} A_{n_k}\right)^m_{k=1}
 \end{align*}
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
 
@@ -135,11 +134,14 @@ The syntax for terms is:
 e,s,t,u & ::= \\
     & |  x & \text{variable} \\
     & |  λx. t & \text{abstraction} \\
-    & |  t_π s & \text{application} \text{We sometimes omit the weight $π$ when it's obvious from the context} \\
+    & |  t_π s & \text{application} \\
     & |  c t₁ … t_n & \text{data construction} \\
     & |  \case t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
 \end{align*}
+
+Remark: we often omit the weight $π$ in an application, as it is
+usually when obvious from the context.
 
 \subsection{Contexts}
 \label{sec:orgheadline6}
@@ -235,18 +237,18 @@ x^*       &= x \\
   (t_π  x )^* &= (t)^*_π  x \\
   (t_π  u )^* &= \flet y =_{π} (u)^* \fin (t)^*_π  y \\
 c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin c_k x₁ … x_n \\
-(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case (t)^* {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
 (\flet x =_{π₁} t₁  …  x =_{π_n} t_n \fin u)^* & = \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin (u)^*
 \end{align*}
 
 \subsubsection{Natural semantics}
 Compared to Launchbury, we add a linear heap, ranged over by Φ,Ψ,Ξ.
-(GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rule
+(GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rules
 for \emph{variable} and \emph{let} are changed. We also add the
 weight: the quantity of values to produce.
 
-The weight is used to interpret $\flet =1 …$ bindings into bindings on
-the proper heap.  Indeed, in ω contexts, $\flet =1 …$ must go on the
+The weight is used to interpret $\flet =1 …$ bindings into allocations on
+the proper heap.  Indeed, in ω contexts, $\flet =1 …$ must allocate on the
 GC heap, not on the linear one. Consider the example:
 
 \begin{verbatim}
@@ -254,9 +256,9 @@ let f =_ω (λy :_1 (). case y of () -> let z =_1 True in z) in
 let a =_ρ f ()
 \end{verbatim}
 
-The function f is a creates some data. When run in a linear context, f
-allocates $z$ on the linear heap. When run in an unrestricted context, it
-must allocate $z$ on the GC heap. So, its behaviour depends the value of ρ.
+The function \texttt{f} creates some data. When run in a linear context, \texttt{f}
+allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
+must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of ρ.
 
 \begin{mathpar}
 \inferrule{ }{Γ;Φ : λx. e ⇓_ρ Γ;Φ : λx. e}\text{abs}
@@ -273,7 +275,7 @@ must allocate $z$ on the GC heap. So, its behaviour depends the value of ρ.
 
 
 \inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓_ρ Δ;Ψ : z}
-{Γ,Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
+{Γ;Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
 
 \text{where $i$ ranges over the subset of indices such that $πᵢρ$ = ω,}
 
@@ -293,6 +295,12 @@ variables. This behaviour allows an occurence of a linear variable to
 work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
 rule.
 
+% TODO: Lemma: if the weight is ω, then the linear heap is empty.  A
+% consequence of this is that we should have main ::1 IO () --
+% otherwise it's impossible to have anything in the linear heap.
+
+% Furthermore, in order to use IO in any reasonable way, we need a
+% 'linear do notation'.
 
 \paragraph{Theorem: The unrestricted heap contains no references to the linear heap}
 Proof: TODO.  (Uses simultaneously the property that when the weight
@@ -302,8 +310,8 @@ linear heap)
 (This result is critical for heap consistency.)
 
 Yet, the following example may, at first glance, look like a counter
-example where \verb|x| is in the non-GC heap while \verb|y| in the
-GC-heap points to \verb|x|:
+example where \verb|x| is in the non-GC heap while \verb|y| is in the
+GC-heap and points to \verb|x|:
 \begin{verbatim}
 data () = ()
 
@@ -312,7 +320,7 @@ let y =_ω ( case x of { () -> () })
 in ()
 \end{verbatim}
 However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
-case rules gives the same weight to the case-expression than to the
+case rules gives the same weight to the case-expression as a whole as to the
 scrutinee (\verb|x| in this case). Therefore
 \verb|case x of { () -> ()}| has weight 1.
 
