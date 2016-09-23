@@ -295,19 +295,31 @@ variables. This behaviour allows an occurence of a linear variable to
 work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
 rule.
 
-% TODO: Lemma: if the weight is ω, then the linear heap is empty.  A
+\paragraph{Theorem: The GC heap contains no references to the linear heap}
+(This result is critical for heap consistency.)
+
+Lemmas:
+\begin{itemize}
+\item If the weight is ω, then the linear heap is empty.
+%  A
 % consequence of this is that we should have main ::1 IO () --
 % otherwise it's impossible to have anything in the linear heap.
 
 % Furthermore, in order to use IO in any reasonable way, we need a
 % 'linear do notation'.
+\item Every variable which is bound in the linear heap is statically
+  bound with weight 1.
+\item Corrollary: every variable bound statically with weight ω is
+  bound in the GC heap.
+\item When $Γ ⊢ t :_ρ A$, then $Γ;Φ : t ⇓_ρ Δ;Ψ : z$.
+\end{itemize}
 
-\paragraph{Theorem: The unrestricted heap contains no references to the linear heap}
-Proof: TODO.  (Uses simultaneously the property that when the weight
-is ω, then we have that the produced value has no reference to the
-linear heap)
+Proof:
+1. The only place where the heap is populated is in let. So we check let. We put things in the GC heap when πρ = ω.
+   a. π = ω. Statically, the expression can only depend on the ω context, so we can't create any reference to the linear heap.
+   b. ρ = ω. In this case, by lemma 1. the linear heap is empty, and thus it's impossible to link to anything in it.
 
-(This result is critical for heap consistency.)
+
 
 Yet, the following example may, at first glance, look like a counter
 example where \verb|x| is in the non-GC heap while \verb|y| is in the
