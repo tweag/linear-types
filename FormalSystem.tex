@@ -285,8 +285,8 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 \inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓_ρ Γ;Φ : c  x₁ … x_n}\text{constructor}
 
 
-\inferrule{Γ;Φ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ,Ψ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ,Ξ :  z}
-   {Γ;Φ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ,Ξ :  z}\text{case}
+\inferrule{Γ;Φ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ,Ψ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ;Ξ :  z}
+   {Γ;Φ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ;Ξ :  z}\text{case}
 \end{mathpar}
 
 Remark: the \emph{unrestricted variable} rule also triggers when the
@@ -315,10 +315,36 @@ Lemmas:
 \item When $Γ ⊢ t :_ρ A$, then $Γ;Φ : t ⇓_ρ Δ;Ψ : z$.
 \end{itemize}
 
-Proof:
-1. The only place where the heap is populated is in let. So we check let. We put things in the GC heap when πρ = ω.
-   a. π = ω. Statically, the expression can only depend on the ω context, so we can't create any reference to the linear heap.
-   b. ρ = ω. In this case, by lemma 1. the linear heap is empty, and thus it's impossible to link to anything in it.
+
+% Proof:
+% 1. The only place where the heap is populated is in let. So we check let. We put things in the GC heap when πρ = ω.
+%    a. π = ω. Statically, the expression can only depend on the ω context, so we can't create any reference to the linear heap.
+%    b. ρ = ω. In this case, by lemma 1. the linear heap is empty, and thus it's impossible to link to anything in it.
+
+% relation: Δ|Γ;Φ ⊢ e :_ρ A   ≜  Δ ⊢ letω Γ in let1 Φ in e :_ρ A
+
+% theorem: if Γ;Φ : e ⇓_ρ Δ,Ψ : z then ∀Ξ,Θ,Α.   Θ|Γ;(Φ-Ξ) ⊢ e :_ρ A  ⇒  Θ|Δ;(Ψ-Ξ) ⊢ z :_ρ A
+
+
+% unrestricted variable case:
+
+% Need to prove:
+
+%   Θ,x:T|Γ;(Φ-Ξ) ⊢ e :_ρ T  ⇒  Θ,x:T|Δ;(ψ-Ξ) ⊢ z :_ρ T
+% ──────────────────────────────────────────────────────
+%  Θ|Γ,x↦e;(Φ-Ξ) ⊢ x :_ρ T  ⇒  Θ|Δ,x↦z;(ψ-Ξ) ⊢ z :_ρ T
+
+% case case:
+
+% Need to prove:
+
+% Ψ = free vars ek - y + x + Z
+% ? = free vars ek - y
+
+% Σ|Γ;Φ-(Z+?) ⊢ e :_ρ D ⇒ Σ|Δ;Ψ-(Z+?) ⊢ ck x :_ρ D
+% Σ|Δ;Ψ-Z ⊢ ek[x/y] :_ρ A ⇒ Σ|θ;Ξ-Z ⊢ z :_ρ A
+% ─────────────────────────────────────────────────────────────
+% Σ|Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ|Θ,Ξ-Z ⊢ z :_ρ A
 
 
 
@@ -371,6 +397,18 @@ let x =_ω ()
 let y =_ω ( case x of { () -> () } )
 in ()
 \end{verbatim}
+
+If one wants to use the linear heap 'locally', one must use CPS.
+
+That is:
+
+doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
+doSomethingWithLinearHeap f x k = case f x of
+  Box y -> k y
+
+doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
+doSomethingWithLinearHeap x k = case x of
+  Box y -> k y
 
 \subsection{Examples of simple programs and their types}
 
