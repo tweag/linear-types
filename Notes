@@ -1,42 +1,74 @@
 -- Unstructured, unlatexified notes
 
--- This is correct but not too helpful as is `u` is linear, then
--- `extract u` will provide a single instance of A.
-extract :: Bang A ⊸ A
-extract (Bang x) = x
+One would linke to construct a function which allows to locally use
+the linear heap. We attempt:
 
--- The main reason for this is that the computation of `extract u` may
--- be suspended, and this would create pointers from the GC-heap to
--- the linear heap. A value of type `Bang A` is a pointer to the
--- linear heap, though, so once a whnf is computed it is safe to
--- extract.
-
--- We need a sequentialisation operator. Box elimination is one:
-seq_extract :: Bang A ⊸ (A → B) ⊸ B
-seq_extract (Box x) f = f x
-
--- Programming with `seq_extract` means sequentialising explicitly
--- non-linear computations inside of linear computations. It is hard
--- to introduce intermediate computation which would benefit from the
--- linear execution model as part of a computation (like a monad,
--- linearity will leak out of functions and be exposed in its type)
+> extract :: Bang A ⊸ A
+> extract (Bang x) = x
 
 
--- We want to be able to write functions such as this, in which
--- putting the result in the GC wouldn't force to do every
--- intermediate computation in the GC.
-withHeap :: (Heap ⊸ Bang A) ⊸ A
+The above is correct but not too helpful, because when `u` is linear, then
+`extract u` will provide a single instance of A.
 
--- To achieve that we need a primitive with the following type:
+The GC-oriented reason for this is that the computation of `extract
+u` may be suspended, and this would create pointers from the
+GC-heap to the linear heap. A value of type `Bang A` is a pointer
+to the linear heap, though, so once a whnf is computed it is safe
+to extract.
+
+We need a sequentialisation operator. We already have one: Bang
+elimination.
+
+> seq_extract :: Bang A ⊸ (A → B) ⊸ B
+> seq_extract (Box x) f = f x
+
+Programming with `seq_extract` means sequentialising explicitly
+non-linear computations inside of linear computations. It is hard
+to introduce intermediate computation which would benefit from the
+linear execution model as part of a computation (like a monad,
+linearity will leak out of functions and be exposed in its type)
+
+
+We want to be able to write functions such as the following, in
+which putting the result in the GC wouldn't force to do every
+intermediate computation in the GC.
+
+> withHeap :: (Heap ⊸ Bang A) ⊸ A
+
+To achieve that we need a primitive with the following type:
 
    ωΓ ⊢ u ::_1 !A
-----------------------------------
+------------------------------
 ωΓ ⊢ strong_extract u ::_ω A
 
--- It is important that all variables in the context are unrestricted,
--- otherwise this could cause pointers from thunks in the GC-heap to
--- the linear heap. The simplest way to understand the semantics of
--- `strong_extract` is to translate programs with `strong_extract` to
--- programs of regular linear logic in CPS, where `strong_extract` is
--- translated to `seq_extract`. Open: what is the best way to
--- introduce this primitive in the language?
+It is important that all variables in the context are unrestricted,
+otherwise this could cause pointers from thunks in the GC-heap to
+the linear heap. The simplest way to understand the semantics of
+`strong_extract` is to translate programs with `strong_extract` to
+programs of regular linear logic in CPS, where `strong_extract` is
+translated to `seq_extract`. Open: what is the best way to
+introduce this primitive in the language?
+
+
+The CPS translation turns the omega into continuations, but
+leaves 1 in direct style. Roughly:
+
+for a term t :_ω A we have ⟦t⟧ :_1 (A → k) ⊸ k
+
+
+⟦strong_extract u⟧ k = seq_extract u k
+⟦t u⟧ k = ⟦u⟧ (⟦t⟧ k)
+…
+
+
+translation of linear things leaves everything untouched except
+application:
+
+tω u = ⟦u⟧ t
+…
+
+
+The above suggests the primitive:
+
+
+kind_of_call/cc :: ((A → ⊥) ⊸ ⊥) → A
