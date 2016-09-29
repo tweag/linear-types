@@ -100,6 +100,107 @@ additionally:
 - Push and Pull arrays in Feldspar https://scholar.google.com/scholar?oi=bibs&hl=en&cites=5417443716167196803
 - On the duality of streams https://jyp.github.io/pdf/Organ.pdf
 - Composable Efficient Array Computations using Linear Types http://www.cse.chalmers.se/~josefs/publications/vectorcomp.pdf
+
+* Controlling sharing (full laziness)
+
+According to de Vries
+(http://www.well-typed.com/blog/2016/09/sharing-conduit/):
+
+#+BEGIN_QUOTE
+[...] In the presence of the full laziness optimization we have no
+control over when values are not shared. While it is possible in
+theory to write code in such a way that the lazy data structures are
+self-referential and hence keeping them in memory does not cause a
+memory leak, in practice the resulting code is too brittle and writing
+code like this is just too difficult.
+
+[..]
+
+Full laziness can be disabled using ~-fno-full-laziness~, but sadly this
+throws out the baby with the bathwater. In many cases, full laziness
+is a useful optimization.
+#+END_QUOTE
+
+Linearity offers a solution to the problem. Indeed, linearly-typed
+values are used once only. Thus, linearity implies that no sharing is
+possible. In turn, the full laziness optimization cannot apply to
+expressions with a linear type.
+
+Consider now a simple example which exhibits the problem, also provided
+by de Vries: 
+
+#+BEGIN_SRC haskell
+ni_mapM_ :: (a -> IO b) -> [a] -> IO ()
+{-# NOINLINE ni_mapM_ #-}
+ni_mapM_ = mapM_
+
+main2 :: IO ()
+main2 = forM_ [1..5] $ \_ -> ni_mapM_ print [1 .. N]
+#+END_SRC
+
+One would expect that the above programs uses constant space (because
+the list [1..N] is produced lazily).  However, if one compiles the
+above program with full laziness and runs it, one observes a memory
+residency proportional to N. This happens because GHC shares the
+intermediate list ~[1..N]~ between runs of ~ni_mapM_ print [1 .. N]~.
+
+Let us now consider an equivalent program, be written using our
+proposed extension for linear types. (To transpose the example with
+minimal changes we have to redefine several basic types and functions
+--- in a practical application this would not happen as we would
+actually be using a custom streaming library, as de Vries does).
+
+
+#+BEGIN_SRC haskell
+data [a] where
+  [] :: [a]
+  (:) :: a ⊸ [a] ⊸ [a]
+
+discard :: Int ⊸ IO ()
+
+ni_mapM_ :: (a ⊸ IO b) → List a ⊸ IO ()
+forM_ :: List a ⊸ (a ⊸ IO ()) → IO ()
+
+main2 ::1 IO ()
+main2 = forM_ [1..5] $ \i -> do
+  discard i
+  ni_mapM_ print [1 .. N]
+#+END_SRC
+
+In the above example, it is incorrect to share the intermediate
+list. Indeed, performing full laziness would amount to transform the
+program into the following form, which is not well-typed:
+
+#+BEGIN_SRC haskell
+main2 ::1 IO ()
+main2 =
+  let xs ::1 [a]
+      xs = [1 .. N]
+  in forM_ [1..5] $ \i -> do
+       discard i
+       ni_mapM_ print xs
+#+END_SRC
+
+Indeed, the above definition attempts to use ~xs~ several times, and
+it is bound only once.
+
+In our proposed extension, one could still write the following
+type-correct program, which introduces explicit sharing:
+
+#+BEGIN_SRC haskell
+main2 ::1 IO ()
+main2 =
+  let xs ::ω [a]
+      xs = [1 .. N]
+  in forM_ [1..5] $ \i -> do
+       discard i
+       ni_mapM_ print xs
+#+END_SRC
+
+Yet, thanks to linearity annotations, the programmer intentionally
+marked the expressions which are not supposed to be shared, in effect
+precisely controlling where (not) to apply full-laziness.
+
 * Diminishing GC pressure
 Because linear values cannot be shared, they should in principle not
 be subject to GC. Indeed, the consumer of the value (pattern matching)
@@ -127,5 +228,6 @@ when pointed to by non-linear data structures.
 
 #  LocalWords:  inliner eg Unfused Lippmeier et al SRC functionals ss
 #  LocalWords:  copySetP FilePath srcs dsts sourceFs sk sinkFs drainP
-#  LocalWords:  affine duplications GC de Wakeling Runciman
-#  LocalWords:  tradeoff latencies runtime
+#  LocalWords:  affine duplications GC de Wakeling Runciman Mul Vries
+#  LocalWords:  tradeoff latencies runtime exampleClient fno ni mapM
+#  LocalWords:  exampleServer NOINLINE forM xs
