@@ -6,6 +6,9 @@ Linear types can be used to encode protocols, in a way very similar to
 'session types'. Linearity checks ensure that the protocol is
 respected (so one does not backtrack or drops out).
 
+The following example is inspired by "Embedding Session Types in
+Haskell", Sam Lindley and J. Garrett Morris.
+
 #+BEGIN_SRC haskell
 pr :: Double -> Effect -- "prints" a number
 
@@ -31,14 +34,15 @@ exampleServer client = case client of
 #+END_SRC
 
 * Correctness of optimized code
-Writing programs in the polarized style shown above is very useful to
-write efficient programs.
+
+Writing programs in the polarized style shown above is very useful to write efficient programs.
 
 In general, fusion in GHC relies on the rewrite rules and the inliner.
 
 1. Rewrite rules transform code using general recursion into a
    representation with no recursion (eg. church encodings)
-2. The inliner kicks in and 'fuses' composition of non-recursive functions
+2. The inliner kicks in and 'fuses' composition of non-recursive
+   functions
 3. Unfused code may be reverted to the original representation.
 
 The problem with this scheme is that it involves two phases of
@@ -47,59 +51,72 @@ difficulties to predict the performance of any given program.
 
 A partial remedy to this solution is to stop relying on rewrite rules,
 and use directly non-recursive representations. For example the
-following representation from Lippmeier et al.:
+following representation from Lippmeier et
+al. [http://benl.ouroborus.net/papers/2016-polarized/dpdf-FHPC2016-preprint.pdf]:
 
 #+BEGIN_SRC haskell
-  data Sources i m e = Sources
-    { arity :: i
-    , pull  :: i -> (e -> m ()) -> m () -> m () }
-#+END_SRC
+data Sources i m e = Sources -- 'i' is the array's index type, 'e' the type of elements and 'm' the effects
+  { arity :: i
+  , pull  :: i -> (e -> m ()) -> m () -> m () } -- 'pull' is an iterator to apply to every elements of the array (like 'traverse')
 
+data Sinks i m e = Sinks
+  { arity :: i
+  , push  :: i -> e -> m ()
+  , eject :: i -> m () }
+#+END_SRC
 Such representations are typically functionals, and thus do not
 consume memory. One eventually gets code which is guaranteed to be
-'fused'. For instance, in the following example from Lippmeier et
-al. [http://benl.ouroborus.net/papers/2016-polarized/dpdf-FHPC2016-preprint.pdf],
+'fused'. For instance, in the following example from Lippmeier et al.,
 neither the source nor the sink represent data in memory.
 
 #+BEGIN_SRC haskell
-  copySetP :: [FilePath] -> [FilePath] -> IO ()
-  copySetP srcs dsts = do
-    ss <- sourceFs srcs
-    sk <- sinkFs   dsts
-    drainP ss sk
+copySetP :: [FilePath] -> [FilePath] -> IO ()
+copySetP srcs dsts = do
+  ss <- sourceFs srcs
+  sk <- sinkFs   dsts
+  drainP ss sk
 #+END_SRC
-
 One then faces two classes of new problems.
 
-First, any non-linear (precisely non-affine) use of such a
-representation will *duplicate work*. If one is not careful, one may
-end up with a program which does not use any intermediate memory, but
-duplicates a lot of intermediate computations. Linear types solve the
-problem by preventing such duplications. (Combinators may be still
-provided to duplicate computation explicitly or store intermediate
-results explicitly.)
+First, any non-linear (precisely non-affine) use of such a representation will /duplicate work/. For example:
+
+#+BEGIN_SRC haskell
+example srcs dsts = do
+  ss <- expensiveComputation <$> sourceFs srcs
+  sk <- sinkFs  dsts
+  drainP ss sk
+  drainP ss sk -- expensiveComputation is run a second time here.
+#+END_SRC
+
+If one is not careful, one may end up with a program which does not
+use any intermediate memory, but duplicates a lot of intermediate
+computations. Linear types solve the problem by preventing such
+duplications. (Combinators may be still provided to duplicate
+computation explicitly or store intermediate results explicitly.)
 
 Second, such representations may contain effects. In this situation,
-non-linear uses may produce an *incorrect program*. If one takes the
-example of a non-recursive representation of files, one may have two
-processes writing simultaneously in the same file (potentially
+non-linear uses may produce an /incorrect program//. If one takes
+the example of a non-recursive representation of files, one may have
+two processes writing simultaneously in the same file (potentially
 corrupting data), or one may forget to close the file.
 
 Quoting Lippmeier et al.:
+
 #+BEGIN_QUOTE
-In general an object of type Sources is an abstract producer of data,
-and it may not even be possible to rewind it to a previous state —
-suppose it was connected to a stream of sensor readings. Alas the
-Haskell type system does not check linearity so we rely on the
-programmer to enforce it manually.
+  In general an object of type Sources is an abstract producer of
+  data, and it may not even be possible to rewind it to a previous
+  state — suppose it was connected to a stream of sensor
+  readings. Alas the Haskell type system does not check linearity so
+  we rely on the programmer to enforce it manually.
 #+END_QUOTE
 
-Literature on this style of non-recursive representations includes
-additionally:
+Literature on this style of non-recursive representations includes additionally:
 
 - Push and Pull arrays in Feldspar https://scholar.google.com/scholar?oi=bibs&hl=en&cites=5417443716167196803
 - On the duality of streams https://jyp.github.io/pdf/Organ.pdf
 - Composable Efficient Array Computations using Linear Types http://www.cse.chalmers.se/~josefs/publications/vectorcomp.pdf
+
+
 
 * Controlling sharing (full laziness)
 
@@ -215,14 +232,16 @@ bigger problem than absolute runtime.
 
 There is however an improvement to be had on top of the simple
 strategy. Namely, to always fuse composition of linear functions. This
-strategy removes many short-lived objects. Fusing *always* is safe
-performance wise thanks to linearity. It is a good idea because it
-allows the programmer to predict accurately the behavior of the
-generated code.
+a good strategy because:
 
-A consequence of this choice is that linear data will only exist
-when pointed to by non-linear data structures.
-
+1. It potentially removes many short-lived objects.
+2. Fusing *always* is safe performance-wise thanks to linearity.
+3. It make the behaviour of the compiler more predictable. Thus
+   ultimately the behaviour of the generated code is more predictable
+   too. A drawback is that the optimiser may not be able to perform
+   this inlining in practice; however, for the case of Church-encoded
+   structures presented earlier in this document, the strategy will
+   work.
 
 
 
