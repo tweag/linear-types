@@ -64,9 +64,10 @@ Additionally, we give
 \label{sec:orgheadline1}
 
 The set of weights is the two-element set $\{1,ω\}$. Intuitively, 1
-represents \emph{exactly one} instance, while $ω$ represents any number of
-instances (including zero).  The metasyntactic variables \(π\) and \(ρ\)
-range over this set. Weights are equipped with + and $·$ operations:
+represents \emph{exactly one} instance, while $ω$ represents any
+number of instances (at the discretion of the consumer, and possible
+zero).  The metasyntactic variables \(π\) and \(ρ\) range over this
+set. Weights are equipped with + and $·$ operations:
 
 
 \begin{align*}
@@ -83,7 +84,7 @@ range over this set. Weights are equipped with + and $·$ operations:
 ω + ω &= ω
 \end{align*}
 
-We equip weights we a partial order (written \(· ≤ ·\)) such that \(1 ≤ ω\).
+We equip weights with a partial order (written \(· ≤ ·\)) such that \(1 ≤ ω\).
 
 \emph{(An alternative which may be worth pursuing is to choose the set of
 weights to be \(ℕ∪{ω}\), in which case \(1+1=2\).)}
@@ -140,8 +141,8 @@ e,s,t,u & ::= \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
 \end{align*}
 
-Remark: we often omit the weight $π$ in an application, as it is
-usually when obvious from the context.
+Remark: we often omit the weight $π$ in an application, because it is
+usually obvious from the context.
 
 \subsection{Contexts}
 \label{sec:orgheadline6}
@@ -242,14 +243,21 @@ c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fi
 \end{align*}
 
 \subsubsection{Natural semantics}
-Compared to Launchbury, we add a linear heap, ranged over by Φ,Ψ,Ξ.
-(GC'ed heap is ranged over by Γ,Δ,Θ). Other than this, only the rules
-for \emph{variable} and \emph{let} are changed. We also add the
-weight: the quantity of values to produce.
+Compared to Launchbury:
 
-The weight is used to interpret $\flet =1 …$ bindings into allocations on
-the proper heap.  Indeed, in ω contexts, $\flet =1 …$ must allocate on the
-GC heap, not on the linear one. Consider the example:
+\begin{itemize}
+\item we add a linear heap, ranged over by Φ,Ψ,Ξ.
+  (GC'ed heap is ranged over by Γ,Δ,Θ);
+\item We add a weight in the reduction relation, corresponding to the
+  quantity of values to produce.
+\item The rules for \emph{variable} and \emph{let} are changed to
+  account for weights.
+\end{itemize}
+
+The weight in the reduction relation is used to interpret $\flet =1 …$
+bindings into allocations on the proper heap.  Indeed, in ω contexts,
+$\flet =1 …$ must allocate on the GC heap, not on the linear
+one. Indeed, consider the example:
 
 \begin{verbatim}
 let f =_ω (λy :_1 (). case y of () -> let z =_1 True in z) in
@@ -290,8 +298,8 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 \end{mathpar}
 
 Remark: the \emph{unrestricted variable} rule also triggers when the
-weight is 1, thus effectively potentially triggering for linear
-variables. This behaviour allows an occurence of a linear variable to
+weight is 1, thus effectively allowing linear variables to look on the
+GC heap. This behaviour allows an occurence of a linear variable to
 work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
 rule.
 
@@ -311,8 +319,6 @@ Lemmas:
   bound with weight 1.
 \item Corrollary: every variable bound statically with weight ω is
   bound in the GC heap.
-
-\item When $Γ ⊢ t :_ρ A$, then $Γ;Φ : t ⇓_ρ Δ;Ψ : z$.
 \end{itemize}
 
 
@@ -359,8 +365,8 @@ let y =_ω ( case x of { () -> () })
 in ()
 \end{verbatim}
 However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
-case rules gives the same weight to the case-expression as a whole as to the
-scrutinee (\verb|x| in this case). Therefore
+typing rule for 'case' gives the same weight to the case-expression as
+a whole as to the scrutinee (\verb|x| in this case). Therefore
 \verb|case x of { () -> ()}| has weight 1.
 
 Remark: for a program to turn a 1-weight into an ω-weight, one may use
@@ -369,7 +375,7 @@ the following definition:
 data Bang A = Box ωA
 \end{verbatim}
 The expression \verb|case x of { () -> Box ()}| has type
-\verb|Bang A|, but still with weight 1.  This pattern does not apply
+\verb|Bang A|, but still with weight 1.  The programming pattern described above does not apply
 just to the unit type $()$, but to any data type \verb|D|. Indeed, for such
 a type we will have a function \verb|D ⊸ Bang D| (this may be even
 efficiently implemented by copying a single pointer --- for example if
