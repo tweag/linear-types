@@ -535,10 +535,13 @@ encoding from session types to linear types (as Wadler demonstrates).
 % - have a single heap (with weights)
 % - explain data T = C 1A wB means C :: A ⊸ B → T
 % - give types for primops (and semantics?)
-% - an input with static weight 1 can have dynamic weight w
 % - talk about thunk freeing themselves
 % - underline that two aspects are mostly independent:
 % 1. prompt deallocation of cons cels
 % 2. resource management with explicit free
 % - examples with wrong usage
+% Operational meaning for
+% f : A → B
+% f : A ⊸ B 
+% that is: an input with static weight 1 can have dynamic weight w
 
