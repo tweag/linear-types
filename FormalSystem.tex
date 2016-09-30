@@ -19,7 +19,7 @@
 \usepackage{unicode-math}
 \setmonofont{DejaVu Sans Mono}
 \setmainfont[]{DejaVu Sans}
-\newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}^m_{k=1}}
+\newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
@@ -144,7 +144,7 @@ e,s,t,u & ::= \\
     & |  λx. t & \text{abstraction} \\
     & |  t_π s & \text{application} \\
     & |  c t₁ … t_n & \text{data construction} \\
-    & |  \case t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+    & |  \case[ρ] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
 \end{align*}
 
@@ -192,8 +192,12 @@ Contexts can be scaled by a weight:
 \subsection{Typing rules}
 \label{sec:orgheadline7}
 
-We have a typing judgement \(Γ ⊢ x : A\), inductively defined by the following rules, and a weighted typing judgement, defined as follows:
-$Γ ⊢ t :_ρ A ≝  ρΓ ⊢ t : A$.
+We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
+following rules.  The intuition behind this judgement is: can
+construct \emph{one} value $t$ of type $A$ from $Γ$. We do not define
+a judgement to denote that we can construct a quantity $ρ$
+of type $A$; instead we will use $ρΓ ⊢ t : A$ to indicate this
+situation.
 
 \begin{mathpar}
 
@@ -208,8 +212,9 @@ $Γ ⊢ t :_ρ A ≝  ρΓ ⊢ t : A$.
 \inferrule{πᵢΔᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i πᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{πᵢ} Aᵢ, …, x_{n_k}:_{π_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+\inferrule{ρΓ   ⊢  t  : D  \\ Δ, x₁:_{ρπᵢ} Aᵢ, …, x_{n_k}:_{ρπ_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
+          {ρΓ+Δ ⊢ \case[ρ] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+
 
 \inferrule{πᵢΓᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
           { Δ+\sum_i πᵢΓᵢ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u : C}\text{let}
@@ -536,3 +541,4 @@ encoding from session types to linear types (as Wadler demonstrates).
 % 1. prompt deallocation of cons cels
 % 2. resource management with explicit free
 % - examples with wrong usage
+
