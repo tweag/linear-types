@@ -39,24 +39,31 @@
 \maketitle
 %% \tableofcontents
 \begin{abstract}
-\noindent
-In this note we give an overview of a lambda calculus augmented with
-weights on variable (bindings). We argue briefly that the calculus is
-a generalisation of both:
-\begin{itemize}
-\item the simply-typed lambda calculus and
-\item the linear lambda calculus
-\end{itemize}
-%
-Additionally, we give
-\begin{itemize}
-\item an operational semantics which demonstrates how memory
-  management of linear values can be simplified.
-\item example types for a number of simple programs
-\item a brief comparison with alternative approaches to linearity
-  (tracking linearity in types; session types)
-\end{itemize}
+  \noindent This article introduces and describes a presentation of a
+  linearly-typed lazy programming language which is designed to be
+  integrate well with an existing programming language, in particular
+  in GHC/Haskell.
 \end{abstract}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+%% In this note we give an overview of a lambda calculus augmented with
+%% weights on variable (bindings). We argue briefly that the calculus is
+%% a generalisation of both:
+%% \begin{itemize}
+%% \item the simply-typed lambda calculus and
+%% \item the linear lambda calculus
+%% \end{itemize}
+%% %
+%% Additionally, we give
+%% \begin{itemize}
+%% \item an operational semantics which demonstrates how memory
+%%   management of linear values can be simplified.
+%% \item example types for a number of simple programs
+%% \item a brief comparison with alternative approaches to linearity
+%%   (tracking linearity in types; session types)
+%% \end{itemize}
 
 \section{Statics}
 \label{sec:orgheadline8}
@@ -216,9 +223,54 @@ Lemmas:
 \item erasure of weights preserves typing
 \end{enumerate}
 
+\subsection{Examples of simple programs and their types}
+
+\hspace{-4cm}\begin{minipage}{\textwidth}
+\begin{align*}
+map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
+lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
+λx. λy. x & : A ⊸ B → A \\
+          & : A → B → A \\
+λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
+            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
+            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\
+λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
+                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
+                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
+                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
+                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
+\end{align*}
+\end{minipage}
+
+%% TODO: additional examples: copy (from linear to unrestricted), free, more?
+
+If we want the most general types of higher order functions, we need
+explicit quantification over weights. Still, this is somewhat simpler
+than what Morris presents in ``The best of both worlds'', because we
+do not need bounded quantification. Instead we use multiplication of
+weights. (There is also the possibility to add a subtyping relation as
+a middle ground.)
+
+%% TODO: example of ill-typed programs due to linearity violation,
+%% with tentative error messages.
+
+\section{Impact on GHC type system}
+\label{sec:ghc}
+
+\subsection{Primops}
+\subsection{FFI}
+
 
 \section{Dynamics}
 \label{sec:orgheadline16}
+
+The semantics given in this section demonstrate a further extension of
+Haskell enabled by linear types: prompt deallocation of thunks. Such
+an extension of the run-time system is not necessary to benefit from
+linear types as was demonstrated in~\label{sec:ghc}. However, this
+dynamic semantics can also help give confidence in the correctness of
+the extensions of~\label{sec:ghc}.
+
 \subsection{(Extended) Launchbury semantics}
 \label{sec:orgheadline11}
 
@@ -404,6 +456,7 @@ If one wants to use the linear heap 'locally', one must use CPS.
 
 That is:
 
+\begin{verbatim}
 doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap f x k = case f x of
   Box y -> k y
@@ -411,34 +464,11 @@ doSomethingWithLinearHeap f x k = case f x of
 doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap x k = case x of
   Box y -> k y
+\end{verbatim}
 
-\subsection{Examples of simple programs and their types}
+\section{Comparison with other techniques}
 
-\hspace{-4cm}\begin{minipage}{\textwidth}
-\begin{align*}
-map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
-lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
-λx. λy. x & : A ⊸ B → A \\
-          & : A → B → A \\
-λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
-            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
-            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\ 
-λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
-                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
-                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
-                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
-                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
-\end{align*}
-\end{minipage}
-
-If we want the most general types of higher order functions, we need
-explicit quantification over weights. Still, this is somewhat simpler
-than what Morris presents in ``The best of both worlds'', because we
-do not need bounded quantification. Instead we use multiplication of
-weights. (There is also the possibility to add a subtyping relation as
-a middle ground.)
-
-\section{Linearity as a property of types vs. linearity as a property of bindings (variables)}
+\subsection{Linearity as a property of types vs. linearity as a property of bindings (variables)}
 
 In several presentations (\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
@@ -474,7 +504,7 @@ annoying to duplicate every primitive type. (Possibly we could
 prescribe \#Int to be linear, but this may break lots of existing
 programs.)
 
-\section{Session types vs. linear types}
+\subsection{Session types vs. linear types}
 
 \Textcite{wadler_propositions_2012} provides a good explanation of
 the relation between session types vs. linear types (even though the
