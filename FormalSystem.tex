@@ -545,3 +545,31 @@ encoding from session types to linear types (as Wadler demonstrates).
 % f : A ⊸ B 
 % that is: an input with static weight 1 can have dynamic weight w
 
+
+% (#+) :: #Int -> #Int -> #Int
+
+% VERSION 1:
+% newByteArray# :: Int# → (MutableByteArray# ⊸ Bang k) ⊸ k
+% updateByteArray# :: Int# -> Byte# → MutableByteArray# ⊸ MutableByteArray#
+% freeByteArray# :: MutableByteArray# ⊸ ()
+% freezeByteArray# :: MutableByteArray# ⊸ Bang ByteArray#
+% indexMutByteArray# :: Int# -> MutableByteArray# ⊸ (MutableByteArray# ⊗ Byte#)
+% indexByteArray# :: Int# -> ByteArray# ⊸ (ByteArray# ⊗ Byte#)
+% 
+% The Bang in newByteArray ensures that the computation depending on the
+% array returns something which is on the GC heap. This means two things
+% 1. the mutableByteArray cannot be returned via k 2. even when called
+% in an ω context, we can return the k without problem.
+% 
+% Other remark: the type system ensures that we never have a variable
+% 
+% x :_ω MutableByteArray
+% 
+% at any point.
+% 
+% VERSION 2:
+% newByteArray# :: Heap s ⊸ Int# → (MutableByteArray# s ⊗ Heap s)
+% updateByteArray# :: Int# -> Byte# → MutableByteArray# s ⊸ MutableByteArray# s
+% freeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ Heap s
+% freezeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray#)
+% withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
