@@ -1,4 +1,4 @@
--- Unstructured, unlatexified notes
+* Local linear things
 
 One would linke to construct a function which allows to locally use
 the linear heap. We attempt:
@@ -72,3 +72,36 @@ The above suggests the primitive:
 
 
 kind_of_call/cc :: ((A → ⊥) ⊸ ⊥) → A
+* Weight Polymorphism 
+
+
+A ::= ∀ρ. A
+
+
+t ::= λπ. t | t p
+
+p,q ::= 1 | ω | p+q | p·q
+
+
+        Γ ⊢ t : A    π fresh for Γ
+  ----------------------------------- weight abs
+          Γ ⊢ λπ. t : ∀π. A
+
+
+         Γ ⊢ t : ∀π. A
+   ----------------------------------- weight app
+         Γ ⊢ t p : A[p/π]
+
+
+
+ Γ ⊢ t[π] : A[π]    π fresh for Γ
+-----------------------------------
+  Γ ⊢ λπ.t : ∀π. A
+---------------------------------------
+    Γ ⊢ (λπ.t) p : A[p/π]
+
+
+reduces to
+
+
+  Γ ⊢ t[p/π] : A[p/π]
