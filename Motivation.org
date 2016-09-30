@@ -140,8 +140,8 @@ is a useful optimization.
 
 Linearity offers a solution to the problem. Indeed, linearly-typed
 values are used once only. Thus, linearity implies that no sharing is
-possible. In turn, the full laziness optimization cannot apply to
-expressions with a linear type.
+intended by the programmer. In turn, the full laziness optimization
+cannot apply to expressions in a linear context.
 
 Consider now a simple example which exhibits the problem, also provided
 by de Vries: 
@@ -164,7 +164,7 @@ intermediate list ~[1..N]~ between runs of ~ni_mapM_ print [1 .. N]~.
 Let us now consider an equivalent program, be written using our
 proposed extension for linear types. (To transpose the example with
 minimal changes we have to redefine several basic types and functions
---- in a practical application this would not happen as we would
+--- in a practical application this would not happen because we would
 actually be using a custom streaming library, as de Vries does).
 
 
@@ -198,7 +198,7 @@ main2 =
        ni_mapM_ print xs
 #+END_SRC
 
-Indeed, the above definition attempts to use ~xs~ several times, and
+Indeed, the above definition attempts to use ~xs~ several times, while
 it is bound only once.
 
 In our proposed extension, one could still write the following
@@ -216,7 +216,12 @@ main2 =
 
 Yet, thanks to linearity annotations, the programmer intentionally
 marked the expressions which are not supposed to be shared, in effect
-precisely controlling where (not) to apply full-laziness.
+precisely controlling where (not) to apply full-laziness. Moreover,
+the user of a library written for streams would never have to worry
+about inadvertent sharing, because the types of the library functions
+would specify exactly the right behavior.
+
+See https://jyp.github.io/pdf/Organ.pdf for how this may look like.
 
 * Diminishing GC pressure
 Because linear values cannot be shared, they should in principle not
@@ -236,9 +241,9 @@ a good strategy because:
 
 1. It potentially removes many short-lived objects.
 2. Fusing *always* is safe performance-wise thanks to linearity.
-3. It make the behaviour of the compiler more predictable. Thus
-   ultimately the behaviour of the generated code is more predictable
-   too. A drawback is that the optimiser may not be able to perform
+3. It make the behavior of the compiler more predictable. Thus
+   ultimately the behavior of the generated code is more predictable
+   too. A drawback is that the optimizer may not be able to perform
    this inlining in practice; however, for the case of Church-encoded
    structures presented earlier in this document, the strategy will
    work.
@@ -249,4 +254,5 @@ a good strategy because:
 #  LocalWords:  copySetP FilePath srcs dsts sourceFs sk sinkFs drainP
 #  LocalWords:  affine duplications GC de Wakeling Runciman Mul Vries
 #  LocalWords:  tradeoff latencies runtime exampleClient fno ni mapM
-#  LocalWords:  exampleServer NOINLINE forM xs
+#  LocalWords:  exampleServer NOINLINE forM xs Lindley inlining
+#  LocalWords:  expensiveComputation
