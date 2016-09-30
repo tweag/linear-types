@@ -185,39 +185,35 @@ Contexts can be scaled by a weight:
 \subsection{Typing rules}
 \label{sec:orgheadline7}
 
-We have a weighted typing judgement \(Γ ⊢ x:_π A\), inductively defined by the following rules.
+We have a typing judgement \(Γ ⊢ x : A\), inductively defined by the following rules, and a weighted typing judgement, defined as follows:
+$Γ ⊢ t :_ρ A ≝  ρΓ ⊢ t : A$.
 
 \begin{mathpar}
-\inferrule{ }{ωΓ + x :_ρ A ⊢ x :_ρ A}\text{variable}
 
-\inferrule{Γ, x :_{πρ} A  ⊢   t :_ρ B}
-          {Γ ⊢ λx. t  :_ρ  A  →_π  B}\text{abs}
+\inferrule{ }{ωΓ + x :_ρ A ⊢ x : A}\text{variable}
 
-\inferrule{Γ ⊢ t :_ρ  A →_π B  \\   Δ ⊢ u :_{πρ} A}
-          {Γ+Δ ⊢ t_π u  :_ρ  B}\text{app}
+\inferrule{Γ, x :_{π} A  ⊢   t : B}
+          {Γ ⊢ λx. t  :  A  →_π  B}\text{abs}
 
-\inferrule{Δᵢ ⊢ tᵢ :_{πᵢρ} Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
-          {\sum_i Δᵢ ⊢ c_k  t₁ … t_n :_ρ  D}\text{constructor}
+\inferrule{Γ ⊢ t :  A →_π B  \\   πΔ ⊢ u : A}
+          {Γ+πΔ ⊢ t_π u  :  B}\text{app}
 
-\inferrule{Γ   ⊢  t  :_{ρ} D  \\ Δ, x₁:_{πᵢρ} Aᵢ, …, x_{n_k}:_{π_{n_k}ρ} A_{n_k} ⊢ u_k :_ρ C \\ \text{with each $c_k$ as above}}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} :_ρ C}\text{case}
+\inferrule{πᵢΔᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
+          {\sum_i πᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
 
-\inferrule{Γᵢ   ⊢  tᵢ  :_{πᵢρ} Aᵢ  \\ Δ, x₁:_{π₁ρ} A₁ …  x_n:_{π_{n}ρ} A_n ⊢ u :_ρ C }
-          {\sum_i Γᵢ+Δ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u :_ρ C}\text{let}
+\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{πᵢ} Aᵢ, …, x_{n_k}:_{π_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
+          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+
+\inferrule{πᵢΓᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
+          { Δ+\sum_i πᵢΓᵢ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u : C}\text{let}
 
 
 \end{mathpar}
 
 Lemmas:
 \begin{enumerate}
-\item \(πΓ ⊢ t:_{πρ} A\) if \(Γ ⊢ t:_ρ A\).
+\item if \(Γ ⊢ t : A\) then \(ωΓ ⊢ t : A\).
 \item erasure of weights preserves typing
-\item unrestricted values need unrestricted contexts
-
-\(Γ ⊢ t :_ω A ~⇒~  ωΓ = Γ \)
-
-Proof: in every rule, if the conclusion has weight $ρ$, then the
-premises have weight $πρ$, for some $π$.
 \end{enumerate}
 
 
