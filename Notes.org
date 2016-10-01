@@ -105,3 +105,29 @@ reduces to
 
 
   Γ ⊢ t[p/π] : A[p/π]
+
+
+Unfortunately we can't really assume that the user will write weight
+applications, so we must infer those.
+* Subtyping
+
+weights are really intervals. We have thus:
+[1..1] ⊆ [0..ω]
+
+but the subtyping relation works the other way, so
+ω ⊂ 1
+
+the usual subtyping rule:
+B ⊂ B'  A' ⊂ A  π'⊂π
+----------------------
+A ->π B  ⊂ A' ->π' B'
+
+and so:
+
+  A ⊸ B  ⊂  A -> B
+
+In words: if you expect 1, I can give you ω. So, if you expect an
+unrestricted function, I can give you a linear function.
+
+
+

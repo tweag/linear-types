@@ -205,28 +205,28 @@ Contexts can be scaled by a weight:
 We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
 following rules.  The intuition behind this judgement is: can
 construct \emph{one} value $t$ of type $A$ from $Γ$. We do not define
-a judgement to denote that we can construct a quantity $ρ$
-of type $A$; instead we will use $ρΓ ⊢ t : A$ to indicate this
+a judgement to denote that we can construct a quantity $ρ$ of type
+$A$; instead we will use $Δ ⊢ t : A$ with $Γ = ρΔ$ to indicate this
 situation.
 
 \begin{mathpar}
 
-\inferrule{ }{ωΓ + x :_ρ A ⊢ x : A}\text{variable}
+\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{variable}
 
 \inferrule{Γ, x :_{π} A  ⊢   t : B}
           {Γ ⊢ λx. t  :  A  →_π  B}\text{abs}
 
-\inferrule{Γ ⊢ t :  A →_π B  \\   πΔ ⊢ u : A}
+\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}
           {Γ+πΔ ⊢ t_π u  :  B}\text{app}
 
-\inferrule{πᵢΔᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
+\inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i πᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
 
-\inferrule{ρΓ   ⊢  t  : D  \\ Δ, x₁:_{ρπᵢ} Aᵢ, …, x_{n_k}:_{ρπ_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
+\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{ρπᵢ} Aᵢ, …, x_{n_k}:_{ρπ_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
           {ρΓ+Δ ⊢ \case[ρ] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
 
 
-\inferrule{πᵢΓᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
+\inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
           { Δ+\sum_i πᵢΓᵢ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u : C}\text{let}
 
 
