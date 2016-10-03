@@ -36,6 +36,14 @@
  pdfkeywords={},
  pdfsubject={},
  pdflang={English}}
+
+% XXX: Placeholders: remove when bibliography is finished
+\newcommand{\citationneeded}{[?]}
+\newcommand{\TODO}[1]{{\footnotesize\it <TODO: #1>}}
+
+% XXX: fixes a bibliographic link
+\newcommand{\HREF}[2]{\href{#1}{#2}}
+
 \begin{document}
 
 \maketitle
@@ -50,32 +58,86 @@
 \setcounter{tocdepth}{3}
 \tableofcontents
 
-%% In this note we give an overview of a lambda calculus augmented with
-%% weights on variable (bindings). We argue briefly that the calculus is
-%% a generalisation of both:
-%% \begin{itemize}
-%% \item the simply-typed lambda calculus and
-%% \item the linear lambda calculus
-%% \end{itemize}
-%% %
-%% Additionally, we give
-%% \begin{itemize}
-%% \item an operational semantics which demonstrates how memory
-%%   management of linear values can be simplified.
-%% \item example types for a number of simple programs
-%% \item a brief comparison with alternative approaches to linearity
-%%   (tracking linearity in types; session types)
-%% \end{itemize}
 \section{Introduction}
 
-- the problem
-  - applications of linear types (usual)
-  - integration with existing language (limit explosion of types --- and thus of code)
+Garbage collection is an essential constituent to the abstractions
+which make modern high-level programming languages powerful. However,
+in recent years, high-level languages which forgo garbage collection
+have gotten a lot of attention. This trend is best exemplified by the
+popularity of the Rust programming language~\citationneeded.
 
-- examples
-  - protocol?
-  - primops
-  - linear stuff used in unrestricted context
+The reason for such a desire for the absence of garbage collection is
+control:
+\begin{itemize}
+\item control of \emph{how much} latency is incurred by memory management;
+\item control of \emph{when} memory-management pauses occur.
+\end{itemize}
+Indeed garbage collection is very fast, and explicit memory management
+may sometimes even be slower. But fewer and more predictable pauses are
+important when operating under real-time constraints or in a
+distributed systems when a pause on one process can make all the other
+processes wait for the slower process to reach completion.
+
+A further benefit of safe explicit memory management is that it can be
+extended to safe \emph{resource} management. Indeed, in garbage
+collected language, management of resources such as files descriptors,
+database handles, and locks is usually explicit (resources have to be
+manually closed). The reason is that such resource are scarce (of
+locks, in particular, there is one of each kind), and leaving the job
+to free them to the garbage collector tends to lead to resources being
+open for too long and unnecessary resource contention (a lock waiting
+to be garbage collected will block every thread waiting on it). In
+garbage-collected languages, resource management is usually left in
+the care of the programmer, and can be used unsafely. \TODO{discussion
+  of combinators which address this and their limitations}
+
+Languages with safe explicit memory management tend to have vastly
+different type systems (such as the ownership and borrowing typing of
+Rust). This observation may induce the belief that abandoning the
+comfort and convenience of \textsc{ml}-family languages is required to benefit
+from the increased control allowed by garbage-free languages.
+
+This article posits that, to the contrary, existing programming
+languages, such as Haskell~\cite{marlow_haskell_2010}, can be extended
+to incorporate safe explicit memory and resource management, and gain
+a measure of control on garbage-collection pauses. Taking cues from
+linear logic~\cite{girard_linear_1987}, we propose a linearly typed
+lazy\footnote{It is not essential that the language is lazy, a similar
+  extension can be designed for a strict language. But the
+  presentation in this article is inherently lazy: both the static and
+  dynamic semantics would change slightly in a strict language}
+programming language (the presentation is inspired by~\TODO{McBride:
+  rig https://personal.cis.strath.ac.uk/conor.mcbride/pub/Rig.pdf}),
+whose main characteristic is to contain a regular programming
+language -- a simplified version of Haskell -- as a subset.
+
+Concretely, in such a programming language, one enjoys the convenience
+of programming in Haskell most of the time. But when part of code
+requires more care, \emph{e.g.} because of efficiency
+(Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or because a
+foreign function needs a linear type (Section~\ref{sec:ffi}), then one
+can use seamlessly the linear feature of the language, which allow
+more control.
+
+\TODO{Applications:
+\begin{itemize}
+\item Explicit memory
+  management~\cite{lafont_linear_1988}\cite{hofmann_in-place_}\TODO{http://www.cs.cornell.edu/people/fluet/research/lin-loc/TLCA05/tlca05.pdf}
+\item Fusion/composable array computations without intermediate
+  allocations~\cite{bernardy_duality_2015},\TODO{Polarized Data
+    Parallel Data Flow, FHPC 2016, Lippmeier\&al}
+\item Protocol specification (session types)~\TODO{honda: http://www.kurims.kyoto-u.ac.jp/~kyodo/kokyuroku/contents/pdf/0851-05.pdf}. The correspondence between
+  session types and linear types is explained in~\cite{wadler_propositions_2012}
+\end{itemize}}
+
+% - the problem
+%   - applications of linear types (usual)
+%   - integration with existing language (limit explosion of types --- and thus of code)
+
+% - examples
+%   - protocol?
+%   - primops
+%   - linear stuff used in unrestricted context
 
 \section{Statics}
 \label{sec:orgheadline8}
@@ -287,6 +349,7 @@ a middle ground.)
 \label{sec:ghc}
 
 \subsection{FFI}
+\label{sec:ffi}
 
 It is not uncommon for Haskell libraries to be shims over libraries
 written in C. Sometimes, the underlying C library is also non
@@ -330,6 +393,7 @@ doneWithContext :: Context ⊸ IO ()
 \subsection{Primops}
 
 \subsection{Fusion}
+\label{sec:fusion}
 
 \section{Dynamics}
 \label{sec:orgheadline16}
@@ -347,7 +411,7 @@ the extensions of~\label{sec:ghc}.
 \subsubsection{Translation}
 \label{sec:orgheadline9}
 As in \textcite{launchbury_natural_1993}, we translate from terms to
-terms where values are always bound to variables. 
+terms where values are always bound to variables.
 
 
 \begin{align*}
@@ -608,7 +672,7 @@ encoding from session types to linear types (as Wadler demonstrates).
 % - examples with wrong usage
 % Operational meaning for
 % f : A → B
-% f : A ⊸ B 
+% f : A ⊸ B
 % that is: an input with static weight 1 can have dynamic weight w
 
 
@@ -621,7 +685,7 @@ encoding from session types to linear types (as Wadler demonstrates).
 % freezeByteArray# :: MutableByteArray# ⊸ Bang ByteArray#
 % indexMutByteArray# :: Int# -> MutableByteArray# ⊸ (MutableByteArray# ⊗ Byte#)
 % indexByteArray# :: Int# -> ByteArray# ⊸ (ByteArray# ⊗ Byte#)
-% 
+%
 % The Bang in newByteArray ensures that the computation depending on the
 % array returns something which is on the GC heap. This means two things
 % 1. the mutableByteArray cannot be returned via k 2. even when called
@@ -629,14 +693,14 @@ encoding from session types to linear types (as Wadler demonstrates).
 
 
 % Other remark: the type system ensures that we never have a variable
-% 
+%
 % x :_ω MutableByteArray
-% 
+%
 % at any point.
-% 
+%
 % VERSION 2:
 % newByteArray# :: Heap s ⊸ Int# → (MutableByteArray# s ⊗ Heap s)
 % updateByteArray# :: Int# -> Byte# → MutableByteArray# s ⊸ MutableByteArray# s
 % freeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ Heap s
 % freezeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray#)
-% withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
+ % withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
