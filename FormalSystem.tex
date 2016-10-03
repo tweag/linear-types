@@ -324,8 +324,9 @@ c_k  t₁ … t_n &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin 
 Compared to Launchbury:
 
 \begin{itemize}
-\item we add a linear heap, ranged over by Φ,Ψ,Ξ.
-  (GC'ed heap is ranged over by Γ,Δ,Θ);
+\item The heap is annotated with weights. Variables with weight $ω$
+  point to the the GC heap, while variables with weight $1$ point to
+  the linear heap.
 \item We add a weight in the reduction relation, corresponding to the
   quantity of values to produce.
 \item The rules for \emph{variable} and \emph{let} are changed to
@@ -333,7 +334,7 @@ Compared to Launchbury:
 \end{itemize}
 
 The weight in the reduction relation is used to interpret $\flet =1 …$
-bindings into allocations on the proper heap.  Indeed, in ω contexts,
+bindings into allocations on the proper heap.  Indeed, in $ω$ contexts,
 $\flet =1 …$ must allocate on the GC heap, not on the linear
 one. Indeed, consider the example:
 
@@ -347,32 +348,27 @@ allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
 must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of ρ.
 
 \begin{mathpar}
-\inferrule{ }{Γ;Φ : λx. e ⇓_ρ Γ;Φ : λx. e}\text{abs}
+\inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
 
 
-\inferrule{Γ;Φ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓_{qρ} Θ;Ξ : z}
-           {Γ;Φ : e_q x ⇓_ρ Θ;Ξ : z} \text{application}
+\inferrule{Γ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ : e'[x/y] ⇓_{qρ} Θ;Ξ : z}
+           {Γ : e_q x ⇓_ρ Θ;Ξ : z} \text{application}
 
-\inferrule{Γ;Φ : e  ⇓_ω  Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓_ρ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
-
-
-\inferrule{Γ;Φ : e ⇓_1 Δ;Ψ : z}
-{(Γ;Φ,x ↦ e) : x ⇓_1 Δ;Ψ : z}\text{linear variable}
+\inferrule{Γ : e  ⇓_ω  Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) : z}\text{unrestricted variable}
 
 
-\inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓_ρ Δ;Ψ : z}
-{Γ;Φ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
-
-\text{where $i$ ranges over the subset of indices such that $qᵢρ$ = ω,}
-
-\text{and $j$ ranges over the subset such that $q_jρ$ = 1.}
+\inferrule{Γ : e ⇓_1 Δ : z}
+{(Γ,x ↦_1 e) : x ⇓_1 Δ : z}\text{linear variable}
 
 
-\inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓_ρ Γ;Φ : c  x₁ … x_n}\text{constructor}
+\inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
+{Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ : z}\text{let}
+
+\inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ … x_n}\text{constructor}
 
 
-\inferrule{Γ;Φ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ,Ψ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ;Ξ :  z}
-   {Γ;Φ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ;Ξ :  z}\text{case}
+\inferrule{Γ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ :  z}
+   {Γ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ :  z}\text{case}
 \end{mathpar}
 
 Remark: the \emph{unrestricted variable} rule also triggers when the
@@ -557,12 +553,11 @@ encoding from session types to linear types (as Wadler demonstrates).
 
 
 % TODOs:
-% - have a single heap (with weights)
 % - explain data T = C 1A wB means C :: A ⊸ B → T
 % - give types for primops (and semantics?)
 % - talk about thunk freeing themselves
 % - underline that two aspects are mostly independent:
-% 1. prompt deallocation of cons cels
+% 1. prompt deallocation of cons cells
 % 2. resource management with explicit free
 % - examples with wrong usage
 % Operational meaning for
