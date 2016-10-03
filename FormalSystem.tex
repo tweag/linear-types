@@ -80,45 +80,64 @@
 \subsection{Weights}
 \label{sec:orgheadline1}
 
-The set of weights is the two-element set $\{1,ω\}$. Intuitively, 1
-represents \emph{exactly one} instance, while $ω$ represents any
-number of instances (at the discretion of the consumer, and possible
-zero).  The metasyntactic variables \(π\) and \(ρ\) range over this
-set. Weights are equipped with + and $·$ operations:
-
+In our calculus, each variable in the context is annotated with the
+number of times that the program must use the variable in question.
+We call this number of times the \emph{weight} of the variable.
 
 \begin{align*}
-1 · ω = ω \\
-ω · 1 = ω \\
-ω · ω = ω \\
-1 · 1 = 1
+  p,q &::= 1 ~|~ ω ~|~ π ~|~ p+q ~|~ p·q
 \end{align*}
 
-\begin{align*}
-1 + ω &= ω \\
-ω + 1 &= ω \\
-1 + 1 &= ω \\
-ω + ω &= ω
-\end{align*}
+A weight can either be a constant ($1$ or $ω$), a variable (ranged
+over by the metasyntactic variables \(π\) and \(ρ\)), a product or a
+sum.  When the weight is $1$, the program must consume the variable
+exactly once. When the weight is $ω$, it may consume it any number of
+times (possibly zero).
+
+Weights are equipped with an equivalence relation $(=)$ which contains
+the following laws:
+
+\begin{itemize}
+\item $+$ and $·$ are associative and commutative
+\item $1$ is the unit of $·$
+\item $·$ distributes over $+$
+\item $ω · ω = ω$
+\item $1 + ω = ω$
+\item $1 + 1 = ω$
+\item $ω + ω = ω$
+\end{itemize}
 
 \subsection{Types}
 \label{sec:orgheadline2}
 
-We propose a variant of the simply typed λ-calculus where the types
-are:
+The syntax for types is as follows:
+\begin{align*}
+  A,B &::=\\
+      & |  A →_q B &\text{function type}\\
+      & |  ∀ρ. A &\text{weighted type}\\
+      & |  D &\text{data type}
+\end{align*}
+
 
 \begin{itemize}
-\item a weighted arrow: \(A →_π B\) (you can get a \(B\) if you can provide a
-quantity \(π\) of \(A\)). Consequently:
+\item a weighted arrow: \(A →_q B\) (you can get a \(B\) if you can provide a
+quantity \(q\) of \(A\)). Consequently:
 \begin{itemize}
 \item \(A →_ω B\) is the intuitionistic arrow (\(A → B\))
 \item \(A →_1 B\) is the linear arrow (\(A ⊸ B\))
 \end{itemize}
 \item weighted ADTs:
 \begin{align*}
-\mathsf{data} D = \left(c_k  π₁ A₁  …  π_{n_k} A_{n_k}\right)^m_{k=1}
+\mathsf{data} D = \left(c_k  q₁ A₁  …  q_{n_k} A_{n_k}\right)^m_{k=1}
 \end{align*}
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
+
+The syntax of data type declarations is as follows ($c$ ranges over constructor names):
+\begin{align*}
+  W &::= qA &\text{weight-annotated type}\\
+  γ &::= c  \vec{W}&\text{constructor declaration}\\
+  decl &::= \mathsf{data } D = \vec{γ}&\text{data type declaration}
+\end{align*}
 
 Note the following special cases:
 \begin{itemize}
@@ -127,16 +146,6 @@ Note the following special cases:
 \item The type data Bang a = Box ωa is isomorphic to the exponential (!a)
 \end{itemize}
 \end{itemize}
-
-The syntax of types and type declarations is as follows ($c$ ranges over constructor names):
-\begin{align*}
-  W &::= πA &\text{weight-annotated type}\\
-  γ &::= c  \vec{W}&\text{constructor declaration}\\
-  decl &::= \mathsf{data } D = \vec{γ}&\text{data type declaration}\\
-  A,B &::=\\
-      & |  A →_π B &\text{function type}\\
-      & |  D &\text{data type}
-\end{align*}
 
 \subsection{Terms}
 \label{sec:orgheadline3}
@@ -147,13 +156,15 @@ The syntax for terms is:
 e,s,t,u & ::= \\
     & |  x & \text{variable} \\
     & |  λx. t & \text{abstraction} \\
-    & |  t_π s & \text{application} \\
+    & |  t_q s & \text{application} \\
+    & |  λπ. t & \text{weight abstraction} \\
+    & |  t p & \text{weight application} \\
     & |  c t₁ … t_n & \text{data construction} \\
-    & |  \case[ρ] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-    & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
+    & |  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+    & |  \flet x =_{q₁} … x =_{q_n} t_n \fin u & \text{let}
 \end{align*}
 
-Remark: we often omit the weight $π$ in an application, because it is
+Remark: we often omit the weight $q$ in an application, because it is
 usually obvious from the context.
 
 \subsection{Contexts}
@@ -164,7 +175,7 @@ additionally to the type:
 
 \begin{align*}
   Γ,Δ & ::=\\
-    & |  x :_π A, Γ & \text{weight-annotated binder} \\
+    & |  x :_q A, Γ & \text{weight-annotated binder} \\
     & |     & \text {empty context}
 \end{align*}
 
@@ -177,11 +188,11 @@ We define a context addition, written \(Γ+Δ\), as follows.
 \item When a variable appears on both input contexts, we add the weights in
 the result:
 
-\((x :_ρ A,Γ) + (x :_π A,Δ) = x :_{ρ+π} A, (Γ+Δ)\)
+\((x :_p A,Γ) + (x :_q A,Δ) = x :_{p+q} A, (Γ+Δ)\)
 
 \item otherwise we propagate:
 
-\((x :_ρ A,Γ) + Δ = x :_ρ A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
+\((x :_p A,Γ) + Δ = x :_p A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
 \end{itemize}
 
 
@@ -191,7 +202,7 @@ the result:
 Contexts can be scaled by a weight:
 
 \begin{displaymath}
-ρ(x :_π A, Γ) =  x :_{πρ} A, ρΓ
+p(x :_q A, Γ) =  x :_{pq} A, pΓ
 \end{displaymath}
 
 \subsection{Typing rules}
@@ -200,29 +211,35 @@ Contexts can be scaled by a weight:
 We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
 following rules.  The intuition behind this judgement is: can
 construct \emph{one} value $t$ of type $A$ from $Γ$. We do not define
-a judgement to denote that we can construct a quantity $ρ$ of type
-$A$; instead we will use $Δ ⊢ t : A$ with $Γ = ρΔ$ to indicate this
+a judgement to denote that we can construct a quantity $p$ of type
+$A$; instead we will use $Δ ⊢ t : A$ with $Γ = pΔ$ to indicate this
 situation.
 
 \begin{mathpar}
 
-\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{variable}
+\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}
 
-\inferrule{Γ, x :_{π} A  ⊢   t : B}
-          {Γ ⊢ λx. t  :  A  →_π  B}\text{abs}
+\inferrule{Γ, x :_{q} A  ⊢   t : B}
+          {Γ ⊢ λx. t  :  A  →_q  B}\text{abs}
 
-\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}
-          {Γ+πΔ ⊢ t_π u  :  B}\text{app}
+\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}
+          {Γ+qΔ ⊢ t_q u  :  B}\text{app}
 
-\inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
-          {\sum_i πᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
+\inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $qᵢ$}}
+          {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{ρπᵢ} Aᵢ, …, x_{n_k}:_{ρπ_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
-          {ρΓ+Δ ⊢ \case[ρ] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …, x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
+          {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
 
 
-\inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
-          { Δ+\sum_i πᵢΓᵢ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u : C}\text{let}
+\inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
+          { Δ+\sum_i qᵢΓᵢ ⊢ \flet x =_{q₁} t₁  …  x =_{q_n} t_n  \fin u : C}\text{let}
+
+\inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
+          {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
+
+\inferrule{Γ ⊢ t :  ∀π. A}
+          {Γ ⊢ t p  :  A[p/π]}\text{w.app}
 
 
 \end{mathpar}
@@ -294,11 +311,11 @@ terms where values are always bound to variables.
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
-  (t_π  x )^* &= (t)^*_π  x \\
-  (t_π  u )^* &= \flet y =_{π} (u)^* \fin (t)^*_π  y \\
-c_k  t₁ … t_n &= \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin c_k x₁ … x_n \\
+  (t_q  x )^* &= (t)^*_q  x \\
+  (t_q  u )^* &= \flet y =_{q} (u)^* \fin (t)^*_q  y \\
+c_k  t₁ … t_n &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin c_k x₁ … x_n \\
 (\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-(\flet x =_{π₁} t₁  …  x =_{π_n} t_n \fin u)^* & = \flet x₁ =_{π_1} (t₁)^*,…, x_n =_{π_n} (t_n)^* \fin (u)^*
+(\flet x =_{q₁} t₁  …  x =_{q_n} t_n \fin u)^* & = \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin (u)^*
 \end{align*}
 
 \subsubsection{Natural semantics}
@@ -331,8 +348,8 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 \inferrule{ }{Γ;Φ : λx. e ⇓_ρ Γ;Φ : λx. e}\text{abs}
 
 
-\inferrule{Γ;Φ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓_{πρ} Θ;Ξ : z}
-           {Γ;Φ : e_π x ⇓_ρ Θ;Ξ : z} \text{application}
+\inferrule{Γ;Φ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ;Ψ : e'[x/y] ⇓_{qρ} Θ;Ξ : z}
+           {Γ;Φ : e_q x ⇓_ρ Θ;Ξ : z} \text{application}
 
 \inferrule{Γ;Φ : e  ⇓_ω  Δ;Ψ : z}{(Γ,x ↦ e;Φ) : x ⇓_ρ (Δ;x ↦ z;Ψ) : z}\text{unrestricted variable}
 
@@ -342,11 +359,11 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 
 
 \inferrule{(Γ,x_i ↦ e_i;Φ,x_j ↦ e_j) : e ⇓_ρ Δ;Ψ : z}
-{Γ;Φ : \flet x₁ =_{π₁} e₁ … x_n =_{π_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
+{Γ;Φ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ;Ψ : z}\text{let}
 
-\text{where $i$ ranges over the subset of indices such that $πᵢρ$ = ω,}
+\text{where $i$ ranges over the subset of indices such that $qᵢρ$ = ω,}
 
-\text{and $j$ ranges over the subset such that $π_jρ$ = 1.}
+\text{and $j$ ranges over the subset such that $q_jρ$ = 1.}
 
 
 \inferrule{ }{Γ;Φ : c  x₁ … x_n ⇓_ρ Γ;Φ : c  x₁ … x_n}\text{constructor}
