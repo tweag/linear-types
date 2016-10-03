@@ -19,7 +19,7 @@
 \usepackage{unicode-math}
 \setmonofont{DejaVu Sans Mono}
 \setmainfont[]{DejaVu Sans}
-\newcommand{\case}[2]{\mathsf{case} #1 \mathsf{of} \{#2\}^m_{k=1}}
+\newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
@@ -39,24 +39,41 @@
 \maketitle
 %% \tableofcontents
 \begin{abstract}
-\noindent
-In this note we give an overview of a lambda calculus augmented with
-weights on variable (bindings). We argue briefly that the calculus is
-a generalisation of both:
-\begin{itemize}
-\item the simply-typed lambda calculus and
-\item the linear lambda calculus
-\end{itemize}
-%
-Additionally, we give
-\begin{itemize}
-\item an operational semantics which demonstrates how memory
-  management of linear values can be simplified.
-\item example types for a number of simple programs
-\item a brief comparison with alternative approaches to linearity
-  (tracking linearity in types; session types)
-\end{itemize}
+  \noindent This article introduces and describes a presentation of a
+  linearly-typed lazy programming language which is designed to be
+  integrate well with an existing programming language, in particular
+  in GHC/Haskell.
 \end{abstract}
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+%% In this note we give an overview of a lambda calculus augmented with
+%% weights on variable (bindings). We argue briefly that the calculus is
+%% a generalisation of both:
+%% \begin{itemize}
+%% \item the simply-typed lambda calculus and
+%% \item the linear lambda calculus
+%% \end{itemize}
+%% %
+%% Additionally, we give
+%% \begin{itemize}
+%% \item an operational semantics which demonstrates how memory
+%%   management of linear values can be simplified.
+%% \item example types for a number of simple programs
+%% \item a brief comparison with alternative approaches to linearity
+%%   (tracking linearity in types; session types)
+%% \end{itemize}
+\section{Introduction}
+
+- the problem
+  - applications of linear types (usual)
+  - integration with existing language (limit explosion of types --- and thus of code)
+
+- examples
+  - protocol?
+  - primops
+  - linear stuff used in unrestricted context
 
 \section{Statics}
 \label{sec:orgheadline8}
@@ -83,11 +100,6 @@ set. Weights are equipped with + and $·$ operations:
 1 + 1 &= ω \\
 ω + ω &= ω
 \end{align*}
-
-We equip weights with a partial order (written \(· ≤ ·\)) such that \(1 ≤ ω\).
-
-\emph{(An alternative which may be worth pursuing is to choose the set of
-weights to be \(ℕ∪{ω}\), in which case \(1+1=2\).)}
 
 \subsection{Types}
 \label{sec:orgheadline2}
@@ -137,7 +149,7 @@ e,s,t,u & ::= \\
     & |  λx. t & \text{abstraction} \\
     & |  t_π s & \text{application} \\
     & |  c t₁ … t_n & \text{data construction} \\
-    & |  \case t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+    & |  \case[ρ] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{π₁} … x =_{π_n} t_n \fin u & \text{let}
 \end{align*}
 
@@ -185,26 +197,31 @@ Contexts can be scaled by a weight:
 \subsection{Typing rules}
 \label{sec:orgheadline7}
 
-We have a typing judgement \(Γ ⊢ x : A\), inductively defined by the following rules, and a weighted typing judgement, defined as follows:
-$Γ ⊢ t :_ρ A ≝  ρΓ ⊢ t : A$.
+We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
+following rules.  The intuition behind this judgement is: can
+construct \emph{one} value $t$ of type $A$ from $Γ$. We do not define
+a judgement to denote that we can construct a quantity $ρ$ of type
+$A$; instead we will use $Δ ⊢ t : A$ with $Γ = ρΔ$ to indicate this
+situation.
 
 \begin{mathpar}
 
-\inferrule{ }{ωΓ + x :_ρ A ⊢ x : A}\text{variable}
+\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{variable}
 
 \inferrule{Γ, x :_{π} A  ⊢   t : B}
           {Γ ⊢ λx. t  :  A  →_π  B}\text{abs}
 
-\inferrule{Γ ⊢ t :  A →_π B  \\   πΔ ⊢ u : A}
+\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}
           {Γ+πΔ ⊢ t_π u  :  B}\text{app}
 
-\inferrule{πᵢΔᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
+\inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $πᵢ$}}
           {\sum_i πᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
 
-\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{πᵢ} Aᵢ, …, x_{n_k}:_{π_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
-          {Γ+Δ ⊢ \case t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{ρπᵢ} Aᵢ, …, x_{n_k}:_{ρπ_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
+          {ρΓ+Δ ⊢ \case[ρ] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
 
-\inferrule{πᵢΓᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
+
+\inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{π₁} A₁ …  x_n:_{π_{n}} A_n ⊢ u : C }
           { Δ+\sum_i πᵢΓᵢ ⊢ \flet x =_{π₁} t₁  …  x =_{π_n} t_n  \fin u : C}\text{let}
 
 
@@ -216,9 +233,55 @@ Lemmas:
 \item erasure of weights preserves typing
 \end{enumerate}
 
+\subsection{Examples of simple programs and their types}
+
+\hspace{-4cm}\begin{minipage}{\textwidth}
+\begin{align*}
+map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
+lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
+λx. λy. x & : A ⊸ B → A \\
+          & : A → B → A \\
+λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
+            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
+            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\
+λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
+                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
+                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
+                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
+                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
+\end{align*}
+\end{minipage}
+
+%% TODO: additional examples: copy (from linear to unrestricted), free, more?
+
+If we want the most general types of higher order functions, we need
+explicit quantification over weights. Still, this is somewhat simpler
+than what Morris presents in ``The best of both worlds'', because we
+do not need bounded quantification. Instead we use multiplication of
+weights. (There is also the possibility to add a subtyping relation as
+a middle ground.)
+
+%% TODO: example of ill-typed programs due to linearity violation,
+%% with tentative error messages.
+
+\section{Applications}
+\label{sec:ghc}
+
+\subsection{Primops}
+\subsection{FFI}
+\subsection{Fusion}
+
 
 \section{Dynamics}
 \label{sec:orgheadline16}
+
+The semantics given in this section demonstrate a further extension of
+Haskell enabled by linear types: prompt deallocation of thunks. Such
+an extension of the run-time system is not necessary to benefit from
+linear types as was demonstrated in~\label{sec:ghc}. However, this
+dynamic semantics can also help give confidence in the correctness of
+the extensions of~\label{sec:ghc}.
+
 \subsection{(Extended) Launchbury semantics}
 \label{sec:orgheadline11}
 
@@ -404,6 +467,7 @@ If one wants to use the linear heap 'locally', one must use CPS.
 
 That is:
 
+\begin{verbatim}
 doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap f x k = case f x of
   Box y -> k y
@@ -411,34 +475,11 @@ doSomethingWithLinearHeap f x k = case f x of
 doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap x k = case x of
   Box y -> k y
+\end{verbatim}
 
-\subsection{Examples of simple programs and their types}
+\section{Comparison with other techniques}
 
-\hspace{-4cm}\begin{minipage}{\textwidth}
-\begin{align*}
-map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
-lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
-λx. λy. x & : A ⊸ B → A \\
-          & : A → B → A \\
-λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
-            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
-            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\ 
-λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
-                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
-                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
-                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
-                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
-\end{align*}
-\end{minipage}
-
-If we want the most general types of higher order functions, we need
-explicit quantification over weights. Still, this is somewhat simpler
-than what Morris presents in ``The best of both worlds'', because we
-do not need bounded quantification. Instead we use multiplication of
-weights. (There is also the possibility to add a subtyping relation as
-a middle ground.)
-
-\section{Linearity as a property of types vs. linearity as a property of bindings (variables)}
+\subsection{Linearity as a property of types vs. linearity as a property of bindings (variables)}
 
 In several presentations (\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
@@ -474,7 +515,7 @@ annoying to duplicate every primitive type. (Possibly we could
 prescribe \#Int to be linear, but this may break lots of existing
 programs.)
 
-\section{Session types vs. linear types}
+\subsection{Session types vs. linear types}
 
 \Textcite{wadler_propositions_2012} provides a good explanation of
 the relation between session types vs. linear types (even though the
@@ -500,9 +541,41 @@ encoding from session types to linear types (as Wadler demonstrates).
 % - have a single heap (with weights)
 % - explain data T = C 1A wB means C :: A ⊸ B → T
 % - give types for primops (and semantics?)
-% - an input with static weight 1 can have dynamic weight w
 % - talk about thunk freeing themselves
 % - underline that two aspects are mostly independent:
 % 1. prompt deallocation of cons cels
 % 2. resource management with explicit free
 % - examples with wrong usage
+% Operational meaning for
+% f : A → B
+% f : A ⊸ B 
+% that is: an input with static weight 1 can have dynamic weight w
+
+
+% (#+) :: #Int -> #Int -> #Int
+
+% VERSION 1:
+% newByteArray# :: Int# → (MutableByteArray# ⊸ Bang k) ⊸ k
+% updateByteArray# :: Int# -> Byte# → MutableByteArray# ⊸ MutableByteArray#
+% freeByteArray# :: MutableByteArray# ⊸ ()
+% freezeByteArray# :: MutableByteArray# ⊸ Bang ByteArray#
+% indexMutByteArray# :: Int# -> MutableByteArray# ⊸ (MutableByteArray# ⊗ Byte#)
+% indexByteArray# :: Int# -> ByteArray# ⊸ (ByteArray# ⊗ Byte#)
+% 
+% The Bang in newByteArray ensures that the computation depending on the
+% array returns something which is on the GC heap. This means two things
+% 1. the mutableByteArray cannot be returned via k 2. even when called
+% in an ω context, we can return the k without problem.
+% 
+% Other remark: the type system ensures that we never have a variable
+% 
+% x :_ω MutableByteArray
+% 
+% at any point.
+% 
+% VERSION 2:
+% newByteArray# :: Heap s ⊸ Int# → (MutableByteArray# s ⊗ Heap s)
+% updateByteArray# :: Int# -> Byte# → MutableByteArray# s ⊸ MutableByteArray# s
+% freeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ Heap s
+% freezeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray#)
+% withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a

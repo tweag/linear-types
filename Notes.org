@@ -1,4 +1,4 @@
--- Unstructured, unlatexified notes
+* Local linear things
 
 One would linke to construct a function which allows to locally use
 the linear heap. We attempt:
@@ -72,3 +72,62 @@ The above suggests the primitive:
 
 
 kind_of_call/cc :: ((A → ⊥) ⊸ ⊥) → A
+* Weight Polymorphism 
+
+
+A ::= ∀ρ. A
+
+
+t ::= λπ. t | t p
+
+p,q ::= 1 | ω | p+q | p·q
+
+
+        Γ ⊢ t : A    π fresh for Γ
+  ----------------------------------- weight abs
+          Γ ⊢ λπ. t : ∀π. A
+
+
+         Γ ⊢ t : ∀π. A
+   ----------------------------------- weight app
+         Γ ⊢ t p : A[p/π]
+
+
+
+ Γ ⊢ t[π] : A[π]    π fresh for Γ
+-----------------------------------
+  Γ ⊢ λπ.t : ∀π. A
+---------------------------------------
+    Γ ⊢ (λπ.t) p : A[p/π]
+
+
+reduces to
+
+
+  Γ ⊢ t[p/π] : A[p/π]
+
+
+Unfortunately we can't really assume that the user will write weight
+applications, so we must infer those.
+* Subtyping
+
+weights are really intervals. We have thus:
+[1..1] ⊆ [0..ω]
+
+but the subtyping relation works the other way, so
+ω ⊂ 1
+
+the usual subtyping rule:
+B ⊂ B'  A' ⊂ A  π'⊂π
+----------------------
+A ->π B  ⊂ A' ->π' B'
+
+and so:
+
+  A ⊸ B  ⊂  A -> B
+
+In words: if you expect 1, I can give you ω. So, if you expect an
+unrestricted function, I can give you a linear function.
+
+
+

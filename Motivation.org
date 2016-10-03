@@ -95,7 +95,7 @@ duplications. (Combinators may be still provided to duplicate
 computation explicitly or store intermediate results explicitly.)
 
 Second, such representations may contain effects. In this situation,
-non-linear uses may produce an /incorrect program//. If one takes
+non-linear uses may produce an /incorrect program/. If one takes
 the example of a non-recursive representation of files, one may have
 two processes writing simultaneously in the same file (potentially
 corrupting data), or one may forget to close the file.
@@ -156,9 +156,9 @@ main2 = forM_ [1..5] $ \_ -> ni_mapM_ print [1 .. N]
 #+END_SRC
 
 One would expect that the above programs uses constant space (because
-the list [1..N] is produced lazily).  However, if one compiles the
+the list ~[1..N]~ is produced lazily).  However, if one compiles the
 above program with full laziness and runs it, one observes a memory
-residency proportional to N. This happens because GHC shares the
+residency proportional to ~N~. This happens because GHC shares the
 intermediate list ~[1..N]~ between runs of ~ni_mapM_ print [1 .. N]~.
 
 Let us now consider an equivalent program, be written using our
@@ -175,8 +175,8 @@ data [a] where
 
 discard :: Int ⊸ IO ()
 
-ni_mapM_ :: (a ⊸ IO b) → List a ⊸ IO ()
-forM_ :: List a ⊸ (a ⊸ IO ()) → IO ()
+ni_mapM_ :: (a ⊸ IO b) → [a] ⊸ IO ()
+forM_ :: [a] ⊸ (a ⊸ IO ()) → IO ()
 
 main2 ::1 IO ()
 main2 = forM_ [1..5] $ \i -> do
