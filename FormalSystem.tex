@@ -286,10 +286,50 @@ a middle ground.)
 \section{Applications}
 \label{sec:ghc}
 
-\subsection{Primops}
 \subsection{FFI}
-\subsection{Fusion}
 
+It is not uncommon for Haskell libraries to be shims over libraries
+written in C. Sometimes, the underlying C library is also non
+re-entrant. That is, they have a single global context, thus if ones
+tries to call the C library several times from different logical
+contexts, one will get incorrect results. A typical attempt to this
+issue involves
+1. using a monadic interface to the library and
+2. having an existentially bound a type parameter in the type:
+
+type M s a
+instance Monad s
+
+primitive :: M s X
+runLowLevel :: M s a -> IO x
+
+This solution is adequate as long as one forbids calling
+
+forkIO :: IO a -> IO ()
+
+In this situation, one is allowed to call runLowLevel several times in
+parallel.
+
+Using linear types, one may instead give an explicit unique instance
+of the context.
+
+type Context
+initialContext ::1 Context
+
+The Context type will not have any runtime representation on the
+Haskell side.  It will only be used to ensure that primitive
+operations can acquire a mutually exclusive access to the context.
+
+primitive :: Context ⊸ IO (Context ⊗ X)
+
+One eventually wants to release the context (freeing whatever
+resources that the C library has allocated), for example as follows:
+
+doneWithContext :: Context ⊸ IO ()
+
+\subsection{Primops}
+
+\subsection{Fusion}
 
 \section{Dynamics}
 \label{sec:orgheadline16}
@@ -348,11 +388,17 @@ allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
 must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of ρ.
 
 \begin{mathpar}
+\inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
+
+
+\inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\  Δ : e'[q/π] ⇓_{ρ} Θ : z}
+          {Γ : e q ⇓_ρ Θ : z} \text{w.app}
+
 \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
 
 
-\inferrule{Γ : e ⇓_ρ Δ;Ψ : λy.e' \\  Δ : e'[x/y] ⇓_{qρ} Θ;Ξ : z}
-           {Γ : e_q x ⇓_ρ Θ;Ξ : z} \text{application}
+\inferrule{Γ : e ⇓_ρ Δ : λy.e' \\  Δ : e'[x/y] ⇓_{qρ} Θ : z}
+           {Γ : e_q x ⇓_ρ Θ : z} \text{application}
 
 \inferrule{Γ : e  ⇓_ω  Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) : z}\text{unrestricted variable}
 
@@ -580,7 +626,8 @@ encoding from session types to linear types (as Wadler demonstrates).
 % array returns something which is on the GC heap. This means two things
 % 1. the mutableByteArray cannot be returned via k 2. even when called
 % in an ω context, we can return the k without problem.
-% 
+
+
 % Other remark: the type system ensures that we never have a variable
 % 
 % x :_ω MutableByteArray
