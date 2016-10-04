@@ -6,6 +6,8 @@ in stdenv.mkDerivation {
                   biber
                   (texlive.combine {
                     inherit (texlive)
+                      todonotes
+                      xargs
                       biblatex
                       logreq
                       scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math capt-of

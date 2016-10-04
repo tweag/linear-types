@@ -27,6 +27,15 @@
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
 \newcommand{\susp}[1]{⟦#1⟧}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage{xargs}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+
 \author{Jean-Philippe Bernardy and Arnaud Spiwack}
 \date{\today}
 \title{Linear and unrestricted at the same time}
@@ -60,11 +69,15 @@
 
 \section{Introduction}
 
-Garbage collection is an essential constituent to the abstractions
-which make modern high-level programming languages powerful. However,
-in recent years, high-level languages which forgo garbage collection
-have gotten a lot of attention. This trend is best exemplified by the
-popularity of the Rust programming language~\citationneeded.
+\improvement{I think that it'd be better to have the general case
+  (resource management) come first.}
+
+Garbage collection is an
+essential constituent to the abstractions which make modern high-level
+programming languages powerful. However, in recent years, high-level
+languages which forgo garbage collection have gotten a lot of
+attention. This trend is best exemplified by the popularity of the
+Rust programming language~\citationneeded.
 
 The reason for such a desire for the absence of garbage collection is
 control:
