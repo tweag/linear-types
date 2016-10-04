@@ -327,6 +327,8 @@ resources that the C library has allocated), for example as follows:
 
 doneWithContext :: Context ⊸ IO ()
 
+In practice, a top-level binding with weight 1 will behave in way
+similar to main, in the sense that it may raise link-time type-errors.
 \subsection{Primops}
 
 \subsection{Fusion}
@@ -400,7 +402,7 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\  Δ : e'[x/y] ⇓_{qρ} Θ : z}
            {Γ : e_q x ⇓_ρ Θ : z} \text{application}
 
-\inferrule{Γ : e  ⇓_ω  Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) : z}\text{unrestricted variable}
+\inferrule{Γ : e  ⇓_ω  Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) : z}\text{shared variable}
 
 
 \inferrule{Γ : e ⇓_1 Δ : z}
@@ -413,7 +415,7 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 \inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ … x_n}\text{constructor}
 
 
-\inferrule{Γ: e ⇓_ρ Δ,Ψ: c_k  x₁ … x_n \\   Δ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ :  z}
+\inferrule{Γ: e ⇓_ρ Δ : c_k  x₁ … x_n \\   Δ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ :  z}
    {Γ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ :  z}\text{case}
 \end{mathpar}
 
