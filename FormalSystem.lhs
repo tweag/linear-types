@@ -82,18 +82,46 @@
 
 \section{Introduction}
 
-\improvement{I think that it'd be better to have the general case
-  (resource management) come first.}
+Garbage collection is an essential constituent to the abstractions
+which make modern high-level programming languages powerful. However,
+garbage collection only takes care of memory: other resources such as
+files, database handles, or locks have to be managed explicitly (the
+duty to close, or release, resources is left in the care of the
+programmer). The reason is that such resource are scarce (of locks, in
+particular, there is one of each kind), and leaving the job to free
+them to the garbage collector tends to lead to resources being open
+for too long and unnecessary resource contention (a lock waiting to be
+garbage collected will block every thread waiting on
+it).\improvement{discussion of combinators which address explicit
+  closes and their limitations?} The activity of writing resource
+management code such as this:
+\begin{code}
+do
+  h <- openfile "myfile" ReadMore
+  -- some code that reads the file
+  hClose h
+\end{code}
+leads easily to unsafe code with free-after-free or use-after free
+errors: the same the kind of errors than garbage collection solves
+for memory.
 
-Garbage collection is an
-essential constituent to the abstractions which make modern high-level
-programming languages powerful. However, in recent years, high-level
-languages which forgo garbage collection have gotten a lot of
-attention. This trend is best exemplified by the popularity of the
-Rust programming language~\citationneeded.
+However, in recent years, high-level languages which forgo garbage
+collection in favour of safe, but explicit, memory \emph{and resource}
+management have gotten a lot of attention. This trend is best
+exemplified by the popularity of the Rust programming
+language~\citationneeded. Where file-reading code such as above
+would be written:
 
-The reason for such a desire for the absence of garbage collection is
-control:
+\begin{verbatim}
+{
+  let path = Path::new("hello.txt");
+  let mut file = try!(File::open(&path));
+  // some code that reads the file
+} // the file is closed when this scope ends
+\end{verbatim}
+
+A further benefit of using a language without garbage collection is
+increased control:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
 \item control of \emph{when} memory-management pauses occur.
@@ -104,30 +132,18 @@ important when operating under real-time constraints or in a
 distributed systems when a pause on one process can make all the other
 processes wait for the slower process to reach completion.
 
-A further benefit of safe explicit memory management is that it can be
-extended to safe \emph{resource} management. Indeed, in garbage
-collected language, management of resources such as files descriptors,
-database handles, and locks is usually explicit (resources have to be
-manually closed). The reason is that such resource are scarce (of
-locks, in particular, there is one of each kind), and leaving the job
-to free them to the garbage collector tends to lead to resources being
-open for too long and unnecessary resource contention (a lock waiting
-to be garbage collected will block every thread waiting on it). In
-garbage-collected languages, resource management is usually left in
-the care of the programmer, and can be used unsafely. \TODO{discussion
-  of combinators which address this and their limitations}
-
 Languages with safe explicit memory management tend to have vastly
 different type systems (such as the ownership and borrowing typing of
 Rust). This observation may induce the belief that abandoning the
-comfort and convenience of \textsc{ml}-family languages is required to benefit
-from the increased control allowed by garbage-free languages.
+comfort and convenience of \textsc{ml}-family languages is required to
+benefit from the increased safety and control allowed by
+garbage-collection free languages.
 
 This article posits that, to the contrary, existing programming
 languages, such as Haskell~\cite{marlow_haskell_2010}, can be extended
-to incorporate safe explicit memory and resource management, and gain
-a measure of control on garbage-collection pauses. Taking cues from
-linear logic~\cite{girard_linear_1987}, we propose a linearly typed
+to incorporate safe explicit resource management, and gain a measure
+of control on garbage-collection pauses. Taking cues from linear
+logic~\cite{girard_linear_1987}, we propose a linearly typed
 lazy\footnote{It is not essential that the language is lazy, a similar
   extension can be designed for a strict language. But the
   presentation in this article is inherently lazy: both the static and
@@ -142,8 +158,9 @@ of programming in Haskell most of the time. But when part of code
 requires more care, \emph{e.g.} because of efficiency
 (Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or because a
 foreign function needs a linear type (Section~\ref{sec:ffi}), then one
-can use seamlessly the linear feature of the language, which allow
-more control.
+can use seamlessly the linear features of the language, which allow
+more control.\improvement{Add a file-read example in the style of this
+article}
 
 \TODO{Applications:
 \begin{itemize}
