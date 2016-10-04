@@ -476,8 +476,8 @@ resources that the C library has allocated), for example as follows:
 doneWithContext :: Context ⊸ IO ()
 \end{code}
 
-In practice, a top-level binding with weight $1$ will behave in way
-similar to |main|, in the sense that it may raise link-time type-errors.
+In practice, a top-level binding with weight $1$ will behave similarly
+to |main|, in the sense that it may raise link-time type-errors.
 
 \subsection{Primitive arrays}
 \unsure{Which version should we choose? Both?}
