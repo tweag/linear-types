@@ -147,7 +147,8 @@ lazy\footnote{It is not essential that the language is lazy, a similar
 programming language (the presentation is inspired
 by~\cite{mcbride_rig_2016}), whose main characteristic is to contain a
 regular programming language -- a simplified version of Haskell -- as
-a subset.
+a subset.\unsure{should we give a name to this programming
+  language/calculus to refer to it through the paper?}
 
 Concretely, in such a programming language, one enjoys the convenience
 of programming in Haskell most of the time. But when part of code
@@ -171,8 +172,45 @@ in~\cite{wadler_propositions_2012}).
 
 \section{Statics}
 \label{sec:orgheadline8}
-\subsection{Weights}
+
 \unsure{Should we rename weights to quantities?}
+
+Simply using linear logic -- or, as it is, intuitionistic linear
+logic, since we will not require a notion of type duality -- as a type
+system would not suffice to meet our goal that a (intuitionistic,
+lazy) programming language be a subset of our calculus. Indeed, if
+intuitionistic $\lambda$-calculus can be embedded in linear
+$\lambda$-calculus, this embedding requires an encoding. Usually, we
+would have a linear arrow $A⊸B$ and the intuitionistic arrow would be
+represented as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
+arbitrary quantity of values of type $A$.
+
+This encoding means that the quantity of available value must be
+managed manually, and the common case (\emph{i.e.} when more than one
+value is required) requires additional syntax. For instance, in the
+pidgin-Haskell syntax which we shall use throughout this article, we
+couldn't write the following:
+\begin{code}
+  dup :: a -> a⊗a
+  dup x = (x,x)
+\end{code}
+and we would be forced to write:
+\begin{code}
+  dup :: a -> a⊗a
+  dup (Bang x) = (x,x)
+\end{code}
+When composing functions we would also have to manage the quantity of
+the output of the intermediate functions:
+\begin{code}
+  id :: a -> a
+  id (Bang x) = x
+
+  v = dup (Bang (id (Bang 42)))
+\end{code}
+
+In our calculus, we replace have, instead, an arrow param
+
+\subsection{Weights}
 
 In our calculus, each variable in the context is annotated with the
 number of times that the program must use the variable in question.
@@ -184,11 +222,11 @@ We call this number of times the \emph{weight} of the variable.
 
 A weight can either be a constant ($1$ or $ω$), a variable (ranged
 over by the metasyntactic variables \(π\) and \(ρ\)), a product or a
-sum.  When the weight is $1$, the program must consume the variable
-exactly once. When the weight is $ω$, it may consume it any number of
+sum.  When the weight is $1$, the program \emph{must} consume the variable
+exactly once. When the weight is $ω$, it \emph{may} consume it any number of
 times (possibly zero).
 
-Weights are equipped with an equivalence relation $(=)$ which contains
+Weights are equipped with an equivalence relation $(=)$ which obeys
 the following laws:
 
 \begin{itemize}
