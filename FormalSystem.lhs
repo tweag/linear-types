@@ -234,7 +234,7 @@ p(x :_q A, Γ) =  x :_{pq} A, pΓ
 
 \begin{lemma}[Contexts form a module]
   \begin{align*}
-  p  (Γ+Δ) &=p Γ+p Δ\\
+ p (Γ+Δ) &=p Γ+p Δ\\
  (p+q) Γ&=p Γ+q Γ \\
  (pq) Γ&=p (q Γ)\\
  1 Γ&=Γ
@@ -269,16 +269,8 @@ The calculus also features abstraction over weights, and thus we can
 construct weight-dependent types using the syntax $∀ρ. A$.
 
 \begin{definition}[Syntax of data type declaration]
-\change{pick one of the following definitions}
 \begin{align*}
-\mathsf{data} D = \left(c_k  q₁ A₁  …  q_{n_k} A_{n_k}\right)^m_{k=1}
-\end{align*}
-\todo{Use GADT syntax}
-The syntax of data type declarations is as follows ($c$ ranges over constructor names):
-\begin{align*}
-  W &::= qA &\text{weight-annotated type}\\
-  γ &::= c  \vec{W}&\text{constructor declaration}\\
-  decl &::= \mathsf{data } D = \vec{γ}&\text{data type declaration}
+\mathsf{data} D \mathsf{where} \left(c_k :: A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
@@ -301,13 +293,13 @@ Note the following special cases:
 \begin{align*}
 e,s,t,u & ::= \\
     & ||  x & \text{variable} \\
-    & ||  λx. t & \text{abstraction} \\
+    & ||  λ(x:_qA). t & \text{abstraction} \\
     & ||  t_q s & \text{application} \\
     & ||  λπ. t & \text{weight abstraction} \\
     & ||  t p & \text{weight application} \\
     & ||  c t₁ … t_n & \text{data construction} \\
     & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-    & ||  \flet x =_{q₁} … x =_{q_n} t_n \fin u & \text{let}
+    & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n =_{q_n} t_n \fin u & \text{let}
 \end{align*}
 \end{definition}
 
@@ -330,7 +322,7 @@ $Γ$.
 \inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}
 
 \inferrule{Γ, x :_{q} A  ⊢   t : B}
-          {Γ ⊢ λx. t  :  A  →_q  B}\text{abs}
+          {Γ ⊢ λ(x:_qA). t  :  A  →_q  B}\text{abs}
 
 \inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}
           {Γ+qΔ ⊢ t_q u  :  B}\text{app}
@@ -343,14 +335,13 @@ $Γ$.
 
 
 \inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
-          { Δ+\sum_i qᵢΓᵢ ⊢ \flet x =_{q₁} t₁  …  x =_{q_n} t_n  \fin u : C}\text{let}
+          { Δ+\sum_i qᵢΓᵢ ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
 
 \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
           {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
 
 \inferrule{Γ ⊢ t :  ∀π. A}
           {Γ ⊢ t p  :  A[p/π]}\text{w.app}
-
 \end{mathpar}
 \end{definition}
 
@@ -366,23 +357,22 @@ rules follow the same pattern.
 \todo{Remark: auto scaling.}
 
 \subsection{Examples of simple programs and their types}
-
 In order to assess the power of our language, let us consider a few
 simple program and the types that they inhabit.
 
 \paragraph{K combinator}
 
-In our system, the expression $k ≝ λx. λy. x$ has both the type
-$A ⊸ B → A$ and $A → B → A$. However, the first type subsumes the
+The lamda-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
+$A ⊸ B → A$ or $A → B → A$. However, the first type subsumes the
 second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
-also call $ω$ times $k$). The lesson learned is that a term used
-(syntactically) just once, it is always better to give it a linear
-weight.
+also call $ω$ times $k$). The lesson learned is that when a varialbe is used
+(syntactically) just once, it is always better to give it the
+weight 1.
 
 \paragraph{Second order Identity}
 
-The term $a ≝ λf.λx.f x$ inhabits all the following types:
+Similarly $a ≝ λf.λx.f x$ could inhabit all the following types:
 $(A → B) → A → B$,
 $(A → B) ⊸ A → B$ and
 $(A ⊸ B) ⊸ A ⊸ B$.
@@ -392,8 +382,8 @@ dominated by the second one. However the remaining two types are
 incomparable. If we want to find a most general type we need to
 abstact over the weight of $A$:
 
-\[ λf.λx.f x : (A →_ρ B) → A →_ρ B.\]
-
+\[ λf. λx. f x : (A →_ρ B) → A →_ρ B.\]
+\todo{This is isn't true, strictly speaking}
 
 \paragraph{Function composition}
 The need for weight abstraction typically occurs in all higher order
@@ -402,6 +392,7 @@ incomparable weight-monomorphic types. Yet they can subsumed by
 abstracting over the linearities of the input functions, as follows:
 
 \[ λf. λg. λx. f (g x) : (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C\]
+\todo{This is isn't true, strictly speaking}
 
 \improvement{
 example of ill-typed programs due to linearity violation,
@@ -534,13 +525,13 @@ shared are bound to variables.
 
 \begin{definition}
 \begin{align*}
-(λx. t)^* &= λx. (t)^* \\
+(λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
 x^*       &= x \\
   (t_q  x )^* &= (t)^*_q  x \\
   (t_q  u )^* &= \flet y =_{q} (u)^* \fin (t)^*_q  y \\
 c_k  t₁ … t_n &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin c_k x₁ … x_n \\
 (\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-(\flet x =_{q₁} t₁  …  x =_{q_n} t_n \fin u)^* & = \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin (u)^*
+(\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n:_{q_n} A_1 (t_n)^* \fin (u)^*
 \end{align*}
 \end{definition}
 

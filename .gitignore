@@ -9,3 +9,5 @@
 *-blx.bib
 *.toc
 *~
+/FormalSystem.tex
+*.ptb
