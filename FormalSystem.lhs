@@ -782,25 +782,15 @@ other is data centric. Yet there is a simple
 encoding from session types to linear types (as Wadler demonstrates).
 
 \todo{Compare with McBride's rig.}
+\todo{talk about thunk freeing themselves}
+\todo{underline that two aspects are mostly independent: 1. prompt deallocation of cons cells 2. resource management with explicit free}
+\todo{Operational meaning for 1. f : A → B 2. f : A ⊸ B. that is: an input with static weight 1 can have dynamic weight w}
+
 \printbibliography
 \end{document}
 
 
-% TODOs:
-% - explain data T = C 1A wB means C :: A ⊸ B → T
-% - give types for primops (and semantics?)
-% - talk about thunk freeing themselves
-% - underline that two aspects are mostly independent:
-% 1. prompt deallocation of cons cells
-% 2. resource management with explicit free
-% - examples with wrong usage
-% Operational meaning for
-% f : A → B
-% f : A ⊸ B
-% that is: an input with static weight 1 can have dynamic weight w
 
-
-% (#+) :: #Int -> #Int -> #Int
 
 
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
