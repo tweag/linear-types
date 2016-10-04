@@ -55,6 +55,7 @@
 \author{Jean-Philippe Bernardy and Arnaud Spiwack}
 \date{\today}
 \title{Linear and unrestricted at the same time}
+% A practical lazy language with linear and unrestricted types.
 \hypersetup{pdflang={English}}
 
 % XXX: Placeholders: remove when bibliography is finished
@@ -272,6 +273,7 @@ construct weight-dependent types using the syntax $∀ρ. A$.
 \begin{align*}
 \mathsf{data} D = \left(c_k  q₁ A₁  …  q_{n_k} A_{n_k}\right)^m_{k=1}
 \end{align*}
+\todo{Use GADT syntax}
 The syntax of data type declarations is as follows ($c$ ranges over constructor names):
 \begin{align*}
   W &::= qA &\text{weight-annotated type}\\
@@ -288,12 +290,11 @@ $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$.
 Such declarations cannot occur in expressions; thus the weights $q_i$
 will either be $1$ or $ω$.
 
-\inconsistent{We do not have parametric types in the syntax. (And can't really have since we have no polymorphism.)}
 Note the following special cases:
 \begin{itemize}
-\item The type $\data \varid{Pair} a b = \varid{Pair} ωa ωb$ is isomorphic to the intuitionistic product (Usually written $a×b$)
-\item The type $\data \varid{Tensor}  a  b = \varid{Pair}  1a  1b$ is isomorphic to the linear tensor product (Usually written $a⊗b$)
-\item The type $\data \varid{Bang} a = \varid{Box}  ωa$ is isomorphic to the exponential (Usually written $!a$)
+\item The type $\data \varid{Pair} A B = \varid{Pair} ωA ωB$ is isomorphic to the intuitionistic product (Usually written $A×B$)
+\item The type $\data \varid{Tensor}  A  B = \varid{Pair}  1A  1B$ is isomorphic to the linear tensor product (Usually written $A⊗B$)
+\item The type $\data \varid{Bang} A = \varid{Box}  ωA$ is isomorphic to the exponential (Usually written $!A$)
 \end{itemize}
 
 \begin{definition}[Syntax of terms]
@@ -361,6 +362,8 @@ to all $t$ once, one needs to produce a quantity $q$ of $A$. Thus we
 split the context into a $Γ$ part and $q$ $Δ$ parts. The $Γ$ part
 feeds $t$, while each of the $Δ$ feed an instance of $u$. The other
 rules follow the same pattern.
+
+\todo{Remark: auto scaling.}
 
 \subsection{Examples of simple programs and their types}
 
@@ -461,10 +464,19 @@ doneWithContext :: Context ⊸ IO ()
 
 In practice, a top-level binding with weight $1$ will behave in way
 similar to |main|, in the sense that it may raise link-time type-errors.
-\subsection{Primops}
-\unsure{Which version should we choose?}
+
+\subsection{Primitive arrays}
+\unsure{Which version should we choose? Both?}
+
+One of the usage of linear types is to make memory management
+(semi-)explicit. As an illustration we provide two possible APIs to
+manipulate randomly addressable memory regions (so called ``byte arrays'' in GHC
+parlance). We also propose a possible implementation strategy for the
+primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
+
+
 \begin{code}
 newByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
@@ -474,14 +486,19 @@ indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
 indexByteArray :: Int -> ByteArray ⊸ (ByteArray ⊗ Byte)
 \end{code}
 
-The Bang in newByteArray ensures that the computation depending on the
-array returns something which is on the GC heap. This means two things
-1. the mutableByteArray cannot be returned via k 2. even when called
-in an ω context, we can return the k without problem.
+The key primitive in the above API is |newByteArray|, whose first
+argument is a size. It takes a continuation where \emph{one} reference
+to the byte array is available. The continuation needs to produce a
+|Bang| type. This type ensures that the continuation cannot return a
+reference to the byte array.  Indeed, it is impossible to transform a
+1-weighted object into an ω-weighted one without copying it
+explicitly. Not returning the byte array is critical, because the
+|newByteArray| function may be called $ω$ times; in which case the
+result will be shared.
 
 Other remark: the type system ensures that we never have a variable
 
-|x :_ω MutableByteArray|
+|x : _ ω MutableByteArray|
 
 at any point.
 
@@ -508,15 +525,14 @@ linear types as was demonstrated in~\label{sec:ghc}. However, this
 dynamic semantics can also help give confidence in the correctness of
 the extensions of~\label{sec:ghc}.
 
-\subsection{(Extended) Launchbury semantics}
-\label{sec:orgheadline11}
+Concretely, show that it is possible to allocate linear objects on a
+heap which is not under GC, and correspondly deallocate them upon
+(lazy) evaluation. To do so we present an extension of the semantics
+of \textcite{launchbury_natural_1993} to our language.  As Launchbury,
+we first transform terms, so that the values that are potentially
+shared are bound to variables.
 
-\subsubsection{Translation}
-\label{sec:orgheadline9}
-As in \textcite{launchbury_natural_1993}, we translate from terms to
-terms where values are always bound to variables.
-
-
+\begin{definition}[·^*]
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
@@ -526,8 +542,8 @@ c_k  t₁ … t_n &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin 
 (\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
 (\flet x =_{q₁} t₁  …  x =_{q_n} t_n \fin u)^* & = \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin (u)^*
 \end{align*}
+\end{definition}
 
-\subsubsection{Natural semantics}
 Compared to Launchbury:
 
 \begin{itemize}
