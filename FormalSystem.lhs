@@ -532,7 +532,7 @@ of \textcite{launchbury_natural_1993} to our language.  As Launchbury,
 we first transform terms, so that the values that are potentially
 shared are bound to variables.
 
-\begin{definition}[·^*]
+\begin{definition}
 \begin{align*}
 (λx. t)^* &= λx. (t)^* \\
 x^*       &= x \\
