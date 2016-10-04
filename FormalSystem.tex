@@ -694,12 +694,9 @@ annoying to duplicate every primitive type. (Possibly we could
 prescribe \#Int to be linear, but this may break lots of existing
 programs.)
 
-\todo{weight polymorphism If we want the most general types of higher order functions, we need
-explicit quantification over weights. Still, this is somewhat simpler
-than what Morris presents in ``The best of both worlds'', because we
-do not need bounded quantification. Instead we use multiplication of
-weights. (There is also the possibility to add a subtyping relation as
-a middle ground.)
+Finally, a benefit of the linearity in variables is that polymorphism
+over weights is straightforward, while linearity in types require
+bounded polymorphism to achieve most general types.
 }
 
 \subsection{Session types vs. linear types}
@@ -720,6 +717,7 @@ well suited for describing data. One is communication centric. The
 other is data centric. Yet there is a simple
 encoding from session types to linear types (as Wadler demonstrates).
 
+\todo{Compare with McBride's rig.}
 \printbibliography
 \end{document}
 
