@@ -50,6 +50,9 @@
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
 
+% Link in bibliography interpreted as hyperlinks.
+\newcommand{\HREF}[2]{\href{#1}{#2}}
+
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
 
@@ -58,13 +61,6 @@
 \title{Linear and unrestricted at the same time}
 % A practical lazy language with linear and unrestricted types.
 \hypersetup{pdflang={English}}
-
-% XXX: Placeholders: remove when bibliography is finished
-\newcommand{\citationneeded}{[?]}
-\newcommand{\TODO}[1]{{\footnotesize\it <TODO: #1>}}
-
-% XXX: fixes a bibliographic link
-\newcommand{\HREF}[2]{\href{#1}{#2}}
 
 \begin{document}
 
@@ -109,7 +105,7 @@ However, in recent years, high-level languages which forgo garbage
 collection in favour of safe, but explicit, memory \emph{and resource}
 management have gotten a lot of attention. This trend is best
 exemplified by the popularity of the Rust programming
-language~\citationneeded. Where file-reading code such as above
+language~\cite{matsakis_rust_2014}. Where file-reading code such as above
 would be written:
 
 \begin{verbatim}
@@ -148,10 +144,10 @@ lazy\footnote{It is not essential that the language is lazy, a similar
   extension can be designed for a strict language. But the
   presentation in this article is inherently lazy: both the static and
   dynamic semantics would change slightly in a strict language}
-programming language (the presentation is inspired by~\TODO{McBride:
-  rig https://personal.cis.strath.ac.uk/conor.mcbride/pub/Rig.pdf}),
-whose main characteristic is to contain a regular programming
-language -- a simplified version of Haskell -- as a subset.
+programming language (the presentation is inspired
+by~\cite{mcbride_rig_2016}), whose main characteristic is to contain a
+regular programming language -- a simplified version of Haskell -- as
+a subset.
 
 Concretely, in such a programming language, one enjoys the convenience
 of programming in Haskell most of the time. But when part of code
@@ -162,25 +158,16 @@ can use seamlessly the linear features of the language, which allow
 more control.\improvement{Add a file-read example in the style of this
 article}
 
-\TODO{Applications:
-\begin{itemize}
-\item Explicit memory
-  management~\cite{lafont_linear_1988}\cite{hofmann_in-place_}\TODO{http://www.cs.cornell.edu/people/fluet/research/lin-loc/TLCA05/tlca05.pdf}
-\item Fusion/composable array computations without intermediate
-  allocations~\cite{bernardy_duality_2015},\TODO{Polarized Data
-    Parallel Data Flow, FHPC 2016, Lippmeier\&al}
-\item Protocol specification (session types)~\TODO{honda: http://www.kurims.kyoto-u.ac.jp/~kyodo/kokyuroku/contents/pdf/0851-05.pdf}. The correspondence between
-  session types and linear types is explained in~\cite{wadler_propositions_2012}
-\end{itemize}}
-
-% - the problem
-%   - applications of linear types (usual)
-%   - integration with existing language (limit explosion of types --- and thus of code)
-
-% - examples
-%   - protocol?
-%   - primops
-%   - linear stuff used in unrestricted context
+Using a type system based on linear logic (rather than uniqueness
+typing or ownership typing) makes it possible to leverage the wealth
+of literature of the past thirty years. Linear logic has been shown,
+for instance, to be applicable to explicit memory
+management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
+memory-efficient array computations through
+fusion~\cite{bernardy_duality_2015,lippmeier_parallel_2016}, and protocol
+specification (as session types)~\cite{honda_session_1993} (the
+correspondence between session types and linear types is explained
+in~\cite{wadler_propositions_2012}).
 
 \section{Statics}
 \label{sec:orgheadline8}
