@@ -5,6 +5,9 @@ PaperTools/bibtex/jp.bib:
 	echo "Try 'git submodule update --init'"
 	false
 
+clean:
+	rm -f *.aux *.bbl *.ptb
+
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
 
