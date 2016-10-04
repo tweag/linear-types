@@ -356,34 +356,46 @@ rules follow the same pattern.
 
 \subsection{Examples of simple programs and their types}
 
-\hspace{-4cm}\begin{minipage}{\textwidth}
-\begin{align*}
-map & : (A ⊸ B) → [A] ⊸ [B] & \text{Scales well in unrestricted contexts}\\
-lmap & : (A ⊸ B) → f A ⊸ f B & \text{Guaranteeing that no element is lost} \\
-λx. λy. x & : A ⊸ B → A \\
-          & : A → B → A \\
-λ(f,x). f x & : \{f :_1 A ⊸ B, x :_1 A\} ⊸ B & \text{(using a row type for concision)}\\
-            & : \{f :_1 A → B, x :_ω A\} ⊸ B \\
-            & : \{f :_1 A →_π B, x :_π A\} ⊸ B & \text{most general type} \\
-λf. λg. λx. f (g x) & : (B → C) → (A → B) → A → C \\
-                    & : (B → C) ⊸ (A → B) → A → C & \text {always better: comp uses $f$  only once} \\
-                    & : (B ⊸ C) ⊸ (A → B) ⊸ A → C & \text {if $f$ is linear, then $g$ is used only once} \\
-                    & : (B ⊸ C) ⊸ (A ⊸ B) ⊸ A ⊸ C & \text {if $g$ is linear too then $x$ is used only once} \\
-                    & : ∀ π ρ. (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C & \text{most general type} \\
-\end{align*}
-\end{minipage}
+In order to assess the power of our language, let us consider a few
+simple program and the types that they inhabit.
 
-%% TODO: additional examples: copy (from linear to unrestricted), free, more?
+\paragraph{K combinator}
 
-If we want the most general types of higher order functions, we need
-explicit quantification over weights. Still, this is somewhat simpler
-than what Morris presents in ``The best of both worlds'', because we
-do not need bounded quantification. Instead we use multiplication of
-weights. (There is also the possibility to add a subtyping relation as
-a middle ground.)
+In our system, the expression $k ≝ λx. λy. x$ has both the type
+$A ⊸ B → A$ and $A → B → A$. However, the first type subsumes the
+second one, because when we heave $ω$ times $A$, we can always call
+$k$ anyway and ignore the rest of $A$'s. (In this situation, we can
+also call $ω$ times $k$). The lesson learned is that a term used
+(syntactically) just once, it is always better to give it a linear
+weight.
 
-%% TODO: example of ill-typed programs due to linearity violation,
-%% with tentative error messages.
+\paragraph{Second order Identity}
+
+The term $a ≝ λf.λx.f x$ inhabits all the following types:
+$(A → B) → A → B$,
+$(A → B) ⊸ A → B$ and
+$(A ⊸ B) ⊸ A ⊸ B$.
+
+As per the lesson learned in the previous paragraph, the first type is
+dominated by the second one. However the remaining two types are
+incomparable. If we want to find a most general type we need to
+abstact over the weight of $A$:
+
+\[ λf.λx.f x : (A →_ρ B) → A →_ρ B.\]
+
+
+\paragraph{Function composition}
+The need for weight abstraction typically occurs in all higher order
+functions.  In particular, function composision inhabits a wealth of
+incomparable weight-monomorphic types. Yet they can subsumed by
+abstracting over the linearities of the input functions, as follows:
+
+\[ λf. λg. λx. f (g x) : (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C\]
+
+\improvement{
+example of ill-typed programs due to linearity violation,
+with tentative error messages.
+}
 
 \section{Applications}
 \label{sec:ghc}
@@ -681,6 +693,14 @@ the heaps. Even though it is possible to provide this, it is somewhat
 annoying to duplicate every primitive type. (Possibly we could
 prescribe \#Int to be linear, but this may break lots of existing
 programs.)
+
+\todo{weight polymorphism If we want the most general types of higher order functions, we need
+explicit quantification over weights. Still, this is somewhat simpler
+than what Morris presents in ``The best of both worlds'', because we
+do not need bounded quantification. Instead we use multiplication of
+weights. (There is also the possibility to add a subtyping relation as
+a middle ground.)
+}
 
 \subsection{Session types vs. linear types}
 
