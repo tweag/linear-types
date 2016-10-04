@@ -10,6 +10,7 @@
 \usepackage{rotating}
 \usepackage[normalem]{ulem}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{textcomp}
 \usepackage{amssymb}
 \usepackage{capt-of}
@@ -22,10 +23,12 @@
 % \setmainfont{DejaVu Sans}
 % \setmathfont{TeX Gyre Pagella Math}
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
+\newcommand{\data}{\mathsf{data} }
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
+\newcommand{\varid}{\mathnormal}
 \newcommand{\susp}[1]{⟦#1⟧}
 \usepackage[dvipsnames]{xcolor}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
@@ -33,18 +36,18 @@
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
 \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
 \newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
-\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+\newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
+
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
 
 \author{Jean-Philippe Bernardy and Arnaud Spiwack}
 \date{\today}
 \title{Linear and unrestricted at the same time}
-\hypersetup{
- pdfauthor={Jean-Philippe Bernardy and Arnaud Spiwack},
- pdftitle={Linear and unrestricted at the same time},
- pdfkeywords={},
- pdfsubject={},
- pdflang={English}}
+\hypersetup{pdflang={English}}
 
 % XXX: Placeholders: remove when bibliography is finished
 \newcommand{\citationneeded}{[?]}
@@ -58,7 +61,7 @@
 \maketitle
 %% \tableofcontents
 \begin{abstract}
-  \noindent This article introduces and describes a presentation of a
+  This article introduces and describes a
   linearly-typed lazy programming language which is designed to be
   integrate well with an existing programming language, in particular
   in GHC/Haskell.
@@ -155,7 +158,7 @@ more control.
 \section{Statics}
 \label{sec:orgheadline8}
 \subsection{Weights}
-\label{sec:orgheadline1}
+\unsure{Should we rename weights to quantities?}
 
 In our calculus, each variable in the context is annotated with the
 number of times that the program must use the variable in question.
@@ -184,31 +187,83 @@ the following laws:
 \item $ω + ω = ω$
 \end{itemize}
 
-\subsection{Types}
-\label{sec:orgheadline2}
+Thus, weights have a ring-like algebra.
 
-The syntax for types is as follows:
+\subsection{Contexts}
+
+As we wrote above, every variable binding in a context is equipped
+with a weight, additionally to the type:
+
+\begin{align*}
+  Γ,Δ & ::=\\
+    & |  x :_q A, Γ & \text{weight-annotated binder} \\
+    & |     & \text {empty context}
+\end{align*}
+
+Because weights have a ring-like structure, contexts have a module
+structure. In particular, we can define context addition and context
+scaling.
+
+\begin{definition}[Context addition]~
+\begin{itemize}
+\item When a variable appears on both input contexts, we add the weights in
+the result:
+
+\((x :_p A,Γ) + (x :_q A,Δ) = x :_{p+q} A, (Γ+Δ)\)
+
+\item otherwise we propagate:
+
+\((x :_p A,Γ) + Δ = x :_p A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Context scaling]
+\begin{displaymath}
+p(x :_q A, Γ) =  x :_{pq} A, pΓ
+\end{displaymath}
+\end{definition}
+
+\begin{lemma}[Contexts form a module]
+  \begin{align*}
+  p  (Γ+Δ) &=p Γ+p Δ\\
+ (p+q) Γ&=p Γ+q Γ \\
+ (pq) Γ&=p (q Γ)\\
+ 1 Γ&=Γ
+  \end{align*}
+\end{lemma}
+
+Additionally, context addition is commutative.
+\subsection{Types}
+
+\begin{definition}[Syntax of types]
 \begin{align*}
   A,B &::=\\
       & |  A →_q B &\text{function type}\\
-      & |  ∀ρ. A &\text{weighted type}\\
+      & |  ∀ρ. A &\text{weight-dependent type}\\
       & |  D &\text{data type}
 \end{align*}
+\end{definition}
 
-
+The weighted function type is a generalization of the intuitionistic
+arrow and the linear arrow. In fact in the context of this paper, we
+will define them as such:
 \begin{itemize}
-\item a weighted arrow: \(A →_q B\) (you can get a \(B\) if you can provide a
-quantity \(q\) of \(A\)). Consequently:
-\begin{itemize}
-\item \(A →_ω B\) is the intuitionistic arrow (\(A → B\))
-\item \(A →_1 B\) is the linear arrow (\(A ⊸ B\))
+\item \(A → B ≝  A →_ω B\)
+\item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-\item weighted ADTs:
+In general, the intuition behind the weighted arrow \(A →_q B\) is
+that you can get a \(B\) if you can provide a quantity \(q\) of \(A\).
+Note in particular when one has $x :_ω A$ and $f :_1 A ⊸ B$,
+the call $f x$ is well-typed.
+
+The calculus also features abstraction over weights, and thus we can
+construct weight-dependent types using the syntax $∀ρ. A$.
+
+\begin{definition}[Syntax of data type declaration]
+\change{pick one of the following definitions}
 \begin{align*}
 \mathsf{data} D = \left(c_k  q₁ A₁  …  q_{n_k} A_{n_k}\right)^m_{k=1}
 \end{align*}
-(\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
-
 The syntax of data type declarations is as follows ($c$ ranges over constructor names):
 \begin{align*}
   W &::= qA &\text{weight-annotated type}\\
@@ -216,19 +271,24 @@ The syntax of data type declarations is as follows ($c$ ranges over constructor 
   decl &::= \mathsf{data } D = \vec{γ}&\text{data type declaration}
 \end{align*}
 
+(\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
+
+We will give special typing rules for constructors, but one could
+equivalently add a constant per constructor $c_k$, with the type
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$.
+\end{definition}
+Such declarations cannot occur in expressions; thus the weights $q_i$
+will either be $1$ or $ω$.
+
+\inconsistent{We do not have parametric types in the syntax. (And can't really have since we have no polymorphism.)}
 Note the following special cases:
 \begin{itemize}
-\item The type data Pair a b = Pair ωa ωb is isomorphic to the intuitionistic product (a×b)
-\item The type data Tensor a b = Pair 1a 1b is isomorphic to the linear tensor product (a⊗b)
-\item The type data Bang a = Box ωa is isomorphic to the exponential (!a)
+\item The type $\data \varid{Pair} a b = \varid{Pair} ωa ωb$ is isomorphic to the intuitionistic product (Usually written $a×b$)
+\item The type $\data \varid{Tensor}  a  b = \varid{Pair}  1a  1b$ is isomorphic to the linear tensor product (Usually written $a⊗b$)
+\item The type $\data \varid{Bang} a = \varid{Box}  ωa$ is isomorphic to the exponential (Usually written $!a$)
 \end{itemize}
-\end{itemize}
 
-\subsection{Terms}
-\label{sec:orgheadline3}
-
-The syntax for terms is:
-
+\begin{definition}[Syntax of terms]
 \begin{align*}
 e,s,t,u & ::= \\
     & |  x & \text{variable} \\
@@ -240,60 +300,24 @@ e,s,t,u & ::= \\
     & |  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
     & |  \flet x =_{q₁} … x =_{q_n} t_n \fin u & \text{let}
 \end{align*}
+\end{definition}
+
 
 Remark: we often omit the weight $q$ in an application, because it is
 usually obvious from the context.
 
-\subsection{Contexts}
-\label{sec:orgheadline6}
-
-Every variable binding in a context is equipped with a weight,
-additionally to the type:
-
-\begin{align*}
-  Γ,Δ & ::=\\
-    & |  x :_q A, Γ & \text{weight-annotated binder} \\
-    & |     & \text {empty context}
-\end{align*}
-
-\subsubsection{Context addition}
-\label{sec:orgheadline4}
-
-We define a context addition, written \(Γ+Δ\), as follows.
-
-\begin{itemize}
-\item When a variable appears on both input contexts, we add the weights in
-the result:
-
-\((x :_p A,Γ) + (x :_q A,Δ) = x :_{p+q} A, (Γ+Δ)\)
-
-\item otherwise we propagate:
-
-\((x :_p A,Γ) + Δ = x :_p A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
-\end{itemize}
-
-
-\subsubsection{Context scaling}
-\label{sec:orgheadline5}
-
-Contexts can be scaled by a weight:
-
-\begin{displaymath}
-p(x :_q A, Γ) =  x :_{pq} A, pΓ
-\end{displaymath}
-
-\subsection{Typing rules}
-\label{sec:orgheadline7}
-
 We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
 following rules.  The intuition behind this judgement is: can
-construct \emph{one} value $t$ of type $A$ from $Γ$. We do not define
-a judgement to denote that we can construct a quantity $p$ of type
-$A$; instead we will use $Δ ⊢ t : A$ with $Γ = pΔ$ to indicate this
-situation.
+construct \emph{exactly one} value of type $A$ from $Γ$, using $t$'s
+recipe. We do not define a judgement to denote that we can construct a
+given quantity $q$ of type $A$, because we can instead use the
+judgement $Δ ⊢ t : A$ together with the constraint $Γ = pΔ$ to
+indicate this situation. The intuition behind this choice is that one
+can simply call $q$ times $t$, each time consuming the $q$-th part of
+$Γ$.
 
+\begin{definition}[Typing judgement]
 \begin{mathpar}
-
 \inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}
 
 \inferrule{Γ, x :_{q} A  ⊢   t : B}
@@ -303,7 +327,7 @@ situation.
           {Γ+qΔ ⊢ t_q u  :  B}\text{app}
 
 \inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $qᵢ$}}
-          {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{constructor}
+          {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{con}
 
 \inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …, x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
           {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
@@ -318,14 +342,17 @@ situation.
 \inferrule{Γ ⊢ t :  ∀π. A}
           {Γ ⊢ t p  :  A[p/π]}\text{w.app}
 
-
 \end{mathpar}
+\end{definition}
 
-Lemmas:
-\begin{enumerate}
-\item if \(Γ ⊢ t : A\) then \(ωΓ ⊢ t : A\).
-\item erasure of weights preserves typing
-\end{enumerate}
+In the variable rule, one may ignore an arbitrary context $ωΓ$ ---
+indeed it is acceptable not to consume $ω$-weighted variables.
+
+The application rule may also deserve some commentary. In order to be able
+to all $t$ once, one needs to produce a quantity $q$ of $A$. Thus we
+split the context into a $Γ$ part and $q$ $Δ$ parts. The $Γ$ part
+feeds $t$, while each of the $Δ$ feed an instance of $u$. The other
+rules follow the same pattern.
 
 \subsection{Examples of simple programs and their types}
 
@@ -464,7 +491,7 @@ let a =_ρ f ()
 
 The function \texttt{f} creates some data. When run in a linear context, \texttt{f}
 allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
-must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of ρ.
+must allocate \texttt{z} on the GC heap. So, its behavior depends the value of ρ.
 
 \begin{mathpar}
 \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
@@ -498,7 +525,7 @@ must allocate \texttt{z} on the GC heap. So, its behaviour depends the value of 
 
 Remark: the \emph{unrestricted variable} rule also triggers when the
 weight is 1, thus effectively allowing linear variables to look on the
-GC heap. This behaviour allows an occurence of a linear variable to
+GC heap. This behavior allows an occurrence of a linear variable to
 work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
 rule.
 
@@ -516,7 +543,7 @@ Lemmas:
 % 'linear do notation'.
 \item Every variable which is bound in the linear heap is statically
   bound with weight 1.
-\item Corrollary: every variable bound statically with weight ω is
+\item Corollary: every variable bound statically with weight ω is
   bound in the GC heap.
 \end{itemize}
 
@@ -719,3 +746,8 @@ encoding from session types to linear types (as Wadler demonstrates).
 % freeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ Heap s
 % freezeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray#)
  % withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
+
+%  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
+%  LocalWords:  forkIO initialContext runtime doneWithContext Primops
+%  LocalWords:  deallocation Launchbury launchbury GC scrutinee
+%  LocalWords:  centric
