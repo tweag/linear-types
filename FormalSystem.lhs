@@ -2,6 +2,12 @@
 % Created 2016-09-15 tor 14:09
 \documentclass[11pt]{article}
 %include polycode.fmt
+%format .         = ". "
+%format forall a         = "∀" a
+%format _ a         = "_{" a "}"
+%format omega = "ω"
+%format rho = "ρ"
+%format pi = "π"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
 \usepackage{fixltx2e}
@@ -417,14 +423,15 @@ issue involves
 \begin{code}
 type M s a
 instance Monad s
-\end{code}
 
 primitive :: M s X
 runLowLevel :: M s a -> IO x
+\end{code}
 
 This solution is adequate as long as one forbids calling
-
+\begin{code}
 forkIO :: IO a -> IO ()
+\end{code}
 
 In this situation, one is allowed to call runLowLevel several times in
 parallel.
@@ -432,23 +439,61 @@ parallel.
 Using linear types, one may instead give an explicit unique instance
 of the context.
 
+\begin{code}
 type Context
 initialContext ::1 Context
+\end{code}
 
 The Context type will not have any runtime representation on the
 Haskell side.  It will only be used to ensure that primitive
 operations can acquire a mutually exclusive access to the context.
 
+\begin{code}
 primitive :: Context ⊸ IO (Context ⊗ X)
+\end{code}
 
 One eventually wants to release the context (freeing whatever
 resources that the C library has allocated), for example as follows:
 
+\begin{code}
 doneWithContext :: Context ⊸ IO ()
+\end{code}
 
-In practice, a top-level binding with weight 1 will behave in way
-similar to main, in the sense that it may raise link-time type-errors.
+In practice, a top-level binding with weight $1$ will behave in way
+similar to |main|, in the sense that it may raise link-time type-errors.
 \subsection{Primops}
+\unsure{Which version should we choose?}
+
+\subsubsection{Version 1}
+\begin{code}
+newByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
+updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
+freeByteArray :: MutableByteArray ⊸ ()
+freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
+indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
+indexByteArray :: Int -> ByteArray ⊸ (ByteArray ⊗ Byte)
+\end{code}
+
+The Bang in newByteArray ensures that the computation depending on the
+array returns something which is on the GC heap. This means two things
+1. the mutableByteArray cannot be returned via k 2. even when called
+in an ω context, we can return the k without problem.
+
+Other remark: the type system ensures that we never have a variable
+
+|x :_ω MutableByteArray|
+
+at any point.
+
+\subsubsection{Version 2}
+
+\begin{code}
+newByteArray :: Heap s ⊸ Int → (MutableByteArray s ⊗ Heap s)
+updateByteArray :: Int -> Byte → MutableByteArray s ⊸ MutableByteArray s
+freeByteArray :: MutableByteArray s ⊸ Heap s ⊸ Heap s
+freezeByteArray :: MutableByteArray s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray)
+withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
+\end{code}
 
 \subsection{Fusion}
 \label{sec:fusion}
@@ -500,10 +545,10 @@ bindings into allocations on the proper heap.  Indeed, in $ω$ contexts,
 $\flet =1 …$ must allocate on the GC heap, not on the linear
 one. Indeed, consider the example:
 
-\begin{verbatim}
-let f =_ω (λy :_1 (). case y of () -> let z =_1 True in z) in
-let a =_ρ f ()
-\end{verbatim}
+\begin{code}
+let f = _ omega (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
+let a = _ rho f ()
+\end{code}
 
 The function \texttt{f} creates some data. When run in a linear context, \texttt{f}
 allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
@@ -599,13 +644,13 @@ Lemmas:
 Yet, the following example may, at first glance, look like a counter
 example where ||x|| is in the non-GC heap while |y| is in the
 GC-heap and points to |x|:
-\begin{verbatim}
+\begin{code}
 data () = ()
 
 let x =_1 ()
 let y =_ω ( case x of { () -> () })
 in ()
-\end{verbatim}
+\end{code}
 However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
 typing rule for 'case' gives the same weight to the case-expression as
 a whole as to the scrutinee (|x| in this case). Therefore
@@ -613,9 +658,9 @@ a whole as to the scrutinee (|x| in this case). Therefore
 
 Remark: for a program to turn a 1-weight into an ω-weight, one may use
 the following definition:
-\begin{verbatim}
+\begin{code}
 data Bang A = Box ωA
-\end{verbatim}
+\end{code}
 The expression |case x of { () -> Box ()}| has type
 |Bang A|, but still with weight 1.  The programming pattern described above does not apply
 just to the unit type $()$, but to any data type |D|. Indeed, for such
@@ -629,28 +674,28 @@ then be moved to the GC heap and used for general consumption.
 In that light, the only way to use a linear value from the GC-heap is
 to force it first, and then chain computations with |case| --- for
 example as follows:
-\begin{verbatim}
-let x =_1 ()
+\begin{code}
+let x = _1 ()
 case ( case x of { () -> Box () }) of {
   Box y -> ()
 }
-\end{verbatim}
+\end{code}
 This still does not create a pointer from GC-heap to non-GC heap: by the
 time |y| is created, the linear value |x| has been freed.
 
 If, on the other hand, |x| had weight $ω$, then we would be in the
 usual Haskell case, and the following expression does type:
-\begin{verbatim}
+\begin{code}
 let x =_ω ()
 let y =_ω ( case x of { () -> () } )
 in ()
-\end{verbatim}
+\end{code}
 
 If one wants to use the linear heap 'locally', one must use CPS.
 
 That is:
 
-\begin{verbatim}
+\begin{code}
 doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap f x k = case f x of
   Box y -> k y
@@ -658,7 +703,7 @@ doSomethingWithLinearHeap f x k = case f x of
 doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap x k = case x of
   Box y -> k y
-\end{verbatim}
+\end{code}
 
 \section{Comparison with other techniques}
 
@@ -741,32 +786,6 @@ encoding from session types to linear types (as Wadler demonstrates).
 
 % (#+) :: #Int -> #Int -> #Int
 
-% VERSION 1:
-% newByteArray# :: Int# → (MutableByteArray# ⊸ Bang k) ⊸ k
-% updateByteArray# :: Int# -> Byte# → MutableByteArray# ⊸ MutableByteArray#
-% freeByteArray# :: MutableByteArray# ⊸ ()
-% freezeByteArray# :: MutableByteArray# ⊸ Bang ByteArray#
-% indexMutByteArray# :: Int# -> MutableByteArray# ⊸ (MutableByteArray# ⊗ Byte#)
-% indexByteArray# :: Int# -> ByteArray# ⊸ (ByteArray# ⊗ Byte#)
-%
-% The Bang in newByteArray ensures that the computation depending on the
-% array returns something which is on the GC heap. This means two things
-% 1. the mutableByteArray cannot be returned via k 2. even when called
-% in an ω context, we can return the k without problem.
-
-
-% Other remark: the type system ensures that we never have a variable
-%
-% x :_ω MutableByteArray
-%
-% at any point.
-%
-% VERSION 2:
-% newByteArray# :: Heap s ⊸ Int# → (MutableByteArray# s ⊗ Heap s)
-% updateByteArray# :: Int# -> Byte# → MutableByteArray# s ⊸ MutableByteArray# s
-% freeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ Heap s
-% freezeByteArray# :: MutableByteArray# s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray#)
- % withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
