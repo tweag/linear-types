@@ -1,7 +1,8 @@
 all: FormalSystem.pdf
 
 PaperTools/bibtex/jp.bib:
-	echo "Get the submodules"
+	echo "Get the submodules:"
+	echo "Try 'git submodule update --init'"
 	false
 
 %.tex: %.lhs
