@@ -305,8 +305,8 @@ e,s,t,u & ::= \\
 \end{definition}
 
 
-Remark: we often omit the weight $q$ in an application, because it is
-usually obvious from the context.
+Remark: we sometimes omit the weights or type annotations when they
+are obvious from the context.
 
 We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
 following rules.  The intuition behind this judgement is: can
@@ -349,13 +349,18 @@ $Γ$.
 In the variable rule, one may ignore an arbitrary context $ωΓ$ ---
 indeed it is acceptable not to consume $ω$-weighted variables.
 
-The application rule may also deserve some commentary. In order to be able
-to all $t$ once, one needs to produce a quantity $q$ of $A$. Thus we
-split the context into a $Γ$ part and $q$ $Δ$ parts. The $Γ$ part
+The application rule may also deserve some commentary. In order to be
+able to all $t$ once, one needs to produce a quantity $q$ of $A$. Thus
+we split the context into a $Γ$ part and $q$ $Δ$ parts. The $Γ$ part
 feeds $t$, while each of the $Δ$ feed an instance of $u$. The other
 rules follow the same pattern.
 
-\todo{Remark: auto scaling.}
+In particular, the following judgement holds:
+
+\[x :ω A, f :ω A ⊸ B, g :_1 B ⊸ C ⊢ g (f x) : C \]
+
+That is, the type-system is capable of intepreting the expression
+$f x$ as calling $ω$ times $f$ with the argument $x$.
 
 \subsection{Examples of simple programs and their types}
 In order to assess the power of our language, let us consider a few
