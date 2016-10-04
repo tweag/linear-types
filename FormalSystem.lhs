@@ -8,6 +8,7 @@
 %format omega = "ω"
 %format rho = "ρ"
 %format pi = "π"
+%subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
 \usepackage{fixltx2e}
@@ -270,7 +271,7 @@ construct weight-dependent types using the syntax $∀ρ. A$.
 
 \begin{definition}[Syntax of data type declaration]
 \begin{align*}
-\mathsf{data} D \mathsf{where} \left(c_k :: A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\mathsf{data} D  \mathsf{where} \left(c_k :: A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
