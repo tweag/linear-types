@@ -1,5 +1,7 @@
+% -*- latex -*-
 % Created 2016-09-15 tor 14:09
 \documentclass[11pt]{article}
+%include polycode.fmt
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
 \usepackage{fixltx2e}
@@ -165,7 +167,7 @@ number of times that the program must use the variable in question.
 We call this number of times the \emph{weight} of the variable.
 
 \begin{align*}
-  p,q &::= 1 ~|~ ω ~|~ π ~|~ p+q ~|~ p·q
+  p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
 \end{align*}
 
 A weight can either be a constant ($1$ or $ω$), a variable (ranged
@@ -196,8 +198,8 @@ with a weight, additionally to the type:
 
 \begin{align*}
   Γ,Δ & ::=\\
-    & |  x :_q A, Γ & \text{weight-annotated binder} \\
-    & |     & \text {empty context}
+    & ||  x :_q A, Γ & \text{weight-annotated binder} \\
+    & ||     & \text {empty context}
 \end{align*}
 
 Because weights have a ring-like structure, contexts have a module
@@ -238,9 +240,9 @@ Additionally, context addition is commutative.
 \begin{definition}[Syntax of types]
 \begin{align*}
   A,B &::=\\
-      & |  A →_q B &\text{function type}\\
-      & |  ∀ρ. A &\text{weight-dependent type}\\
-      & |  D &\text{data type}
+      & ||  A →_q B &\text{function type}\\
+      & ||  ∀ρ. A &\text{weight-dependent type}\\
+      & ||  D &\text{data type}
 \end{align*}
 \end{definition}
 
@@ -291,14 +293,14 @@ Note the following special cases:
 \begin{definition}[Syntax of terms]
 \begin{align*}
 e,s,t,u & ::= \\
-    & |  x & \text{variable} \\
-    & |  λx. t & \text{abstraction} \\
-    & |  t_q s & \text{application} \\
-    & |  λπ. t & \text{weight abstraction} \\
-    & |  t p & \text{weight application} \\
-    & |  c t₁ … t_n & \text{data construction} \\
-    & |  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-    & |  \flet x =_{q₁} … x =_{q_n} t_n \fin u & \text{let}
+    & ||  x & \text{variable} \\
+    & ||  λx. t & \text{abstraction} \\
+    & ||  t_q s & \text{application} \\
+    & ||  λπ. t & \text{weight abstraction} \\
+    & ||  t p & \text{weight application} \\
+    & ||  c t₁ … t_n & \text{data construction} \\
+    & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+    & ||  \flet x =_{q₁} … x =_{q_n} t_n \fin u & \text{let}
 \end{align*}
 \end{definition}
 
@@ -412,8 +414,10 @@ issue involves
 1. using a monadic interface to the library and
 2. having an existentially bound a type parameter in the type:
 
+\begin{code}
 type M s a
 instance Monad s
+\end{code}
 
 primitive :: M s X
 runLowLevel :: M s a -> IO x
@@ -565,18 +569,18 @@ Lemmas:
 %    a. π = ω. Statically, the expression can only depend on the ω context, so we can't create any reference to the linear heap.
 %    b. ρ = ω. In this case, by lemma 1. the linear heap is empty, and thus it's impossible to link to anything in it.
 
-% relation: Δ|Γ;Φ ⊢ e :_ρ A   ≜  Δ ⊢ letω Γ in let1 Φ in e :_ρ A
+% relation: Δ||Γ;Φ ⊢ e :_ρ A   ≜  Δ ⊢ letω Γ in let1 Φ in e :_ρ A
 
-% theorem: if Γ;Φ : e ⇓_ρ Δ,Ψ : z then ∀Ξ,Θ,Α.   Θ|Γ;(Φ-Ξ) ⊢ e :_ρ A  ⇒  Θ|Δ;(Ψ-Ξ) ⊢ z :_ρ A
+% theorem: if Γ;Φ : e ⇓_ρ Δ,Ψ : z then ∀Ξ,Θ,Α.   Θ||Γ;(Φ-Ξ) ⊢ e :_ρ A  ⇒  Θ||Δ;(Ψ-Ξ) ⊢ z :_ρ A
 
 
 % unrestricted variable case:
 
 % Need to prove:
 
-%   Θ,x:T|Γ;(Φ-Ξ) ⊢ e :_ρ T  ⇒  Θ,x:T|Δ;(ψ-Ξ) ⊢ z :_ρ T
+%   Θ,x:T||Γ;(Φ-Ξ) ⊢ e :_ρ T  ⇒  Θ,x:T||Δ;(ψ-Ξ) ⊢ z :_ρ T
 % ──────────────────────────────────────────────────────
-%  Θ|Γ,x↦e;(Φ-Ξ) ⊢ x :_ρ T  ⇒  Θ|Δ,x↦z;(ψ-Ξ) ⊢ z :_ρ T
+%  Θ||Γ,x↦e;(Φ-Ξ) ⊢ x :_ρ T  ⇒  Θ||Δ,x↦z;(ψ-Ξ) ⊢ z :_ρ T
 
 % case case:
 
@@ -585,16 +589,16 @@ Lemmas:
 % Ψ = free vars ek - y + x + Z
 % ? = free vars ek - y
 
-% Σ|Γ;Φ-(Z+?) ⊢ e :_ρ D ⇒ Σ|Δ;Ψ-(Z+?) ⊢ ck x :_ρ D
-% Σ|Δ;Ψ-Z ⊢ ek[x/y] :_ρ A ⇒ Σ|θ;Ξ-Z ⊢ z :_ρ A
+% Σ||Γ;Φ-(Z+?) ⊢ e :_ρ D ⇒ Σ||Δ;Ψ-(Z+?) ⊢ ck x :_ρ D
+% Σ||Δ;Ψ-Z ⊢ ek[x/y] :_ρ A ⇒ Σ||θ;Ξ-Z ⊢ z :_ρ A
 % ─────────────────────────────────────────────────────────────
-% Σ|Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ|Θ,Ξ-Z ⊢ z :_ρ A
+% Σ||Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ||Θ,Ξ-Z ⊢ z :_ρ A
 
 
 
 Yet, the following example may, at first glance, look like a counter
-example where \verb|x| is in the non-GC heap while \verb|y| is in the
-GC-heap and points to \verb|x|:
+example where ||x|| is in the non-GC heap while |y| is in the
+GC-heap and points to |x|:
 \begin{verbatim}
 data () = ()
 
@@ -602,20 +606,20 @@ let x =_1 ()
 let y =_ω ( case x of { () -> () })
 in ()
 \end{verbatim}
-However, while \verb|()| can indeed be typed as $⊢ () :_ω ()$, the
+However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
 typing rule for 'case' gives the same weight to the case-expression as
-a whole as to the scrutinee (\verb|x| in this case). Therefore
-\verb|case x of { () -> ()}| has weight 1.
+a whole as to the scrutinee (|x| in this case). Therefore
+|case x of { () -> ()}| has weight 1.
 
 Remark: for a program to turn a 1-weight into an ω-weight, one may use
 the following definition:
 \begin{verbatim}
 data Bang A = Box ωA
 \end{verbatim}
-The expression \verb|case x of { () -> Box ()}| has type
-\verb|Bang A|, but still with weight 1.  The programming pattern described above does not apply
-just to the unit type $()$, but to any data type \verb|D|. Indeed, for such
-a type we will have a function \verb|D ⊸ Bang D| (this may be even
+The expression |case x of { () -> Box ()}| has type
+|Bang A|, but still with weight 1.  The programming pattern described above does not apply
+just to the unit type $()$, but to any data type |D|. Indeed, for such
+a type we will have a function |D ⊸ Bang D| (this may be even
 efficiently implemented by copying a single pointer --- for example if
 we have a single array, or a notion of compact region).  Thus at any
 point where we have an intermediate result comprised of data only, we
@@ -623,7 +627,7 @@ may switch to use the linear heap. In a second phase, this data may
 then be moved to the GC heap and used for general consumption.
 
 In that light, the only way to use a linear value from the GC-heap is
-to force it first, and then chain computations with \verb|case| --- for
+to force it first, and then chain computations with |case| --- for
 example as follows:
 \begin{verbatim}
 let x =_1 ()
@@ -632,9 +636,9 @@ case ( case x of { () -> Box () }) of {
 }
 \end{verbatim}
 This still does not create a pointer from GC-heap to non-GC heap: by the
-time \verb|y| is created, the linear value \verb|x| has been freed.
+time |y| is created, the linear value |x| has been freed.
 
-If, on the other hand, \verb|x| had weight $ω$, then we would be in the
+If, on the other hand, |x| had weight $ω$, then we would be in the
 usual Haskell case, and the following expression does type:
 \begin{verbatim}
 let x =_ω ()
@@ -697,7 +701,6 @@ programs.)
 Finally, a benefit of the linearity in variables is that polymorphism
 over weights is straightforward, while linearity in types require
 bounded polymorphism to achieve most general types.
-}
 
 \subsection{Session types vs. linear types}
 
