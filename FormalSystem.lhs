@@ -221,6 +221,7 @@ arrow type is parametrised by the amount of its argument it requires:
 \end{itemize}
 
 \subsection{Typing contexts}
+\label{sec:typing-contexts}
 
 Each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
@@ -289,12 +290,12 @@ module structure on typing contexts as follows.
   \end{align*}
 \end{lemma}
 
-\subsection{Types}
+\subsection{Typing}
 
 \begin{figure}
   \figuresection{Type declarations}
   \begin{align*}
-    \mathsf{data} D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
   \end{align*}
 
   \figuresection{Types}
@@ -334,27 +335,41 @@ notations:
 The intuition behind the weighted arrow \(A →_q B\) is that you can
 get a \(B\) if you can provide a quantity \(q\) of \(A\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
-$f x$ is well-typed. Therefore the constraints imposed by weights on
+$f x$ is well-typed. Therefore, the constraints imposed by weights on
 arrow types is dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of weight $1$ or $ω$.
 
 \begin{definition}[Syntax of data type declaration]
-\begin{align*}
-\mathsf{data} D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
-\end{align*}
+  Data type declarations, also presented in Figure~\ref{fig:syntax}
+  deserve some additional explanation.
+  \begin{align*}
+    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \end{align*}
+  Means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
+  each with \(n_k\) arguments. Arguments of constructors have a
+  weight, just like arguments of function: an argument of weight $ω$
+  means that the data type can store, at that position, data which
+  \emph{must} have weight $ω$; while a weight of $1$ means that data
+  at that position \emph{can} have weight $1$ (or $ω$). A further
+  requirement is that the weights $q_i$ will either be $1$ or
+  $ω$.\info{The requirement that weights are constant in constructor
+    makes sense in the dynamic semantics, it's not only to simplify
+    the presentation with consideration about type polymorphism. There
+    may be a meaning to weight-polymorphic data type, but I [aspiwack]
+    can't see it.}\unsure{Should we explain some of the above in the
+    text?}
 
-(\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
-
-We will give special typing rules for constructors, but one could
-equivalently add a constant per constructor $c_k$, with the type
-$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$.
+  For many purposes, $c_k$, behaves like a constant with the type
+  $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+  Figure~\ref{fig:typing} will make clear, this means in particular
+  that to have a quantity $ω$ of data of type $D$, all its sub-data
+  including the arguments declared with weight $1$ must have weight
+  $ω$.
 \end{definition}
-Such declarations cannot occur in expressions; thus the weights $q_i$
-will either be $1$ or $ω$.
-
-Note the following special cases:
+The following example of data-type declarations illustrate the role of
+weights in constructor arguments:
 \begin{itemize}
 \item The type
   $\data \varid{Pair} A B = \varid{Pair} : A →_ω B →_ω
@@ -366,7 +381,7 @@ Note the following special cases:
   $A⊗B$)
 \item The type
   $\data \varid{Bang} A = \varid{Bang} A→_ω \varid{Bang} A$ is
-  the exponential modality of linear logic (usually written $!A$)
+  the exponential modality of linear logic (usually written ${!}A$)
 \end{itemize}
 
 % \begin{definition}[Syntax of terms]
@@ -383,9 +398,25 @@ Note the following special cases:
 % \end{align*}
 % \end{definition}
 
+The term syntax (Figure~\ref{fig:syntax}) is that of a
+type-annotated~--~\emph{à la} Church~--~simply typed $λ$-calculus
+with let-definitions. Binders in $λ$-abstractions and type definitions
+are annotated with both their type and their weight (echoing the
+typing context from Section~\ref{sec:typing-contexts}), weight
+abstraction and application are explicit.
 
-Remark: we sometimes omit the weights or type annotations when they
-are obvious from the context.
+It is perhaps more surprising that applications and cases are
+annotated by a weight. This information is usually redundant, but we
+use is in Section~\ref{sec:orgheadline16} to define a compositional
+dynamic semantics with prompt deallocation of data. We sometimes omit
+the weights or type annotations when they are obvious from the
+context, especially in the case of applications.
+
+\begin{figure}
+
+  \caption{Typing rules}
+  \label{fig:typing}
+\end{figure}
 
 We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
 following rules.  The intuition behind this judgement is: can
@@ -876,3 +907,4 @@ encoding from session types to linear types (as Wadler demonstrates).
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
 %  LocalWords:  deallocation Launchbury launchbury GC scrutinee
 %  LocalWords:  centric polymorphism modality intuitionistic
+%  LocalWords:  compositional
