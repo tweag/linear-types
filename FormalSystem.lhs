@@ -290,7 +290,7 @@ module structure on typing contexts as follows.
 \begin{align*}
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
-      & ||  ∀ρ. A &\text{weight-dependent type}\\
+      & ||  ∀ρ. A &\text{weight-polymorphic type}\\
       & ||  D &\text{data type}
 \end{align*}
 \end{definition}
@@ -308,11 +308,11 @@ Note in particular when one has $x :_ω A$ and $f :_1 A ⊸ B$,
 the call $f x$ is well-typed.
 
 The calculus also features abstraction over weights, and thus we can
-construct weight-dependent types using the syntax $∀ρ. A$.
+construct weight-polymorphic types using the syntax $∀ρ. A$.
 
 \begin{definition}[Syntax of data type declaration]
 \begin{align*}
-\mathsf{data} D  \mathsf{where} \left(c_k :: A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\mathsf{data} D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 
 (\(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\)).
@@ -326,9 +326,17 @@ will either be $1$ or $ω$.
 
 Note the following special cases:
 \begin{itemize}
-\item The type $\data \varid{Pair} A B = \varid{Pair} ωA ωB$ is isomorphic to the intuitionistic product (Usually written $A×B$)
-\item The type $\data \varid{Tensor}  A  B = \varid{Pair}  1A  1B$ is isomorphic to the linear tensor product (Usually written $A⊗B$)
-\item The type $\data \varid{Bang} A = \varid{Box}  ωA$ is isomorphic to the exponential (Usually written $!A$)
+\item The type
+  $\data \varid{Pair} A B = \varid{Pair} : A →_ω B →_ω
+  \varid{Pair} A B$ is the intuitionistic product (usually written
+  $A×B$)
+\item The type
+  $\data \varid{Tensor} A B = \varid{Tensor} : A →_1 B →_1
+  \varid{Tensor} A B$ is the linear tensor product (usually written
+  $A⊗B$)
+\item The type
+  $\data \varid{Bang} A = \varid{Bang} A→_ω \varid{Bang} A$ is
+  the exponential modality of linear logic (usually written $!A$)
 \end{itemize}
 
 \begin{definition}[Syntax of terms]
@@ -341,7 +349,7 @@ e,s,t,u & ::= \\
     & ||  t p & \text{weight application} \\
     & ||  c t₁ … t_n & \text{data construction} \\
     & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-    & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n =_{q_n} t_n \fin u & \text{let}
+    & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
 \end{align*}
 \end{definition}
 
@@ -834,4 +842,4 @@ encoding from session types to linear types (as Wadler demonstrates).
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
 %  LocalWords:  deallocation Launchbury launchbury GC scrutinee
-%  LocalWords:  centric polymorphism
+%  LocalWords:  centric polymorphism modality
