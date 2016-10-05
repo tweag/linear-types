@@ -188,7 +188,7 @@ arbitrary quantity of values of type $A$.
 This encoding means that the quantity of available value must be
 managed manually, and the common case (\emph{i.e.} when more than one
 value is required) requires additional syntax. For instance, in the
-pidgin-Haskell syntax which we shall use throughout this article, we
+pidgin-Haskell syntax which we will use throughout this article, we
 couldn't write the following:
 \begin{code}
   dup :: a -> a⊗a
@@ -208,26 +208,45 @@ the output of the intermediate functions:
   v = dup (Bang (id (Bang 42)))
 \end{code}
 
-In our calculus, we replace have, instead, an arrow param
+In our calculus, instead, both arrow types are primitive. To be
+precise, in a style pioneered by McBride~\cite{mcbride_rig_2016}, the
+arrow type is parametrised by the amount of its argument it requires:
+\begin{itemize}
+\item $A →_1 B$ is the linear arrow $A ⊸ B$
+\item $A →_ω B$ is the intuitionistic arrow $A → B$
+\end{itemize}
 
-\subsection{Weights}
+\subsection{Typing contexts}
 
-In our calculus, each variable in the context is annotated with the
-number of times that the program must use the variable in question.
-We call this number of times the \emph{weight} of the variable.
+Each variable in typing contexts is annotated with the number of times
+that the program must use the variable in question. We call this
+number of times the \emph{weight} of the variable.
 
-\begin{align*}
-  p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
-\end{align*}
+\begin{figure}
+  \begin{align*}
+    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q\\
+    \hfill\\
+    Γ,Δ & ::=\\
+        & ||  x :_q A, Γ & \text{weight-annotated binder} \\
+        & ||     & \text {empty context}
+  \end{align*}
 
-A weight can either be a constant ($1$ or $ω$), a variable (ranged
-over by the metasyntactic variables \(π\) and \(ρ\)), a product or a
-sum.  When the weight is $1$, the program \emph{must} consume the variable
-exactly once. When the weight is $ω$, it \emph{may} consume it any number of
-times (possibly zero).
+  \caption{Syntax of weights and contexts}
+  \label{fig:contexts}
+\end{figure}
 
-Weights are equipped with an equivalence relation $(=)$ which obeys
-the following laws:
+
+A weight can either be a constant ($1$ or $ω$). When the weight is
+$1$, the program \emph{must} consume the variable exactly once. When
+the weight is $ω$, it \emph{may} consume it any number of times
+(possibly zero). For the sake of polymorphism, weights are extended
+with weight \emph{expressions}, which contain variables (ranged over by
+the metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
+complete syntax of weights and contexts can be found in
+Figure~\ref{fig:contexts}.
+
+In addition, weights are equipped with an equivalence relation $(=)$
+which obeys the following laws:
 
 \begin{itemize}
 \item $+$ and $·$ are associative and commutative
@@ -238,53 +257,33 @@ the following laws:
 \item $1 + 1 = ω$
 \item $ω + ω = ω$
 \end{itemize}
-
-Thus, weights have a ring-like algebra.
-
-\subsection{Contexts}
-
-As we wrote above, every variable binding in a context is equipped
-with a weight, additionally to the type:
-
-\begin{align*}
-  Γ,Δ & ::=\\
-    & ||  x :_q A, Γ & \text{weight-annotated binder} \\
-    & ||     & \text {empty context}
-\end{align*}
-
-Because weights have a ring-like structure, contexts have a module
-structure. In particular, we can define context addition and context
-scaling.
+Thus, weights form a semi-ring (without a zero), which extends to a
+module structure on typing contexts as follows.
 
 \begin{definition}[Context addition]~
-\begin{itemize}
-\item When a variable appears on both input contexts, we add the weights in
-the result:
-
-\((x :_p A,Γ) + (x :_q A,Δ) = x :_{p+q} A, (Γ+Δ)\)
-
-\item otherwise we propagate:
-
-\((x :_p A,Γ) + Δ = x :_p A, Γ+Δ\)   \hfill   \(x ∉ Δ\)
-\end{itemize}
+  \begin{align*}
+    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
+    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
+    () + Δ &= Δ
+  \end{align*}
 \end{definition}
 
 \begin{definition}[Context scaling]
-\begin{displaymath}
-p(x :_q A, Γ) =  x :_{pq} A, pΓ
-\end{displaymath}
+  \begin{displaymath}
+    p(x :_q A, Γ) =  x :_{pq} A, pΓ
+  \end{displaymath}
 \end{definition}
 
 \begin{lemma}[Contexts form a module]
+  The following laws hold:
   \begin{align*}
- p (Γ+Δ) &=p Γ+p Δ\\
- (p+q) Γ&=p Γ+q Γ \\
- (pq) Γ&=p (q Γ)\\
- 1 Γ&=Γ
+    Γ + Δ &= Δ + Γ\\
+    p (Γ+Δ) &= p Γ + p Δ\\
+    (p+q) Γ &= p Γ+ q Γ \\
+    (pq) Γ &= p (q Γ)\\
+    1 Γ &= Γ
   \end{align*}
 \end{lemma}
-
-Additionally, context addition is commutative.
 \subsection{Types}
 
 \begin{definition}[Syntax of types]
@@ -835,4 +834,4 @@ encoding from session types to linear types (as Wadler demonstrates).
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
 %  LocalWords:  deallocation Launchbury launchbury GC scrutinee
-%  LocalWords:  centric
+%  LocalWords:  centric polymorphism
