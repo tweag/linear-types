@@ -384,20 +384,6 @@ weights in constructor arguments:
   the exponential modality of linear logic (usually written ${!}A$)
 \end{itemize}
 
-% \begin{definition}[Syntax of terms]
-% \begin{align*}
-% e,s,t,u & ::= \\
-%     & ||  x & \text{variable} \\
-%     & ||  λ(x:_qA). t & \text{abstraction} \\
-%     & ||  t_q s & \text{application} \\
-%     & ||  λπ. t & \text{weight abstraction} \\
-%     & ||  t p & \text{weight application} \\
-%     & ||  c t₁ … t_n & \text{data construction} \\
-%     & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-%     & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
-% \end{align*}
-% \end{definition}
-
 The term syntax (Figure~\ref{fig:syntax}) is that of a
 type-annotated~--~\emph{à la} Church~--~simply typed $λ$-calculus
 with let-definitions. Binders in $λ$-abstractions and type definitions
@@ -412,65 +398,146 @@ dynamic semantics with prompt deallocation of data. We sometimes omit
 the weights or type annotations when they are obvious from the
 context, especially in the case of applications.
 
+%%% typing rule macros %%%
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t_q u  :  B}\text{app}}
+\newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …,
+      x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
+    {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
+%%% /macros %%%
+
 \begin{figure}
+  \begin{mathpar}
+    \varrule
+
+    \inferrule{Γ, x :_{q} A  ⊢   t : B}
+    {Γ ⊢ λ(x:_qA). t  :  A  →_q  B}\text{abs}
+
+    \apprule
+
+    \inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
+        A_n →_{q_n} D$ constructor}}
+    {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{con}
+
+    \caserule
+
+    \inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
+    { Δ+\sum_i qᵢΓᵢ ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
+
+    \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
+    {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
+
+    \inferrule{Γ ⊢ t :  ∀π. A}
+    {Γ ⊢ t p  :  A[p/π]}\text{w.app}
+  \end{mathpar}
 
   \caption{Typing rules}
   \label{fig:typing}
 \end{figure}
 
-We have a typing judgement \(Γ ⊢ t : A\), inductively defined by the
-following rules.  The intuition behind this judgement is: can
-construct \emph{exactly one} value of type $A$ from $Γ$, using $t$'s
-recipe. We do not define a judgement to denote that we can construct a
-given quantity $q$ of type $A$, because we can instead use the
-judgement $Δ ⊢ t : A$ together with the constraint $Γ = pΔ$ to
-indicate this situation. The intuition behind this choice is that one
-can simply call $q$ times $t$, each time consuming the $q$-th part of
-$Γ$.
+\improvement{It may be useful to have a better transition between
+  syntax and typing judgement}
 
-\begin{definition}[Typing judgement]
-\begin{mathpar}
-\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}
+Typing judgements \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
+build \emph{one} $A$''. Contrary to~\cite{mcbride_rig_2016}, there is
+no judgement to mean ``with $Γ$ I can build $p$ $A$-s''. Instead, we
+make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
+one can build a quantity $p$ of $A$. This idea is at play in the
+application rule (the complete set of rules can be found in
+Figure~\ref{fig:typing}):
+$$\apprule$$
+Here, $t$ requires its argument $u$ to have weight $q$: $Δ ⊢ u : A$
+give us $u$ with a weight of $1$, therefore the application needs $qΔ$
+to have a quantity $q$ of $u$ at its disposal. This rule is the second
+arm of the weighted arrows which allow to have a regular programming
+language as a subset of this calculus.\improvement{aspiwack: I've used
+  the phrase ``a regular programming language as a subset [of this
+  calculus]'' several time already, it's rather awkward, a better
+  phrase would be welcome.} Indeed, recall the example from the
+beginning of Section~\ref{sec:orgheadline8} which had us write |dup
+(Bang (id (Bang 42)))|. Thanks to the application rule we have
+instead:\improvement{maybe work a little on the presentation of this
+  example}
+$$
+\inferrule
+{\inferrule
+  {\inferrule
+    {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
+    {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
+  {⊢ λ x. Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id 42}}
+{()+ω() ⊢ (λ x. Tensor x x) (id 42)}\text{app}
+$$
+In the application rule the promotion rule of linear logic is applied
+implicitly.
+$$\inferrule{{!}Γ ⊢ A}{{!}Γ ⊢ {!}A}$$
+where ${!}Γ$ is a context with all the hypotheses of the form ${!}A$
+for some $A$.
 
-\inferrule{Γ, x :_{q} A  ⊢   t : B}
-          {Γ ⊢ λ(x:_qA). t  :  A  →_q  B}\text{abs}
+This implicit use of the promotion rule is what makes it possible to
+seamlessly mix linear types and intuitionistic types inside the same
+language. The whole idea is a bit subtle, and it may be worth it to
+ponder a moment why it works as advertised.  \info{There is a
+  presentation of the application which is closer to the usual
+  promotion rule: requiring $\Delta$ to be divisible by $q$ (and not
+  scale $\Delta$ in the conclusion). This works fine when weights are
+  $1$ and $\omega$, but will fail with $0$ (used for uniform
+  quantification in a dependently typed presentation) or more exotic
+  weights (such as $2$).}  \unsure{Should we make a comment explaining
+  the above?}
 
-\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}
-          {Γ+qΔ ⊢ t_q u  :  B}\text{app}
+The variable rule, used in the above example, may require some
+clarification.
+$$\varrule$$
+The variable rule is the rule which implements the weakening of
+$ω$-weighted variables: that is, it allows variables of weight
+$ω$~--~and only of weight $ω$~--~not to be used. Pushing weakening to
+the variable rule is classic in programming language, and in the case
+of linear logic, dates back at least to Andreoli's work on
+focusing~\cite{andreoli_logic_1992}. Note that the judgement
+$x :_ω A ⊢ x :A$ is an instance of the variable rule, since
+$(x :_ω A)+(x :_1 A) = x:_ω A$.
 
-\inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k$ is a constructor of $D$ with arguments $Aᵢ$ and weights $qᵢ$}}
-          {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{con}
+Most of the other typing rules are straightforward, but let us linger
+for a moment on the case rule:
+$$\caserule$$
+Like the application rule it is parametrised by a weight $p$. But,
+while in the application rule only the argument is affected by $p$, in
+the case rule, not only the scrutinee but also the variable bindings
+in the branches are affected by $p$. What it means, concretely, is
+that the weight of data is \emph{inherited} by its sub-data: if we
+have a quantity $1$ of $A⊗B$ we have a quantity $1$ of $A$ and a
+quantity $1$ of $B$, and if we have a quantity $ω$ of $A⊗B$ we have a
+quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
+following program, which asserts the existence of projections, is
+well-typed
+\begin{code}
+  data (⊗) a b = (,) : a ⊸ b ⊸ a⊗b
 
-\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …, x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\ \text{with each $c_k$ as above}}
-          {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}
+  first  :: a⊗b → a
+  first (a,b)  = a
 
-
-\inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
-          { Δ+\sum_i qᵢΓᵢ ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
-
-\inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
-          {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
-
-\inferrule{Γ ⊢ t :  ∀π. A}
-          {Γ ⊢ t p  :  A[p/π]}\text{w.app}
-\end{mathpar}
-\end{definition}
-
-In the variable rule, one may ignore an arbitrary context $ωΓ$ ---
-indeed it is acceptable not to consume $ω$-weighted variables.
-
-The application rule may also deserve some commentary. In order to be
-able to all $t$ once, one needs to produce a quantity $q$ of $A$. Thus
-we split the context into a $Γ$ part and $q$ $Δ$ parts. The $Γ$ part
-feeds $t$, while each of the $Δ$ feed an instance of $u$. The other
-rules follow the same pattern.
-
-In particular, the following judgement holds:
-
-\[x :ω A, f :ω A ⊸ B, g :_1 B ⊸ C ⊢ g (f x) : C \]
-
-That is, the type-system is capable of intepreting the expression
-$f x$ as calling $ω$ times $f$ with the argument $x$.
+  snd  :: a⊗b → b
+  snd (a,b)  = b
+\end{code}
+These projections are a small deviation from linear logic: the
+existence of this projections mean that ${!}(A⊗B)$ is isomorphic to
+${!}({!}A⊗{!}B)$. While this additional law may restrict the
+applicable models of our calculus (hence may be inconvenient for some
+applications), it is a key to retro-fitting linearity in an existing
+language: if we interpret the weights on the arguments of existing
+constructor to be $1$ while the weights on the arguments of existing
+functions to be $ω$, the typable programs are exactly the same as an
+intuitionistic $λ$-calculus.
+\info{Remark: the reason why
+  we can have ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we
+  have a model in mind where all sub-data is boxed (and managed by GC)
+  if the data is managed by GC. In a model where sub-data is unboxed,
+  we would need the ability to copy sub-data (\emph{chunks of data})
+  into the GC-ed heap, which is not necessarily available for all
+  data. So this extension of linear logic fits our Haskellian model
+  rather snugly. It is not the only possible path, however.}  \improvement{show free, dup and copy on booleans
+  and peano-numbers}
 
 \subsection{Examples of simple programs and their types}
 In order to assess the power of our language, let us consider a few
@@ -906,5 +973,5 @@ encoding from session types to linear types (as Wadler demonstrates).
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
 %  LocalWords:  deallocation Launchbury launchbury GC scrutinee
-%  LocalWords:  centric polymorphism modality intuitionistic
-%  LocalWords:  compositional
+%  LocalWords:  centric polymorphism modality intuitionistic typable
+%  LocalWords:  compositional Andreoli's
