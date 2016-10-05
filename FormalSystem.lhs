@@ -31,6 +31,7 @@
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
 % \setmathfont{TeX Gyre Pagella Math}
+
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
 \newcommand{\inl}{\mathsf{inl} }
@@ -39,6 +40,9 @@
 \newcommand{\fin}{ \mathsf{in} }
 \newcommand{\varid}{\mathnormal}
 \newcommand{\susp}[1]{⟦#1⟧}
+
+\newcommand{\figuresection}[1]{\textbf{#1}}
+
 \usepackage[dvipsnames]{xcolor}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \usepackage{xargs}
@@ -284,31 +288,57 @@ module structure on typing contexts as follows.
     1 Γ &= Γ
   \end{align*}
 \end{lemma}
+
 \subsection{Types}
 
-\begin{definition}[Syntax of types]
-\begin{align*}
+\begin{figure}
+  \figuresection{Type declarations}
+  \begin{align*}
+    \mathsf{data} D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \end{align*}
+
+  \figuresection{Types}
+  \begin{align*}
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
       & ||  ∀ρ. A &\text{weight-polymorphic type}\\
       & ||  D &\text{data type}
-\end{align*}
-\end{definition}
+  \end{align*}
 
-The weighted function type is a generalization of the intuitionistic
-arrow and the linear arrow. In fact in the context of this paper, we
-will define them as such:
+  \figuresection{Terms}
+  \begin{align*}
+    e,s,t,u & ::= \\
+            & ||  x & \text{variable} \\
+            & ||  λ(x:_qA). t & \text{abstraction} \\
+            & ||  t_q s & \text{application} \\
+            & ||  λπ. t & \text{weight abstraction} \\
+            & ||  t p & \text{weight application} \\
+            & ||  c t₁ … t_n & \text{data construction} \\
+            & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
+  \end{align*}
+
+  \caption{Syntax of the linear calculus}
+  \label{fig:syntax}
+\end{figure}
+
+The types of our calculus (see Figure~\ref{fig:syntax}) are simple
+types with arrows (albeit weighted ones), data types, and weight
+polymorphism.  The weighted function type is a generalization of the
+intuitionistic arrow and the linear arrow. We will use the following
+notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
 \item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-In general, the intuition behind the weighted arrow \(A →_q B\) is
-that you can get a \(B\) if you can provide a quantity \(q\) of \(A\).
-Note in particular when one has $x :_ω A$ and $f :_1 A ⊸ B$,
-the call $f x$ is well-typed.
-
-The calculus also features abstraction over weights, and thus we can
-construct weight-polymorphic types using the syntax $∀ρ. A$.
+The intuition behind the weighted arrow \(A →_q B\) is that you can
+get a \(B\) if you can provide a quantity \(q\) of \(A\). Note in
+particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
+$f x$ is well-typed. Therefore the constraints imposed by weights on
+arrow types is dual to those they impose on variables in the context:
+a function of type $A→B$ \emph{must} be applied to an argument of
+weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
+argument of weight $1$ or $ω$.
 
 \begin{definition}[Syntax of data type declaration]
 \begin{align*}
@@ -339,19 +369,19 @@ Note the following special cases:
   the exponential modality of linear logic (usually written $!A$)
 \end{itemize}
 
-\begin{definition}[Syntax of terms]
-\begin{align*}
-e,s,t,u & ::= \\
-    & ||  x & \text{variable} \\
-    & ||  λ(x:_qA). t & \text{abstraction} \\
-    & ||  t_q s & \text{application} \\
-    & ||  λπ. t & \text{weight abstraction} \\
-    & ||  t p & \text{weight application} \\
-    & ||  c t₁ … t_n & \text{data construction} \\
-    & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-    & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
-\end{align*}
-\end{definition}
+% \begin{definition}[Syntax of terms]
+% \begin{align*}
+% e,s,t,u & ::= \\
+%     & ||  x & \text{variable} \\
+%     & ||  λ(x:_qA). t & \text{abstraction} \\
+%     & ||  t_q s & \text{application} \\
+%     & ||  λπ. t & \text{weight abstraction} \\
+%     & ||  t p & \text{weight application} \\
+%     & ||  c t₁ … t_n & \text{data construction} \\
+%     & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+%     & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
+% \end{align*}
+% \end{definition}
 
 
 Remark: we sometimes omit the weights or type annotations when they
@@ -845,4 +875,4 @@ encoding from session types to linear types (as Wadler demonstrates).
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
 %  LocalWords:  deallocation Launchbury launchbury GC scrutinee
-%  LocalWords:  centric polymorphism modality
+%  LocalWords:  centric polymorphism modality intuitionistic
