@@ -423,7 +423,10 @@ second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
 also call $ω$ times $k$). The lesson learned is that when a varialbe is used
 (syntactically) just once, it is always better to give it the
-weight 1.
+weight 1.\inconsistent{It is always better to use $⊸$ if there is a
+  subtyping relation. Since we have weight polymorphism instead, $k$
+  should probably be given a polymorphic type to avoid the need to
+  $\eta$-expand $k$ sometimes.}
 
 \paragraph{Second order Identity}
 
