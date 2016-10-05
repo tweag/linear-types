@@ -724,9 +724,9 @@ a whole as to the scrutinee (|x| in this case). Therefore
 Remark: for a program to turn a 1-weight into an ω-weight, one may use
 the following definition:
 \begin{code}
-data Bang A = Box ωA
+data Bang A = Bang ωA
 \end{code}
-The expression |case x of { () -> Box ()}| has type
+The expression |case x of { () -> Bang ()}| has type
 |Bang A|, but still with weight 1.  The programming pattern described above does not apply
 just to the unit type $()$, but to any data type |D|. Indeed, for such
 a type we will have a function |D ⊸ Bang D| (this may be even
@@ -741,8 +741,8 @@ to force it first, and then chain computations with |case| --- for
 example as follows:
 \begin{code}
 let x = _1 ()
-case ( case x of { () -> Box () }) of {
-  Box y -> ()
+case ( case x of { () -> Bang () }) of {
+  Bang y -> ()
 }
 \end{code}
 This still does not create a pointer from GC-heap to non-GC heap: by the
@@ -763,11 +763,11 @@ That is:
 \begin{code}
 doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap f x k = case f x of
-  Box y -> k y
+  Bang y -> k y
 
 doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
 doSomethingWithLinearHeap x k = case x of
-  Box y -> k y
+  Bang y -> k y
 \end{code}
 
 \section{Comparison with other techniques}
