@@ -236,12 +236,12 @@ number of times the \emph{weight} of the variable.
 \end{figure}
 
 
-A weight can either be a constant ($1$ or $ω$). When the weight is
-$1$, the program \emph{must} consume the variable exactly once. When
-the weight is $ω$, it \emph{may} consume it any number of times
-(possibly zero). For the sake of polymorphism, weights are extended
-with weight \emph{expressions}, which contain variables (ranged over by
-the metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
+Weights are either $1$ or $ω$: when the weight is $1$, the program
+\emph{must} consume the variable exactly once; when the weight is $ω$,
+it \emph{may} consume it any number of times (possibly zero). For the
+sake of polymorphism, weights are extended with weight
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
 complete syntax of weights and contexts can be found in
 Figure~\ref{fig:contexts}.
 
