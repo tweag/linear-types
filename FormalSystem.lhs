@@ -600,9 +600,9 @@ withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 The semantics given in this section demonstrate a further extension of
 Haskell enabled by linear types: prompt deallocation of thunks. Such
 an extension of the run-time system is not necessary to benefit from
-linear types as was demonstrated in~\label{sec:ghc}. However, this
+linear types as was demonstrated in~\ref{sec:ghc}. However, this
 dynamic semantics can also help give confidence in the correctness of
-the extensions of~\label{sec:ghc}.
+the extensions of~\ref{sec:ghc}.
 
 Concretely, show that it is possible to allocate linear objects on a
 heap which is not under GC, and correspondly deallocate them upon
