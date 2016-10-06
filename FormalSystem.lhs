@@ -34,6 +34,7 @@
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
+\newcommand{\where}{ \mathsf{where} }
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
@@ -85,12 +86,12 @@
 Garbage collection is an essential constituent to the abstractions
 which make modern high-level programming languages powerful. However,
 garbage collection only takes care of memory: other resources such as
-files, database handles, or locks have to be managed explicitly (the
+files, database handles, or locks\unsure{JP: AFAIU locks are a means to manage resources, not an end.} have to be managed explicitly (the
 duty to close, or release, resources is left in the care of the
-programmer). The reason is that such resource are scarce (of locks, in
+programmer). The reason is that such resources are scarce (of locks, in
 particular, there is one of each kind), and leaving the job to free
 them to the garbage collector tends to lead to resources being open
-for too long and unnecessary resource contention (a lock waiting to be
+for too long, and thus to unnecessary resource contention (a lock waiting to be
 garbage collected will block every thread waiting on
 it).\improvement{discussion of combinators which address explicit
   closes and their limitations?} The activity of writing resource
@@ -184,14 +185,14 @@ logic, since we will not require a notion of type duality -- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
 intuitionistic $\lambda$-calculus can be embedded in linear
-$\lambda$-calculus, this embedding requires an encoding. Usually, we
+$\lambda$-calculus, this embedding requires an encoding. Usually, one
 would have a linear arrow $A⊸B$ and the intuitionistic arrow would be
-represented as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
+encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
 arbitrary quantity of values of type $A$.
 
 This encoding means that the quantity of available value must be
-managed manually, and the common case (\emph{i.e.} when more than one
-value is required) requires additional syntax. For instance, in the
+managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
+required) requires additional syntax. For instance, in the
 pidgin-Haskell syntax which we will use throughout this article, we
 couldn't write the following:
 \begin{code}
@@ -200,20 +201,20 @@ couldn't write the following:
 \end{code}
 and we would be forced to write:
 \begin{code}
-  dup :: a -> a⊗a
+  dup :: Bang a ⊸ a⊗a
   dup (Bang x) = (x,x)
 \end{code}
 When composing functions we would also have to manage the quantity of
 the output of the intermediate functions:
 \begin{code}
-  id :: a -> a
+  id :: Bang a ⊸ a
   id (Bang x) = x
 
   v = dup (Bang (id (Bang 42)))
 \end{code}
 
 In our calculus, instead, both arrow types are primitive. To be
-precise, in a style pioneered by McBride~\cite{mcbride_rig_2016}, the
+precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
 arrow type is parametrised by the amount of its argument it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
@@ -239,7 +240,6 @@ number of times the \emph{weight} of the variable.
   \caption{Syntax of weights and contexts}
   \label{fig:contexts}
 \end{figure}
-
 
 Weights are either $1$ or $ω$: when the weight is $1$, the program
 \emph{must} consume the variable exactly once; when the weight is $ω$,
@@ -347,7 +347,7 @@ argument of weight $1$ or $ω$.
   \begin{align*}
     \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
   \end{align*}
-  Means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
+  The above declaration means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
   each with \(n_k\) arguments. Arguments of constructors have a
   weight, just like arguments of function: an argument of weight $ω$
   means that the data type can store, at that position, data which
@@ -361,26 +361,27 @@ argument of weight $1$ or $ω$.
     can't see it.}\unsure{Should we explain some of the above in the
     text?}
 
-  For many purposes, $c_k$, behaves like a constant with the type
+  For most purposes $c_k$, behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
   Figure~\ref{fig:typing} will make clear, this means in particular
   that to have a quantity $ω$ of data of type $D$, all its sub-data
   including the arguments declared with weight $1$ must have weight
-  $ω$.
+  $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
+  construct a quantity $ω$ of $D$.
 \end{definition}
 The following example of data-type declarations illustrate the role of
 weights in constructor arguments:
 \begin{itemize}
 \item The type
-  $\data \varid{Pair} A B = \varid{Pair} : A →_ω B →_ω
+  $\data \varid{Pair} A B \where \varid{Pair} : A →_ω B →_ω
   \varid{Pair} A B$ is the intuitionistic product (usually written
   $A×B$)
 \item The type
-  $\data \varid{Tensor} A B = \varid{Tensor} : A →_1 B →_1
+  $\data \varid{Tensor} A B \where \varid{Tensor} : A →_1 B →_1
   \varid{Tensor} A B$ is the linear tensor product (usually written
   $A⊗B$)
 \item The type
-  $\data \varid{Bang} A = \varid{Bang} A→_ω \varid{Bang} A$ is
+  $\data \varid{Bang} A \where \varid{Bang} A→_ω \varid{Bang} A$ is
   the exponential modality of linear logic (usually written ${!}A$)
 \end{itemize}
 
@@ -393,7 +394,7 @@ abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
 annotated by a weight. This information is usually redundant, but we
-use is in Section~\ref{sec:orgheadline16} to define a compositional
+use it in Section~\ref{sec:orgheadline16} to define a compositional
 dynamic semantics with prompt deallocation of data. We sometimes omit
 the weights or type annotations when they are obvious from the
 context, especially in the case of applications.
@@ -439,18 +440,18 @@ context, especially in the case of applications.
 \improvement{It may be useful to have a better transition between
   syntax and typing judgement}
 
-Typing judgements \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
-build \emph{one} $A$''. Contrary to~\cite{mcbride_rig_2016}, there is
-no judgement to mean ``with $Γ$ I can build $p$ $A$-s''. Instead, we
+The typing judgement \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
+build \emph{one} $A$''. Contrary to~\textcite{mcbride_rig_2016}, we provide
+no judgement to mean ``with $Γ$ I can build a quanitiy $p$ of $A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one can build a quantity $p$ of $A$. This idea is at play in the
 application rule (the complete set of rules can be found in
 Figure~\ref{fig:typing}):
 $$\apprule$$
-Here, $t$ requires its argument $u$ to have weight $q$: $Δ ⊢ u : A$
+Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a weight of $1$, therefore the application needs $qΔ$
 to have a quantity $q$ of $u$ at its disposal. This rule is the second
-arm of the weighted arrows which allow to have a regular programming
+arm\unsure{Where is the first arm?} of the weighted arrows which allow to have a regular programming
 language as a subset of this calculus.\improvement{aspiwack: I've used
   the phrase ``a regular programming language as a subset [of this
   calculus]'' several time already, it's rather awkward, a better
@@ -512,7 +513,8 @@ quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed
 \begin{code}
-  data (⊗) a b = (,) : a ⊸ b ⊸ a⊗b
+  data (⊗) a a where
+    (,) : a ⊸ b ⊸ a⊗b
 
   first  :: a⊗b → a
   first (a,b)  = a
@@ -549,7 +551,7 @@ The lamda-calculus expression $k ≝ λx. λy. x$ can be elaborated in our syste
 $A ⊸ B → A$ or $A → B → A$. However, the first type subsumes the
 second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
-also call $ω$ times $k$). The lesson learned is that when a varialbe is used
+also call $ω$ times $k$). The lesson learned is that when a variable is used
 (syntactically) just once, it is always better to give it the
 weight 1.\inconsistent{It is always better to use $⊸$ if there is a
   subtyping relation. Since we have weight polymorphism instead, $k$
