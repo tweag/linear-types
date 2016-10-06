@@ -746,6 +746,7 @@ In practice, a top-level binding with weight $1$ will behave similarly
 to |main|, in the sense that it may raise link-time type-errors.
 
 \subsection{Primitive arrays}
+\label{sec:primops}
 One of the usage of linear types is to make memory management
 (semi-)explicit. As an illustration we provide two possible APIs to
 manipulate randomly addressable memory regions (so called ``byte
@@ -910,34 +911,69 @@ explored in detail by \textcite{bernardy_duality_2015}.
 \section{\calc{} dynamics}
 \label{sec:orgheadline16}
 
-The semantics given in this section demonstrate a further extension of
-Haskell enabled by linear types: prompt deallocation of thunks. Such
-an extension of the run-time system is not necessary to benefit from
-linear types as was demonstrated in~\fref{sec:ghc}. However, this
-dynamic semantics can also help to give confidence in the correctness of
-the extensions of~\fref{sec:ghc}.
+The examples of~\fref{sec:ghc} would require only surface changes to
+Haskell: only the type system for \fref{sec:ffi} and
+\fref{sec:primops}, while \fref{sec:fusion} only requires additional
+annotations in the optimization phase.
 
-Concretely, we show that it is possible to allocate linear objects on a
-heap which is not under GC, and correspondingly deallocate them upon
-(lazy) evaluation. To do so we present an extension of the semantics
-of \textcite{launchbury_natural_1993} to our language.  As Launchbury,
-we first transform terms, so that the values that are potentially
-shared are bound to variables.
+If one is willing to dive deeper and modify the runtime system, a
+further benefit can be reaped: prompt deallocation of thunks. While
+this extension of the runtime system is not necessary to benefit from
+linear types, the dynamic semantics presented in this section can also
+help give confidence in the correctness of the extensions
+of~\fref{sec:ghc}.\improvement{make reference style more uniform}
 
-\begin{definition}
-\begin{align*}
-(λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
-x^*       &= x \\
-  (t_q  x )^* &= (t)^*_q  x \\
-  (t_q  u )^* &= \flet y =_{q} (u)^* \fin (t)^*_q  y \\
-c_k  t₁ … t_n &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^* \fin c_k x₁ … x_n \\
-(\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-(\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n:_{q_n} A_1 (t_n)^* \fin (u)^*
-\end{align*}
-\end{definition}
+Concretely, we show that it is possible to allocate linear objects on
+a heap which is not managed by the garbage collector, and
+correspondingly deallocate them upon (lazy) evaluation. To do so we
+present an extension of the semantics of
+\textcite{launchbury_natural_1993} to our language. Prompt
+deallocation is not necessarily faster than garbage collection but it
+reduces latencies and allows more control on when garbage-collection
+pause occur.
 
-Compared to Launchbury:
+\begin{figure}
 
+  \figuresection{Syntax of the runtime language}
+  \begin{align*}
+    r &::=\\
+      &||  x\\
+      &||  λx. r\\
+      &||  r_q x\\
+      &||  λπ. r\\
+      &||  r p\\
+      &||  c x₁ … x_n\\
+      &||  \case r {c_k  x₁ … x_{n_k} → r_k}\\
+      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r
+  \end{align*}
+
+  \figuresection{Translation of typed terms}
+
+  \begin{align*}
+    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
+    x^*             &= x \\
+    (t_q  x )^*     &= (t)^*_q  x \\
+    (t_q  u )^*     &= \flet y =_{q} (u)^* \fin (t)^*_q  y \\
+    c_k  t₁ … t_n   &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^*
+                      \fin c_k x₁ … x_n
+  \end{align*}
+  \begin{align*}
+    (\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁ =_{q₁} (t₁)^*,…, x_n=_{q_n} (t_n)^* \fin (u)^*
+  \end{align*}
+
+  \caption{Syntax for the Launchbury-style semantics}
+  \label{fig:launchbury:syntax}
+\end{figure}
+
+A Launchbury-style semantics is a big-step semantics expressed in a
+language suitable to represent sharing. The detail of this language
+and the translation from \calc{} can be found in
+\fref{fig:launchbury:syntax}. The main differences between \calc{} and
+the runtime language are that the latter is untyped, has fewer weight
+annotations, and applications always have variable arguments.
+
+…Compared to Launchbury:
 \begin{itemize}
 \item The heap is annotated with weights. Variables with weight $ω$
   point to the the GC heap, while variables with weight $1$ point to
@@ -962,36 +998,43 @@ The function \varid{f} creates some data. When run in a linear context, \varid{f
 allocates \varid{f} on the linear heap. When run in an unrestricted context, it
 must allocate \varid{z} on the GC heap. So, its behavior depends the value of ρ.
 
-\begin{mathpar}
-\inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
+\begin{figure}
+  \begin{mathpar}
+    \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
 
 
-\inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\  Δ : e'[q/π] ⇓_{ρ} Θ : z}
-          {Γ : e q ⇓_ρ Θ : z} \text{w.app}
+    \inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\ Δ : e'[q/π] ⇓_{ρ} Θ : z} {Γ :
+      e q ⇓_ρ Θ : z} \text{w.app}
 
-\inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
-
-
-\inferrule{Γ : e ⇓_ρ Δ : λy.e' \\  Δ : e'[x/y] ⇓_{qρ} Θ : z}
-           {Γ : e_q x ⇓_ρ Θ : z} \text{application}
-
-\inferrule{Γ : e  ⇓_ω  Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) : z}\text{shared variable}
+    \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
 
 
-\inferrule{Γ : e ⇓_1 Δ : z}
-{(Γ,x ↦_1 e) : x ⇓_1 Δ : z}\text{linear variable}
+    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{qρ} Θ : z} {Γ :
+      e_q x ⇓_ρ Θ : z} \text{application}
+
+    \inferrule{Γ : e ⇓_ω Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) :
+      z}\text{shared variable}
 
 
-\inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
-{Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ : z}\text{let}
-
-\inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ … x_n}\text{constructor}
+    \inferrule{Γ : e ⇓_1 Δ : z} {(Γ,x ↦_1 e) : x ⇓_1 Δ :
+      z}\text{linear variable}
 
 
-\inferrule{Γ: e ⇓_ρ Δ : c_k  x₁ … x_n \\   Δ :  e_k[xᵢ/yᵢ] ⇓_ρ Θ :  z}
-   {Γ :  \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ :  z}\text{case}
-\end{mathpar}
+    \inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
+    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ :
+      z}\text{let}
 
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ …
+      x_n}\text{constructor}
+
+
+    \inferrule{Γ: e ⇓_ρ Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
+    {Γ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+  \end{mathpar}
+
+  \caption{Dynamic semantics}
+  \label{fig:dynamics}
+\end{figure}
 Remark: the \emph{unrestricted variable} rule also triggers when the
 weight is 1, thus effectively allowing linear variables to look on the
 GC heap. This behavior allows an occurrence of a linear variable to
@@ -1223,5 +1266,5 @@ operations, and the variable rule adapted accordingly.
 %  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
 %  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
 %  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation
-%  LocalWords:  duplications bernardy deallocate morris
-%  LocalWords:  doSomethingWithLinearHeap
+%  LocalWords:  duplications bernardy deallocate morris latencies
+%  LocalWords:  doSomethingWithLinearHeap untyped
