@@ -827,16 +827,20 @@ effectively creating a memory leak
 
 A partial remedy to this situation is to stop relying on rewrite rules,
 and use directly non-recursive representations. Doing so is nowadays
-popular in libraries for efficient programming in haskell. \todo{cite
+popular in libraries for efficient programming in Haskell. \todo{cite
   eg. feldspar, accelerate, ...}
 
 For example, \textcite{lippmeier_parallel_2016} use the following
 representation:
 
 \begin{code}
-data Sources i m e = Sources -- 'i' is the array's index type, 'e' the type of elements and 'm' the effects
+-- |i| is the array's index type, |e| the type of elements and 'm' the
+-- effects
+data Sources i m e = Sources
   { arity :: i
-  , pull  :: i -> (e -> m ()) -> m () -> m () } -- 'pull' is an iterator to apply to every elements of the array (like 'traverse')
+   -- |pull| is an iterator to apply to every elements of the array
+   -- (like |traverse|)
+  , pull  :: i -> (e -> m ()) -> m () -> m () }
 
 data Sinks i m e = Sinks
   { arity :: i
@@ -894,7 +898,7 @@ Quoting \citeauthor{lippmeier_parallel_2016}:
 \end{quote}
 
 Linearity offers a direct solution to
-\citeauthor{lippmeier_parallel_2016} worry about safety.  At the same
+\citeauthor{lippmeier_parallel_2016}'s worry about safety.  At the same
 time, sharing becomes more explicit. In the above snippet, because
 |srcs| have weight 1, so has |ss|, and thus it cannot be shared in the
 following lines. The programmer has then the choice of either: copying
@@ -903,7 +907,7 @@ must be written explicitly.
 Programming streaming libraries in with explicit linearity has been
 explored in detail by \textcite{bernardy_duality_2015}.
 
-\section{\calc{} Dynamics}
+\section{\calc{} dynamics}
 \label{sec:orgheadline16}
 
 The semantics given in this section demonstrate a further extension of
