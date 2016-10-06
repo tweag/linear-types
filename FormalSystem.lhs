@@ -61,6 +61,9 @@
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
 
+\newcommand\HaskeLL{HaskeLL}
+\newcommand\calc{{\ensuremath{λ^q}}}
+
 \author{Jean-Philippe Bernardy and Arnaud Spiwack}
 \date{\today}
 \title{Linear and unrestricted at the same time}
@@ -162,7 +165,7 @@ programming language (the presentation is inspired
 by~\cite{mcbride_rig_2016}), whose main characteristic is to contain a
 regular programming language -- a simplified version of Haskell -- as
 a subset.\unsure{should we give a name to this programming
-  language/calculus to refer to it through the paper? (Pun idea: HaskeLL)}
+  language/calculus to refer to it through the paper?}
 
 Concretely, in such a programming language, one enjoys the convenience
 of programming in Haskell most of the time. But when part of code
@@ -184,13 +187,13 @@ specification (as session types)~\cite{honda_session_1993} (the
 correspondence between session types and linear types is explained
 in~\cite{wadler_propositions_2012}).
 
-\section{Statics}
+\section{Programming in \HaskeLL}
 \label{sec:orgheadline8}
 
 \unsure{Should we rename weights to quantities?}
 
-Simply using linear logic -- or, as it is, intuitionistic linear
-logic, since we will not require a notion of type duality -- as a type
+Simply using linear logic --- or, as it is, intuitionistic linear
+logic, since we will not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
 intuitionistic $\lambda$-calculus can be embedded in linear
@@ -203,7 +206,7 @@ This encoding means that the quantity of available value must be
 managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
 required) requires additional syntax. For instance, in the
 pidgin-Haskell syntax which we will use throughout this article, we
-couldn't write the following:
+couldn't write the following:\unsure{Scrap dup/id example in favour of ``all existing code needs to be written inside the |Bang| co-monad?}
 \begin{code}
   dup :: a -> a⊗a
   dup x = (x,x)
@@ -230,6 +233,52 @@ arrow type is parametrised by the amount of its argument it requires:
 \item $A →_ω B$ is the intuitionistic arrow $A → B$
 \end{itemize}
 
+Concretely, in our language, one can write linear code whenever it is
+possible, and use it in unrestricted contexts anyway.
+
+\begin{code}
+data List a where
+  [] :: List a
+  (:) :: a ⊸ List a ⊸ List a
+\end{code}
+
+The above data declaration defines a linear version of the list
+type. That is, given \emph{one} instance of a list, one will obtain
+exactly \emph{one} instance of each of the data contained inside it.
+
+Many list-based functions conserve the quantity of data, and thus can
+be given a more precise type. For example we can type write |(++)|
+as follows:
+
+\begin{code}
+(++) :: List a ⊸ List a ⊸ List a
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+
+Operationally, this means that the resulting list does not need to
+live on a GC'ed heap --- instead it can be put on an explicitly
+managed heap. That list can thus be deallocated exactly at the point
+of its consumption.
+
+Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
+call $ω$ times |(++)| to obtain $ω$ times the
+concatenation. Operationally, having an $ω$ quantity of the inputs
+implies that the they reside on the GC heap. Constructing $ω$ times the
+output means to put it on the GC heap as well, with all the usual
+implications in terms of laziness and sharing.
+
+A function may legitimately demand $ω$ times its input. For example
+the function repeating indefinitely its input will have the type:
+
+\begin{code}
+cycle :: List a → List a
+\end{code}
+
+Operationally, cycle requires its argument to be on the GC heap.
+
+
+\section{\calc{} statics}
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
@@ -703,7 +752,7 @@ withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \subsection{Fusion}
 \label{sec:fusion}
 
-\section{Dynamics}
+\section{\calc{} Dynamics}
 \label{sec:orgheadline16}
 
 The semantics given in this section demonstrate a further extension of
