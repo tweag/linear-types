@@ -135,7 +135,7 @@ what follows would be written:
 } // the file is closed when this scope ends
 \end{verbatim}
 
-Giving up garabage collection offers in particular the following
+Also giving up on garabage collection offers, in particular, the following
 benefits:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
