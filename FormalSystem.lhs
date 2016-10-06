@@ -416,7 +416,7 @@ module structure on typing contexts as follows.
             & ||  t p & \text{weight application} \\
             & ||  c t₁ … t_n & \text{data construction} \\
             & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-            & ||  \flet x :_{q₁}A₁ = t₁ … x:_{q_n}A_n = t_n \fin u & \text{let}
+            & ||  \flet x_1 :_{q₁}A₁ = t₁ … x_n :_{q_n}A_n = t_n \fin u & \text{let}
   \end{align*}
 
   \caption{Syntax of the linear calculus}
