@@ -193,7 +193,7 @@ in~\cite{wadler_propositions_2012}).
 \unsure{Should we rename weights to quantities?}
 
 Simply using linear logic --- or, as it is, intuitionistic linear
-logic, since we will not require a notion of type duality --- as a type
+logic, becauce we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
 intuitionistic $\lambda$-calculus can be embedded in linear
@@ -264,11 +264,13 @@ managed heap. That list can thus be deallocated exactly at the point
 of its consumption.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
-call $ω$ times |(++)| to obtain $ω$ times the concatenation. 
-Operationally, having an $ω$ quantity of the inputs
-implies that the they reside on the GC heap. Constructing $ω$ times the
-output means to put it on the GC heap as well, with all the usual
-implications in terms of laziness and sharing.
+call $ω$ times |(++)| to obtain $ω$ times the concatenation.
+Operationally, having an $ω$ quantity of the inputs implies that the
+they reside on the GC heap. Constructing $ω$ times the output means to
+put it on the GC heap as well, with all the usual implications in
+terms of laziness and sharing. (In a lazy language the thunks on the
+linear heap can thus free themselves.)
+
 
 A function may legitimately demand $ω$ times its input. For example
 the function repeating indefinitely its input will have the type:
@@ -1023,23 +1025,40 @@ well suited for describing data. One is communication centric. The
 other is data centric. Yet there is a simple
 encoding from session types to linear types (as Wadler demonstrates).
 
-\todo{Compare with McBride's rig.}
-\todo{talk about thunk freeing themselves}
-\todo{underline that two aspects are mostly independent: 1. prompt deallocation of cons cells 2. resource management with explicit free}
+\subsection{Weights in type derivation}
+
+\Textcite{mcbride_rig_2016} presents a similar type-theory, but with
+weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
+weight is multiplied by the weight of the function in the argument. At
+the point of variable usage one checks that the appropriate quantity
+of the variable is available. A problem with this approach is that
+whenever one enters an $ω$-weighted judgement, one effectively
+abandons tracking any linearity whatsoever. Thus, the following
+program would be type-correct, while |dup| is duplicating a linear
+value.
+
+\[
+(λ (dup : _ ω a ⊸ (a ⊗ a) ) -> dup) (λx. (x,x))
+\]
+
+Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
+abstractions while retaining the linearity property.
 \section{Extensions and Future Work}
 
 \subsection{More Weights}
 
 To keep things concrete, we have limited the constants of the language
-of weights is limited to $1$ and $ω$. Yet, we could have more
-constants.  For example, we could add $α$ to represent affine
-variables (usable zero or once). In this situation we would have
-$α + 1 = ω$, $α ∙ ω = ω$, and the variable rule should be extended to
-$α$-contexts.
+of weights to $1$ and $ω$. Yet, we could have more constants.  For
+example, we could add $α$ to represent affine variables (usable zero
+or once). In this situation we would have $α + 1 = ω$, $α ∙ ω = ω$,
+and the variable rule should be extended to $α$-contexts. Similary one
+can add a $0$, as \textcite{mcbride_rig_2016} does, and in turn
+support dependent types.
 
 We can even make the set weight constants = $2^ℕ$, with the obvious
 operations, and the variable rule adapted accordingly.
 
+\todo{underline that two aspects are mostly independent: 1. prompt deallocation of cons cells 2. resource management with explicit free}
 
 \printbibliography
 \end{document}
