@@ -1026,7 +1026,20 @@ encoding from session types to linear types (as Wadler demonstrates).
 \todo{Compare with McBride's rig.}
 \todo{talk about thunk freeing themselves}
 \todo{underline that two aspects are mostly independent: 1. prompt deallocation of cons cells 2. resource management with explicit free}
-\todo{Operational meaning for 1. f : A → B 2. f : A ⊸ B. that is: an input with static weight 1 can have dynamic weight w}
+\section{Extensions and Future Work}
+
+\subsection{More Weights}
+
+To keep things concrete, we have limited the constants of the language
+of weights is limited to $1$ and $ω$. Yet, we could have more
+constants.  For example, we could add $α$ to represent affine
+variables (usable zero or once). In this situation we would have
+$α + 1 = ω$, $α ∙ ω = ω$, and the variable rule should be extended to
+$α$-contexts.
+
+We can even make the set weight constants = $2^ℕ$, with the obvious
+operations, and the variable rule adapted accordingly.
+
 
 \printbibliography
 \end{document}
