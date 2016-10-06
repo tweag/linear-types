@@ -160,21 +160,21 @@ logic~\cite{girard_linear_1987}, we propose a linearly typed
 lazy\footnote{Laziness is not an essential characteristic: a similar
   extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
-  dynamic semantics would change slightly in a strict language}
-programming language (the presentation is inspired
-by~\cite{mcbride_rig_2016}), whose main characteristic is to contain a
-regular programming language -- a simplified version of Haskell -- as
-a subset.\unsure{should we give a name to this programming
-  language/calculus to refer to it through the paper?}
+  dynamic semantics would change slightly in a strict language} lamdba
+calculus (the presentation is inspired by~\cite{mcbride_rig_2016}),
+which contains the simply-typed lambda calculus as a subset.
 
-Concretely, in such a programming language, one enjoys the convenience
-of programming in Haskell most of the time. But when part of code
-requires more care, \emph{e.g.} because of efficiency
-(Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or because a
-foreign function needs a linear type (Section~\ref{sec:ffi}), then one
-can use seamlessly the linear features of the language, which allow
-more control.\improvement{Add a file-read example in the style of this
-article}
+This lambda calculus can be scaled up to a full-fledged programming
+language and is itself a conservative extention of Haskell. Thus we
+(cheekily) call it \HaskeLL.
+Concretely, in \HaskeLL,
+one enjoys the convenience of programming in Haskell most of the
+time; but when part of code requires more care, \emph{e.g.} because of
+efficiency (Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or
+because a foreign function needs a linear type
+(Section~\ref{sec:ffi}), then one can use seamlessly the linear
+features of the language, which allow more control.\improvement{Add a
+  file-read example in the style of this article}
 
 Using a type system based on linear logic (rather than uniqueness
 typing or ownership typing) makes it possible to leverage the wealth
@@ -245,6 +245,8 @@ data List a where
 The above data declaration defines a linear version of the list
 type. That is, given \emph{one} instance of a list, one will obtain
 exactly \emph{one} instance of each of the data contained inside it.
+Thus the above list may contain handle to resources without
+compromising safety.
 
 Many list-based functions conserve the quantity of data, and thus can
 be given a more precise type. For example we can type write |(++)|
@@ -262,8 +264,8 @@ managed heap. That list can thus be deallocated exactly at the point
 of its consumption.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
-call $ω$ times |(++)| to obtain $ω$ times the
-concatenation. Operationally, having an $ω$ quantity of the inputs
+call $ω$ times |(++)| to obtain $ω$ times the concatenation. 
+Operationally, having an $ω$ quantity of the inputs
 implies that the they reside on the GC heap. Constructing $ω$ times the
 output means to put it on the GC heap as well, with all the usual
 implications in terms of laziness and sharing.
@@ -275,7 +277,10 @@ the function repeating indefinitely its input will have the type:
 cycle :: List a → List a
 \end{code}
 
-Operationally, cycle requires its argument to be on the GC heap.
+Operationally, cycle requires its argument to be on the GC heap.  In
+practice, libraries will never provide $ω$ times a scarce resource
+(eg. a handle to a physical entity); such a resource will thus never
+endup in the argument to |cycle|.
 
 
 \section{\calc{} statics}
