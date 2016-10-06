@@ -327,16 +327,6 @@ that the program must use the variable in question. We call this
 number of times the \emph{weight} of the variable.
 
 \begin{figure}
-  \begin{align*}
-    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q\\
-    \hfill\\
-    Γ,Δ & ::=\\
-        & ||  x :_q A, Γ & \text{weight-annotated binder} \\
-        & ||     & \text {empty context}
-  \end{align*}
-
-  \caption{Syntax of weights and contexts}
-  \label{fig:contexts}
 \end{figure}
 
 Concrete weights are either $1$ or $ω$: when the weight is $1$, the program
@@ -391,6 +381,17 @@ module structure on typing contexts as follows.
 \subsection{Typing}
 
 \begin{figure}
+  \figuresection{Weights}
+  \begin{align*}
+    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
+  \end{align*}
+  \figuresection{Contexts}
+  \begin{align*}
+    Γ,Δ & ::=\\
+        & ||  x :_q A, Γ & \text{weight-annotated binder} \\
+        & ||     & \text {empty context}
+  \end{align*}
+
   \figuresection{Type declarations}
   \begin{align*}
     \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
@@ -419,6 +420,7 @@ module structure on typing contexts as follows.
 
   \caption{Syntax of the linear calculus}
   \label{fig:syntax}
+  \label{fig:contexts}
 \end{figure}
 
 The types of our calculus (see Figure~\ref{fig:syntax}) are simple
