@@ -927,7 +927,7 @@ Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
 correspondingly deallocate them upon (lazy) evaluation. To do so we
 present an extension of the semantics of
-\textcite{launchbury_natural_1993} to our language. Prompt
+\textcite{launchbury_natural_1993} to \calc{}. Prompt
 deallocation is not necessarily faster than garbage collection but it
 reduces latencies and allows more control on when garbage-collection
 pause occur.
