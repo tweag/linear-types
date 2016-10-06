@@ -6,7 +6,7 @@ PaperTools/bibtex/jp.bib:
 	false
 
 clean:
-	rm -f *.aux *.bbl *.ptb
+	rm -f *.aux *.bbl *.ptb FormalSystem.tex *.pdf
 
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
