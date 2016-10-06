@@ -4,7 +4,7 @@
 %include polycode.fmt
 %format .         = ". "
 %format forall a         = "∀" a
-%format _ a         = "_{" a "}"
+%format _ (a)         = "_{" a "}"
 %format omega = "ω"
 %format rho = "ρ"
 %format pi = "π"
@@ -190,9 +190,10 @@ in~\cite{wadler_propositions_2012}).
 \section{Programming in \HaskeLL}
 \label{sec:orgheadline8}
 
+\subsection{An ILL-guided attempt}
 \unsure{Should we rename weights to quantities?}
 
-Simply using linear logic --- or, as it is, intuitionistic linear
+Simply using linear logic --- or, as it were, intuitionistic linear
 logic, becauce we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
@@ -202,7 +203,7 @@ would have a linear arrow $A⊸B$ and the intuitionistic arrow would be
 encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
 arbitrary quantity of values of type $A$.
 
-This encoding means that the quantity of available value must be
+This encoding means that the quantity of available values must be
 managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
 required) requires additional syntax. For instance, in the
 pidgin-Haskell syntax which we will use throughout this article, we
@@ -225,26 +226,34 @@ the output of the intermediate functions:
   v = dup (Bang (id (Bang 42)))
 \end{code}
 
+\subsection{Putting the Bang in the arrow}
+
 In our calculus, instead, both arrow types are primitive. To be
 precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
 arrow type is parametrised by the amount of its argument it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
-\item $A →_ω B$ is the intuitionistic arrow $A → B$
+\item $A →_ω B$ is the intuitionistic\todo{It is weird to call it like
+    that, because intuitionism is a constructive reaction to classicism; and ILL is certainly intuitionistic in that sense.} arrow
+  $A → B$
 \end{itemize}
 
-Concretely, in our language, one can write linear code whenever it is
-possible, and use it in unrestricted contexts anyway.
+The first main benefit of this approach is that all the code already
+written, assuming an $ω$-sized supply of everything, works out of the
+box.
+
+The second benefit is that one can write linear code whenever it is
+possible, and use it in unrestricted contexts anyway. The following
+example illustrates.
 
 \begin{code}
 data List a where
   [] :: List a
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
-
 The above data declaration defines a linear version of the list
 type. That is, given \emph{one} instance of a list, one will obtain
-exactly \emph{one} instance of each of the data contained inside it.
+exactly \emph{one} instance of each of the items contained inside it.
 Thus the above list may contain handle to resources without
 compromising safety.
 
@@ -261,15 +270,15 @@ as follows:
 Operationally, this means that the resulting list does not need to
 live on a GC'ed heap --- instead it can be put on an explicitly
 managed heap. That list can thus be deallocated exactly at the point
-of its consumption.
+of its consumption. In a lazy language the thunks on the
+linear heap can thus even free themselves.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
 call $ω$ times |(++)| to obtain $ω$ times the concatenation.
 Operationally, having an $ω$ quantity of the inputs implies that the
 they reside on the GC heap. Constructing $ω$ times the output means to
 put it on the GC heap as well, with all the usual implications in
-terms of laziness and sharing. (In a lazy language the thunks on the
-linear heap can thus free themselves.)
+terms of laziness and sharing.
 
 
 A function may legitimately demand $ω$ times its input. For example
@@ -279,11 +288,29 @@ the function repeating indefinitely its input will have the type:
 cycle :: List a → List a
 \end{code}
 
-Operationally, cycle requires its argument to be on the GC heap.  In
+Operationally, |cycle| requires its argument to be on the GC heap.  In
 practice, libraries will never provide $ω$ times a scarce resource
 (eg. a handle to a physical entity); such a resource will thus never
 endup in the argument to |cycle|.
 
+While automatic scaling from $1$ to $ω$ works well for first-order
+code, higher-order programs need polymorphism over weights. For
+example, the standard |map| function
+\begin{code}
+map f []      = []
+map f (x:xs)  = f x : map f xs
+\end{code}
+can be given the two incomparable following types: |(a ⊸ b) -> List a
+⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
+|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. \improvement{Can we show that a principal type always exists?}
+
+Likewise, function composition can be given the following type:
+\begin{code}
+(∘) :: forall pi rho. (b → _ pi c) ⊸ (a → _ rho b) → _ pi a → _ (pi rho) c
+(f ∘ g) x = f (g x)
+\end{code}
+What the above type says is that, two functions of arbitrary linearities $ρ$
+and $π$ can be combined into a function of linearity $ρπ$.
 
 \section{\calc{} statics}
 \subsection{Typing contexts}
@@ -406,8 +433,7 @@ a function of type $A→B$ \emph{must} be applied to an argument of
 weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of weight $1$ or $ω$.
 
-\begin{definition}[Syntax of data type declaration]
-  Data type declarations, also presented in Figure~\ref{fig:syntax}
+  Data type declarations, also presented in Figure~\ref{fig:syntax},
   deserve some additional explanation.
   \begin{align*}
     \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
@@ -433,7 +459,7 @@ argument of weight $1$ or $ω$.
   including the arguments declared with weight $1$ must have weight
   $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
   construct a quantity $ω$ of $D$.
-\end{definition}
+
 The following example of data-type declarations illustrate the role of
 weights in constructor arguments:
 \begin{itemize}
@@ -710,13 +736,11 @@ In practice, a top-level binding with weight $1$ will behave similarly
 to |main|, in the sense that it may raise link-time type-errors.
 
 \subsection{Primitive arrays}
-\unsure{Which version should we choose? Both?}
-
 One of the usage of linear types is to make memory management
 (semi-)explicit. As an illustration we provide two possible APIs to
-manipulate randomly addressable memory regions (so called ``byte arrays'' in GHC
-parlance). We also propose a possible implementation strategy for the
-primitives, and argue briefly for correctness.
+manipulate randomly addressable memory regions (so called ``byte
+arrays'' in GHC parlance). We also propose a possible implementation
+strategy for the primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
 
@@ -731,11 +755,11 @@ indexByteArray :: Int -> ByteArray ⊸ (ByteArray ⊗ Byte)
 \end{code}
 
 The key primitive in the above API is |newByteArray|, whose first
-argument is a size. It takes a continuation where \emph{one} reference
-to the byte array is available. The continuation needs to produce a
+argument is the size of an array to allocate. It takes a continuation where \emph{one} reference
+to the byte array is available. Crucially, the continuation needs to produce a
 |Bang| type. This type ensures that the continuation cannot return a
 reference to the byte array.  Indeed, it is impossible to transform a
-1-weighted object into an ω-weighted one without copying it
+$1$-weighted object into an $ω$-weighted one, without copying it
 explicitly. Not returning the byte array is critical, because the
 |newByteArray| function may be called $ω$ times; in which case the
 result will be shared.
@@ -969,7 +993,7 @@ doSomethingWithLinearHeap x k = case x of
 
 \subsection{Linearity as a property of types vs. linearity as a property of bindings (variables)}
 
-In several presentations (\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
+In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
 or unrestricted. Unrestricted types typically includes primitive types
@@ -1031,14 +1055,14 @@ encoding from session types to linear types (as Wadler demonstrates).
 weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
 weight is multiplied by the weight of the function in the argument. At
 the point of variable usage one checks that the appropriate quantity
-of the variable is available. A problem with this approach is that
+of the variable is available. A problem with this approach\todo{Thanks Ryan}{} is that
 whenever one enters an $ω$-weighted judgement, one effectively
 abandons tracking any linearity whatsoever. Thus, the following
 program would be type-correct, while |dup| is duplicating a linear
 value.
 
 \[
-(λ (dup : _ ω a ⊸ (a ⊗ a) ) -> dup) (λx. (x,x))
+(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
 \]
 
 Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
