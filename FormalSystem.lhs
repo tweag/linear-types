@@ -27,6 +27,7 @@
 \usepackage{mathpartir}
 \usepackage{fontspec}
 \usepackage{unicode-math}
+\usepackage{fancyref}
 \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
@@ -39,7 +40,7 @@
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
-\newcommand{\varid}{\mathnormal}
+\newcommand{\varid}[1]{\ensuremath{\mathnormal{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
 
 \newcommand{\figuresection}[1]{\textbf{#1}}
@@ -908,9 +909,9 @@ explored in detail by \textcite{bernardy_duality_2015}.
 The semantics given in this section demonstrate a further extension of
 Haskell enabled by linear types: prompt deallocation of thunks. Such
 an extension of the run-time system is not necessary to benefit from
-linear types as was demonstrated in~\ref{sec:ghc}. However, this
+linear types as was demonstrated in~\fref{sec:ghc}. However, this
 dynamic semantics can also help to give confidence in the correctness of
-the extensions of~\ref{sec:ghc}.
+the extensions of~\fref{sec:ghc}.
 
 Concretely, we show that it is possible to allocate linear objects on a
 heap which is not under GC, and correspondingly deallocate them upon
@@ -953,9 +954,9 @@ let f = _ omega (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
 let a = _ rho f ()
 \end{code}
 
-The function \texttt{f} creates some data. When run in a linear context, \texttt{f}
-allocates \texttt{f} on the linear heap. When run in an unrestricted context, it
-must allocate \texttt{z} on the GC heap. So, its behavior depends the value of ρ.
+The function \varid{f} creates some data. When run in a linear context, \varid{f}
+allocates \varid{f} on the linear heap. When run in an unrestricted context, it
+must allocate \varid{z} on the GC heap. So, its behavior depends the value of ρ.
 
 \begin{mathpar}
 \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
@@ -1116,7 +1117,7 @@ In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morri
 programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
 or unrestricted. Unrestricted types typically includes primitive types
-(\texttt{Int}), and all (strictly positive) data types. Linear types
+(\varid{Int}), and all (strictly positive) data types. Linear types
 include typically resources, effects, etc.
 
 A characteristic of this presentation is that linearity ``infects''
