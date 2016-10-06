@@ -49,7 +49,7 @@ The problem with this scheme is that it involves two phases of
 heuristics (rules and inliner), and in practice programmers have
 difficulties to predict the performance of any given program.
 
-A partial remedy to this solution is to stop relying on rewrite rules,
+A partial remedy to this situation is to stop relying on rewrite rules,
 and use directly non-recursive representations. For example the
 following representation from Lippmeier et
 al. [http://benl.ouroborus.net/papers/2016-polarized/dpdf-FHPC2016-preprint.pdf]:

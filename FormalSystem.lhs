@@ -66,8 +66,9 @@
 
 \author{Jean-Philippe Bernardy and Arnaud Spiwack}
 \date{\today}
-\title{Linear and unrestricted at the same time}
-% A practical lazy language with linear and unrestricted types.
+\title{A practical lazy language with linear and unrestricted types}
+% Linear and unrestricted at the same time
+% 
 \hypersetup{pdflang={English}}
 
 \begin{document}
@@ -89,7 +90,8 @@
 When one writes a program interacting with its environment, sooner or
 later one needs to manage shared resources. Programming languages
 typically offer three kind of facilities to help with shared resources
-management with we classify as follows none, dynamic or static.
+management which we classify as follows: ``no support'', ``dynamic
+support'' or ``static support''.
 
 The ``no support'' class leaves all the work to the programmer. It is
 in particular the strategy offered by the popular Unix operating
@@ -103,27 +105,27 @@ do  h <- openfile "myfile" ReadMore
 leads easily to unsafe code with free-after-free or use-after free
 errors. In concurrent settings, one may even face deadlocks.
 
-The ``dynamic support'' class proposes to dynamically detect when a
-program won't use a resource, and free it at that moment. Given such
-support, the programmer will essentially omit the deallocation
+The ``dynamic support'' class offers to dynamically detect when a
+program won't use a resource, and to free it at that moment. Given such
+support, the programmer will essentially omit the instruction to release the ressource
 (|hClose h| in the above program), and hope for the best. Automatic
 dynamic management of memory is an essential constituent to the
 abstractions which make modern high-level programming languages
 powerful, widely known as garbage collection. Automatic dynamic
 management of other resources is not as popular, but can still be
 found, often under the name of ``weak references''. In Haskell,
-automatic management of files is available, and known as Lazy IO.
-Automatic management of such resources tends to lead to resources
-being open for too long, and thus to unnecessary resource contention.
+automatic management of files is available, and is known as ``lazy IO''.
+Such automatic management tends to lead to resources
+being locked for too long, and thus to unnecessary resource contention.
 This shortcoming is critical for scarce resources (a lock waiting to
 be garbage collected will block every thread waiting on it).
 
-The ``satic support'' class has received a lot of attention in recent
+The ``static support'' class has received a lot of attention in recent
 years.  The idea is to forgo automatic management in favour of safe,
 but explicit management of resources, including memory. This trend is
 best exemplified by the popularity of the Rust programming
-language~\cite{matsakis_rust_2014}. Where file-reading code such as
-above would be written:
+language~\cite{matsakis_rust_2014}, where file-reading code such as
+what follows would be written:
 
 \begin{verbatim}
 {
@@ -140,12 +142,12 @@ benefits:
 \item control of \emph{when} memory-management pauses occur.
 \end{itemize}
 Indeed garbage collection is very fast, and explicit memory management
-may sometimes even be slower. But fewer and more predictable pauses are
+may sometimes even be slower. Yet, fewer and more predictable pauses are
 important when operating under real-time constraints or in a
-distributed systems when a pause on one process can make all the other
+distributed systems: a pause on one process can make all the other
 processes wait for the slower process to reach completion.
 
-Languages with safe explicit memory management tend to have vastly
+Languages with safe explicit resource management tend to have vastly
 different type systems (such as the ownership and borrowing typing of
 Rust). This observation may induce the belief that abandoning the
 comfort and convenience of \textsc{ml}-family languages is required to
@@ -168,8 +170,8 @@ This lambda calculus can be scaled up to a full-fledged programming
 language and is itself a conservative extention of Haskell. Thus we
 (cheekily) call it \HaskeLL.
 Concretely, in \HaskeLL,
-one enjoys the convenience of programming in Haskell most of the
-time; but when part of code requires more care, \emph{e.g.} because of
+one enjoys the convenience of programming in Haskell;
+but when part of code requires more care, \emph{e.g.} because of
 efficiency (Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or
 because a foreign function needs a linear type
 (Section~\ref{sec:ffi}), then one can use seamlessly the linear
@@ -193,8 +195,8 @@ in~\cite{wadler_propositions_2012}).
 \subsection{An ILL-guided attempt}
 \unsure{Should we rename weights to quantities?}
 
-Simply using linear logic --- or, as it were, intuitionistic linear
-logic, becauce we do not require a notion of type duality --- as a type
+Simply using linear logic --- or, as it were, intuitionistic linear
+logic, becauce we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
 intuitionistic $\lambda$-calculus can be embedded in linear
@@ -226,6 +228,10 @@ the output of the intermediate functions:
   v = dup (Bang (id (Bang 42)))
 \end{code}
 
+In sum, one would have to re-write all the code which uses several
+instances of the same value in the $!$ co-monad: hardly a tempting
+prospect.
+
 \subsection{Putting the Bang in the arrow}
 
 In our calculus, instead, both arrow types are primitive. To be
@@ -239,8 +245,8 @@ arrow type is parametrised by the amount of its argument it requires:
 \end{itemize}
 
 The first main benefit of this approach is that all the code already
-written, assuming an $ω$-sized supply of everything, works out of the
-box.
+written, assuming an $ω$-sized supply of everything, can work out of
+the box.
 
 The second benefit is that one can write linear code whenever it is
 possible, and use it in unrestricted contexts anyway. The following
@@ -254,11 +260,11 @@ data List a where
 The above data declaration defines a linear version of the list
 type. That is, given \emph{one} instance of a list, one will obtain
 exactly \emph{one} instance of each of the items contained inside it.
-Thus the above list may contain handle to resources without
+Thus the above list may contain (handles to) resources without
 compromising safety.
 
 Many list-based functions conserve the quantity of data, and thus can
-be given a more precise type. For example we can type write |(++)|
+be given a more precise type. For example we can write |(++)|
 as follows:
 
 \begin{code}
@@ -269,9 +275,10 @@ as follows:
 
 Operationally, this means that the resulting list does not need to
 live on a GC'ed heap --- instead it can be put on an explicitly
-managed heap. That list can thus be deallocated exactly at the point
-of its consumption. In a lazy language the thunks on the
-linear heap can thus even free themselves.
+managed heap (which we call the linear heap in what follows). That
+list can thus be deallocated exactly at the point of its
+consumption. In a lazy language, the thunks on the linear heap can thus
+even free themselves.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
 call $ω$ times |(++)| to obtain $ω$ times the concatenation.
@@ -279,7 +286,6 @@ Operationally, having an $ω$ quantity of the inputs implies that the
 they reside on the GC heap. Constructing $ω$ times the output means to
 put it on the GC heap as well, with all the usual implications in
 terms of laziness and sharing.
-
 
 A function may legitimately demand $ω$ times its input. For example
 the function repeating indefinitely its input will have the type:
@@ -309,7 +315,7 @@ Likewise, function composition can be given the following type:
 (∘) :: forall pi rho. (b → _ pi c) ⊸ (a → _ rho b) → _ pi a → _ (pi rho) c
 (f ∘ g) x = f (g x)
 \end{code}
-What the above type says is that, two functions of arbitrary linearities $ρ$
+What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
 \section{\calc{} statics}
@@ -333,7 +339,7 @@ number of times the \emph{weight} of the variable.
   \label{fig:contexts}
 \end{figure}
 
-Weights are either $1$ or $ω$: when the weight is $1$, the program
+Concrete weights are either $1$ or $ω$: when the weight is $1$, the program
 \emph{must} consume the variable exactly once; when the weight is $ω$,
 it \emph{may} consume it any number of times (possibly zero). For the
 sake of polymorphism, weights are extended with weight
@@ -394,7 +400,7 @@ module structure on typing contexts as follows.
   \begin{align*}
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
-      & ||  ∀ρ. A &\text{weight-polymorphic type}\\
+      & ||  ∀ρ. A &\text{weight-dependent type}\\
       & ||  D &\text{data type}
   \end{align*}
 
@@ -452,9 +458,9 @@ argument of weight $1$ or $ω$.
     can't see it.}\unsure{Should we explain some of the above in the
     text?}
 
-  For most purposes $c_k$, behaves like a constant with the type
+  For most purposes, $c_k$ behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  Figure~\ref{fig:typing} will make clear, this means in particular
+  Figure~\ref{fig:typing} make clear, this means in particular
   that to have a quantity $ω$ of data of type $D$, all its sub-data
   including the arguments declared with weight $1$ must have weight
   $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
@@ -477,10 +483,10 @@ weights in constructor arguments:
 \end{itemize}
 
 The term syntax (Figure~\ref{fig:syntax}) is that of a
-type-annotated~--~\emph{à la} Church~--~simply typed $λ$-calculus
+type-annotated (\textit{à la} Church) simply typed $λ$-calculus
 with let-definitions. Binders in $λ$-abstractions and type definitions
 are annotated with both their type and their weight (echoing the
-typing context from Section~\ref{sec:typing-contexts}), weight
+typing context from Section~\ref{sec:typing-contexts}). Weight
 abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
@@ -532,7 +538,7 @@ context, especially in the case of applications.
   syntax and typing judgement}
 
 The typing judgement \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
-build \emph{one} $A$''. Contrary to~\textcite{mcbride_rig_2016}, we provide
+build \emph{exactly one} $A$''. Contrary to~\textcite{mcbride_rig_2016}, we provide
 no judgement to mean ``with $Γ$ I can build a quanitiy $p$ of $A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one can build a quantity $p$ of $A$. This idea is at play in the
@@ -583,11 +589,11 @@ clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
 $ω$-weighted variables: that is, it allows variables of weight
-$ω$~--~and only of weight $ω$~--~not to be used. Pushing weakening to
+$ω$---and only of weight $ω$---not to be used. Pushing weakening to
 the variable rule is classic in programming language, and in the case
 of linear logic, dates back at least to Andreoli's work on
 focusing~\cite{andreoli_logic_1992}. Note that the judgement
-$x :_ω A ⊢ x :A$ is an instance of the variable rule, since
+$x :_ω A ⊢ x : A$ is an instance of the variable rule, since
 $(x :_ω A)+(x :_1 A) = x:_ω A$.
 
 Most of the other typing rules are straightforward, but let us linger
@@ -604,7 +610,7 @@ quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed
 \begin{code}
-  data (⊗) a a where
+  data (⊗) a b where
     (,) : a ⊸ b ⊸ a⊗b
 
   first  :: a⊗b → a
@@ -614,10 +620,10 @@ well-typed
   snd (a,b)  = b
 \end{code}
 These projections are a small deviation from linear logic: the
-existence of this projections mean that ${!}(A⊗B)$ is isomorphic to
+existence of these projections mean that ${!}(A⊗B)$ is isomorphic to
 ${!}({!}A⊗{!}B)$. While this additional law may restrict the
 applicable models of our calculus (hence may be inconvenient for some
-applications), it is a key to retro-fitting linearity in an existing
+applications), it is key to retro-fitting linearity in an existing
 language: if we interpret the weights on the arguments of existing
 constructor to be $1$ while the weights on the arguments of existing
 functions to be $ω$, the typable programs are exactly the same as an
@@ -633,6 +639,7 @@ intuitionistic $λ$-calculus.
   and peano-numbers}
 
 \subsection{Examples of simple programs and their types}
+\unsure{Scrap this section?}
 In order to assess the power of our language, let us consider a few
 simple program and the types that they inhabit.
 
@@ -749,26 +756,36 @@ strategy for the primitives, and argue briefly for correctness.
 newByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
 freeByteArray :: MutableByteArray ⊸ ()
-freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
-indexByteArray :: Int -> ByteArray ⊸ (ByteArray ⊗ Byte)
+freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
+indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
 The key primitive in the above API is |newByteArray|, whose first
 argument is the size of an array to allocate. It takes a continuation where \emph{one} reference
 to the byte array is available. Crucially, the continuation needs to produce a
-|Bang| type. This type ensures that the continuation cannot return a
+|Bang| type. This signature ensures that the continuation cannot return a
 reference to the byte array.  Indeed, it is impossible to transform a
 $1$-weighted object into an $ω$-weighted one, without copying it
 explicitly. Not returning the byte array is critical, because the
 |newByteArray| function may be called $ω$ times; in which case the
 result will be shared.
 
-Other remark: the type system ensures that we never have a variable
+Many functions take a |MutableByteArray| as argument and produce a new
+|MutableByteArray|. Such functions can perform in-place updates of the
+array (even though we remark that the |MutableByteArray| is not a
+reference type) because linearity ensures that it cannot be shared.
 
-|x : _ ω MutableByteArray|
+Finally, |freezeByteArray| turns a linear |MutableByteArray| into a
+sharable |ByteArray|. It does so by moving the data from the linear
+heap in into the GC heap. It consumes the static |MutableByteArray|,
+so that no other function can access it. In particular, such a frozen
+byte array can be returned by the argument to |newByteArray|:
+\begin{code}
+  newByteArray n freezeByteArray :: ByteArray
+\end{code}
 
-at any point.
+\todo{Add splitByteArray?}
 
 \subsubsection{Version 2}
 
@@ -783,6 +800,106 @@ withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \subsection{Fusion}
 \label{sec:fusion}
 
+A popular optimisation for functional languages, and in particular
+GHC, is \emph{shortcut fusion} \cite{gill_short_1993}.  Shortcut
+fusion relies on the custom rewrite rules, and a general purpose
+compile-time evaluation mechanism.
+
+Concretely:
+\begin{enumerate}
+\item Rewrite rules transform structures which use general recursion
+  into a representation with no recursion (typically church encodings)
+\item The inliner kicks in and 'fuses' composition of non-recursive
+  functions
+\item Unfused structures are reverted to the original representation.
+\end{enumerate}
+
+The problem with this scheme is that it involves two phases of
+heuristics (custom rewrite rules and evaluator), and in practice
+programmers have difficulties to predict the performance of any given
+program subject to shortcut fusion. It is not uncommon for a compiler
+to even introduce sharing where the programmer doesn't expect it,
+effectively creating a memory leak
+(\url{https://ghc.haskell.org/trac/ghc/ticket/12620}).
+
+A partial remedy to this situation is to stop relying on rewrite rules,
+and use directly non-recursive representations. Doing so is nowadays
+popular in libraries for efficient programming in haskell. \todo{cite
+  eg. feldspar, accelerate, ...}
+
+For example, \textcite{lippmeier_parallel_2016} use the following
+representation:
+
+\begin{code}
+data Sources i m e = Sources -- 'i' is the array's index type, 'e' the type of elements and 'm' the effects
+  { arity :: i
+  , pull  :: i -> (e -> m ()) -> m () -> m () } -- 'pull' is an iterator to apply to every elements of the array (like 'traverse')
+
+data Sinks i m e = Sinks
+  { arity :: i
+  , push  :: i -> e -> m ()
+  , eject :: i -> m () }
+\end{code}
+Such representations are typically functionals, and thus do not
+consume memory and are never implemented using recursion. Thus, one
+eventually gets code which is known to be fused. For instance, in the
+following example from Lippmeier et al., neither the source nor the
+sink represent data in memory.
+
+\begin{code}
+copySetP :: [FilePath] -> [FilePath] -> IO ()
+copySetP srcs dsts = do
+  ss <- sourceFs srcs
+  sk <- sinkFs   dsts
+  drainP ss sk
+\end{code}
+
+However, one then faces two classes of new problems.
+
+First, any non-linear (precisely non-affine) use of such a
+representation will \emph{duplicate work}. For example, one can write
+the following piece of code, but the |expensiveComputation| will be
+run twice, perhaps unbeknownst to the programmer.
+
+\begin{code}
+example srcs dsts = do
+  ss <- expensiveComputation `ap` sourceFs srcs
+  sk <- sinkFs  dsts
+  drainP ss sk
+  drainP ss sk
+\end{code}
+
+If one is not careful, one may end up with a program which does not
+use any intermediate memory, but duplicates a lot of intermediate
+computations. Linear types solve the problem by preventing such
+duplications. (Combinators may be still provided to duplicate
+computation explicitly or store intermediate results explicitly.)
+
+Second, such representations may contain effects. In this situation,
+non-linear uses may produce an \emph{incorrect program}. If one takes
+the example of a non-recursive representation of files, one may have
+two processes writing simultaneously in the same file (potentially
+corrupting data), or one may forget to close the file.
+Quoting \citeauthor{lippmeier_parallel_2016}:
+
+\begin{quote}
+  In general an object of type |Sources| is an abstract producer of
+  data, and it may not even be possible to rewind it to a previous
+  state --- suppose it was connected to a stream of sensor
+  readings. Alas the Haskell type system does not check linearity so
+  we rely on the programmer to enforce it manually.
+\end{quote}
+
+Linearity offers a direct solution to
+\citeauthor{lippmeier_parallel_2016} worry about safety.  At the same
+time, sharing becomes more explicit. In the above snippet, because
+|srcs| have weight 1, so has |ss|, and thus it cannot be shared in the
+following lines. The programmer has then the choice of either: copying
+the contents of |srcs| or duplicating the computation, and this choice
+must be written explicitly.
+Programming streaming libaries in with explicit linearity has been
+explored in detail by \textcite{bernardy_duality_2015}.
+
 \section{\calc{} Dynamics}
 \label{sec:orgheadline16}
 
@@ -790,10 +907,10 @@ The semantics given in this section demonstrate a further extension of
 Haskell enabled by linear types: prompt deallocation of thunks. Such
 an extension of the run-time system is not necessary to benefit from
 linear types as was demonstrated in~\ref{sec:ghc}. However, this
-dynamic semantics can also help give confidence in the correctness of
+dynamic semantics can also help to give confidence in the correctness of
 the extensions of~\ref{sec:ghc}.
 
-Concretely, show that it is possible to allocate linear objects on a
+Concretely, we show that it is possible to allocate linear objects on a
 heap which is not under GC, and correspondly deallocate them upon
 (lazy) evaluation. To do so we present an extension of the semantics
 of \textcite{launchbury_natural_1993} to our language.  As Launchbury,
@@ -926,7 +1043,7 @@ Lemmas:
 
 
 Yet, the following example may, at first glance, look like a counter
-example where ||x|| is in the non-GC heap while |y| is in the
+example where |x| is in the non-GC heap while |y| is in the
 GC-heap and points to |x|:
 \begin{code}
 data () = ()
@@ -1022,14 +1139,11 @@ management'' that we aim to tackle. As we have seen, the ability to
 use an intermediate linear heap rests on the ability to turn a linear
 value into an unrestricted one. When linearity is captured in types,
 we must have two versions of every type that we intend to move between
-the heaps. Even though it is possible to provide this, it is somewhat
-annoying to duplicate every primitive type. (Possibly we could
-prescribe \#Int to be linear, but this may break lots of existing
-programs.)
+the heaps. Even though \textcite{morris_best_2016} manages to largely
+address the issue by means of polymorphism and constraints over types,
+it comes as the cost of a type-system vastly more complex than the one
+we present here.
 
-Finally, a benefit of the linearity in variables is that polymorphism
-over weights is straightforward, while linearity in types require
-bounded polymorphism to achieve most general types.
 
 \subsection{Session types vs. linear types}
 
