@@ -83,35 +83,44 @@
 
 \section{Introduction}
 
-Garbage collection is an essential constituent to the abstractions
-which make modern high-level programming languages powerful. However,
-garbage collection only takes care of memory: other resources such as
-files, database handles, or locks\unsure{JP: AFAIU locks are a means to manage resources, not an end.} have to be managed explicitly (the
-duty to close, or release, resources is left in the care of the
-programmer). The reason is that such resources are scarce (of locks, in
-particular, there is one of each kind), and leaving the job to free
-them to the garbage collector tends to lead to resources being open
-for too long, and thus to unnecessary resource contention (a lock waiting to be
-garbage collected will block every thread waiting on
-it).\improvement{discussion of combinators which address explicit
-  closes and their limitations?} The activity of writing resource
-management code such as this:
+When one writes a program interacting with its environment, sooner or
+later one needs to manage shared resources. Programming languages
+typically offer three kind of facilities to help with shared resources
+management with we classify as follows none, dynamic or static.
+
+The ``no support'' class leaves all the work to the programmer. It is
+in particular the strategy offered by the popular Unix operating
+system and its native language, C.  However, the activity of writing
+resource management code such as this:
 \begin{code}
-do
-  h <- openfile "myfile" ReadMore
-  -- some code that reads the file
-  hClose h
+do  h <- openfile "myfile" ReadMore
+    -- some code that reads the file
+    hClose h
 \end{code}
 leads easily to unsafe code with free-after-free or use-after free
-errors: the same the kind of errors than garbage collection solves
-for memory.
+errors. In concurrent settings, one may even face deadlocks.
 
-However, in recent years, high-level languages which forgo garbage
-collection in favour of safe, but explicit, memory \emph{and resource}
-management have gotten a lot of attention. This trend is best
-exemplified by the popularity of the Rust programming
-language~\cite{matsakis_rust_2014}. Where file-reading code such as above
-would be written:
+The ``dynamic support'' class proposes to dynamically detect when a
+program won't use a resource, and free it at that moment. Given such
+support, the programmer will essentially omit the deallocation
+(|hClose h| in the above program), and hope for the best. Automatic
+dynamic management of memory is an essential constituent to the
+abstractions which make modern high-level programming languages
+powerful, widely known as garbage collection. Automatic dynamic
+management of other resources is not as popular, but can still be
+found, often under the name of ``weak references''. In Haskell,
+automatic management of files is available, and known as Lazy IO.
+Automatic management of such resources tends to lead to resources
+being open for too long, and thus to unnecessary resource contention.
+This shortcoming is critical for scarce resources (a lock waiting to
+be garbage collected will block every thread waiting on it).
+
+The ``satic support'' class has received a lot of attention in recent
+years.  The idea is to forgo automatic management in favour of safe,
+but explicit management of resources, including memory. This trend is
+best exemplified by the popularity of the Rust programming
+language~\cite{matsakis_rust_2014}. Where file-reading code such as
+above would be written:
 
 \begin{verbatim}
 {
@@ -121,8 +130,8 @@ would be written:
 } // the file is closed when this scope ends
 \end{verbatim}
 
-A further benefit of using a language without garbage collection is
-increased control:
+Giving up garabage collection offers in particular the following
+benefits:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
 \item control of \emph{when} memory-management pauses occur.
@@ -145,15 +154,15 @@ languages, such as Haskell~\cite{marlow_haskell_2010}, can be extended
 to incorporate safe explicit resource management, and gain a measure
 of control on garbage-collection pauses. Taking cues from linear
 logic~\cite{girard_linear_1987}, we propose a linearly typed
-lazy\footnote{It is not essential that the language is lazy, a similar
-  extension can be designed for a strict language. But the
+lazy\footnote{Laziness is not an essential characteristic: a similar
+  extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
   dynamic semantics would change slightly in a strict language}
 programming language (the presentation is inspired
 by~\cite{mcbride_rig_2016}), whose main characteristic is to contain a
 regular programming language -- a simplified version of Haskell -- as
 a subset.\unsure{should we give a name to this programming
-  language/calculus to refer to it through the paper?}
+  language/calculus to refer to it through the paper? (Pun idea: HaskeLL)}
 
 Concretely, in such a programming language, one enjoys the convenience
 of programming in Haskell most of the time. But when part of code
