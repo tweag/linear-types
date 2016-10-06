@@ -107,7 +107,7 @@ errors. In concurrent settings, one may even face deadlocks.
 
 The ``dynamic support'' class offers to dynamically detect when a
 program won't use a resource, and to free it at that moment. Given such
-support, the programmer will essentially omit the instruction to release the ressource
+support, the programmer will essentially omit the instruction to release the resource
 (|hClose h| in the above program), and hope for the best. Automatic
 dynamic management of memory is an essential constituent to the
 abstractions which make modern high-level programming languages
@@ -121,7 +121,7 @@ This shortcoming is critical for scarce resources (a lock waiting to
 be garbage collected will block every thread waiting on it).
 
 The ``static support'' class has received a lot of attention in recent
-years.  The idea is to forgo automatic management in favour of safe,
+years.  The idea is to forgo automatic management in flavor of safe,
 but explicit management of resources, including memory. This trend is
 best exemplified by the popularity of the Rust programming
 language~\cite{matsakis_rust_2014}, where file-reading code such as
@@ -135,7 +135,7 @@ what follows would be written:
 } // the file is closed when this scope ends
 \end{verbatim}
 
-Giving up garabage collection offers in particular the following
+Giving up garbage collection offers in particular the following
 benefits:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
@@ -162,12 +162,12 @@ logic~\cite{girard_linear_1987}, we propose a linearly typed
 lazy\footnote{Laziness is not an essential characteristic: a similar
   extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
-  dynamic semantics would change slightly in a strict language} lamdba
+  dynamic semantics would change slightly in a strict language} lambda
 calculus (the presentation is inspired by~\cite{mcbride_rig_2016}),
 which contains the simply-typed lambda calculus as a subset.
 
 This lambda calculus can be scaled up to a full-fledged programming
-language and is itself a conservative extention of Haskell. Thus we
+language and is itself a conservative extension of Haskell. Thus we
 (cheekily) call it \HaskeLL.
 Concretely, in \HaskeLL,
 one enjoys the convenience of programming in Haskell;
@@ -196,7 +196,7 @@ in~\cite{wadler_propositions_2012}).
 \unsure{Should we rename weights to quantities?}
 
 Simply using linear logic --- or, as it were, intuitionistic linear
-logic, becauce we do not require a notion of type duality --- as a type
+logic, because we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
 lazy) programming language be a subset of our calculus. Indeed, if
 intuitionistic $\lambda$-calculus can be embedded in linear
@@ -209,7 +209,7 @@ This encoding means that the quantity of available values must be
 managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
 required) requires additional syntax. For instance, in the
 pidgin-Haskell syntax which we will use throughout this article, we
-couldn't write the following:\unsure{Scrap dup/id example in favour of ``all existing code needs to be written inside the |Bang| co-monad?}
+couldn't write the following:\unsure{Scrap dup/id example in favor of ``all existing code needs to be written inside the |Bang| co-monad?}
 \begin{code}
   dup :: a -> a⊗a
   dup x = (x,x)
@@ -236,7 +236,7 @@ prospect.
 
 In our calculus, instead, both arrow types are primitive. To be
 precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
-arrow type is parametrised by the amount of its argument it requires:
+arrow type is parametrized by the amount of its argument it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
 \item $A →_ω B$ is the intuitionistic\todo{It is weird to call it like
@@ -297,7 +297,7 @@ cycle :: List a → List a
 Operationally, |cycle| requires its argument to be on the GC heap.  In
 practice, libraries will never provide $ω$ times a scarce resource
 (eg. a handle to a physical entity); such a resource will thus never
-endup in the argument to |cycle|.
+end up in the argument to |cycle|.
 
 While automatic scaling from $1$ to $ω$ works well for first-order
 code, higher-order programs need polymorphism over weights. For
@@ -510,7 +510,7 @@ context, especially in the case of applications.
     \varrule
 
     \inferrule{Γ, x :_{q} A  ⊢   t : B}
-    {Γ ⊢ λ(x:_qA). t  :  A  →_q  B}\text{abs}
+    {Γ ⊢ λ(x:_q A). t  :  A  →_q  B}\text{abs}
 
     \apprule
 
@@ -539,7 +539,7 @@ context, especially in the case of applications.
 
 The typing judgement \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
 build \emph{exactly one} $A$''. Contrary to~\textcite{mcbride_rig_2016}, we provide
-no judgement to mean ``with $Γ$ I can build a quanitiy $p$ of $A$-s''. Instead, we
+no judgement to mean ``with $Γ$ I can build a quantity $p$ of $A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one can build a quantity $p$ of $A$. This idea is at play in the
 application rule (the complete set of rules can be found in
@@ -599,7 +599,7 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
-Like the application rule it is parametrised by a weight $p$. But,
+Like the application rule it is parametrized by a weight $p$. But,
 while in the application rule only the argument is affected by $p$, in
 the case rule, not only the scrutinee but also the variable bindings
 in the branches are affected by $p$. What it means, concretely, is
@@ -645,7 +645,7 @@ simple program and the types that they inhabit.
 
 \paragraph{K combinator}
 
-The lamda-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
+The lambda-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
 $A ⊸ B → A$ or $A → B → A$. However, the first type subsumes the
 second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
@@ -666,14 +666,14 @@ $(A ⊸ B) ⊸ A ⊸ B$.
 As per the lesson learned in the previous paragraph, the first type is
 dominated by the second one. However the remaining two types are
 incomparable. If we want to find a most general type we need to
-abstact over the weight of $A$:
+abstract over the weight of $A$:
 
 \[ λf. λx. f x : (A →_ρ B) → A →_ρ B.\]
 \todo{This is isn't true, strictly speaking}
 
 \paragraph{Function composition}
 The need for weight abstraction typically occurs in all higher order
-functions.  In particular, function composision inhabits a wealth of
+functions.  In particular, function composition inhabits a wealth of
 incomparable weight-monomorphic types. Yet they can subsumed by
 abstracting over the linearities of the input functions, as follows:
 
@@ -777,7 +777,7 @@ array (even though we remark that the |MutableByteArray| is not a
 reference type) because linearity ensures that it cannot be shared.
 
 Finally, |freezeByteArray| turns a linear |MutableByteArray| into a
-sharable |ByteArray|. It does so by moving the data from the linear
+shareable |ByteArray|. It does so by moving the data from the linear
 heap in into the GC heap. It consumes the static |MutableByteArray|,
 so that no other function can access it. In particular, such a frozen
 byte array can be returned by the argument to |newByteArray|:
@@ -800,7 +800,7 @@ withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \subsection{Fusion}
 \label{sec:fusion}
 
-A popular optimisation for functional languages, and in particular
+A popular optimization for functional languages, and in particular
 GHC, is \emph{shortcut fusion} \cite{gill_short_1993}.  Shortcut
 fusion relies on the custom rewrite rules, and a general purpose
 compile-time evaluation mechanism.
@@ -897,7 +897,7 @@ time, sharing becomes more explicit. In the above snippet, because
 following lines. The programmer has then the choice of either: copying
 the contents of |srcs| or duplicating the computation, and this choice
 must be written explicitly.
-Programming streaming libaries in with explicit linearity has been
+Programming streaming libraries in with explicit linearity has been
 explored in detail by \textcite{bernardy_duality_2015}.
 
 \section{\calc{} Dynamics}
@@ -911,7 +911,7 @@ dynamic semantics can also help to give confidence in the correctness of
 the extensions of~\ref{sec:ghc}.
 
 Concretely, we show that it is possible to allocate linear objects on a
-heap which is not under GC, and correspondly deallocate them upon
+heap which is not under GC, and correspondingly deallocate them upon
 (lazy) evaluation. To do so we present an extension of the semantics
 of \textcite{launchbury_natural_1993} to our language.  As Launchbury,
 we first transform terms, so that the values that are potentially
@@ -1189,7 +1189,7 @@ To keep things concrete, we have limited the constants of the language
 of weights to $1$ and $ω$. Yet, we could have more constants.  For
 example, we could add $α$ to represent affine variables (usable zero
 or once). In this situation we would have $α + 1 = ω$, $α ∙ ω = ω$,
-and the variable rule should be extended to $α$-contexts. Similary one
+and the variable rule should be extended to $α$-contexts. Similarly one
 can add a $0$, as \textcite{mcbride_rig_2016} does, and in turn
 support dependent types.
 
@@ -1207,6 +1207,14 @@ operations, and the variable rule adapted accordingly.
 
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
-%  LocalWords:  deallocation Launchbury launchbury GC scrutinee
+%  LocalWords:  deallocation Launchbury launchbury GC scrutinee dup
 %  LocalWords:  centric polymorphism modality intuitionistic typable
-%  LocalWords:  compositional Andreoli's
+%  LocalWords:  compositional Andreoli's openfile myfile ReadMore ys
+%  LocalWords:  hClose xs GC'ed deallocated linearities mcbride snd
+%  LocalWords:  unboxed Haskellian APIs newByteArray MutableByteArray
+%  LocalWords:  updateByteArray freeByteArray indexMutByteArray et ss
+%  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
+%  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
+%  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation
+%  LocalWords:  duplications bernardy deallocate morris
+%  LocalWords:  doSomethingWithLinearHeap
