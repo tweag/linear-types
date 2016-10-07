@@ -755,9 +755,10 @@ strategy for the primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
 
+A first possible API is the following:
 
 \begin{code}
-newByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
+withNewByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
 freeByteArray :: MutableByteArray ⊸ ()
 indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
@@ -765,14 +766,18 @@ freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
-The key primitive in the above API is |newByteArray|, whose first
-argument is the size of an array to allocate. It takes a continuation where \emph{one} reference
-to the byte array is available. Crucially, the continuation needs to produce a
-|Bang| type. This signature ensures that the continuation cannot return a
+The key primitive in the above API is |withNewByteArray|, whose first
+argument is the size of an array to allocate. It takes a continuation
+where \emph{one} reference to the byte array is
+available. Operationally, the function starts by allocating a byte
+array of the requested size \emph{on a non GC heap} and call the
+continuation. The types of the various primitives are chosen to ensure
+memory safety. Crucially, the continuation needs to produce a |Bang|
+type. This signature ensures that the continuation cannot return a
 reference to the byte array.  Indeed, it is impossible to transform a
 $1$-weighted object into an $ω$-weighted one, without copying it
 explicitly. Not returning the byte array is critical, because the
-|newByteArray| function may be called $ω$ times; in which case the
+|withNewByteArray| function may be called $ω$ times; in which case its
 result will be shared.
 
 Many functions take a |MutableByteArray| as argument and produce a new
@@ -782,16 +787,19 @@ reference type) because linearity ensures that it cannot be shared.
 
 Finally, |freezeByteArray| turns a linear |MutableByteArray| into a
 shareable |ByteArray|. It does so by moving the data from the linear
-heap in into the GC heap. It consumes the static |MutableByteArray|,
-so that no other function can access it. In particular, such a frozen
-byte array can be returned by the argument to |newByteArray|:
+heap onto the GC heap. It consumes the static |MutableByteArray|,
+so that no further function can access it. In particular, such a frozen
+byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
-  newByteArray n freezeByteArray :: ByteArray
+  withNewByteArray n freezeByteArray :: ByteArray
 \end{code}
 
 \todo{Add splitByteArray?}
 
 \subsubsection{Version 2}
+
+A possible shortcoming of the above API is that it forces to write
+allocating code in CPS. An alternative API is the following.
 
 \begin{code}
 newByteArray :: Heap s ⊸ Int → (MutableByteArray s ⊗ Heap s)
@@ -801,6 +809,15 @@ freezeByteArray :: MutableByteArray s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray)
 withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \end{code}
 
+The above API assumes a unique reference to a |Heap s|. The
+|newByteArray| function takes a such a reference (and eventually
+releases it), which ensures that it can never be called $ω$ times.
+
+The |withAHeap| function creates such a unique reference. It uses the
+same trick as |withNewByteArray| to ensure that linear objects do not
+escape the intended scope.
+
+\todo{Why do freeze/free need the heap access?}
 \subsection{Fusion}
 \label{sec:fusion}
 
@@ -813,7 +830,7 @@ Concretely:
 \begin{enumerate}
 \item Rewrite rules transform structures which use general recursion
   into a representation with no recursion (typically church encodings)
-\item The inliner kicks in and 'fuses' composition of non-recursive
+\item The inliner kicks in and fuses compositions of non-recursive
   functions
 \item Unfused structures are reverted to the original representation.
 \end{enumerate}
