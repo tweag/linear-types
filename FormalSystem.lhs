@@ -353,6 +353,7 @@ one does not only want the static guarantees of linearity, but also
 its dynamic benefits. \todo{add forward references or move this
   section to a more appropriate place.}
 
+
 \section{\calc{} statics}
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
@@ -360,9 +361,6 @@ its dynamic benefits. \todo{add forward references or move this
 Each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
 number of times the \emph{weight} of the variable.
-
-\begin{figure}
-\end{figure}
 
 Concrete weights are either $1$ or $ω$: when the weight is $1$, the program
 \emph{must} consume the variable exactly once; when the weight is $ω$,

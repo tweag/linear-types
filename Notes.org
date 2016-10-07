@@ -182,3 +182,33 @@ doSomethingWithLinearHeap x k = case x of
   Bang y -> k y
 \end{code}
 
+* Linear Monads?
+
+What should monadic bind look like?
+
+The "root tree" is used only once, always, so we can have the type:
+(>>=) :: m a -> (a -> m b) ⊸ m b
+
+-- additionally if the reference is used once, then its action is used once too.
+(>>=) :: m a ⊸ (a ⊸ m b) ⊸ m b
+
+For many monads (IO) actions are never shared. So we probably want just the above type.
+Downside: yet result is often to be shared, and this has to be explicit:
+
+(>>=) :: m (Bang a) ⊸ (Bang a ⊸ m b) ⊸ m b
+
+(We have syntactic sugar there anyway... so perhaps we don't care)
+
+
+In this situation we may write code like
+
+#+BEGIN_SRC haskell
+do h <- openFile
+   h <- use h -- kinda ugly
+   close h'
+#+END_SRC
+
+where
+
+openFile :: String -> IO Handle
+hClose :: Handle ⊸ IO ()
