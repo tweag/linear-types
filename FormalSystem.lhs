@@ -323,6 +323,36 @@ Likewise, function composition can be given the following type:
 What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
+\section{Sharing linear data}
+
+The |Bang| type, used above, can be defined in \HaskeLL{} like so:
+
+\begin{code}
+data Bang a where
+  Bang :: a → Bang a
+\end{code}
+
+The above type is useful for example to return a sharable reference even
+when a function is called just once. In particular, copiable
+can be captured with the following class:
+\begin{code}
+data Copiable a where
+  copy :: a → Bang a
+\end{code}
+It turns out that all data structures are copiable. For example:
+\begin{code}
+instance Copiable a => Copiable (List a) where
+  copy [] = Bang []
+  copy (x:xs) = case (copy x, copy xs) of
+    (Bang x', Bang xs') -> Bang (x':xs')
+\end{code}
+
+Equipped with the above, one can create shareable references while
+without escaping to the unrestricted world. Doing so is necessary when
+one does not only want the static guarantees of linearity, but also
+its dynamic benefits. \todo{add forward references or move this
+  section to a more appropriate place.}
+
 \section{\calc{} statics}
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
@@ -1116,7 +1146,6 @@ Lemmas:
 % Σ||Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ||Θ,Ξ-Z ⊢ z :_ρ A
 
 
-\todo{probably this discussion should come earlier}
 Yet, the following example may, at first glance, look like a counter
 example where |x| is in the non-GC heap while |y| is in the
 GC-heap and points to |x|:
@@ -1131,56 +1160,6 @@ However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
 typing rule for 'case' gives the same weight to the case-expression as
 a whole as to the scrutinee (|x| in this case). Therefore
 |case x of { () -> ()}| has weight $1$.
-
-Remark: for a program to turn a $1$-weight into an $ω$-weight, one may use
-the following definition:
-\begin{code}
-data Bang A = Bang ωA
-\end{code}
-
-The expression |case x of { () -> Bang ()}| has type
-|Bang A|, but still with weight 1.  The programming pattern described above does not apply
-just to the unit type $()$, but to any data type |D|. Indeed, for such
-a type we will have a function |D ⊸ Bang D| (this may be even
-efficiently implemented by copying a single pointer --- for example if
-we have a single array, or a notion of compact region).  Thus at any
-point where we have an intermediate result comprised of data only, we
-may switch to use the linear heap. In a second phase, this data may
-then be moved to the GC heap and used for general consumption.
-
-In that light, the only way to use a linear value from the GC-heap is
-to force it first, and then chain computations with |case| --- for
-example as follows:
-\begin{code}
-let x = _1 ()
-case ( case x of { () -> Bang () }) of {
-  Bang y -> ()
-}
-\end{code}
-This still does not create a pointer from GC-heap to non-GC heap: by the
-time |y| is created, the linear value |x| has been freed.
-
-If, on the other hand, |x| had weight $ω$, then we would be in the
-usual Haskell case, and the following expression does type:
-\begin{code}
-let x =_ω ()
-let y =_ω ( case x of { () -> () } )
-in ()
-\end{code}
-
-If one wants to use the linear heap 'locally', one must use CPS.
-
-That is:
-
-\begin{code}
-doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
-doSomethingWithLinearHeap f x k = case f x of
-  Bang y -> k y
-
-doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
-doSomethingWithLinearHeap x k = case x of
-  Bang y -> k y
-\end{code}
 
 \section{Comparison with other techniques}
 
@@ -1259,12 +1238,14 @@ Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
 abstractions while retaining the linearity property.
 \section{Extensions and Future Work}
 
+unsure{Weight inference? Polymorphism? Magic |copy| of data structures?}
+
 \subsection{More Weights}
 
 To keep things concrete, we have limited the constants of the language
 of weights to $1$ and $ω$. Yet, we could have more constants.  For
 example, we could add $α$ to represent affine variables (usable zero
-or once). In this situation we would have $α + 1 = ω$, $α ∙ ω = ω$,
+or once). In this situation we would have $α + 1 = ω$, $α · ω = ω$,
 and the variable rule should be extended to $α$-contexts. Similarly one
 can add a $0$, as \textcite{mcbride_rig_2016} does, and in turn
 support dependent types.

@@ -131,3 +131,54 @@ unrestricted function, I can give you a linear function.
 
 
 
+* Copying
+for a program to turn a $1$-weight into an $ω$-weight, one may use
+the following definition:
+\begin{code}
+data Bang A = Bang ωA
+\end{code}
+
+The expression |case x of { () -> Bang ()}| has type
+|Bang A|, but still with weight 1.  The programming pattern described above does not apply
+just to the unit type $()$, but to any data type |D|. Indeed, for such
+a type we will have a function |D ⊸ Bang D| (this may be even
+efficiently implemented by copying a single pointer --- for example if
+we have a single array, or a notion of compact region).  Thus at any
+point where we have an intermediate result comprised of data only, we
+may switch to use the linear heap. In a second phase, this data may
+then be moved to the GC heap and used for general consumption.
+
+In that light, the only way to use a linear value from the GC-heap is
+to force it first, and then chain computations with |case| --- for
+example as follows:
+\begin{code}
+let x = _1 ()
+case ( case x of { () -> Bang () }) of {
+  Bang y -> ()
+}
+\end{code}
+This still does not create a pointer from GC-heap to non-GC heap: by the
+time |y| is created, the linear value |x| has been freed.
+
+If, on the other hand, |x| had weight $ω$, then we would be in the
+usual Haskell case, and the following expression does type:
+\begin{code}
+let x = _ ω ()
+let y = _ ω ( case x of { () -> () } )
+in ()
+\end{code}
+
+If one wants to use the linear heap 'locally', one must use CPS.
+
+That is:
+
+\begin{code}
+doSomethingWithLinearHeap :: (A ⊸ Bang B) ⊸ A ⊸ (B → C) ⊸ C
+doSomethingWithLinearHeap f x k = case f x of
+  Bang y -> k y
+
+doSomethingWithLinearHeap :: Bang B ⊸ (B → C) ⊸ C
+doSomethingWithLinearHeap x k = case x of
+  Bang y -> k y
+\end{code}
+
