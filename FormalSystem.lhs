@@ -1309,8 +1309,6 @@ support dependent types.
 We can even make the set weight constants = $2^ℕ$, with the obvious
 operations, and the variable rule adapted accordingly.
 
-\todo{underline that two aspects are mostly independent: 1. prompt deallocation of cons cells 2. resource management with explicit free}
-
 \printbibliography
 \end{document}
 
