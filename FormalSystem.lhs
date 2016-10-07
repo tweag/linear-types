@@ -278,18 +278,19 @@ as follows:
 \end{code}
 
 Operationally, this means that the resulting list does not need to
-live on a GC'ed heap --- instead it can be put on an explicitly
-managed heap (which we call the linear heap in what follows). That
-list can thus be deallocated exactly at the point of its
-consumption. In a lazy language, the thunks on the linear heap can thus
-even free themselves.
+live on a GC'ed heap\footnote{even though it can} --- instead it can
+be put on an explicitly managed heap (which we call the linear heap in
+what follows). If so, that list can thus be deallocated exactly at the
+point of its consumption. In a lazy language, the thunks on the linear
+heap can thus even free themselves.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
 call $ω$ times |(++)| to obtain $ω$ times the concatenation.
-Operationally, having an $ω$ quantity of the inputs implies that the
-they reside on the GC heap. Constructing $ω$ times the output means to
-put it on the GC heap as well, with all the usual implications in
-terms of laziness and sharing.
+Operationally, having an $ω$ quantity of the inputs implies that they
+reside on the GC heap, and thus can be shared as much as
+necessary. Constructing $ω$ times the output means to put it on the GC
+heap as well, with all the usual implications in terms of laziness and
+sharing.
 
 A function may legitimately demand $ω$ times its input. For example
 the function repeating indefinitely its input will have the type:
@@ -694,6 +695,9 @@ with tentative error messages.
 \section{Applications}
 \label{sec:ghc}
 
+\subsection{Protocols}
+\label{sec:protocols}
+\todo{Fill this section}
 \subsection{FFI}
 \label{sec:ffi}
 
@@ -993,20 +997,21 @@ and the translation from \calc{} can be found in
 the runtime language are that the latter is untyped, has fewer weight
 annotations, and applications always have variable arguments.
 
-…Compared to Launchbury:
+Compared to \citeauthor{launchbury_natural_1993}'s original, our
+semantics exhibits the following salient points:
 \begin{itemize}
 \item The heap is annotated with weights. Variables with weight $ω$
   point to the the GC heap, while variables with weight $1$ point to
   the linear heap.
 \item We add a weight in the reduction relation, corresponding to the
-  quantity of values to produce.
+  (dynamic) quantity of values to produce.
 \item The rules for \emph{variable} and \emph{let} are changed to
   account for weights.
 \end{itemize}
 
-The weight in the reduction relation is used to interpret $\flet =1 …$
+The weight in the reduction relation is used to interpret $\flet =_1 …$
 bindings into allocations on the proper heap.  Indeed, in $ω$ contexts,
-$\flet =1 …$ must allocate on the GC heap, not on the linear
+$\flet =_1 …$ must allocate on the GC heap, not on the linear
 one. Indeed, consider the example:
 
 \begin{code}
@@ -1016,7 +1021,7 @@ let a = _ rho f ()
 
 The function \varid{f} creates some data. When run in a linear context, \varid{f}
 allocates \varid{f} on the linear heap. When run in an unrestricted context, it
-must allocate \varid{z} on the GC heap. So, its behavior depends the value of ρ.
+must allocate \varid{z} on the GC heap. So, its behavior depends the value of $ρ$.
 
 \begin{figure}
   \begin{mathpar}
@@ -1066,7 +1071,7 @@ rule.
 
 Lemmas:
 \begin{itemize}
-\item If the weight is ω, then the linear heap is empty.
+\item If the weight is $ω$, then the linear heap is empty.
 %  A
 % consequence of this is that we should have main ::1 IO () --
 % otherwise it's impossible to have anything in the linear heap.
@@ -1074,8 +1079,8 @@ Lemmas:
 % Furthermore, in order to use IO in any reasonable way, we need a
 % 'linear do notation'.
 \item Every variable which is bound in the linear heap is statically
-  bound with weight 1.
-\item Corollary: every variable bound statically with weight ω is
+  bound with weight $1$.
+\item Corollary: every variable bound statically with weight $ω$ is
   bound in the GC heap.
 \end{itemize}
 
@@ -1111,27 +1116,28 @@ Lemmas:
 % Σ||Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ||Θ,Ξ-Z ⊢ z :_ρ A
 
 
-
+\todo{probably this discussion should come earlier}
 Yet, the following example may, at first glance, look like a counter
 example where |x| is in the non-GC heap while |y| is in the
 GC-heap and points to |x|:
 \begin{code}
 data () = ()
 
-let x =_1 ()
-let y =_ω ( case x of { () -> () })
+let x = _ 1 ()
+let y = _ omega ( case x of { () -> () })
 in ()
 \end{code}
 However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
 typing rule for 'case' gives the same weight to the case-expression as
 a whole as to the scrutinee (|x| in this case). Therefore
-|case x of { () -> ()}| has weight 1.
+|case x of { () -> ()}| has weight $1$.
 
-Remark: for a program to turn a 1-weight into an ω-weight, one may use
+Remark: for a program to turn a $1$-weight into an $ω$-weight, one may use
 the following definition:
 \begin{code}
 data Bang A = Bang ωA
 \end{code}
+
 The expression |case x of { () -> Bang ()}| has type
 |Bang A|, but still with weight 1.  The programming pattern described above does not apply
 just to the unit type $()$, but to any data type |D|. Indeed, for such
