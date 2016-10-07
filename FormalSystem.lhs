@@ -588,8 +588,8 @@ application rule (the complete set of rules can be found in
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
-to have a quantity $q$ of $u$ at its disposal. This rule is the second
-arm\unsure{Where is the first arm?} of the weighted arrows which allow to have the $λ$-calculus
+to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
+of the weighted arrows which allow to have the $λ$-calculus
 as a subset of \calc{}. Indeed, recall the example from the
 beginning of Section~\ref{sec:orgheadline8} which had us write |dup
 (Bang (id (Bang 42)))|. Thanks to the application rule we have
@@ -1143,7 +1143,7 @@ weight is 1, thus effectively allowing linear variables to look on the
 GC heap. This behavior allows an occurrence of a linear variable to
 work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
 rule.
-
+\todo{Works only on weight-closed terms}
 \paragraph{Theorem: The GC heap contains no references to the linear heap}
 (This result is critical for heap consistency.)
 
@@ -1232,9 +1232,9 @@ kinds and bounded polymorphism.
 
 In contrast, in \calc{} we have automatic scaling of linear types to unrestricted
 ones in unrestricted contexts. This feature already partially
-addresses the problem of explosion of types. In order to get principal
+addresses the problem of explosion of types. In order to give suitably general
 types we need quantification over weights, and extension of the
-language of weights to products and sums. \todo{Does this really suffice?}
+language of weights to products and sums.
 
 Another issue with the ``linearity in types'' presentation is that it
 is awkward at addressing the problem of ``simplified memory

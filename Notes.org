@@ -204,7 +204,7 @@ In this situation we may write code like
 
 #+BEGIN_SRC haskell
 do h <- openFile
-   h <- use h -- kinda ugly
+   h' <- use h -- kinda ugly
    close h'
 #+END_SRC
 
