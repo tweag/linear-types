@@ -330,36 +330,6 @@ Likewise, function composition can be given the following type:
 What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
-\section{Sharing linear data}
-
-The |Bang| type, used above, can be defined in \HaskeLL{} like so:
-
-\begin{code}
-data Bang a where
-  Bang :: a → Bang a
-\end{code}
-
-The above type is useful for example to return a sharable reference even
-when a function is called just once. In particular, copiable
-can be captured with the following class:
-\begin{code}
-data Copiable a where
-  copy :: a → Bang a
-\end{code}
-It turns out that all data structures are copiable. For example:
-\begin{code}
-instance Copiable a => Copiable (List a) where
-  copy [] = Bang []
-  copy (x:xs) = case (copy x, copy xs) of
-    (Bang x', Bang xs') -> Bang (x':xs')
-\end{code}
-
-Equipped with the above, one can create shareable references while
-without escaping to the unrestricted world. Doing so is necessary when
-one does not only want the static guarantees of linearity, but also
-its dynamic benefits. \todo{add forward references or move this
-  section to a more appropriate place.}
-
 \section{\calc{} statics}
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
@@ -1197,9 +1167,8 @@ any data type:
 
     move Nil = Bang Nil
     move (Cons x l) =
-      case move x of Bang x' ->
-      case move l of Bang l' ->
-      Bang (Cons x' l')
+    case (move x, move l) of
+      (Bang x',Bang l') -> Bang (Cons x' l')
 \end{code}
 
 The existence of |move| combined with lazy thunks may seem to
