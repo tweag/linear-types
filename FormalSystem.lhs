@@ -1076,30 +1076,41 @@ the runtime language are that the latter is untyped, has fewer weight
 annotations, and applications always have variable arguments.
 
 Compared to \citeauthor{launchbury_natural_1993}'s original, our
-semantics exhibits the following salient points:
+semantics exhibits the following salient differences:
 \begin{itemize}
-\item The heap is annotated with weights. Variables with weight $ω$
-  point to the the GC heap, while variables with weight $1$ point to
+\item The heap is annotated with weights. The variables with weight
+  $ω$ represent the garbage-collected heap, while the variables with
+  weight $1$ represent the non-garbage-collected heap, which we call
   the linear heap.
-\item We add a weight in the reduction relation, corresponding to the
-  (dynamic) quantity of values to produce.
-\item The rules for \emph{variable} and \emph{let} are changed to
-  account for weights.
+\item We add a weight parameter to the reduction relation,
+  corresponding to the (dynamic) quantity of values to produce.
+\item The rules for \emph{variable}, \emph{let}, and
+  \emph{application} are changed to account for weights (let-bindings
+  and application are annotated by a weight for this reason).
 \end{itemize}
 
-The weight in the reduction relation is used to interpret $\flet =_1 …$
-bindings into allocations on the proper heap.  Indeed, in $ω$ contexts,
-$\flet =_1 …$ must allocate on the GC heap, not on the linear
-one. Indeed, consider the example:
+The weight parameter of the reduction relation is used to interpret
+$\flet x =_1 …$ bindings into allocations on the appropriate
+heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
+allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
+allocate on the GC heap, not on the linear one. To see why, consider
+the following example:
 
 \begin{code}
 let f = _ omega (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
 let a = _ rho f ()
 \end{code}
 
-The function \varid{f} creates some data. When run in a linear context, \varid{f}
-allocates \varid{z} on the linear heap. When run in an unrestricted context, it
-must allocate \varid{z} on the GC heap. So, its behavior depends the value of $ρ$.
+The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, this
+thunk must be allocated in the linear heap if the context requires a
+linear value, while if the context requires an unrestricted value, the
+thunk must be allocated on the garbage-collected heap. However, the
+thunk is allocated by $let z =_1 …$, so this let-binding may have to
+allocate on the garbage-collected heap despite being annotated with
+weight $1$. This behaviour is not a consequence of implicit promotion,
+but of linear logic: explicit promotion also permits linear functions
+which produce linear values to be promoted to producing unrestricted
+values. The semantics is given in \fref{fig:dynamics}.
 
 \begin{figure}
   \begin{mathpar}
@@ -1138,76 +1149,87 @@ must allocate \varid{z} on the GC heap. So, its behavior depends the value of $�
   \caption{Dynamic semantics}
   \label{fig:dynamics}
 \end{figure}
-Remark: the \emph{unrestricted variable} rule also triggers when the
-weight is 1, thus effectively allowing linear variables to look on the
-GC heap. This behavior allows an occurrence of a linear variable to
-work in an unrestricted contexts, in turn justifying the $1 + ω = ω$
-rule.
-\todo{Works only on weight-closed terms}
-\paragraph{Theorem: The GC heap contains no references to the linear heap}
-(This result is critical for heap consistency.)
+Remark: the \emph{shared variable} rule also triggers when the weight
+parameter is $1$, thus effectively allowing linear variables to look
+on the garbage-collected heap and linear data to have unrestricted
+sub-data. \todo{Works only on weight-closed terms}
 
-Lemmas:
-\begin{itemize}
-\item If the weight is $ω$, then the linear heap is empty.
-%  A
-% consequence of this is that we should have main ::1 IO () --
-% otherwise it's impossible to have anything in the linear heap.
+\begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
+  It is an essential property that the garbage collected heap does not
+  contain reference to the linear heap. Otherwise, garbage collection
+  would have to also free the linear heap, making the linear heap
+  garbage-collected as well (the converse does not hold: there can be
+  references to the garbage-collected heap in the linear heap).
+\end{lemma}
 
-% Furthermore, in order to use IO in any reasonable way, we need a
-% 'linear do notation'.
-\item Every variable which is bound in the linear heap is statically
-  bound with weight $1$.
-\item Conversely: every variable bound statically with weight $ω$ is
-  bound in the GC heap.
-\end{itemize}
-
-
-% Proof:
-% 1. The only place where the heap is populated is in let. So we check let. We put things in the GC heap when πρ = ω.
-%    a. π = ω. Statically, the expression can only depend on the ω context, so we can't create any reference to the linear heap.
-%    b. ρ = ω. In this case, by lemma 1. the linear heap is empty, and thus it's impossible to link to anything in it.
-
-% relation: Δ||Γ;Φ ⊢ e :_ρ A   ≜  Δ ⊢ letω Γ in let1 Φ in e :_ρ A
-
-% theorem: if Γ;Φ : e ⇓_ρ Δ,Ψ : z then ∀Ξ,Θ,Α.   Θ||Γ;(Φ-Ξ) ⊢ e :_ρ A  ⇒  Θ||Δ;(Ψ-Ξ) ⊢ z :_ρ A
-
-
-% unrestricted variable case:
-
-% Need to prove:
-
-%   Θ,x:T||Γ;(Φ-Ξ) ⊢ e :_ρ T  ⇒  Θ,x:T||Δ;(ψ-Ξ) ⊢ z :_ρ T
-% ──────────────────────────────────────────────────────
-%  Θ||Γ,x↦e;(Φ-Ξ) ⊢ x :_ρ T  ⇒  Θ||Δ,x↦z;(ψ-Ξ) ⊢ z :_ρ T
-
-% case case:
-
-% Need to prove:
-
-% Ψ = free vars ek - y + x + Z
-% ? = free vars ek - y
-
-% Σ||Γ;Φ-(Z+?) ⊢ e :_ρ D ⇒ Σ||Δ;Ψ-(Z+?) ⊢ ck x :_ρ D
-% Σ||Δ;Ψ-Z ⊢ ek[x/y] :_ρ A ⇒ Σ||θ;Ξ-Z ⊢ z :_ρ A
-% ─────────────────────────────────────────────────────────────
-% Σ||Γ;Φ-Z ⊢ case e of {ck y -> ek} :_ρ A  ⇒ Σ||Θ,Ξ-Z ⊢ z :_ρ A
-
-
-Yet, the following example may, at first glance, look like a counter
-example where |x| is in the non-GC heap while |y| is in the
-GC-heap and points to |x|:
+To illustrate how the semantics of \fref{fig:dynamics} works, let us
+consider how it indeed allows explicit memory management of data in
+the linear heap. Specifically, first-order inductive data types, can
+be cleared from the linear heap either by being freed, or by being
+moved into the garbage-collected heap, without additional
+primitives. To that effect, let us introduce the following \HaskeLL{}
+type class:
 \begin{code}
-data () where () :: ()
-
-let x = _ 1 ()
-let y = _ omega ( case x of { () -> () })
-in ()
+  class Data a where
+    free :: a ⊸ ()  -- Frees data in the linear heap
+    move :: a ⊸ !a  -- moves data from the linear heap to the \textsc{gc} heap
 \end{code}
-However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
-typing rule for 'case' gives the same weight to the case-expression as
-a whole as to the scrutinee (|x| in this case). Therefore
-|case x of { () -> ()}| has weight $1$. \improvement{It's very unclear what this paragraph is trying to convey.}
+Now, let us demonstrate how to implement instance of |Data| for
+booleans and lists, which should make it clear how to derive |Data| to
+any data type:
+\begin{code}
+  data Bool = True | False
+
+  instance Data Bool where
+    free True = ()
+    free False = ()
+
+    move True = Bang True
+    move False = Bang False
+
+  data List a
+    = Nil : List a
+    | Cons : a ⊸ List a ⊸ List a
+
+  instance Data a => Data (List a) where
+    free Nil = ()
+    free (Cons x l) = case free x of () -> free l
+
+    move Nil = Bang Nil
+    move (Cons x l) =
+      case move x of Bang x' ->
+      case move l of Bang l' ->
+      Bang (Cons x' l')
+\end{code}
+
+The existence of |move| combined with lazy thunks may seem to
+contradict the fact there are no references from the garbage collected
+heap to the linear heap:
+\begin{code}
+  let x : _ 1 List Bool = [True,False]
+      y : _ omega !(List Bool) = move x
+  in …
+\end{code}
+The thunk in |y| contains a pointer to |x| which lives in the linear
+heap. Fortunately this is not the case: |move x| is a lazy thunk which
+produces a \textsc{gc}-heap-allocated value, but the thunk itself is
+not unrestricted and will go to the linear heap\footnote{To be
+  entirely precise |move x| will go to the linear heap if the weight
+  parameter is $1$, but if the weight parameter is $ω$ both $x$ and
+  $ω$ will allocated to the garbage-collected heap.}. And, indeed, the
+above snippet is ill-typed. Because we are trying to verify the
+following judgement:
+$$x:_1|List Bool|⊢ \flet y :_ω |move x| = …$$
+while, per the \emph{let} typing rule, we would need:
+$$x:_ω|List Bool|⊢ \flet y :_ω |move x| = …$$
+
+In order to extract the unrestricted value from |move x| one has to
+force the thunk with a case:
+\begin{code}
+  let x : _ 1 List Bool = [True,False]
+  in case move x of Bang x' ->
+  … -- |x'| is unrestricted
+\end{code}
 
 \section{Comparison with other techniques}
 
@@ -1328,4 +1350,4 @@ operations, and the variable rule adapted accordingly.
 %  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
 %  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation
 %  LocalWords:  duplications bernardy deallocate morris latencies
-%  LocalWords:  doSomethingWithLinearHeap untyped
+%  LocalWords:  doSomethingWithLinearHeap untyped boolean
