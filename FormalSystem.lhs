@@ -613,7 +613,7 @@ for some $A$.
 This implicit use of the promotion rule is what makes it possible to
 seamlessly mix linear types and intuitionistic types inside the same
 language. The whole idea is a bit subtle, and it may be worth it to
-ponder a moment why it works as advertised.  \info{There is a
+ponder for a moment why it works as advertised.  \info{There is a
   presentation of the application which is closer to the usual
   promotion rule: requiring $\Delta$ to be divisible by $q$ (and not
   scale $\Delta$ in the conclusion). This works fine when weights are
@@ -1158,7 +1158,7 @@ Lemmas:
 % 'linear do notation'.
 \item Every variable which is bound in the linear heap is statically
   bound with weight $1$.
-\item Corollary: every variable bound statically with weight $ω$ is
+\item Conversely: every variable bound statically with weight $ω$ is
   bound in the GC heap.
 \end{itemize}
 
