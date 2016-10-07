@@ -34,7 +34,7 @@
 \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
-% \setmathfont{TeX Gyre Pagella Math}
+% \setmainfont{TeXGyrePagella}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -747,8 +747,8 @@ corresponding to either the point of view of the server or the client.
 type Dual a = a ⊸ ⊥
 data Status = Success | Failure
 data Client where
-  Deposit  :: ℕ -> Dual Server ⊸ Client
-  Withdraw :: ℕ -> Dual (Status ⊗ Server) ⊸ Client
+  Deposit  :: Nat -> Dual Server ⊸ Client
+  Withdraw :: Nat -> Dual (Status ⊗ Server) ⊸ Client
 type Server = Dual Client
 \end{code}
 The |Client| type describes the possible behaviours of the
@@ -760,7 +760,7 @@ response will additionally indicate if withdrawal was successful.
 For good measure, we can show how to implement a simple server which
 satisfies the protocol:
 \begin{code}
-server :: ℕ -> Server
+server :: Nat -> Server
 server balance client = case client of
   Deposit amount respond -> respond (server (balance + amount))
   Withdraw amount respond

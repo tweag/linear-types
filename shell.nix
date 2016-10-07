@@ -7,6 +7,9 @@ in stdenv.mkDerivation {
                   biber
                   (texlive.combine {
                     inherit (texlive)
+                      # collection-fontutils
+                      # tex-gyre tex-gyre-math
+                      lm
                       todonotes
                       stmaryrd lazylist polytable # for lhs2tex
                       xargs
