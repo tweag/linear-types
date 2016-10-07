@@ -27,7 +27,9 @@
 \usepackage{mathpartir}
 \usepackage{fontspec}
 \usepackage{unicode-math}
-\usepackage{fancyref}
+\usepackage[plain]{fancyref}
+\def\frefsecname{Section}
+
 \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
@@ -938,7 +940,7 @@ further benefit can be reaped: prompt deallocation of thunks. While
 this extension of the runtime system is not necessary to benefit from
 linear types, the dynamic semantics presented in this section can also
 help give confidence in the correctness of the extensions
-of~\fref{sec:ghc}.\improvement{make reference style more uniform}
+of~\fref{sec:ghc}.
 
 Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
