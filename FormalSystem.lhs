@@ -43,7 +43,7 @@
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
-\newcommand{\varid}[1]{\ensuremath{\mathnormal{#1}}}
+\newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
 
 \newcommand{\figuresection}[1]{\textbf{#1}}
@@ -352,7 +352,6 @@ without escaping to the unrestricted world. Doing so is necessary when
 one does not only want the static guarantees of linearity, but also
 its dynamic benefits. \todo{add forward references or move this
   section to a more appropriate place.}
-
 
 \section{\calc{} statics}
 \subsection{Typing contexts}
@@ -725,7 +724,59 @@ with tentative error messages.
 
 \subsection{Protocols}
 \label{sec:protocols}
-\todo{Fill this section}
+
+Linear types as proposed here can be conveniently used to represent
+protocols. When used in to represent protocols, negation of types
+becomes an important construction, because it corresponds to taking
+the point of view of the other party. Linear logic typically features
+a bottom type $⊥$, whose computational interpretation is that of a
+terminating computation. Given this type, $A ⊸ ⊥$ is an adequate
+representation for the negation of $A$. We have no primitive $⊥$ type
+in \HaskeLL{}: instead we assume that it is an abstract type provided
+by a library, together with a combinator enabling to execute the
+embedded computation:
+\begin{code}
+type ⊥ -- abstract
+runComputation :: ⊥ ⊸ IO ()
+\end{code}
+
+Assuming the above signature, we can define a protocol for a simple
+`bank-account' server. We do so by simultaneously defining two dual types,
+corresponding to either the point of view of the server or the client.
+\begin{code}
+type Dual a = a ⊸ ⊥
+data Status = Success | Failure
+data Client where
+  Deposit  :: ℕ -> Dual Server ⊸ Client
+  Withdraw :: ℕ -> Dual (Status ⊗ Server) ⊸ Client
+type Server = Dual Client
+\end{code}
+The |Client| type describes the possible behaviours of the
+client. When it |Deposit|s, it provides a certain amount and a means
+to get a response from the server (|Dual Server|). Upon |Withdraw|al, the
+response will additionally indicate if withdrawal was successful.
+
+
+For good measure, we can show how to implement a simple server which
+satisfies the protocol:
+\begin{code}
+server :: ℕ -> Server
+server balance client = case client of
+  Deposit amount respond -> respond (server (balance + amount))
+  Withdraw amount respond
+    | amount >= balance -> respond (Success, server (balance - amount))
+    | otherwise         -> respond (Failure, server balance)
+\end{code}
+
+The linearity of client/server states ensures that:
+\begin{enumerate}
+\item The protocol is respected. This is crucial in a real
+  implementation, because the effects that inevitably come into play
+  (database, logging, etc. ...) are neither lost nor duplicated. In
+  such a situation, the effect will be embedded in the $⊥$ type.
+\item The implementation will not `hold onto' stale server/client
+  states any longer than strictly necessary: no memory leak can occur.
+\end{enumerate}
 \subsection{FFI}
 \label{sec:ffi}
 
