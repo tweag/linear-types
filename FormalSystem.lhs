@@ -320,7 +320,7 @@ map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
-|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. \improvement{Can we show that a principal type always exists? This would probably require a lattice structure on weights?}
+|∀rho. (a -> _ rho b) -> List a -> _ rho List b|.
 
 Likewise, function composition can be given the following type:
 \begin{code}
