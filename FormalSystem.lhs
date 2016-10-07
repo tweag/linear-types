@@ -29,6 +29,7 @@
 \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
 \def\frefsecname{Section}
+\def\freffigname{Figure}
 
 \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
@@ -339,7 +340,7 @@ sake of polymorphism, weights are extended with weight
 \emph{expressions}, which contain variables (ranged over by the
 metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
 complete syntax of weights and contexts can be found in
-Figure~\ref{fig:contexts}.
+\fref{fig:contexts}.
 
 In addition, weights are equipped with an equivalence relation $(=)$
 which obeys the following laws:
@@ -426,7 +427,7 @@ module structure on typing contexts as follows.
   \label{fig:contexts}
 \end{figure}
 
-The types of our calculus (see Figure~\ref{fig:syntax}) are simple
+The types of our calculus (see \fref{fig:syntax}) are simple
 types with arrows (albeit weighted ones), data types, and weight
 polymorphism.  The weighted function type is a generalization of the
 intuitionistic arrow and the linear arrow. We will use the following
@@ -444,7 +445,7 @@ a function of type $A→B$ \emph{must} be applied to an argument of
 weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of weight $1$ or $ω$.
 
-  Data type declarations, also presented in Figure~\ref{fig:syntax},
+  Data type declarations, also presented in \fref{fig:syntax},
   deserve some additional explanation.
   \begin{align*}
     \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
@@ -465,7 +466,7 @@ argument of weight $1$ or $ω$.
 
   For most purposes, $c_k$ behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  Figure~\ref{fig:typing} make clear, this means in particular
+  \fref{fig:typing} make clear, this means in particular
   that to have a quantity $ω$ of data of type $D$, all its sub-data
   including the arguments declared with weight $1$ must have weight
   $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
@@ -487,7 +488,7 @@ weights in constructor arguments:
   the exponential modality of linear logic (usually written ${!}A$)
 \end{itemize}
 
-The term syntax (Figure~\ref{fig:syntax}) is that of a
+The term syntax (\fref{fig:syntax}) is that of a
 type-annotated (\textit{à la} Church) simply typed $λ$-calculus
 with let-definitions. Binders in $λ$-abstractions and type definitions
 are annotated with both their type and their weight (echoing the
@@ -548,7 +549,7 @@ no judgement to mean ``with $Γ$ I can build a quantity $p$ of $A$-s''. Instead,
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one can build a quantity $p$ of $A$. This idea is at play in the
 application rule (the complete set of rules can be found in
-Figure~\ref{fig:typing}):
+\fref{fig:typing}):
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a weight of $1$, therefore the application needs $qΔ$
