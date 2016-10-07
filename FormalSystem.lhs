@@ -1211,7 +1211,7 @@ a whole as to the scrutinee (|x| in this case). Therefore
 
 \section{Comparison with other techniques}
 
-\subsection{Linearity as a property of types vs. linearity as a property of bindings (variables)}
+\subsection{Linearity as a property of types vs. a property of bindings}
 
 In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
@@ -1294,7 +1294,7 @@ abstractions while retaining the linearity property.
 
 \section{Extensions and Future Work}
 
-unsure{Weight inference? Polymorphism? Magic |copy| of data structures?}
+\unsure{Weight inference? Polymorphism? Magic |copy| of data structures?}
 
 \subsection{More Weights}
 
