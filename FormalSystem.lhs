@@ -578,9 +578,9 @@ context, especially in the case of applications.
 \improvement{It may be useful to have a better transition between
   syntax and typing judgement}
 
-The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: $t$ consumes all of $Γ$ and
+The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$ consumes $Γ$ and
 builds \emph{exactly one} $A$. Contrary to~\textcite{mcbride_rig_2016}, we provide
-no judgement to mean ``by consuming $Γ$, one can build a quantity $p$ of $ A$-s''. Instead, we
+no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
 application rule (the complete set of rules can be found in
@@ -628,7 +628,7 @@ $$\varrule$$
 The variable rule is the rule which implements the weakening of
 $ω$-weighted variables: that is, it allows variables of weight
 $ω$---and only of weight $ω$---not to be used. Pushing weakening to
-the variable rule is classic in programming language, and in the case
+the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
 focusing~\cite{andreoli_logic_1992}. Note that the judgement
 $x :_ω A ⊢ x : A$ is an instance of the variable rule, since
@@ -679,7 +679,7 @@ intuitionistic $λ$-calculus.
 \subsection{Examples of simple programs and their types}
 \unsure{Scrap this section?}
 In order to assess the power of our language, let us consider a few
-simple program and the types that they inhabit.
+simple programs and the types that they inhabit.
 
 \paragraph{K combinator}
 
@@ -730,25 +730,30 @@ with tentative error messages.
 \label{sec:protocols}
 
 Linear types as proposed here can be conveniently used to represent
-protocols. When used in to represent protocols, negation of types
-becomes an important construction, because it corresponds to taking
-the point of view of the other party. Linear logic typically features
-a bottom type $⊥$, whose computational interpretation is that of a
-terminating computation. Given this type, $A ⊸ ⊥$ is an adequate
-representation for the negation of $A$. We have no primitive $⊥$ type
-in \HaskeLL{}: instead we assume that it is an abstract type provided
-by a library, together with a combinator enabling to execute the
-embedded computation:
+protocols. When used for this purpose, the negation of types becomes
+an important construction, because it corresponds to taking the point
+of view of the other party. Linear logic typically features a bottom
+type $⊥$, whose computational interpretation is that of a terminating
+computation. Given this type, $A ⊸ ⊥$ is an adequate representation
+for the negation of $A$.
+\begin{code}
+type Dual a = a ⊸ ⊥
+\end{code}
+Many languages with session types offer
+duality at their core, and conveniently make negation involutive. We
+neither rely on nor provide this feature: it is not essential to
+precisely and concisely describe protocols.  Additionally, we have
+no primitive $⊥$ type in \HaskeLL{}: instead we assume that it is an
+abstract type provided by a library, together with a combinator
+which executes the embedded computation:
 \begin{code}
 type ⊥ -- abstract
 runComputation :: ⊥ ⊸ IO ()
 \end{code}
-
 Assuming the above signature, we can define a protocol for a simple
 `bank-account' server. We do so by simultaneously defining two dual types,
 corresponding to either the point of view of the server or the client.
 \begin{code}
-type Dual a = a ⊸ ⊥
 data Status = Success | Failure
 data Client where
   Deposit  :: Nat -> Dual Server ⊸ Client
@@ -760,16 +765,15 @@ client. When it |Deposit|s, it provides a certain amount and a means
 to get a response from the server (|Dual Server|). Upon |Withdraw|al, the
 response will additionally indicate if withdrawal was successful.
 
-
 For good measure, we can show how to implement a simple server which
 satisfies the protocol:
 \begin{code}
 server :: Nat -> Server
 server balance client = case client of
-  Deposit amount respond -> respond (server (balance + amount))
+  Deposit amount respond  -> respond (server (balance + amount))
   Withdraw amount respond
-    | amount >= balance -> respond (Success, server (balance - amount))
-    | otherwise         -> respond (Failure, server balance)
+    | amount >= balance   -> respond (Success, server (balance - amount))
+    | otherwise           -> respond (Failure, server balance)
 \end{code}
 
 The linearity of client/server states ensures that:
@@ -801,37 +805,31 @@ primitive :: M s X
 runLowLevel :: M s a -> IO x
 \end{code}
 
-This solution is adequate as long as one forbids calling
+This solution is adequate as long as one refrains from calling
 \begin{code}
 forkIO :: IO a -> IO ()
 \end{code}
+Indeed, if one uses |forkIO|, there is a risk to call |runLowLevel|
+several times in parallel.
 
-In this situation, one is allowed to call runLowLevel several times in
-parallel.
-
-Using linear types, one may instead give an explicit unique instance
-of the context.
-
+Using linear types, one may instead provide an explicit and unique
+instance of the context.
 \begin{code}
 type Context
-initialContext ::1 Context
+initialContext :: _ 1 Context
 \end{code}
 
-The Context type will not have any runtime representation on the
+The |Context| type will not have any runtime representation on the
 Haskell side.  It will only be used to ensure that primitive
 operations can acquire a mutually exclusive access to the context.
-
 \begin{code}
 primitive :: Context ⊸ IO (Context ⊗ X)
 \end{code}
-
 One eventually wants to release the context (freeing whatever
 resources that the C library has allocated), for example as follows:
-
 \begin{code}
 doneWithContext :: Context ⊸ IO ()
 \end{code}
-
 In practice, a top-level binding with weight $1$ will behave similarly
 to |main|, in the sense that it may raise link-time type-errors.
 
@@ -845,8 +843,7 @@ strategy for the primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
 
-A first possible API is the following:
-
+A possible API is the following:
 \begin{code}
 withNewByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
@@ -996,7 +993,6 @@ the example of a non-recursive representation of files, one may have
 two processes writing simultaneously in the same file (potentially
 corrupting data), or one may forget to close the file.
 Quoting \citeauthor{lippmeier_parallel_2016}:
-
 \begin{quote}
   In general an object of type |Sources| is an abstract producer of
   data, and it may not even be possible to rewind it to a previous
@@ -1004,7 +1000,6 @@ Quoting \citeauthor{lippmeier_parallel_2016}:
   readings. Alas the Haskell type system does not check linearity so
   we rely on the programmer to enforce it manually.
 \end{quote}
-
 Linearity offers a direct solution to
 \citeauthor{lippmeier_parallel_2016}'s worry about safety.  At the same
 time, sharing becomes more explicit. In the above snippet, because
@@ -1012,14 +1007,14 @@ time, sharing becomes more explicit. In the above snippet, because
 following lines. The programmer has then the choice of either: copying
 the contents of |srcs| or duplicating the computation, and this choice
 must be written explicitly.
-Programming streaming libraries in with explicit linearity has been
+Programming streaming libraries with explicit linearity has been
 explored in detail by \textcite{bernardy_duality_2015}.
 
 \section{\calc{} dynamics}
 \label{sec:orgheadline16}
 
-The examples of~\fref{sec:ghc} would require only surface changes to
-Haskell: only the type system for \fref{sec:ffi} and
+Supporting the examples of~\fref{sec:ghc} would require only changes to
+an Haskell implementation: only the type system for \fref{sec:ffi} and
 \fref{sec:primops}, while \fref{sec:fusion} only requires additional
 annotations in the optimization phase.
 
@@ -1103,7 +1098,7 @@ let a = _ rho f ()
 \end{code}
 
 The function \varid{f} creates some data. When run in a linear context, \varid{f}
-allocates \varid{f} on the linear heap. When run in an unrestricted context, it
+allocates \varid{z} on the linear heap. When run in an unrestricted context, it
 must allocate \varid{z} on the GC heap. So, its behavior depends the value of $ρ$.
 
 \begin{figure}
@@ -1203,7 +1198,7 @@ Yet, the following example may, at first glance, look like a counter
 example where |x| is in the non-GC heap while |y| is in the
 GC-heap and points to |x|:
 \begin{code}
-data () = ()
+data () where () :: ()
 
 let x = _ 1 ()
 let y = _ omega ( case x of { () -> () })
@@ -1212,7 +1207,7 @@ in ()
 However, while |()| can indeed be typed as $⊢ () :_ω ()$, the
 typing rule for 'case' gives the same weight to the case-expression as
 a whole as to the scrutinee (|x| in this case). Therefore
-|case x of { () -> ()}| has weight $1$.
+|case x of { () -> ()}| has weight $1$. \improvement{It's very unclear what this paragraph is trying to convey.}
 
 \section{Comparison with other techniques}
 
@@ -1222,24 +1217,24 @@ In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morri
 programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
 or unrestricted. Unrestricted types typically includes primitive types
-(\varid{Int}), and all (strictly positive) data types. Linear types
-include typically resources, effects, etc.
+(such as \varid{Int}), and all (strictly positive) data types. Linear types
+typically include resources, effects, etc.
 
 A characteristic of this presentation is that linearity ``infects''
 every type containing a linear type. Consequently, if we want to make
 a pair of (say) an integer and an effect, the resulting type must be
-linear. This property means that polymorphic data structure can no
-longer be used ``as is'' to store linear values. Technically, one
+linear. This property means that polymorphic data structures can no
+longer be used \emph{as is} to store linear values. Technically, one
 cannot unify a type variable of unrestricted kind to a linear
 type. One can escape the issue by having polymorphism over kinds;
-unfortunately to get principal types one must have subtyping between
+unfortunately to get principal types one must then have subtyping between
 kinds and bounded polymorphism.
 
-In contrast, we have automatic scaling of linear types to unrestricted
+In contrast, in \calc{} we have automatic scaling of linear types to unrestricted
 ones in unrestricted contexts. This feature already partially
 addresses the problem of explosion of types. In order to get principal
 types we need quantification over weights, and extension of the
-language of weights to products and sums.
+language of weights to products and sums. \todo{Does this really suffice?}
 
 Another issue with the ``linearity in types'' presentation is that it
 is awkward at addressing the problem of ``simplified memory
@@ -1255,21 +1250,24 @@ we present here.
 
 \subsection{Session types vs. linear types}
 
-\Textcite{wadler_propositions_2012} provides a good explanation of
-the relation between session types vs. linear types (even though the
-paper contains some subtle traps --- notably the explanation of par
-and tensor in LL does not match the semantics given later.). In sum,
-session types classify 'live' sessions with long-lived channels, whose
-type ``evolves'' over time. In contrast, linear types are well suited
-to giving types to a given bit of information. One can see thus that
-linear types are better suited for a language based on a lambda
-calculus, while session types are better suited for languages based on
-a pi-calculus and/or languages with effects. Or put another way,
-it's a matter of use cases: session types are particularly well-suited
-to naturally describe communication protocols, while linear types are
-well suited for describing data. One is communication centric. The
-other is data centric. Yet there is a simple
-encoding from session types to linear types (as Wadler demonstrates).
+\Textcite{wadler_propositions_2012} provides a good explanation of the
+relation between session types vs. linear types (even though the paper
+contains some subtle traps --- notably the intuitive explanation of
+par and tensor in LL does not match the semantics given in the
+paper.). In sum, session types classify 'live' sessions with
+long-lived channels, whose type ``evolves'' over time. In contrast,
+linear types are well suited to giving types to a given bit of
+information. One can see thus that linear types are better suited for
+a language based on a lambda calculus, while session types are better
+suited for languages based on a pi-calculus and/or languages with
+effects. Or put another way, it is a matter of use cases: session
+types are particularly aimed at describing communication protocols,
+while linear types are well suited for describing data. One is
+communication centric, the other is data centric, yet there is a
+simple encoding from session types to linear types (as Wadler
+demonstrates in detail). In practice, we find that plain linear types
+are perfectly sufficient to represent protocols, as as we show in
+\fref{sec:protocols}.
 
 \subsection{Weights in type derivation}
 
@@ -1289,6 +1287,11 @@ value.
 
 Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
 abstractions while retaining the linearity property.
+
+\subsection{TODO}
+
+\todo{\textcite{wakeling_linearity_1991}}
+
 \section{Extensions and Future Work}
 
 unsure{Weight inference? Polymorphism? Magic |copy| of data structures?}
