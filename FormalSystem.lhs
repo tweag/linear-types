@@ -11,7 +11,6 @@
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
-\usepackage{fixltx2e}
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{longtable}
@@ -23,7 +22,14 @@
 \usepackage{textcomp}
 \usepackage{amssymb}
 \usepackage{capt-of}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+  }
 \usepackage{mathpartir}
 \usepackage{fontspec}
 \usepackage{unicode-math}
@@ -34,7 +40,9 @@
 \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
-% \setmainfont{TeXGyrePagella}
+% \setmainfont{TeX Gyre Pagella}
+% \setmathfont{TeX Gyre Pagella Math}
+% \setmainfont{Latin Modern Roman}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -48,7 +56,6 @@
 
 \newcommand{\figuresection}[1]{\textbf{#1}}
 
-\usepackage[dvipsnames]{xcolor}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
@@ -202,7 +209,7 @@ in~\cite{wadler_propositions_2012}).
 Simply using linear logic --- or, as it were, intuitionistic linear
 logic, because we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
-lazy) programming language be a subset of our calculus. Indeed, if
+lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
 intuitionistic $\lambda$-calculus can be embedded in linear
 $\lambda$-calculus, this embedding requires an encoding. Usually, one
 would have a linear arrow $A⊸B$ and the intuitionistic arrow would be
@@ -213,7 +220,7 @@ This encoding means that the quantity of available values must be
 managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
 required) requires additional syntax. For instance, in the
 pidgin-Haskell syntax which we will use throughout this article, we
-couldn't write the following:\unsure{Scrap dup/id example in favor of ``all existing code needs to be written inside the |Bang| co-monad?}
+couldn't write the following:
 \begin{code}
   dup :: a -> a⊗a
   dup x = (x,x)
@@ -313,7 +320,7 @@ map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
-|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. \improvement{Can we show that a principal type always exists?}
+|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. \improvement{Can we show that a principal type always exists? This would probably require a lattice structure on weights?}
 
 Likewise, function composition can be given the following type:
 \begin{code}
@@ -571,22 +578,19 @@ context, especially in the case of applications.
 \improvement{It may be useful to have a better transition between
   syntax and typing judgement}
 
-The typing judgement \(Γ ⊢ t : A\) ought to be read as ``with $Γ$ I can
-build \emph{exactly one} $A$''. Contrary to~\textcite{mcbride_rig_2016}, we provide
-no judgement to mean ``with $Γ$ I can build a quantity $p$ of $A$-s''. Instead, we
+The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: $t$ consumes all of $Γ$ and
+builds \emph{exactly one} $A$. Contrary to~\textcite{mcbride_rig_2016}, we provide
+no judgement to mean ``by consuming $Γ$, one can build a quantity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
-one can build a quantity $p$ of $A$. This idea is at play in the
+one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
 application rule (the complete set of rules can be found in
 \fref{fig:typing}):
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
-give us $u$ with a weight of $1$, therefore the application needs $qΔ$
+give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
 to have a quantity $q$ of $u$ at its disposal. This rule is the second
-arm\unsure{Where is the first arm?} of the weighted arrows which allow to have a regular programming
-language as a subset of this calculus.\improvement{aspiwack: I've used
-  the phrase ``a regular programming language as a subset [of this
-  calculus]'' several time already, it's rather awkward, a better
-  phrase would be welcome.} Indeed, recall the example from the
+arm\unsure{Where is the first arm?} of the weighted arrows which allow to have the $λ$-calculus
+as a subset of \calc{}. Indeed, recall the example from the
 beginning of Section~\ref{sec:orgheadline8} which had us write |dup
 (Bang (id (Bang 42)))|. Thanks to the application rule we have
 instead:\improvement{maybe work a little on the presentation of this
@@ -679,7 +683,7 @@ simple program and the types that they inhabit.
 
 \paragraph{K combinator}
 
-The lambda-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
+The $\lambda$-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
 $A ⊸ B → A$ or $A → B → A$. However, the first type subsumes the
 second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
