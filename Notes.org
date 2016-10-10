@@ -182,8 +182,11 @@ doSomethingWithLinearHeap x k = case x of
   Bang y -> k y
 \end{code}
 
-* Linear Monads?
+* Safe handles.
 
+There are several options to introduce a Handle safely:
+
+** Linear Monads?
 What should monadic bind look like?
 
 The "root tree" is used only once, always, so we can have the type:
@@ -212,3 +215,31 @@ where
 
 openFile :: String -> IO Handle
 hClose :: Handle ⊸ IO ()
+
+** Bang to prevent escape
+
+Can use the same trick as withNewByteArray:
+
+withFile :: FilePath -> (Handle ⊸ IO (Bang a)) -> IO a
+
+However one may miss the advantage compared to
+
+withFile :: FilePath -> (Handle -> IO a) -> IO a
+
+(You have to be trying hard to use withFile incorrectly)
+
+** Linear context
+
+There is a single (context ::1 Context), and we provide
+
+openFile :: FilePath -> Context ⊸ (Context ⊗ Handle)
+closeFile :: (Context ⊗ Handle) ⊸ Context
+
+Could even make a dependently-typed version to ensure that the Handle
+of the file is not shared behind one's back.
+
+roughly:
+
+openFile :: ∀ paths. (path :: FilePath) -> Context (path:paths) ⊸ (Context paths ⊗ Handle path)
+closeFile :: ∀ path paths. (Context paths ⊗ Handle path) ⊸ Context paths
+

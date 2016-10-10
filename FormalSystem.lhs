@@ -187,7 +187,7 @@ efficiency (sections~\ref{sec:fusion} and \ref{sec:dynamics}), or
 because a foreign function needs a linear type
 (Section~\ref{sec:ffi}), then one can use seamlessly the linear
 features of the language, which allow more control.\improvement{Add a
-  file-read example in the style of this article}
+  file-read example in the style of this article.}
 
 Using a type system based on linear logic (rather than uniqueness
 typing or ownership typing) makes it possible to leverage the wealth
@@ -1262,7 +1262,7 @@ demonstrates in detail). In practice, we find that plain linear types
 are perfectly sufficient to represent protocols, as as we show in
 \fref{sec:protocols}.
 
-\subsubsection{Weights in type derivation}
+\subsection{Weights in type derivation}
 
 \Textcite{mcbride_rig_2016} presents a similar type-theory, but with
 weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
