@@ -1298,9 +1298,9 @@ complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
 linear heap (as we do in \fref{sec:dynamics}). They did not manage to
 obtain consistent performance gains. However, they still manage to
-reduce GC usage, which may be critical in distributed\todo{why?}{} and
-real-time environments. In itself, the tradeoff is beneficial is
-certain situations.
+reduce GC usage, which may be critical in distributed and
+real-time environments, as we explained in the introduction.
+Thus the tradeoff is beneficial is certain situations.
 
 Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
