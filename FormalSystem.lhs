@@ -1134,15 +1134,15 @@ sub-data. \todo{Works only on weight-closed terms}
 
 To illustrate how the semantics of \fref{fig:dynamics} works, let us
 consider how it indeed allows explicit memory management of data in
-the linear heap. Specifically, first-order inductive data types, can
+the linear heap. Specifically, first-order inductive data types can
 be cleared from the linear heap either by being freed, or by being
 moved into the garbage-collected heap, without additional
 primitives. To that effect, let us introduce the following \HaskeLL{}
 type class:
 \begin{code}
   class Data a where
-    free :: a ⊸ ()  -- Frees data in the linear heap
-    move :: a ⊸ !a  -- moves data from the linear heap to the \textsc{gc} heap
+    free  :: a ⊸ ()  -- Frees data in the linear heap
+    move  :: a ⊸ Bang a  -- moves data from the linear heap to the \textsc{gc} heap
 \end{code}
 Now, let us demonstrate how to implement instance of |Data| for
 booleans and lists, which should make it clear how to derive |Data| to
@@ -1151,15 +1151,15 @@ any data type:
   data Bool = True | False
 
   instance Data Bool where
-    free True = ()
-    free False = ()
+    free True   = ()
+    free False  = ()
 
-    move True = Bang True
-    move False = Bang False
+    move True   = Bang True
+    move False  = Bang False
 
-  data List a
-    = Nil : List a
-    | Cons : a ⊸ List a ⊸ List a
+  data List a where
+    Nil : List a
+    Cons : a ⊸ List a ⊸ List a
 
   instance Data a => Data (List a) where
     free Nil = ()
@@ -1175,8 +1175,10 @@ The existence of |move| combined with lazy thunks may seem to
 contradict the fact there are no references from the garbage collected
 heap to the linear heap:
 \begin{code}
-  let x : _ 1 List Bool = [True,False]
-      y : _ omega !(List Bool) = move x
+  let  x  : _ 1 List Bool
+          = [True,False]
+       y  : _ omega Bang (List Bool)
+          = move x
   in …
 \end{code}
 The thunk in |y| contains a pointer to |x| which lives in the linear
