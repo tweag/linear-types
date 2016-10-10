@@ -183,7 +183,7 @@ language and is itself a conservative extension of Haskell. Thus we
 Concretely, in \HaskeLL,
 one enjoys the convenience of programming in Haskell;
 but when part of code requires more care, \emph{e.g.} because of
-efficiency (Sections~\ref{sec:fusion}\&\ref{sec:orgheadline16}), or
+efficiency (sections~\ref{sec:fusion} and \ref{sec:dynamics}), or
 because a foreign function needs a linear type
 (Section~\ref{sec:ffi}), then one can use seamlessly the linear
 features of the language, which allow more control.\improvement{Add a
@@ -502,7 +502,7 @@ abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
 annotated by a weight. This information is usually redundant, but we
-use it in Section~\ref{sec:orgheadline16} to define a compositional
+use it in Section~\ref{sec:dynamics} to define a compositional
 dynamic semantics with prompt deallocation of data. We sometimes omit
 the weights or type annotations when they are obvious from the
 context, especially in the case of applications.
