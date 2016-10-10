@@ -219,8 +219,8 @@ arbitrary quantity of values of type $A$.
 This encoding means that the quantity of available values must be
 managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
 required) requires additional syntax. For instance, in the
-pidgin-Haskell syntax which we will use throughout this article, we
-couldn't write the following:
+pidgin-Haskell syntax that we envision for \HaskeLL{}, we
+could not write the following:
 \begin{code}
   dup :: a -> a⊗a
   dup x = (x,x)
@@ -247,7 +247,7 @@ prospect.
 
 In our calculus, instead, both arrow types are primitive. To be
 precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
-arrow type is parametrized by the amount of its argument it requires:
+arrow type is parametrized by the amount of its argument that it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
 \item $A →_ω B$ is the intuitionistic\todo{It is weird to call it like
@@ -270,7 +270,7 @@ data List a where
 \end{code}
 The above data declaration defines a linear version of the list
 type. That is, given \emph{one} instance of a list, one will obtain
-exactly \emph{one} instance of each of the items contained inside it.
+\emph{exactly one} instance of each of the items contained inside it.
 Thus the above list may contain (handles to) resources without
 compromising safety.
 
@@ -283,13 +283,12 @@ as follows:
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
-
 Operationally, this means that the resulting list does not need to
 live on a GC'ed heap\footnote{even though it can} --- instead it can
 be put on an explicitly managed heap (which we call the linear heap in
 what follows). If so, that list can thus be deallocated exactly at the
 point of its consumption. In a lazy language, the thunks on the linear
-heap can thus even free themselves.
+heap can even free themselves.
 
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
 call $ω$ times |(++)| to obtain $ω$ times the concatenation.
@@ -299,8 +298,10 @@ necessary. Constructing $ω$ times the output means to put it on the GC
 heap as well, with all the usual implications in terms of laziness and
 sharing.
 
-A function may legitimately demand $ω$ times its input. For example
-the function repeating indefinitely its input will have the type:
+Of course, not all programs are linear: a function may legitimately
+demand $ω$ times its input, even to construct a single output. For
+example the function repeating indefinitely its input will have the
+type:
 
 \begin{code}
 cycle :: List a → List a
@@ -311,9 +312,9 @@ practice, libraries will never provide $ω$ times a scarce resource
 (eg. a handle to a physical entity); such a resource will thus never
 end up in the argument to |cycle|.
 
-While automatic scaling from $1$ to $ω$ works well for first-order
-code, higher-order programs need polymorphism over weights. For
-example, the standard |map| function
+While reusing first-order code can be done simply by scaling from $1$
+to $ω$, reusing, higher-order programs need polymorphism over
+weights. For example, the standard |map| function
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
@@ -321,7 +322,7 @@ map f (x:xs)  = f x : map f xs
 can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
 |∀rho. (a -> _ rho b) -> List a -> _ rho List b|.
-
+%
 Likewise, function composition can be given the following type:
 \begin{code}
 (∘) :: forall pi rho. (b → _ pi c) ⊸ (a → _ rho b) → _ pi a → _ (pi rho) c
@@ -331,10 +332,13 @@ What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
 \section{\calc{} statics}
+In this section we concentrate on the calculus at the core of
+\HaskeLL{}, namely \calc{}, and give a step by step account of its
+syntax and typing rules.
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
-Each variable in typing contexts is annotated with the number of times
+In \calc{}, each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
 number of times the \emph{weight} of the variable.
 
@@ -601,7 +605,7 @@ $ω$---and only of weight $ω$---not to be used. Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
 focusing~\cite{andreoli_logic_1992}. Note that the judgement
-$x :_ω A ⊢ x : A$ is an instance of the variable rule, since
+$x :_ω A ⊢ x : A$ is an instance of the variable rule, because
 $(x :_ω A)+(x :_1 A) = x:_ω A$.
 
 Most of the other typing rules are straightforward, but let us linger
@@ -627,7 +631,7 @@ well-typed
   snd  :: a⊗b → b
   snd (a,b)  = b
 \end{code}
-These projections are a small deviation from linear logic: the
+These projections exhibit a small deviation from linear logic: the
 existence of these projections mean that ${!}(A⊗B)$ is isomorphic to
 ${!}({!}A⊗{!}B)$. While this additional law may restrict the
 applicable models of our calculus (hence may be inconvenient for some
@@ -660,7 +664,7 @@ $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
 also call $ω$ times $k$). The lesson learned is that when a variable is used
 (syntactically) just once, it is always better to give it the
 weight 1.\inconsistent{It is always better to use $⊸$ if there is a
-  subtyping relation. Since we have weight polymorphism instead, $k$
+  subtyping relation. Because we have weight polymorphism instead, $k$
   should probably be given a polymorphic type to avoid the need to
   $\eta$-expand $k$ sometimes.}
 
@@ -709,18 +713,18 @@ for the negation of $A$.
 \begin{code}
 type Dual a = a ⊸ ⊥
 \end{code}
-Many languages with session types offer
-duality at their core, and conveniently make negation involutive. We
-neither rely on nor provide this feature: it is not essential to
-precisely and concisely describe protocols.  Additionally, we have
-no primitive $⊥$ type in \HaskeLL{}: instead we assume that it is an
-abstract type provided by a library, together with a combinator
-which executes the embedded computation:
+Many languages with session types offer duality at their core, and
+conveniently make negation involutive. We neither rely on nor provide
+this feature: it is not essential to precisely and concisely describe
+protocols.  Additionally, we propose no primitive $⊥$ type for
+\HaskeLL{}: instead we assume an abstract type $⊥$, typically provided
+by a library together with a combinator which executes the embedded
+computation:
 \begin{code}
 type ⊥ -- abstract
 runComputation :: ⊥ ⊸ IO ()
 \end{code}
-Assuming the above signature, we can define a protocol for a simple
+Assuming the above signature, we can for example define a protocol for a simple
 `bank-account' server. We do so by simultaneously defining two dual types,
 corresponding to either the point of view of the server or the client.
 \begin{code}
@@ -752,8 +756,8 @@ The linearity of client/server states ensures that:
   implementation, because the effects that inevitably come into play
   (database, logging, etc. ...) are neither lost nor duplicated. In
   such a situation, the effect will be embedded in the $⊥$ type.
-\item The implementation will not `hold onto' stale server/client
-  states any longer than strictly necessary: no memory leak can occur.
+\item The implementation will not `hold onto' any stale client or
+  state any longer than strictly necessary: no memory leak can occur.
 \end{enumerate}
 \subsection{FFI}
 \label{sec:ffi}
@@ -774,13 +778,12 @@ instance Monad s
 primitive :: M s X
 runLowLevel :: M s a -> IO x
 \end{code}
-
-This solution is adequate as long as one refrains from calling
+The above solution is adequate as long as one refrains from calling
 \begin{code}
 forkIO :: IO a -> IO ()
 \end{code}
 Indeed, if one uses |forkIO|, there is a risk to call |runLowLevel|
-several times in parallel.
+several times concurrently.
 
 Using linear types, one may instead provide an explicit and unique
 instance of the context.
@@ -790,7 +793,7 @@ initialContext :: _ 1 Context
 \end{code}
 
 The |Context| type will not have any runtime representation on the
-Haskell side.  It will only be used to ensure that primitive
+\HaskeLL{} side.  It will only be used to ensure that primitive
 operations can acquire a mutually exclusive access to the context.
 \begin{code}
 primitive :: Context ⊸ IO (Context ⊗ X)
@@ -830,8 +833,8 @@ available. Operationally, the function starts by allocating a byte
 array of the requested size \emph{on a non GC heap} and call the
 continuation. The types of the various primitives are chosen to ensure
 memory safety. Crucially, the continuation needs to produce a |Bang|
-type. This signature ensures that the continuation cannot return a
-reference to the byte array.  Indeed, it is impossible to transform a
+type. This output type ensures that the continuation cannot return a
+reference to the byte array.  Indeed, the typing rules make it is impossible to transform a
 $1$-weighted object into an $ω$-weighted one, without copying it
 explicitly. Not returning the byte array is critical, because the
 |withNewByteArray| function may be called $ω$ times; in which case its
@@ -855,8 +858,9 @@ byte array can be returned by the argument to |withNewByteArray|:
 
 \subsubsection{Version 2}
 
-A possible shortcoming of the above API is that it forces to write
-allocating code in CPS. An alternative API is the following.
+A possible shortcoming of the above API is that it forces to write any
+code that performs allocation in continuation-passing style.
+An alternative, direct style, API is the following:
 
 \begin{code}
 newByteArray :: Heap s ⊸ Int → (MutableByteArray s ⊗ Heap s)
@@ -880,14 +884,14 @@ escape the intended scope.
 
 A popular optimization for functional languages, and in particular
 GHC, is \emph{shortcut fusion} \cite{gill_short_1993}.  Shortcut
-fusion relies on the custom rewrite rules, and a general purpose
+fusion relies on custom rewrite rules and a general purpose
 compile-time evaluation mechanism.
 
 Concretely:
 \begin{enumerate}
 \item Rewrite rules transform structures which use general recursion
   into a representation with no recursion (typically church encodings)
-\item The inliner kicks in and fuses compositions of non-recursive
+\item The evaluator kicks in and fuses compositions of non-recursive
   functions
 \item Unfused structures are reverted to the original representation.
 \end{enumerate}
@@ -895,7 +899,7 @@ Concretely:
 The problem with this scheme is that it involves two phases of
 heuristics (custom rewrite rules and evaluator), and in practice
 programmers have difficulties to predict the performance of any given
-program subject to shortcut fusion. It is not uncommon for a compiler
+program subject to shortcut fusion. Additionally, it is not uncommon for a compiler
 to even introduce sharing where the programmer doesn't expect it,
 effectively creating a memory leak
 (\url{https://ghc.haskell.org/trac/ghc/ticket/12620}).
@@ -923,11 +927,10 @@ data Sinks i m e = Sinks
   , eject :: i -> m () }
 \end{code}
 Such representations are typically functionals, and thus do not
-consume memory and are never implemented using recursion. Thus, one
+consume memory\footnote{proportionally to the input} and are never implemented using recursion. Thus, one
 eventually gets code which is known to be fused. For instance, in the
 following example from Lippmeier et al., neither the source nor the
-sink represent data in memory.
-
+sink represent data in memory:
 \begin{code}
 copySetP :: [FilePath] -> [FilePath] -> IO ()
 copySetP srcs dsts = do
@@ -937,12 +940,12 @@ copySetP srcs dsts = do
 \end{code}
 
 However, one then faces two classes of new problems.
-
+%
 First, any non-linear (precisely non-affine) use of such a
 representation will \emph{duplicate work}. For example, one can write
 the following piece of code, but the |expensiveComputation| will be
 run twice, perhaps unbeknownst to the programmer.
-
+%
 \begin{code}
 example srcs dsts = do
   ss <- expensiveComputation `ap` sourceFs srcs
@@ -973,25 +976,26 @@ Quoting \citeauthor{lippmeier_parallel_2016}:
 Linearity offers a direct solution to
 \citeauthor{lippmeier_parallel_2016}'s worry about safety.  At the same
 time, sharing becomes more explicit. In the above snippet, because
-|srcs| have weight 1, so has |ss|, and thus it cannot be shared in the
-following lines. The programmer has then the choice of either: copying
-the contents of |srcs| or duplicating the computation, and this choice
-must be written explicitly.
+|srcs| have weight 1, so has |ss|, and thus it cannot be shared between the two instances of |drainP ss sk|.
+The programmer has then the choice of either: 1. copying
+the contents of |srcs| or 2. duplicating the computation; and the choice
+must be written explicitly in the program.
+
 Programming streaming libraries with explicit linearity has been
 explored in detail by \textcite{bernardy_duality_2015}.
 
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-Supporting the examples of~\fref{sec:ghc} would require only changes to
+Supporting the examples of~\fref{sec:ghc} would require only surface changes to
 an Haskell implementation: only the type system for \fref{sec:ffi} and
 \fref{sec:primops}, while \fref{sec:fusion} only requires additional
 annotations in the optimization phase.
 
 If one is willing to dive deeper and modify the runtime system, a
 further benefit can be reaped: prompt deallocation of thunks. While
-this extension of the runtime system is not necessary to benefit from
-linear types, the dynamic semantics presented in this section can also
+this extension of the runtime system is necessary only to enjoy prompt deallocation of thunks,
+the dynamic semantics presented in this section can also
 help give confidence in the correctness of the extensions
 of~\fref{sec:ghc}.
 
