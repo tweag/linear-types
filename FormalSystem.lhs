@@ -981,7 +981,7 @@ Programming streaming libraries with explicit linearity has been
 explored in detail by \textcite{bernardy_duality_2015}.
 
 \section{\calc{} dynamics}
-\label{sec:orgheadline16}
+\label{sec:dynamics}
 
 Supporting the examples of~\fref{sec:ghc} would require only changes to
 an Haskell implementation: only the type system for \fref{sec:ffi} and
@@ -1202,7 +1202,7 @@ force the thunk with a case:
   … -- |x'| is unrestricted
 \end{code}
 
-\section{Comparison with other techniques}
+\section{Related work}
 
 \subsection{Linearity as a property of types vs. a property of bindings}
 
@@ -1262,7 +1262,7 @@ demonstrates in detail). In practice, we find that plain linear types
 are perfectly sufficient to represent protocols, as as we show in
 \fref{sec:protocols}.
 
-\subsection{Weights in type derivation}
+\subsubsection{Weights in type derivation}
 
 \Textcite{mcbride_rig_2016} presents a similar type-theory, but with
 weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
@@ -1275,15 +1275,37 @@ program would be type-correct, while |dup| is duplicating a linear
 value.
 
 \[
-(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
+(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
 \]
 
 Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
-abstractions while retaining the linearity property.
+abstractions while retaining the linearity property. In that respect,
+our system is closer to that of \textcite{ghica_bounded_2014}, which
+does not exhibit the issue.
 
-\subsection{TODO}
+\subsection{Operational aspects of linear languages}
 
-\todo{\textcite{wakeling_linearity_1991}}
+Recent literature is suprising silent on the operational aspect of
+linear types, and concentrates rather on uniqueness types
+\cite{pottier_programming_2013,matsakis_rust_2014}.
+
+Looking further back, \textcite{wakeling_linearity_1991} produced a
+complete implementation of a language with linear types, with the goal
+of improving the performance. Their implementation features a separate
+linear heap (as we do in \fref{sec:dynamics}). They did not manage to
+obtain consistent performance gains. However, they still manage to
+reduce GC usage, which may be critical in distributed\todo{why?}{} and
+real-time environments. In itself, the tradeoff is beneficial is
+certain situations.
+
+Regarding absolute performance increase,
+\citeauthor{wakeling_linearity_1991} propose not attempt prompt free
+of thunks, and instead take advantage of linear arrays. \todo{Run concrete examples and see what we get.}
+
+% \item Linear Lisp. \cite{baker_lively_1992}: unclear results
+
+% \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
+
 
 \section{Extensions and Future Work}
 
