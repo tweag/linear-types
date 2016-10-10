@@ -37,7 +37,7 @@
 \def\frefsecname{Section}
 \def\freffigname{Figure}
 
-\setmonofont[Scale=0.8]{DejaVu Sans Mono}
+% \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
 % \setmainfont{DejaVu Sans}
 % \setmainfont{TeX Gyre Pagella}
