@@ -661,8 +661,7 @@ intuitionistic $λ$-calculus.
   we would need the ability to copy sub-data (\emph{chunks of data})
   into the GC-ed heap, which is not necessarily available for all
   data. So this extension of linear logic fits our Haskellian model
-  rather snugly. It is not the only possible path, however.}  \improvement{show free, dup and copy on booleans
-  and peano-numbers}
+  rather snugly. It is not the only possible path, however.}
 
 \subsection{Examples of simple programs and their types}
 \unsure{Scrap this section?}
