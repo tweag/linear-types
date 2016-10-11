@@ -817,9 +817,11 @@ strategy for the primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
 
+withNewByteArray :: Copy k => Int → (MutableByteArray ⊸ k) ⊸ k
+
 A possible API is the following:
 \begin{code}
-withNewByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
+withNewByteArray :: Copy k => Int → (MutableByteArray ⊸ k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
 freeByteArray :: MutableByteArray ⊸ ()
 indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
@@ -828,18 +830,15 @@ indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
 The key primitive in the above API is |withNewByteArray|, whose first
-argument is the size of an array to allocate. It takes a continuation
-where \emph{one} reference to the byte array is
+argument is the size of an array to allocate. The second argument a
+continuation where \emph{one} reference to the byte array is
 available. Operationally, the function starts by allocating a byte
-array of the requested size \emph{on a non GC heap} and call the
-continuation. The types of the various primitives are chosen to ensure
-memory safety. Crucially, the continuation needs to produce a |Bang|
-type. This output type ensures that the continuation cannot return a
-reference to the byte array.  Indeed, the typing rules make it is impossible to transform a
-$1$-weighted object into an $ω$-weighted one, without copying it
-explicitly. Not returning the byte array is critical, because the
-|withNewByteArray| function may be called $ω$ times; in which case its
-result will be shared.
+array of the requested size \emph{on a non GC heap} and then calls the
+continuation. Using the |copy| function, it forces the result and
+copies it to the GC heap. (|copy| ensures that no reference to the
+non-GC heap remains unforced). This final copy ensures that the final
+result can be shared, which is critical when |withNewByteArray| is
+called $ω$ times.
 
 Many functions take a |MutableByteArray| as argument and produce a new
 |MutableByteArray|. Such functions can perform in-place updates of the
@@ -854,20 +853,14 @@ byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
   withNewByteArray n freezeByteArray :: ByteArray
 \end{code}
-\unsure{
-In order to ensure that the continuation does not exit with a dangling
-pointer to the mutable array, we must additionally ensure that
-|withNewByteArray| forces (deeply?) the continuation result before
-proceeding (otherwise the whole computation will be a thunk,
-potentially with references to the mutable array)}
 
 \todo{Add splitByteArray?}
 
 \subsubsection{Version 2}
 
-A possible shortcoming of the above API is that it forces to write any
-code that performs allocation in continuation-passing style.
-An alternative, direct style, API is the following:
+A possible shortcoming of the above API is that any code that performs
+allocation must be written in continuation-passing style.  An
+alternative, direct style, API is the following:
 
 \begin{code}
 newByteArray :: Heap s ⊸ Int → (MutableByteArray s ⊗ Heap s)
@@ -885,7 +878,17 @@ The |withAHeap| function creates such a unique reference. It uses the
 same trick as |withNewByteArray| to ensure that linear objects do not
 escape the intended scope.
 
-\todo{Why do freeze/free need the heap access?}
+Contrary to the first API, no |Copy| constraint is necessary, because
+the heap is threaded though all functions (take note that |freeze| and
+|free| explicitly access the heap). Thus, by forcing the final state
+of the heap in |withAHeap|, one ensures that no dangling reference to
+linear array remains. Additionally, the |Bang a| type ensures that the
+argument of |withAHeap| cannot return a reference to any byte array.
+Indeed, the typing rules make it is impossible to transform a
+$1$-weighted object into an $ω$-weighted one, without copying it
+explicitly. Not returning the byte array is critical, because the
+|withAHeap| function may be called $ω$ times; in which case its result
+will be shared.
 \subsection{Fusion}
 \label{sec:fusion}
 
