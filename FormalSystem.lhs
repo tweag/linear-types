@@ -829,7 +829,7 @@ strategy for the primitives, and argue briefly for correctness.
 \subsubsection{Version 1}
 A possible API is the following:
 \begin{code}
-withNewByteArray :: Copy k => Int → (MutableByteArray ⊸ k) ⊸ k
+withNewByteArray :: Data k => Int → (MutableByteArray ⊸ k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
 freeByteArray :: MutableByteArray ⊸ ()
 indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
