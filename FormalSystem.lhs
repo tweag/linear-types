@@ -201,6 +201,7 @@ withFile "myfile" ReadMore $ \h -> do
     -- some code that reads the file
     hClose h
 \end{code}
+% Add a dollar to prevent syntax highlighting to go wild: $
 \unsure{This may not be the right example, because it requires a change in the monad class.}
 
 Using a type system based on linear logic (rather than uniqueness
