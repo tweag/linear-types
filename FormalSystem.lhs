@@ -39,6 +39,7 @@
 
 % \setmonofont[Scale=0.8]{DejaVu Sans Mono}
 % \setmonofont{CMU TypeWriter Text}
+% \setmainfont[ExternalLocation=/Library/Fonts/,Ligatures={Common,Rare,Historic},Variant=1]{Zapfino.ttf}
 % \setmainfont{DejaVu Sans}
 % \setmainfont{TeX Gyre Pagella}
 % \setmathfont{TeX Gyre Pagella Math}
@@ -853,6 +854,12 @@ byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
   withNewByteArray n freezeByteArray :: ByteArray
 \end{code}
+\unsure{
+In order to ensure that the continuation does not exit with a dangling
+pointer to the mutable array, we must additionally ensure that
+|withNewByteArray| forces (deeply?) the continuation result before
+proceeding (otherwise the whole computation will be a thunk,
+potentially with references to the mutable array)}
 
 \todo{Add splitByteArray?}
 
