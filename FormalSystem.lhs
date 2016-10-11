@@ -1187,17 +1187,17 @@ any data type:
     move False  = Bang False
 
   data List a where
-    Nil : List a
-    Cons : a ⊸ List a ⊸ List a
+    []   :: List a
+    (:)  :: a ⊸ List a ⊸ List a
 
   instance Data a => Data (List a) where
-    free Nil = ()
-    free (Cons x l) = case free x of () -> free l
+    free [] = ()
+    free (x:l) = case free x of () -> free l
 
-    move Nil = Bang Nil
-    move (Cons x l) =
+    move [] = Bang []
+    move (x:l) =
     case (move x, move l) of
-      (Bang x',Bang l') -> Bang (Cons x' l')
+      (Bang x',Bang l') -> Bang (x':l')
 \end{code}
 
 The existence of |move| combined with lazy thunks may seem to
