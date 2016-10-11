@@ -842,8 +842,8 @@ argument is the size of an array to allocate. The second argument is a
 continuation where \emph{one} reference to the byte array is
 available. Operationally, the function starts by allocating a byte
 array of the requested size \emph{on a non GC heap} and then calls the
-continuation. Using the |copy| function, it forces the result and
-copies it to the GC heap. (|copy| ensures that no reference to the
+continuation. Using the |move| function, it forces the result and
+copies it to the GC heap. (|move| ensures that no reference to the
 non-GC heap remains unforced). This final copy ensures that the final
 result can be shared, which is critical when |withNewByteArray| is
 called $ω$ times.
