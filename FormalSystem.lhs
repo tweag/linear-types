@@ -200,6 +200,7 @@ Given this primitive, the running example becomes:
 withFile "myfile" ReadMore $ \h -> do
     -- some code that reads the file
     hClose h
+    return (Bang ()) -- Ensures that there is no linear resource left
 \end{code}
 % Add a dollar to prevent syntax highlighting to go wild: $
 \unsure{This may not be the right example, because it requires a change in the monad class.}
@@ -878,6 +879,8 @@ freeByteArray :: MutableByteArray s ⊸ Heap s ⊸ Heap s
 freezeByteArray :: MutableByteArray s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray)
 withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \end{code}
+\unsure{I'm not sure |freezeByteArray| should return a |Bang| in this
+  case.}
 
 The above API assumes a unique reference to a |Heap s|. The
 |newByteArray| function takes a such a reference (and eventually
@@ -887,13 +890,17 @@ The |withAHeap| function creates such a unique reference. It uses the
 same trick as |withNewByteArray| to ensure that linear objects do not
 escape the intended scope.
 
-Contrary to the first API, no |Copy| constraint is necessary, because
+Contrary to the first API, no |Data| constraint is necessary, because
 the heap is threaded though all functions (take note that |freeze| and
-|free| explicitly access the heap). Thus, by forcing the final state
-of the heap in |withAHeap|, one ensures that no dangling reference to
+|free| explicitly access the heap)\emph{If the |Data| constraint is
+  supposed to solved the strictness problem, I don't think this is
+  actually different here. On the other hand, since these are
+  primitive we could for them to be strict without requiring a
+  user-provided strict function}. Thus, by forcing the final state of
+the heap in |withAHeap|, one ensures that no dangling reference to
 linear array remains. Additionally, the |Bang a| type ensures that the
-argument of |withAHeap| cannot return a reference to any mutable byte array
-(or heap).  Indeed, the typing rules make it is impossible to
+argument of |withAHeap| cannot return a reference to any mutable byte
+array (or heap).  Indeed, the typing rules make it is impossible to
 transform a $1$-weighted object into an $ω$-weighted one, without
 copying it explicitly. Not returning a mutable byte array is critical,
 because the |withAHeap| function may be called $ω$ times; in which
@@ -1270,7 +1277,7 @@ we present here.
 relation between session types vs. linear types (even though the paper
 contains some subtle traps --- notably the intuitive explanation of
 par and tensor in LL does not match the semantics given in the
-paper.). In sum, session types classify 'live' sessions with
+paper.). In sum, session types classify `live' sessions with
 long-lived channels, whose type ``evolves'' over time. In contrast,
 linear types are well suited to giving types to a given bit of
 information. One can see thus that linear types are better suited for
