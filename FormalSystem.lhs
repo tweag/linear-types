@@ -133,7 +133,7 @@ This shortcoming is critical for scarce resources (a lock waiting to
 be garbage collected will block every thread waiting on it).
 
 The ``static support'' class has received a lot of attention in recent
-years.  The idea is to forgo automatic management in flavor of safe,
+years.  The idea is to forgo automatic management in favor of safe,
 but explicit management of resources, including memory. This trend is
 best exemplified by the popularity of the Rust programming
 language~\cite{matsakis_rust_2014}, where file-reading code such as
@@ -147,14 +147,14 @@ what follows would be written:
 } // the file is closed when this scope ends
 \end{verbatim}
 
-Also giving up on garabage collection offers, in particular, the following
+Also giving up on garbage collection offers, in particular, the following
 benefits:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
 \item control of \emph{when} memory-management pauses occur.
 \end{itemize}
 Indeed garbage collection is very fast, and explicit memory management
-may sometimes even be slower. Yet, fewer and more predictable pauses are
+may sometimes be even slower. Yet, fewer and more predictable pauses are
 important when operating under real-time constraints or in a
 distributed systems: a pause on one process can make all the other
 processes wait for the slower process to reach completion.
@@ -170,7 +170,7 @@ This article posits that, to the contrary, existing programming
 languages, such as Haskell~\cite{marlow_haskell_2010}, can be extended
 to incorporate safe explicit resource management, and gain a measure
 of control on garbage-collection pauses. Taking cues from linear
-logic~\cite{girard_linear_1987}, we propose a linearly typed
+logic~(LL)~\cite{girard_linear_1987}, we propose a linearly typed
 lazy\footnote{Laziness is not an essential characteristic: a similar
   extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
@@ -228,15 +228,14 @@ system would not suffice to meet our goal that a (intuitionistic,
 lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
 intuitionistic $\lambda$-calculus can be embedded in linear
 $\lambda$-calculus, this embedding requires an encoding. Usually, one
-would have a linear arrow $A⊸B$ and the intuitionistic arrow would be
+would have a linear arrow $A⊸B$ and the intuitionistic arrow\unsure{Not sure what you mean by intuitionistic arrow} would be
 encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
 arbitrary quantity of values of type $A$.
 
-This encoding means that the quantity of available values must be
-managed manually, and the common case (\emph{i.e.} an arbitrary quantity is
-required) requires additional syntax. For instance, in the
-pidgin-Haskell syntax that we envision for \HaskeLL{}, we
-could not write the following:
+This encoding means that the quantity of available values must be managed
+manually, and the common case (\emph{i.e.} an arbitrary quantity is required)
+requires additional syntax. For instance, in \HaskeLL{}, we could not write the
+following:
 \begin{code}
   dup :: a -> a⊗a
   dup x = (x,x)
@@ -258,6 +257,8 @@ the output of the intermediate functions:
 In sum, one would have to re-write all the code which uses several
 instances of the same value in the $!$ co-monad: hardly a tempting
 prospect.
+\unsure{Is it necessary to talk about the fact that $!$ is a co-monad?
+It has not been mentioned before.}
 
 \subsection{Putting the Bang in the arrow}
 
