@@ -187,8 +187,21 @@ but when part of code requires more care, \emph{e.g.} because of
 efficiency (sections~\ref{sec:fusion} and \ref{sec:dynamics}), or
 because a foreign function needs a linear type
 (Section~\ref{sec:ffi}), then one can use seamlessly the linear
-features of the language, which allow more control.\improvement{Add a
-  file-read example in the style of this article.}
+features of the language, which allow more control.
+
+For example, one may ensure that file handles do not remain dangling
+by giving the following type to a file-accessing functions: 
+\begin{code}
+  withFile :: FilePath -> (Handle ⊸ IO (Bang a)) -> IO a
+  hClose :: Handle ⊸ IO ()
+\end{code}
+Given this primitive, the running example becomes:
+\begin{code}
+withFile "myfile" ReadMore $ \h -> do
+    -- some code that reads the file
+    hClose h
+\end{code}
+\unsure{This may not be the right example, because it requires a change in the monad class.}
 
 Using a type system based on linear logic (rather than uniqueness
 typing or ownership typing) makes it possible to leverage the wealth
@@ -202,7 +215,7 @@ correspondence between session types and linear types is explained
 in~\cite{wadler_propositions_2012}).
 
 \section{Programming in \HaskeLL}
-\label{sec:orgheadline8}
+\label{sec:programming-intro}
 
 \subsection{An ILL-guided attempt}
 \unsure{Should we rename weights to quantities?}
@@ -251,9 +264,7 @@ precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
 arrow type is parametrized by the amount of its argument that it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
-\item $A →_ω B$ is the intuitionistic\todo{It is weird to call it like
-    that, because intuitionism is a constructive reaction to classicism; and ILL is certainly intuitionistic in that sense.} arrow
-  $A → B$
+\item $A →_ω B$ is the usual intuitionistic arrow $A → B$
 \end{itemize}
 
 The first main benefit of this approach is that all the code already
@@ -566,7 +577,7 @@ give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
 to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
 of the weighted arrows which allow to have the $λ$-calculus
 as a subset of \calc{}. Indeed, recall the example from the
-beginning of Section~\ref{sec:orgheadline8} which had us write |dup
+beginning of Section~\ref{sec:programming-intro} which had us write |dup
 (Bang (id (Bang 42)))|. Thanks to the application rule we have
 instead:\improvement{maybe work a little on the presentation of this
   example}
@@ -816,9 +827,6 @@ arrays'' in GHC parlance). We also propose a possible implementation
 strategy for the primitives, and argue briefly for correctness.
 
 \subsubsection{Version 1}
-
-withNewByteArray :: Copy k => Int → (MutableByteArray ⊸ k) ⊸ k
-
 A possible API is the following:
 \begin{code}
 withNewByteArray :: Copy k => Int → (MutableByteArray ⊸ k) ⊸ k
@@ -830,7 +838,7 @@ indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
 The key primitive in the above API is |withNewByteArray|, whose first
-argument is the size of an array to allocate. The second argument a
+argument is the size of an array to allocate. The second argument is a
 continuation where \emph{one} reference to the byte array is
 available. Operationally, the function starts by allocating a byte
 array of the requested size \emph{on a non GC heap} and then calls the
@@ -851,7 +859,7 @@ heap onto the GC heap. It consumes the static |MutableByteArray|,
 so that no further function can access it. In particular, such a frozen
 byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
-  withNewByteArray n freezeByteArray :: ByteArray
+  withNewByteArray n freezeByteArray :: Bang ByteArray
 \end{code}
 
 \todo{Add splitByteArray?}
@@ -860,7 +868,7 @@ byte array can be returned by the argument to |withNewByteArray|:
 
 A possible shortcoming of the above API is that any code that performs
 allocation must be written in continuation-passing style.  An
-alternative, direct style, API is the following:
+alternative API using direct style is the following:
 
 \begin{code}
 newByteArray :: Heap s ⊸ Int → (MutableByteArray s ⊗ Heap s)
@@ -883,12 +891,12 @@ the heap is threaded though all functions (take note that |freeze| and
 |free| explicitly access the heap). Thus, by forcing the final state
 of the heap in |withAHeap|, one ensures that no dangling reference to
 linear array remains. Additionally, the |Bang a| type ensures that the
-argument of |withAHeap| cannot return a reference to any byte array.
-Indeed, the typing rules make it is impossible to transform a
-$1$-weighted object into an $ω$-weighted one, without copying it
-explicitly. Not returning the byte array is critical, because the
-|withAHeap| function may be called $ω$ times; in which case its result
-will be shared.
+argument of |withAHeap| cannot return a reference to any mutable byte array
+(or heap).  Indeed, the typing rules make it is impossible to
+transform a $1$-weighted object into an $ω$-weighted one, without
+copying it explicitly. Not returning a mutable byte array is critical,
+because the |withAHeap| function may be called $ω$ times; in which
+case its result will be shared.
 \subsection{Fusion}
 \label{sec:fusion}
 
@@ -914,10 +922,10 @@ to even introduce sharing where the programmer doesn't expect it,
 effectively creating a memory leak
 (\url{https://ghc.haskell.org/trac/ghc/ticket/12620}).
 
-A partial remedy to this situation is to stop relying on rewrite rules,
-and use directly non-recursive representations. Doing so is nowadays
-popular in libraries for efficient programming in Haskell. \todo{cite
-  eg. feldspar, accelerate, ...}
+A partial remedy to this situation is to stop relying on rewrite
+rules, and use directly non-recursive representations. Doing so is
+nowadays popular in libraries for efficient programming in Haskell
+\cite{axelsson_feldspar_2010,lippmeier_parallel_2016,chakravarty_accelerating_2011,claessen_expressive_2012}.
 
 For example, \textcite{lippmeier_parallel_2016} use the following
 representation:
