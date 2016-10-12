@@ -707,10 +707,54 @@ abstracting over the linearities of the input functions, as follows:
 \[ λf. λg. λx. f (g x) : (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C\]
 \todo{This is isn't true, strictly speaking}
 
-\improvement{
-example of ill-typed programs due to linearity violation,
-with tentative error messages.
-}
+\paragraph{Ill-typed programs}
+
+As most type systems, \calc{} is perhaps better understood by the
+programs it rejects than the programs it accepts. Linear types add
+three brands of type errors, let us illustrate all three with three
+stripped-down \HaskeLL{} examples, each being the bare minimum to
+exhibit one kind of type-checking failure. A program can fail because
+it uses a linear variable several time on a code path:
+\begin{code}
+  data (⊗) a b where
+    (,) :: a ⊸ b ⊸ a⊗b
+
+  dup :: a ⊸ a⊗a
+  dup x = (x,x)
+\end{code}
+\begin{quote}\color{red}
+  Variable `x' is used, while it has been exhausted\\
+  In the expression: |x|\\
+  In the expression: |(x,x)|
+\end{quote}
+The second cause of type-checking failure is similar, except that it
+concerns expressions rather than variables. When an expression of
+weight $1$ where weight $ω$ is required:
+\begin{code}
+  unrestricted :: a -> a
+  unrestricted x = x
+
+  restriction :: a ⊸ a
+  restriction x = unrestricted (x,True)
+\end{code}
+\begin{quote}\color{red}
+  Couldn't match expected weight `$ω$' with actual weight `1'\\
+  In the expression: |(x,True)|\\
+  In the expression: unrestricted |(x,True)|
+\end{quote}
+Finally, and dually, it is an error to forget to use a linear
+variable:
+\begin{code}
+  drop :: a ⊸ ()
+  drop x = ()
+\end{code}
+\begin{quote}\color{red}
+  Variable `x' is unused, while it has weight `1'\\
+  In the expression: |()|
+\end{quote}
+\improvement{Maybe a slightly more complex program with a |case|
+  expression to illustrate that each code path (branch) must have a single use
+  of linear variables?}
 
 \section{Applications}
 \label{sec:ghc}
