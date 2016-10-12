@@ -85,3 +85,26 @@ tieredStorageServer s1 s2 client = case client of
     respond (tieredStorageServer s1 s2)
 
 
+{- Thoughts about distributed computations
+
+Distributable (N a) where
+combine :: N a ⊸ N a  ⊸ N a
+unit :: Index -> N a
+
+Composition:
+
+N(a⊗N b)
+
+N(b⊗N c)
+
+
+pipe :: N(b ⊗ N b)
+pipe (b,nb) = nb b
+
+chain :: N(a⊗N b) -> N(b⊗N c) -> N(a⊗N c)
+chain p1 p2 (a,nc) =
+  pipe $ \(b,nb) ->
+  p1 (a,nb) >>
+  p2 (b,nc)
+
+-}
