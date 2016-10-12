@@ -195,7 +195,8 @@ by giving the following type to a file-accessing functions:
   withFile :: FilePath -> (Handle ⊸ IO (Bang a)) -> IO a
   hClose :: Handle ⊸ IO ()
 \end{code}
-Given this primitive, the running example becomes:
+\unsure{At this point, Bang has not been exposed yet. It should be clarified what it does.}
+Given this primitive, th erunning example becomes:
 \begin{code}
 withFile "myfile" ReadMore $ \h -> do
     -- some code that reads the file
@@ -787,7 +788,7 @@ issue involves
 
 \begin{code}
 type M s a
-instance Monad s
+instance Monad (M s)
 
 primitive :: M s X
 runLowLevel :: M s a -> IO x
