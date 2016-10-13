@@ -308,6 +308,6 @@ The rules are:
 
 
   1Ψ ⊢ (let Γ in e ⇓ let Δ in Bang x) : Bang A -- clarify!
-  ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
---------------------------------------------------------------------- case
-  ω(Ξ+1Ψ) ⊢ (let Γ in case[1] e of {Bang y ↦ u } ⇓ let θ in z) : C
+  ωΞ+ωΨ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
+-------------------------------------------------------------------------- case
+  ω(Ξ+1Ψ+ωΨ) ⊢ (let Γ in case[1] e of {Bang y ↦ u} ⇓ let θ in z) : C

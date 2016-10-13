@@ -1413,6 +1413,16 @@ support dependent types.
 We can even make the set weight constants = $2^ℕ$, with the obvious
 operations, and the variable rule adapted accordingly.
 
+\subsection{TODOs}
+\begin{itemize}
+\item Define what 'subsumes' means
+\item Explain why no GC goes with linear instead of affine. Demonstrate why we go for linear instead of affine. Why can't we have |x| linear in |let x = _ 1 e in Just (x+1)|.
+\item Make a case for having both linear and unrestricted constructors
+\item Sem op for primops
+\item What kind of top-level application are we mostly interested in? Long-lived? Allocation pattern?
+\item Properly explain why we can't have links from GC heap to linear
+  heap.
+\end{itemize}
 \printbibliography
 \end{document}
 
