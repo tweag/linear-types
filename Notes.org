@@ -268,18 +268,20 @@ We exend the reduction with types, as follows:
 
    Γ:t  ⇓ρ  Δ:z
 becomes:
-  Ξ ⊢ (let Γ , in t ⇓ let Δ in z) :ρ A
+  Ξ ⊢ (Γ|t ⇓ Δ|z) :ρ A, Σ
+
+where
+Ξ : free variables
+Γ,Δ: heap states
+t,z : term states
+Σ : stack (pairs of term and type)
+
 
 Then we can prove
 
-if Ξ|Γ ⊢ t : ρA then Ξ|Δ ⊢ z : ρA
-where Ξ|Γ ⊢ t :ρ A  ≝   Ξ ⊢ let Γ, x :ρ A = t in x : A (*)
+if Ξ ⊢ (Γ|t :ρ A),Σ then Ξ ⊢ (Δ|z :ρ A),Σ
 
-by an easy induction.
-
-(*) this form allows ρ-times computed results to be put-back in the
-heap in the shared var rule.
-
+where Ξ ⊢ (Γ|t :ρ A),Σ  ≝   Ξ ⊢ let Γ in (t,terms(Σ)) : (A⊗types(Σ))
 
 Consistency of the heap is implied by well-typedness; so if we start
 with a well-typed heap, we will obtain a consistent heap.
@@ -287,32 +289,44 @@ with a well-typed heap, we will obtain a consistent heap.
 
 The rules are:
 
-  Ξ, x:ωB ⊢ (let Γ in e ⇓ let Δ in z) :ρ A
+  Ξ, x:ωB ⊢ (Γ|e ⇓ Δ|z) :ρ A, Σ
 ---------------------------------------------------------------- shared variable
-  Ξ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z) :ρ A
+  Ξ ⊢ (Γ,x :ω B = e | x  ⇓ Δ, x :ω B = z | z) :ρ A, Σ
 
 
 
-
-  Ξ,x:1B ⊢ (let Γ in e ⇓ let Δ in z) :1 A
+  Ξ,x:1B ⊢ (Γ|e ⇓ Δ|z) :1 A, Σ
 ----------------------------------------------------- linear variable
-  Ξ ⊢ (let Γ,x :1 B = e in x  ⇓  let Δ in z) :1 A
+  Ξ ⊢ (Γ,x :1 B = e| x  ⇓  Δ|z) :1 A,  Σ
 
 
 
-  Ξ ⊢ (let Γ, x :ρq B = e1 in t ⇓ let Δ in z) :ρ A
+  Ξ ⊢ (Γ,    x :ρq B = e1 |  t ⇓ Δ|z) :ρ A, Σ
 ---------------------------------------------------------- let
-  Ξ ⊢ (let Γ in let x :q B = e1 in t ⇓ let Δ in z) :ρ A
+  Ξ ⊢ (Γ|let x :q B  = e1 in t ⇓ Δ|z) :ρ A,  Σ
 
 
 
-  qΨ ⊢ (let Γ in e ⇓ let Δ in c x) :ρ D
-  Ξ ⊢ (let Δ in u[x/y] ⇓ let θ in z) :ρ C
+    Ξ  ⊢  (Γ|e      ⇓ Δ|λy.u):ρ A →q B, x:qρ A, Σ
+    Ξ  ⊢  (Δ|u[x/y] ⇓ Θ|z)   :ρ A →q B,         Σ
+------------------------------------------------------------------ app
+    Ξ  ⊢  (Γ|e x ⇓ Θ|z) :ρ B ,Σ
+
+
+  Ξ,y:pqρ A ⊢ (Γ|e ⇓ Δ|c x) :qρ D, u:ρ C, Σ
+  Ξ ⊢ (Δ|u[x/y] ⇓ Θ|z) :ρ C, Σ
 ------------------------------------------------------------------- case
-  (Ξ+qΨ) ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
+  Ξ ⊢ (Γ|case[q] e of {c y ↦ u} ⇓ Θ|z) :ρ C, Σ
 
 
-  ωΨ ⊢ (let Γ in e ⇓ let Δ in Bang x) :1 Bang A -- clarify!
-  Ξ ⊢ (let Δ in u[x/y] ⇓ let θ in z) :ρ C
--------------------------------------------------------------------------- case
-  (Ξ+ωΨ) ⊢ (let Γ in case[1] e of {Bang y ↦ u} ⇓ let θ in z) :ρ C
+TODO: case1  Bang
+
+
+** Small step version
+
+
+  Γ,z ↦ let x :q B  = e1 in t :ρ A  ⊢ z,Σ   ⟶   Γ,x :qρ B  = e1, z ↦ t ⊢ z:ρ A,Σ
+  Γ,z ↦ e x ⊢ z,Σ                           ⟶   Γ,z' ↦ e ⊢ z' ,x :qρ A,Σ
+  Γ,z ↦ λy. u ⊢ z,x,Σ                       ⟶  Γ,z' ↦ u[x/y] ⊢ z',Σ
+
+This is ugly and should be polarized.

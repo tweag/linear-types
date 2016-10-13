@@ -96,6 +96,7 @@
 
 \setcounter{tocdepth}{3}
 \tableofcontents
+\listoffigures
 
 \section{Introduction}
 
