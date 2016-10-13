@@ -794,6 +794,8 @@ data Client where
   Withdraw :: Nat -> Dual (Status ⊗ Server) ⊸ Client
 type Server = Dual Client
 \end{code}
+\unsure{Maybe it should be made clear why Client =/= Dual (Dual Client).}
+
 The |Client| type describes the possible behaviours of the
 client. When it |Deposit|s, it provides a certain amount and a means
 to get a response from the server (|Dual Server|). Upon |Withdraw|al, the
