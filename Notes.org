@@ -1,5 +1,6 @@
 * Local linear things
 
+** Old
 One would linke to construct a function which allows to locally use
 the linear heap. We attempt:
 
@@ -72,6 +73,15 @@ The above suggests the primitive:
 
 
 kind_of_call/cc :: ((A → ⊥) ⊸ ⊥) → A
+** New
+
+We can interpret the expression 
+
+case1 t of Bang x -> u[x]
+
+specially. That is, even in ω contexts, t can be evaluated just
+once. (We'll get ω things out of the Bang anyway.)
+
 * Weight Polymorphism 
 
 
@@ -128,7 +138,6 @@ and so:
 
 In words: if you expect 1, I can give you ω. So, if you expect an
 unrestricted function, I can give you a linear function.
-
 
 
 * Copying
@@ -243,3 +252,53 @@ roughly:
 openFile :: ∀ paths. (path :: FilePath) -> Context (path:paths) ⊸ (Context paths ⊗ Handle path)
 closeFile :: ∀ path paths. (Context paths ⊗ Handle path) ⊸ Context paths
 
+* (Mutable) Array of linear variables
+
+mkArray :: List a ⊸ Array a -- allowing for unrestricted array
+withNewArray :: List a ⊸ (Array a ⊸ Bang k) ⊸ k -- ensuring that arrays are always linear.
+updateArray :: Int → a ⊸ Array a ⊸ (Array a ⊗ a)
+splitArray :: Int → Array a ⊸ (Array a ⊗ Array a)
+foldArray :: b ⊸ (Int → a ⊸ b ⊸ b) → Array a ⊸ b
+byteArraySize :: Array a → Int
+
+
+* Proof of consistency for dyn. semantics
+
+We exend the reduction with types, as follows:
+
+ρΞ ⊢ (let γ in t ⇓ let δ in z) : A
+
+And prove if Ξ ⊢ let γ in t : A then Ξ ⊢ let δ in z : A.
+Consistency of the heap is in turn guaranteed by the typesystem.
+
+
+The rules are:
+
+  ωΞ,x:ωB ⊢ (let Γ in e ⇓ let Δ in z) : A
+------------------------------------------------------------- shared variable
+  ρΞ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z)
+
+
+
+  1Ξ,x:1B ⊢ (let Γ in e ⇓ let Δ in z) : A
+----------------------------------------------------- linear variable
+  1Ξ ⊢ (let Γ,x :1 B = e in x  ⇓ let Δ in z) : A
+
+
+
+  ρΞ ⊢ (let Γ, x :q B = e1 in t ⇓ let Δ in z) : A
+---------------------------------------------------- let
+  ρΞ ⊢ (let Γ, x :q B = e1 in t ⇓ let Δ in z) : A
+
+
+
+  qρΞ ⊢ (let Γ in e ⇓ let Δ in c x) : D
+  ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
+---------------------------------------------------------------- case
+  ρΞ ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
+
+
+  ρΞ ⊢ (let Γ in e ⇓ let Δ in Bang x) : Bang A
+  ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
+---------------------------------------------------------------- case
+  ρΞ ⊢ (let Γ in case[q] e of {Bang y ↦ u } ⇓ let θ in z) : C
