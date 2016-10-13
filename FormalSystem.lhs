@@ -1200,6 +1200,7 @@ values. The semantics is given in \fref{fig:dynamics}.
 
     \inferrule{Γ: e ⇓_ρ Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
     {Γ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+
   \end{mathpar}
 
   \caption{Dynamic semantics}
@@ -1209,6 +1210,9 @@ Remark: the \emph{shared variable} rule also triggers when the weight
 parameter is $1$, thus effectively allowing linear variables to look
 on the garbage-collected heap and linear data to have unrestricted
 sub-data. \todo{Works only on weight-closed terms}
+
+\improvement{We can even have a case rule that demotes $ρ$ to $1$ when
+  all the constructor arugments have weight $ω$.}
 
 \begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
   It is an essential property that the garbage collected heap does not
