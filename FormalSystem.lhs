@@ -338,7 +338,7 @@ map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
-|∀rho. (a -> _ rho b) -> List a -> _ rho List b|.
+|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. 
 %
 Likewise, function composition can be given the following type:
 \begin{code}
@@ -674,7 +674,7 @@ simple programs and the types that they inhabit.
 \paragraph{K combinator}
 
 The $\lambda$-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
-$A ⊸ B → A$ or $A → B → A$. However, the first type subsumes the
+$A ⊸ B → A$ or $A → B → A$. However, the first type subsumes\improvement{define what subsume means.} the
 second one, because when we heave $ω$ times $A$, we can always call
 $k$ anyway and ignore the rest of $A$'s. (In this situation, we can
 also call $ω$ times $k$). The lesson learned is that when a variable is used
@@ -885,6 +885,8 @@ indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
 freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
+
+\improvement{sem. op. for these things}
 
 The key primitive in the above API is |withNewByteArray|, whose first
 argument is the size of an array to allocate. The second argument is a
@@ -1415,13 +1417,12 @@ operations, and the variable rule adapted accordingly.
 
 \subsection{TODOs}
 \begin{itemize}
-\item Define what 'subsumes' means
-\item Explain why no GC goes with linear instead of affine. Demonstrate why we go for linear instead of affine. Why can't we have |x| linear in |let x = _ 1 e in Just (x+1)|.
+\item Linear vs. Affine discussion. Explain why no GC goes with linear
+  instead of affine. Demonstrate why we go for linear instead of
+  affine. Why can't we have |x| linear in |let x = _ 1 e in Just
+  (x+1)|.
 \item Make a case for having both linear and unrestricted constructors
-\item Sem op for primops
 \item What kind of top-level application are we mostly interested in? Long-lived? Allocation pattern?
-\item Properly explain why we can't have links from GC heap to linear
-  heap.
 \end{itemize}
 \printbibliography
 \end{document}

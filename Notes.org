@@ -266,15 +266,20 @@ byteArraySize :: Array a → Int
 
 We exend the reduction with types, as follows:
 
-   Γ:t ⇓ρ Δ:z
+   Γ:t  ⇓ρ  Δ:z
 becomes:
-  ρΞ ⊢ (let Γ in t ⇓ let Δ in z) : A
+  Ξ ⊢ (let Γ , in t ⇓ let Δ in z) :ρ A
 
 Then we can prove
 
-if ρΞ ⊢ let Γ in t : A then ρΞ ⊢ let Δ in z : A
+if Ξ|Γ ⊢ t : ρA then Ξ|Δ ⊢ z : ρA
+where Ξ|Γ ⊢ t :ρ A  ≝   Ξ ⊢ let Γ, x :ρ A = t in x : A (*)
 
 by an easy induction.
+
+(*) this form allows ρ-times computed results to be put-back in the
+heap in the shared var rule.
+
 
 Consistency of the heap is implied by well-typedness; so if we start
 with a well-typed heap, we will obtain a consistent heap.
@@ -282,32 +287,32 @@ with a well-typed heap, we will obtain a consistent heap.
 
 The rules are:
 
-  ωΞ,x:ωB ⊢ (let Γ in e ⇓ let Δ in z) : A
+  Ξ, x:ωB ⊢ (let Γ in e ⇓ let Δ in z) :ρ A
 ---------------------------------------------------------------- shared variable
-  ρΞ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z) : A
+  Ξ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z) :ρ A
 
 
 
 
-  1Ξ,x:1B ⊢ (let Γ in e ⇓ let Δ in z) : A
+  Ξ,x:1B ⊢ (let Γ in e ⇓ let Δ in z) :1 A
 ----------------------------------------------------- linear variable
-  1Ξ ⊢ (let Γ,x :1 B = e in x  ⇓ let Δ in z) : A
+  Ξ ⊢ (let Γ,x :1 B = e in x  ⇓  let Δ in z) :1 A
 
 
 
-  ρΞ ⊢ (let Γ, x :q B = e1 in t ⇓ let Δ in z) : A
+  Ξ ⊢ (let Γ, x :ρq B = e1 in t ⇓ let Δ in z) :ρ A
 ---------------------------------------------------------- let
-  ρΞ ⊢ (let Γ in let x :q B = e1 in t ⇓ let Δ in z) : A
+  Ξ ⊢ (let Γ in let x :q B = e1 in t ⇓ let Δ in z) :ρ A
 
 
 
-  ρqΨ ⊢ (let Γ in e ⇓ let Δ in c x) : D
-  ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
+  qΨ ⊢ (let Γ in e ⇓ let Δ in c x) :ρ D
+  Ξ ⊢ (let Δ in u[x/y] ⇓ let θ in z) :ρ C
 ------------------------------------------------------------------- case
-  ρ(Ξ+qΨ) ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
+  (Ξ+qΨ) ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
 
 
-  1Ψ ⊢ (let Γ in e ⇓ let Δ in Bang x) : Bang A -- clarify!
-  ωΞ+ωΨ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
+  ωΨ ⊢ (let Γ in e ⇓ let Δ in Bang x) :1 Bang A -- clarify!
+  Ξ ⊢ (let Δ in u[x/y] ⇓ let θ in z) :ρ C
 -------------------------------------------------------------------------- case
-  ω(Ξ+1Ψ+ωΨ) ⊢ (let Γ in case[1] e of {Bang y ↦ u} ⇓ let θ in z) : C
+  (Ξ+ωΨ) ⊢ (let Γ in case[1] e of {Bang y ↦ u} ⇓ let θ in z) :ρ C
