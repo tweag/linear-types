@@ -223,7 +223,10 @@ in~\cite{wadler_propositions_2012}).
 \label{sec:programming-intro}
 
 \subsection{An ILL-guided attempt}
-\unsure{Should we rename weights to quantities?}
+\unsure{Should we rename weights to quantities?  Simon: ``weights'' is fine.}
+
+\unsure{Simon: I find it terribly distracting and confusing to have all these asides about
+alternative approaches.  Could we relegate them all to ``Alternative approaches'' or ``Related work''?}
 
 Simply using linear logic --- or, as it were, intuitionistic linear
 logic, because we do not require a notion of type duality --- as a type
@@ -570,7 +573,10 @@ context, especially in the case of applications.
   syntax and typing judgement}
 
 The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$ consumes $Γ$ and
-builds \emph{exactly one} $A$. We provide
+builds \emph{exactly one} $A$.
+\unsure{Simon: this is a super-important statement.  Let's say it
+right at the beginning of the section on types.}
+We provide
 no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
@@ -583,7 +589,9 @@ to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
 of the weighted arrows which allow to have the $λ$-calculus
 as a subset of \calc{}. Indeed, recall the example from the
 beginning of Section~\ref{sec:programming-intro} which had us write |dup
-(Bang (id (Bang 42)))|. Thanks to the application rule we have
+(Bang (id (Bang 42)))|. 
+\unsure{Simon: another distracting aside for experts; move to footnote or related work}
+Thanks to the application rule we have
 instead:\improvement{maybe work a little on the presentation of this
   example}
 $$
@@ -592,11 +600,13 @@ $$
   {\inferrule
     {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
     {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
-  {⊢ λ x. Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id 42}}
-{()+ω() ⊢ (λ x. Tensor x x) (id 42)}\text{app}
+  {⊢ λ (x :_w A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id 42 : A}}
+{()+ω() ⊢ (λ (x :_w A). Tensor x x)_w \; (id_w \; 42)}\text{app}
 $$
+\unsure{Simon: this example has several missing type annotations tec. I've added them; check.}
 In the application rule the promotion rule of linear logic is applied
 implicitly.
+\unsure{Simon: another distracting aside for experts; move to footnote or related work}
 $$\inferrule{{!}Γ ⊢ A}{{!}Γ ⊢ {!}A}$$
 where ${!}Γ$ is a context with all the hypotheses of the form ${!}A$
 for some $A$.
@@ -618,7 +628,9 @@ clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
 $ω$-weighted variables: that is, it allows variables of weight
-$ω$---and only of weight $ω$---not to be used. Pushing weakening to
+$ω$---and only of weight $ω$---not to be used.
+\unsure{I couldn't parse the part after the semicolon}
+ Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
 focusing~\cite{andreoli_logic_1992}. Note that the judgement
@@ -657,6 +669,7 @@ language: if we interpret the weights on the arguments of existing
 constructor to be $1$ while the weights on the arguments of existing
 functions to be $ω$, the typable programs are exactly the same as an
 intuitionistic $λ$-calculus.
+\unsure{Simon: another distracting aside for experts; move to footnote or related work}
 \info{Remark: the reason why
   we can have ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we
   have a model in mind where all sub-data is boxed (and managed by GC)
