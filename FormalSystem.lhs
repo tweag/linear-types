@@ -190,13 +190,15 @@ because a foreign function needs a linear type
 features of the language, which allow more control.
 
 For example, one may ensure that file handles do not remain dangling
-by giving the following type to a file-accessing functions: 
+by giving the following type to a file-accessing functions:
 \begin{code}
   withFile :: FilePath -> (Handle ⊸ IO (Bang a)) -> IO a
   hClose :: Handle ⊸ IO ()
 \end{code}
-\unsure{At this point, Bang has not been exposed yet. It should be clarified what it does.}
-Given this primitive, th erunning example becomes:
+\unsure{This example is actually broken, because it requires a linear
+  bind. Additionally, at this point, |Bang| has not been
+  introduced. It should be detailed in sec:app.}. Given this
+primitive, the running example becomes:
 \begin{code}
 withFile "myfile" ReadMore $ \h -> do
     -- some code that reads the file
@@ -255,11 +257,10 @@ the output of the intermediate functions:
   v = dup (Bang (id (Bang 42)))
 \end{code}
 
-In sum, one would have to re-write all the code which uses several
-instances of the same value inside a co-monad (|Bang|): hardly a tempting
-prospect.
-\unsure{Is it necessary to talk about the fact that |Bang| is a co-monad?
-It has not been mentioned before.}
+In sum, all the existing code which uses the same value several times
+has to be re-written. This rewriting is mechanical, but deep: in
+technical terms, it amounts to using the co-kleisli category of |Bang|
+(which is incidentally a co-monad).
 
 \subsection{Putting the Bang in the arrow}
 
