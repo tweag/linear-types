@@ -266,17 +266,26 @@ byteArraySize :: Array a → Int
 
 We exend the reduction with types, as follows:
 
-ρΞ ⊢ (let γ in t ⇓ let δ in z) : A
+   Γ:t ⇓ρ Δ:z
+becomes:
+  ρΞ ⊢ (let Γ in t ⇓ let Δ in z) : A
 
-And prove if Ξ ⊢ let γ in t : A then Ξ ⊢ let δ in z : A.
-Consistency of the heap is in turn guaranteed by the typesystem.
+Then we can prove
+
+if ρΞ ⊢ let Γ in t : A then ρΞ ⊢ let Δ in z : A
+
+by an easy induction.
+
+Consistency of the heap is implied by well-typedness; so if we start
+with a well-typed heap, we will obtain a consistent heap.
 
 
 The rules are:
 
   ωΞ,x:ωB ⊢ (let Γ in e ⇓ let Δ in z) : A
-------------------------------------------------------------- shared variable
-  ρΞ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z)
+---------------------------------------------------------------- shared variable
+  ρΞ ⊢ (let Γ,x :ω B = e in x  ⇓ let Δ, x :ω B = z in z) : A
+
 
 
 
@@ -287,18 +296,18 @@ The rules are:
 
 
   ρΞ ⊢ (let Γ, x :q B = e1 in t ⇓ let Δ in z) : A
----------------------------------------------------- let
-  ρΞ ⊢ (let Γ, x :q B = e1 in t ⇓ let Δ in z) : A
+---------------------------------------------------------- let
+  ρΞ ⊢ (let Γ in let x :q B = e1 in t ⇓ let Δ in z) : A
 
 
 
-  qρΞ ⊢ (let Γ in e ⇓ let Δ in c x) : D
+  ρqΨ ⊢ (let Γ in e ⇓ let Δ in c x) : D
   ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
----------------------------------------------------------------- case
-  ρΞ ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
+------------------------------------------------------------------- case
+  ρ(Ξ+qΨ) ⊢ (let Γ in case[q] e of {c y ↦ u } ⇓ let θ in z) : C
 
 
-  ρΞ ⊢ (let Γ in e ⇓ let Δ in Bang x) : Bang A
+  1Ψ ⊢ (let Γ in e ⇓ let Δ in Bang x) : Bang A -- clarify!
   ρΞ ⊢ (let Δ in u[x/y] ⇓ let θ in z) : C
----------------------------------------------------------------- case
-  ρΞ ⊢ (let Γ in case[q] e of {Bang y ↦ u } ⇓ let θ in z) : C
+--------------------------------------------------------------------- case
+  ω(Ξ+1Ψ) ⊢ (let Γ in case[1] e of {Bang y ↦ u } ⇓ let θ in z) : C
