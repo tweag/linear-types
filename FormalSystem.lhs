@@ -175,7 +175,7 @@ lazy\footnote{Laziness is not an essential characteristic: a similar
   extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
   dynamic semantics would change slightly in a strict language} lambda
-calculus (the presentation is inspired by~\cite{mcbride_rig_2016}),
+calculus (inspired by~\cite{mcbride_rig_2016} and~\cite{ghica_bounded_2014}),
 which contains the simply-typed lambda calculus as a subset.
 
 This lambda calculus can be scaled up to a full-fledged programming
@@ -229,7 +229,7 @@ system would not suffice to meet our goal that a (intuitionistic,
 lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
 intuitionistic $\lambda$-calculus can be embedded in linear
 $\lambda$-calculus, this embedding requires an encoding. Usually, one
-would have a linear arrow $A⊸B$ and the intuitionistic arrow\unsure{Not sure what you mean by intuitionistic arrow} would be
+would have a linear arrow $A⊸B$ and the usual unrestricted (intuitionistic) arrow would be
 encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
 arbitrary quantity of values of type $A$.
 
@@ -256,9 +256,9 @@ the output of the intermediate functions:
 \end{code}
 
 In sum, one would have to re-write all the code which uses several
-instances of the same value in the $!$ co-monad: hardly a tempting
+instances of the same value inside a co-monad (|Bang|): hardly a tempting
 prospect.
-\unsure{Is it necessary to talk about the fact that $!$ is a co-monad?
+\unsure{Is it necessary to talk about the fact that |Bang| is a co-monad?
 It has not been mentioned before.}
 
 \subsection{Putting the Bang in the arrow}
@@ -277,7 +277,8 @@ the box.
 
 The second benefit is that one can write linear code whenever it is
 possible, and use it in unrestricted contexts anyway. The following
-example illustrates.
+example illustrates. \improvement{Say somewhere that top-level
+  bindings have weight $ω$ unless otherwise specified.}
 
 \begin{code}
 data List a where
@@ -569,7 +570,7 @@ context, especially in the case of applications.
   syntax and typing judgement}
 
 The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$ consumes $Γ$ and
-builds \emph{exactly one} $A$. Contrary to~\textcite{mcbride_rig_2016}, we provide
+builds \emph{exactly one} $A$. We provide
 no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
