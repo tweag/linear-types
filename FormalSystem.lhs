@@ -278,8 +278,9 @@ the box.
 
 The second benefit is that one can write linear code whenever it is
 possible, and use it in unrestricted contexts anyway. The following
-example illustrates. \improvement{Say somewhere that top-level
-  bindings have weight $ω$ unless otherwise specified.}
+example illustrates. (Note that all top-level bingdings, including
+constructors and class methods are assumed to have weight $ω$, unless
+explicitly specified otherwise.)
 
 \begin{code}
 data List a where
@@ -320,18 +321,16 @@ Of course, not all programs are linear: a function may legitimately
 demand $ω$ times its input, even to construct a single output. For
 example the function repeating indefinitely its input will have the
 type:
-
 \begin{code}
 cycle :: List a → List a
 \end{code}
-
 Operationally, |cycle| requires its argument to be on the GC heap.  In
 practice, libraries will never provide $ω$ times a scarce resource
 (eg. a handle to a physical entity); such a resource will thus never
 end up in the argument to |cycle|.
 
 While reusing first-order code can be done simply by scaling from $1$
-to $ω$, reusing, higher-order programs need polymorphism over
+to $ω$, reusing higher-order programs need polymorphism over
 weights. For example, the standard |map| function
 \begin{code}
 map f []      = []
@@ -775,7 +774,7 @@ for the negation of $A$.
 type Dual a = a ⊸ ⊥
 \end{code}
 Many languages with session types offer duality at their core, and
-conveniently make negation involutive. We neither rely on nor provide
+conveniently make negation involutive (|Dual (Dual a) = a|). We neither rely on nor provide
 this feature: it is not essential to precisely and concisely describe
 protocols.  Additionally, we propose no primitive $⊥$ type for
 \HaskeLL{}: instead we assume an abstract type $⊥$, typically provided
@@ -795,7 +794,6 @@ data Client where
   Withdraw :: Nat -> Dual (Status ⊗ Server) ⊸ Client
 type Server = Dual Client
 \end{code}
-\unsure{Maybe it should be made clear why Client =/= Dual (Dual Client).}
 
 The |Client| type describes the possible behaviours of the
 client. When it |Deposit|s, it provides a certain amount and a means
@@ -946,8 +944,6 @@ freeByteArray :: MutableByteArray s ⊸ Heap s ⊸ Heap s
 freezeByteArray :: MutableByteArray s ⊸ Heap s ⊸ (Heap s ⊗ Bang ByteArray)
 withAHeap :: forall a. (forall s. Heap s ⊸ (Heap s ⊗ Bang a)) ⊸ a
 \end{code}
-\unsure{I'm not sure |freezeByteArray| should return a |Bang| in this
-  case.}
 
 The above API assumes a unique reference to a |Heap s|. The
 |newByteArray| function takes a such a reference (and eventually
