@@ -1099,26 +1099,26 @@ pause occur.
     r &::=\\
       &||  x\\
       &||  λx. r\\
-      &||  r_q x\\
+      &||  r x\\
       &||  λπ. r\\
       &||  r p\\
       &||  c x₁ … x_n\\
-      &||  \case r {c_k  x₁ … x_{n_k} → r_k}\\
+      &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
       &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r
   \end{align*}
 
   \figuresection{Translation of typed terms}
 
   \begin{align*}
-    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
+    (λ(x:_qA). t)^* &= λx. (t)^* \\
     x^*             &= x \\
-    (t_q  x )^*     &= (t)^*_q  x \\
-    (t_q  u )^*     &= \flet y =_{q} (u)^* \fin (t)^*_q  y \\
+    (t_q  x )^*     &= (t)^*  x \\
+    (t_q  u )^*     &= \flet y =_{q} (u)^* \fin (t)^*  y \\
     c_k  t₁ … t_n   &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^*
                       \fin c_k x₁ … x_n
   \end{align*}
   \begin{align*}
-    (\case t {c_k  x₁ … x_{n_k} → u_k})^* &= \case {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
     (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁ =_{q₁} (t₁)^*,…, x_n=_{q_n} (t_n)^* \fin (u)^*
   \end{align*}
 
@@ -1181,8 +1181,8 @@ values. The semantics is given in \fref{fig:dynamics}.
     \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{qρ} Θ : z} {Γ :
-      e_q x ⇓_ρ Θ : z} \text{application}
+    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{ρ} Θ : z} {Γ :
+      e x ⇓_ρ Θ : z} \text{application}
 
     \inferrule{Γ : e ⇓_ω Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) :
       z}\text{shared variable}
@@ -1200,8 +1200,8 @@ values. The semantics is given in \fref{fig:dynamics}.
       x_n}\text{constructor}
 
 
-    \inferrule{Γ: e ⇓_ρ Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
-    {Γ : \case e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
 
   \end{mathpar}
 
