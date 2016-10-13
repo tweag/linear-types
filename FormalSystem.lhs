@@ -794,6 +794,8 @@ data Client where
   Withdraw :: Nat -> Dual (Status ⊗ Server) ⊸ Client
 type Server = Dual Client
 \end{code}
+\unsure{Maybe it should be made clear why Client =/= Dual (Dual Client).}
+
 The |Client| type describes the possible behaviours of the
 client. When it |Deposit|s, it provides a certain amount and a means
 to get a response from the server (|Dual Server|). Upon |Withdraw|al, the
@@ -895,6 +897,8 @@ continuation. It then forces the evaluation of the continuation in whnf
 then returned. The type-system ensures that this reference does not
 depend on any object in the linear heap.  This property is critical
 when |withNewByteArray| is called $ω$ times.
+\unsure{The move function is defined several pages later.
+Also it returns a `Bang k`, but withNewByteArray sig contains no Bang}
 
 To convince oneself of the correctness of the above semantics, one can
 examine the following example:
