@@ -897,8 +897,6 @@ continuation. It then forces the evaluation of the continuation in whnf
 then returned. The type-system ensures that this reference does not
 depend on any object in the linear heap.  This property is critical
 when |withNewByteArray| is called $ω$ times.
-\unsure{The move function is defined several pages later.
-Also it returns a `Bang k`, but withNewByteArray sig contains no Bang}
 
 To convince oneself of the correctness of the above semantics, one can
 examine the following example:
