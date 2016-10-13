@@ -877,7 +877,7 @@ strategy for the primitives, and argue briefly for correctness.
 \subsubsection{Version 1}
 A possible API is the following:
 \begin{code}
-withNewByteArray :: Data k => Int → (MutableByteArray ⊸ k) ⊸ k
+withNewByteArray :: Int → (MutableByteArray ⊸ Bang k) ⊸ k
 updateByteArray :: Int -> Byte → MutableByteArray ⊸ MutableByteArray
 freeByteArray :: MutableByteArray ⊸ ()
 indexMutByteArray :: Int -> MutableByteArray ⊸ (MutableByteArray ⊗ Byte)
@@ -889,17 +889,35 @@ The key primitive in the above API is |withNewByteArray|, whose first
 argument is the size of an array to allocate. The second argument is a
 continuation where \emph{one} reference to the byte array is
 available. Operationally, the function starts by allocating a byte
-array of the requested size \emph{on a non GC heap} and then calls the
-continuation. Using the |move| function, it forces the result and
-copies it to the GC heap. (|move| ensures that no reference to the
-non-GC heap remains unforced). This final copy ensures that the final
-result can be shared, which is critical when |withNewByteArray| is
-called $ω$ times.
+array of the requested size \emph{on a linear heap} and then calls the
+continuation. It then forces the evaluation of the continuation in whnf
+(obtains the |Bang| constructor). The reference contained therein is
+then returned. The type-system ensures that this reference does not
+depend on any object in the linear heap.  This property is critical
+when |withNewByteArray| is called $ω$ times.
 
-Many functions take a |MutableByteArray| as argument and produce a new
-|MutableByteArray|. Such functions can perform in-place updates of the
-array (even though we remark that the |MutableByteArray| is not a
-reference type) because linearity ensures that it cannot be shared.
+To convince oneself of the correctness of the above semantics, one can
+examine the following example:
+\begin{code}
+expensiveFunction :: ByteArray → Int
+
+withNewByteArray n (\a ->
+  case freezeByteArray a of
+    Bang a' -> Bang (expensiveFunction a'))
+\end{code}
+In order to evaluate |Bang (expensiveFunction a')| to whnf, one must
+first evaluate |freezeByteArray a| to whnf, and this operation turns
+the linear reference into an unrestricted reference. In general, the
+typesystem ensures that the closure inside |Bang| contains no linear
+variable, because the typing rules make it is impossible to transform
+a $1$-weighted object into an $ω$-weighted one without copying it
+explicitly.
+
+Many functions from API take a |MutableByteArray| as argument and
+produce a new |MutableByteArray|. Such functions can perform in-place
+updates of the array (even though we remark that the
+|MutableByteArray| is not a reference type) because linearity ensures
+that it cannot be shared.
 
 Finally, |freezeByteArray| turns a linear |MutableByteArray| into a
 shareable |ByteArray|. It does so by moving the data from the linear
@@ -907,7 +925,7 @@ heap onto the GC heap. It consumes the static |MutableByteArray|,
 so that no further function can access it. In particular, such a frozen
 byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
-  withNewByteArray n freezeByteArray :: Bang ByteArray
+  withNewByteArray n freezeByteArray :: ByteArray
 \end{code}
 
 \todo{Add splitByteArray?}
@@ -936,21 +954,13 @@ The |withAHeap| function creates such a unique reference. It uses the
 same trick as |withNewByteArray| to ensure that linear objects do not
 escape the intended scope.
 
-Contrary to the first API, no |Data| constraint is necessary, because
+Contrary to the first API, no |Bang| return type is necessary, because
 the heap is threaded though all functions (take note that |freeze| and
-|free| explicitly access the heap)\emph{If the |Data| constraint is
-  supposed to solved the strictness problem, I don't think this is
-  actually different here. On the other hand, since these are
-  primitive we could for them to be strict without requiring a
-  user-provided strict function}. Thus, by forcing the final state of
+|free| explicitly access the heap). Thus, by forcing the final state of
 the heap in |withAHeap|, one ensures that no dangling reference to
 linear array remains. Additionally, the |Bang a| type ensures that the
 argument of |withAHeap| cannot return a reference to any mutable byte
-array (or heap).  Indeed, the typing rules make it is impossible to
-transform a $1$-weighted object into an $ω$-weighted one, without
-copying it explicitly. Not returning a mutable byte array is critical,
-because the |withAHeap| function may be called $ω$ times; in which
-case its result will be shared.
+array (or heap), as we have discussed for Version 1. 
 \subsection{Fusion}
 \label{sec:fusion}
 
