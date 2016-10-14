@@ -150,6 +150,7 @@ what follows would be written:
   // some code that reads the file
 } // the file is closed when this scope ends
 \end{verbatim}
+\unsure{What if |file| is put in a closure which is returned?}
 
 Also giving up on garbage collection offers, in particular, the following
 benefits:
@@ -212,16 +213,17 @@ withFile "myfile" ReadMore $ \h -> do
 % Add a dollar to prevent syntax highlighting to go wild: $
 \unsure{This may not be the right example, because it requires a change in the monad class.}
 
-Using a type system based on linear logic (rather than uniqueness
-typing or ownership typing) makes it possible to leverage the wealth
-of literature of the past thirty years. Linear logic has been shown,
-for instance, to be applicable to explicit memory
+A type system based on linear logic is considerably simpler than one
+based on uniqueness or ownership. Additionally, and it makes it
+possible to leverage the wealth of literature of the past thirty
+years. Linear logic has been shown, for instance, to be applicable to
+explicit memory
 management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
 memory-efficient array computations through
-fusion~\cite{bernardy_duality_2015,lippmeier_parallel_2016}, and protocol
-specification (as session types)~\cite{honda_session_1993} (the
-correspondence between session types and linear types is explained
-in~\cite{wadler_propositions_2012}).
+fusion~\cite{bernardy_duality_2015,lippmeier_parallel_2016}, and
+protocol specification (as session types)~\cite{honda_session_1993}
+(the correspondence between session types and linear types is
+explained in~\cite{wadler_propositions_2012}).
 
 \section{Programming in \HaskeLL}
 \label{sec:programming-intro}
