@@ -56,6 +56,9 @@
 \newcommand{\susp}[1]{⟦#1⟧}
 
 \newcommand{\figuresection}[1]{\textbf{#1}}
+\newenvironment{aside}
+{\quotation{} \scriptsize \noindent Side remark. }
+{ End of side remark. \endquotation }
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \usepackage{xargs}
@@ -223,54 +226,11 @@ in~\cite{wadler_propositions_2012}).
 \section{Programming in \HaskeLL}
 \label{sec:programming-intro}
 
-\subsection{An ILL-guided attempt}
-\unsure{Should we rename weights to quantities?  Simon: ``weights'' is fine.}
 
-\unsure{Simon: I find it terribly distracting and confusing to have all these asides about
-alternative approaches.  Could we relegate them all to ``Alternative approaches'' or ``Related work''?}
-
-Simply using linear logic --- or, as it were, intuitionistic linear
-logic, because we do not require a notion of type duality --- as a type
-system would not suffice to meet our goal that a (intuitionistic,
-lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
-intuitionistic $\lambda$-calculus can be embedded in linear
-$\lambda$-calculus, this embedding requires an encoding. Usually, one
-would have a linear arrow $A⊸B$ and the usual unrestricted (intuitionistic) arrow would be
-encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
-arbitrary quantity of values of type $A$.
-
-This encoding means that the quantity of available values must be managed
-manually, and the common case (\emph{i.e.} an arbitrary quantity is required)
-requires additional syntax. For instance, in \HaskeLL{}, we could not write the
-following:
-\begin{code}
-  dup :: a -> a⊗a
-  dup x = (x,x)
-\end{code}
-and we would be forced to write:
-\begin{code}
-  dup :: Bang a ⊸ a⊗a
-  dup (Bang x) = (x,x)
-\end{code}
-When composing functions we would also have to manage the quantity of
-the output of the intermediate functions:
-\begin{code}
-  id :: Bang a ⊸ a
-  id (Bang x) = x
-
-  v = dup (Bang (id (Bang 42)))
-\end{code}
-
-In sum, all the existing code which uses the same value several times
-has to be re-written. This rewriting is mechanical, but deep: in
-technical terms, it amounts to using the co-kleisli category of |Bang|
-(which is incidentally a co-monad).
-
-\subsection{Putting the Bang in the arrow}
-
-In our calculus, instead, both arrow types are primitive. To be
-precise, in a style proposed by McBride~\cite{mcbride_rig_2016}, the
-arrow type is parametrized by the amount of its argument that it requires:
+We propose a programming language with two arrow types: one for usual
+intutistic functions, and one for linear functions --- which guarantee
+to consume exactly once their argument. To be precise, the arrow type
+is parametrized by the amount of its argument that it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
 \item $A →_ω B$ is the usual intuitionistic arrow $A → B$
@@ -588,10 +548,13 @@ Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
 to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
 of the weighted arrows which allow to have the $λ$-calculus
-as a subset of \calc{}. Indeed, recall the example from the
-beginning of Section~\ref{sec:programming-intro} which had us write |dup
-(Bang (id (Bang 42)))|. 
-\unsure{Simon: another distracting aside for experts; move to footnote or related work}
+as a subset of \calc{}.
+
+\begin{aside}
+Indeed, recall the example from the
+beginning of Section~\ref{sec:ill} which had us write |dup
+(Bang (id (Bang 42)))|.
+%
 Thanks to the application rule we have
 instead:\improvement{maybe work a little on the presentation of this
   example}
@@ -605,13 +568,14 @@ $$
 {()+ω() ⊢ (λ (x :_w A). Tensor x x)_w \; (id_w \; 42)}\text{app}
 $$
 \unsure{Simon: this example has several missing type annotations tec. I've added them; check.}
+\end{aside}
+\begin{aside}
 In the application rule the promotion rule of linear logic is applied
 implicitly.
-\unsure{Simon: another distracting aside for experts; move to footnote or related work}
 $$\inferrule{{!}Γ ⊢ A}{{!}Γ ⊢ {!}A}$$
 where ${!}Γ$ is a context with all the hypotheses of the form ${!}A$
 for some $A$.
-
+\end{aside}
 This implicit use of the promotion rule is what makes it possible to
 seamlessly mix linear types and intuitionistic types inside the same
 language. The whole idea is a bit subtle, and it may be worth it to
@@ -661,6 +625,7 @@ well-typed
   snd  :: a⊗b → b
   snd (a,b)  = b
 \end{code}
+\begin{aside}
 These projections exhibit a small deviation from linear logic: the
 existence of these projections mean that ${!}(A⊗B)$ is isomorphic to
 ${!}({!}A⊗{!}B)$. While this additional law may restrict the
@@ -670,7 +635,7 @@ language: if we interpret the weights on the arguments of existing
 constructor to be $1$ while the weights on the arguments of existing
 functions to be $ω$, the typable programs are exactly the same as an
 intuitionistic $λ$-calculus.
-\unsure{Simon: another distracting aside for experts; move to footnote or related work}
+\end{aside}
 \info{Remark: the reason why
   we can have ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we
   have a model in mind where all sub-data is boxed (and managed by GC)
@@ -1328,7 +1293,47 @@ force the thunk with a case:
   … -- |x'| is unrestricted
 \end{code}
 
-\section{Related work}
+\section{Alternative designs}
+
+\subsection{An ILL-guided design}
+\label{sec:ill}
+
+Simply using linear logic --- or, as it were, intuitionistic linear
+logic, because we do not require a notion of type duality --- as a type
+system would not suffice to meet our goal that a (intuitionistic,
+lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
+intuitionistic $\lambda$-calculus can be embedded in linear
+$\lambda$-calculus, this embedding requires an encoding. Usually, one
+would have a linear arrow $A⊸B$ and the usual unrestricted (intuitionistic) arrow would be
+encoded as ${!}A ⊸ B$, where a value of type ${!}A$ represents an
+arbitrary quantity of values of type $A$.
+
+This encoding means that the quantity of available values must be managed
+manually, and the common case (\emph{i.e.} an arbitrary quantity is required)
+requires additional syntax. For instance, in \HaskeLL{}, we could not write the
+following:
+\begin{code}
+  dup :: a -> a⊗a
+  dup x = (x,x)
+\end{code}
+and we would be forced to write:
+\begin{code}
+  dup :: Bang a ⊸ a⊗a
+  dup (Bang x) = (x,x)
+\end{code}
+When composing functions we would also have to manage the quantity of
+the output of the intermediate functions:
+\begin{code}
+  id :: Bang a ⊸ a
+  id (Bang x) = x
+
+  v = dup (Bang (id (Bang 42)))
+\end{code}
+
+In sum, all the existing code which uses the same value several times
+has to be re-written. This rewriting is mechanical, but deep: in
+technical terms, it amounts to using the co-kleisli category of |Bang|
+(which is incidentally a co-monad).
 
 \subsection{Linearity as a property of types vs. a property of bindings}
 
@@ -1409,6 +1414,7 @@ abstractions while retaining the linearity property. In that respect,
 our system is closer to that of \textcite{ghica_bounded_2014}, which
 does not exhibit the issue.
 
+\section{Other related work}
 \subsection{Operational aspects of linear languages}
 
 Recent literature is suprising silent on the operational aspect of
