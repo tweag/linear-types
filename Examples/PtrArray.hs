@@ -6,6 +6,7 @@ import qualified Foreign
 import Foreign.Marshal.Array
 import Foreign.C
 import System.IO.Unsafe
+import qualified Foreign.Concurrent as FC
 
 
 -- Broken man's linear types.
@@ -21,14 +22,16 @@ type N a = a ⊸ Effect
 newtype Bang a = Bang { unBang :: a }
 
 
+-- | Outside the GC
 data MAr a = MAr {-ω-}Int {-ω-}(Ptr a)
 
-newtype Ar a = Ar (MAr a)
+-- | Back to the GC
+data Ar a = Ar Int (ForeignPtr a)
 
 class Data a where
   move :: a -> Bang a
   free :: a ⊸ ()
-instance Data CChar where
+instance Data (Ptr a) where
   move x = Bang x
   free x = ()
 
@@ -42,19 +45,21 @@ updateAr n byte (MAr size ar) = unsafePerformIO $ do
   pokeElemOff ar n byte
   return $ MAr size ar
 
-freeAr :: MAr a ⊸ ()
-freeAr (MAr _ ar) = unsafePerformIO $ Foreign.free ar
+freeMAr :: MAr a ⊸ ()
+freeMAr (MAr _ ar) = unsafePerformIO $ Foreign.free ar
 
 freezeAr :: MAr a ⊸ Bang (Ar a)
-freezeAr (MAr size ar) = Bang (Ar (MAr size ar))
+freezeAr (MAr size ar) = Bang $ Ar size $ unsafePerformIO $
+  FC.newForeignPtr ar (Foreign.free ar)
 
 indexMAr :: Storable a => Int -> MAr a ⊸ (MAr a ⊗ a)
 indexMAr i (MAr size ar) =
   (MAr size ar, unsafePerformIO $ peekElemOff ar i)
 
 indexAr :: Storable a => Int -> Ar a -> a
-indexAr i (Ar (MAr size ar)) = unsafePerformIO $
-  peekElemOff ar i
+indexAr i (Ar size fptr) = unsafePerformIO $
+  withForeignPtr fptr $ \ar ->
+    peekElemOff ar i
 
 {- ex = withNewByteArray 3 $ \ar ->
   let ar' = updateByteArray 1 64 ar
