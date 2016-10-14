@@ -609,13 +609,11 @@ The variable rule, used in the above example, may require some
 clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
-$ω$-weighted variables: that is, it allows variables of weight
-$ω$---and only of weight $ω$---not to be used.
-\unsure{I couldn't parse the part after the semicolon}
- Pushing weakening to
+$ω$-weighted variables: that is, it allows ignoring variables of weight
+$ω$. \footnote{Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
-focusing~\cite{andreoli_logic_1992}. Note that the judgement
+focusing~\cite{andreoli_logic_1992}.} Note that the judgement
 $x :_ω A ⊢ x : A$ is an instance of the variable rule, because
 $(x :_ω A)+(x :_1 A) = x:_ω A$.
 
@@ -669,16 +667,17 @@ simple programs and the types that they inhabit.
 
 \paragraph{K combinator}
 
-The $\lambda$-calculus expression $k ≝ λx. λy. x$ can be elaborated in our system to have either the type
-$A ⊸ B → A$ or $A → B → A$. However, the first type subsumes\improvement{define what subsume means.} the
-second one, because when we heave $ω$ times $A$, we can always call
-$k$ anyway and ignore the rest of $A$'s. (In this situation, we can
-also call $ω$ times $k$). The lesson learned is that when a variable is used
-(syntactically) just once, it is always better to give it the
-weight 1.\inconsistent{It is always better to use $⊸$ if there is a
-  subtyping relation. Because we have weight polymorphism instead, $k$
-  should probably be given a polymorphic type to avoid the need to
-  $\eta$-expand $k$ sometimes.}
+The $\lambda$-calculus expression $k ≝ λx. λy. x$ can be elaborated
+\calc{} to have either the type $A ⊸ B → A$ or $A → B → A$. However,
+using the first type does not restrict the programs one can write,
+because when we heave $ω$ times $A$, we can always call $k$ anyway and
+ignore the rest of $A$'s. (In this situation, we can also call $ω$
+times $k$). The lesson learned is that when a variable is used
+(syntactically) just once, it is better to give it the weight
+1.\info{In our system we could also give the type $∀ π. A →_π B → A$,
+  because $π$ can range only over $1$ or $ω$. It would always better
+  to use $⊸$ if there were a subtyping relation; but now we may have
+  to $\eta$-expand $k$ sometimes.}
 
 \paragraph{Second order Identity}
 
@@ -691,9 +690,7 @@ As per the lesson learned in the previous paragraph, the first type is
 dominated by the second one. However the remaining two types are
 incomparable. If we want to find a most general type we need to
 abstract over the weight of $A$:
-
-\[ λf. λx. f x : (A →_ρ B) → A →_ρ B.\]
-\todo{This is isn't true, strictly speaking}
+\[ λρ. λf. λx. f x : (A →_ρ B) → A →_ρ B.\]
 
 \paragraph{Function composition}
 The need for weight abstraction typically occurs in all higher order
@@ -701,8 +698,7 @@ functions.  In particular, function composition inhabits a wealth of
 incomparable weight-monomorphic types. Yet they can subsumed by
 abstracting over the linearities of the input functions, as follows:
 
-\[ λf. λg. λx. f (g x) : (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C\]
-\todo{This is isn't true, strictly speaking}
+\[ λπ. λρ. λf. λg. λx. f (g x) : (B →_π C) ⊸ (A →_ρ B) →_π A →_{πρ} C\]
 
 \paragraph{Ill-typed programs}
 
@@ -1186,6 +1182,10 @@ result has weight $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
 have been completely eliminated before being able to return $x$.
 
+The dynamics additionally assume that weight expressions are reduced
+to a constant using weight-equality laws. If that is not possible the
+reduction will block.
+
 \begin{figure}
   \begin{mathpar}
     \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
@@ -1227,17 +1227,15 @@ have been completely eliminated before being able to return $x$.
 Remark: the \emph{shared variable} rule also triggers when the weight
 parameter is $1$, thus effectively allowing linear variables to look
 on the garbage-collected heap and linear data to have unrestricted
-sub-data. \improvement{Remark that this works only on weight-closed terms}
-
-\improvement{We can even have a case rule that demotes $ρ$ to $1$ when
-  all the constructor arugments have weight $ω$.}
+sub-data.
 
 \begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
   It is an essential property that the garbage collected heap does not
   contain reference to the linear heap. Otherwise, garbage collection
   would have to also free the linear heap, making the linear heap
   garbage-collected as well (the converse does not hold: there can be
-  references to the garbage-collected heap in the linear heap).
+  references to the garbage-collected heap from the linear heap,
+  acting as roots).
 \end{lemma}
 
 To illustrate how the semantics of \fref{fig:dynamics} works, let us
@@ -1479,7 +1477,8 @@ operations, and the variable rule adapted accordingly.
   instead of affine. Demonstrate why we go for linear instead of
   affine. Why can't we have |x| linear in |let x = _ 1 e in Just
   (x+1)|.
-\item What kind of top-level application are we mostly interested in? Long-lived? Allocation pattern?
+\item What kind of top-level application are we mostly interested in?
+  Long-lived? Allocation pattern?
 \end{itemize}
 \printbibliography
 \end{document}
