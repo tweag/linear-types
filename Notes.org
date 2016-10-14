@@ -347,7 +347,12 @@ The rules are:
   Ξ ⊢ (Γ|case[q] e of {c y ↦ u} ⇓ Θ|z) :ρ C, Σ
 
 
-TODO: case1  Bang
+  Ξ,y:ω A ⊢ (Γ|e ⇓ Δ|Bang x) :1 D, u:ω C, Σ
+  Ξ ⊢ (Δ|u[x/y] ⇓ Θ|z) :ω C, Σ
+---------------------------------------------------- case-Bang
+  Ξ ⊢ (Γ|case[1] e of {Bang y ↦ u} ⇓ Θ|z) :ω C, Σ
+
+
 
 
 ** Small step version
