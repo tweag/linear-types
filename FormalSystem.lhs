@@ -312,6 +312,23 @@ Likewise, function composition can be given the following type:
 What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
+So far it may seem like every data type should use linear arrows for
+its constructors. However, the unrestricted arrow is useful there as
+well, as the following data type illustrates:
+\begin{code}
+  data Bang a where
+    Bang :: a → Bang a
+\end{code}
+The type constructor |Bang| is in fact an encoding of the modality of the same name (written ${!}$) in linear logic. In \HaskeLL{} it is used to indicate that a linear function can return $ω$ results. For example:
+\begin{code}
+  copy :: Bool ⊸ Bang Bool
+  copy True = Bang True
+  copy False = Bang False
+\end{code}
+We stress that the above is not the same as the linear identity
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the amount of
+|Bool|, when |copy| does not.
+
 \section{\calc{} statics}
 In this section we concentrate on the calculus at the core of
 \HaskeLL{}, namely \calc{}, and give a step by step account of its
@@ -1462,7 +1479,6 @@ operations, and the variable rule adapted accordingly.
   instead of affine. Demonstrate why we go for linear instead of
   affine. Why can't we have |x| linear in |let x = _ 1 e in Just
   (x+1)|.
-\item Make a case for having both linear and unrestricted constructors
 \item What kind of top-level application are we mostly interested in? Long-lived? Allocation pattern?
 \end{itemize}
 \printbibliography
