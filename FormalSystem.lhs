@@ -1159,6 +1159,7 @@ semantics exhibits the following salient differences:
   \emph{application} are changed to account for weights (let-bindings
   and application are annotated by a weight for this reason).
 \end{itemize}
+The complete semantics is given in \fref{fig:dynamics}.
 
 The weight parameter of the reduction relation is used to interpret
 $\flet x =_1 …$ bindings into allocations on the appropriate
@@ -1178,10 +1179,30 @@ linear value, while if the context requires an unrestricted value, the
 thunk must be allocated on the garbage-collected heap. However, the
 thunk is allocated by $let z =_1 …$, so this let-binding may have to
 allocate on the garbage-collected heap despite being annotated with
-weight $1$. This behaviour is not a consequence of implicit promotion,
-but of linear logic: explicit promotion also permits linear functions
-which produce linear values to be promoted to producing unrestricted
-values. The semantics is given in \fref{fig:dynamics}.
+weight $1$. This behaviour is not a consequence of implicit promotion
+from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
+pure linear logic features an explicit promotion, which also permits
+linear functions to produce linear values which can be promoted to
+produce unrestricted values.
+
+In all evaluation rules, this dynamic weight is propagated to
+evaluation of subterms, sometimes multiplied by another weight
+originating from the term. This means that, essentially, once one
+starts evaluating unrestricted results (weight = $ω$), one will remain
+in this dynamic evaluation mode, and thus all further allocations will
+be on the GC heap. However, it is possible to provide special-purpose
+evaluation rules to escape dynamic evaluation to linear evaluation.
+One such rule concerns case analysis of |Bang x|:
+\[
+    \inferrule{Γ: t ⇓_{1} Δ : Bang x \\ Δ : u[x/y] ⇓_ρ Θ : z}
+    {Γ : \case[q] t {Bang y ↦ u} ⇓_ρ Θ : z}\text{case-bang}
+\]
+The observations justifying this rule is that 1. when forcing a |Bang|
+constructor, one will obtain $ω$ times the contents. 2. the contents
+of |Bang| ($x$) always reside on the GC heap. Indeed, because this
+result has weight $ω$, the type-system ensures that all the
+intermediate linear values potentially allocated to produce $x$ must
+have been completely eliminated before being able to return $x$.
 
 \begin{figure}
   \begin{mathpar}
@@ -1224,7 +1245,7 @@ values. The semantics is given in \fref{fig:dynamics}.
 Remark: the \emph{shared variable} rule also triggers when the weight
 parameter is $1$, thus effectively allowing linear variables to look
 on the garbage-collected heap and linear data to have unrestricted
-sub-data. \todo{Works only on weight-closed terms}
+sub-data. \improvement{Remark that this works only on weight-closed terms}
 
 \improvement{We can even have a case rule that demotes $ρ$ to $1$ when
   all the constructor arugments have weight $ω$.}
