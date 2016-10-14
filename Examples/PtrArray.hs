@@ -48,7 +48,7 @@ freeAr (MAr _ ar) = unsafePerformIO $ Foreign.free ar
 freezeAr :: MAr a ⊸ Bang (Ar a)
 freezeAr (MAr size ar) = Bang (Ar (MAr size ar))
 
-indexMAr :: Int -> MAr a ⊸ (MAr a ⊗ a)
+indexMAr :: Storable a => Int -> MAr a ⊸ (MAr a ⊗ a)
 indexMAr i (MAr size ar) =
   (MAr size ar, unsafePerformIO $ peekElemOff ar i)
 
