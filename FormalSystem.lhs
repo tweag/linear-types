@@ -230,7 +230,7 @@ explained in~\cite{wadler_propositions_2012}).
 
 
 We propose a programming language with two arrow types: one for usual
-intutistic functions, and one for linear functions --- which guarantee
+intuitionistic functions, and one for linear functions --- which guarantee
 to consume exactly once their argument. To be precise, the arrow type
 is parametrized by the amount of its argument that it requires:
 \begin{itemize}
@@ -244,7 +244,7 @@ the box.
 
 The second benefit is that one can write linear code whenever it is
 possible, and use it in unrestricted contexts anyway. The following
-example illustrates. (Note that all top-level bingdings, including
+example illustrates. (Note that all top-level bindings, including
 constructors and class methods are assumed to have weight $ω$, unless
 explicitly specified otherwise.)
 
@@ -292,7 +292,7 @@ cycle :: List a → List a
 \end{code}
 Operationally, |cycle| requires its argument to be on the GC heap.  In
 practice, libraries will never provide $ω$ times a scarce resource
-(eg. a handle to a physical entity); such a resource will thus never
+(e.g. a handle to a physical entity); such a resource will thus never
 end up in the argument to |cycle|.
 
 While reusing first-order code can be done simply by scaling from $1$
@@ -888,7 +888,7 @@ argument is the size of an array to allocate. The second argument is a
 continuation where \emph{one} reference to the byte array is
 available. Operationally, the function starts by allocating a byte
 array of the requested size \emph{on a linear heap} and then calls the
-continuation. It then forces the evaluation of the continuation in whnf
+continuation. It then forces the evaluation of the continuation in WHNF
 (obtains the |Bang| constructor). The reference contained therein is
 then returned. The type-system ensures that this reference does not
 depend on any object in the linear heap.  This property is critical
@@ -903,10 +903,10 @@ withNewByteArray n (\a ->
   case freezeByteArray a of
     Bang a' -> Bang (expensiveFunction a'))
 \end{code}
-In order to evaluate |Bang (expensiveFunction a')| to whnf, one must
-first evaluate |freezeByteArray a| to whnf, and this operation turns
+In order to evaluate |Bang (expensiveFunction a')| to WHNF, one must
+first evaluate |freezeByteArray a| to WHNF, and this operation turns
 the linear reference into an unrestricted reference. In general, the
-typesystem ensures that the closure inside |Bang| contains no linear
+type-system ensures that the closure inside |Bang| contains no linear
 variable, because the typing rules make it is impossible to transform
 a $1$-weighted object into an $ω$-weighted one without copying it
 explicitly.
@@ -1350,7 +1350,7 @@ the output of the intermediate functions:
 
 In sum, all the existing code which uses the same value several times
 has to be re-written. This rewriting is mechanical, but deep: in
-technical terms, it amounts to using the co-kleisli category of |Bang|
+technical terms, it amounts to using the co-Kleisli category of |Bang|
 (which is incidentally a co-monad).
 
 \subsection{Linearity as a property of types vs. a property of bindings}
@@ -1435,7 +1435,7 @@ does not exhibit the issue.
 \section{Other related work}
 \subsection{Operational aspects of linear languages}
 
-Recent literature is suprising silent on the operational aspect of
+Recent literature is surprising silent on the operational aspect of
 linear types, and concentrates rather on uniqueness types
 \cite{pottier_programming_2013,matsakis_rust_2014}.
 
@@ -1446,7 +1446,7 @@ linear heap (as we do in \fref{sec:dynamics}). They did not manage to
 obtain consistent performance gains. However, they still manage to
 reduce GC usage, which may be critical in distributed and
 real-time environments, as we explained in the introduction.
-Thus the tradeoff is beneficial is certain situations.
+Thus the trade-off is beneficial is certain situations.
 
 Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
@@ -1501,6 +1501,9 @@ operations, and the variable rule adapted accordingly.
 %  LocalWords:  updateByteArray freeByteArray indexMutByteArray et ss
 %  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
 %  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
-%  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation
+%  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation WHNF
 %  LocalWords:  duplications bernardy deallocate morris latencies
-%  LocalWords:  doSomethingWithLinearHeap untyped boolean
+%  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile
+%  LocalWords:  forall aspiwack dually involutive runComputation
+%  LocalWords:  withNewByteArray expensiveFunction affine booleans
+%  LocalWords:  Kleisli ghica wakeling TODOs
