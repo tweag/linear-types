@@ -264,7 +264,7 @@ byteArraySize :: Array a → Int
 
 * Proof of consistency for dyn. semantics
 
-We exend the reduction with types, as follows:
+We extend the reduction with types, as follows:
 
    Γ:t  ⇓ρ  Δ:z
 becomes:
@@ -281,7 +281,7 @@ Then we can prove
 
 if Ξ ⊢ (Γ|t :ρ A),Σ then Ξ ⊢ (Δ|z :ρ A),Σ
 
-where Ξ ⊢ (Γ|t :ρ A),Σ  ≝   Ξ ⊢ let Γ in (t,terms(Σ)) : (A⊗types(Σ))
+where Ξ ⊢ (Γ|t :ρ A),Σ  ≝   Ξ ⊢ let Γ in (t,terms(Σ)) : (ρA⊗weighted_types(Σ))
 
 Consistency of the heap is implied by well-typedness; so if we start
 with a well-typed heap, we will obtain a consistent heap.
@@ -290,32 +290,32 @@ with a well-typed heap, we will obtain a consistent heap.
 The rules are:
 
   Ξ, x:ωB ⊢ (Γ|e ⇓ Δ|z) :ρ A, Σ
----------------------------------------------------------------- shared variable
+---------------------------------------------------------- shared variable
   Ξ ⊢ (Γ,x :ω B = e | x  ⇓ Δ, x :ω B = z | z) :ρ A, Σ
 
 
 
-  Ξ,x:1B ⊢ (Γ|e ⇓ Δ|z) :1 A, Σ
------------------------------------------------------ linear variable
+  Ξ ⊢ (Γ|e ⇓ Δ|z) :1 A, Σ
+-------------------------------------------- linear variable
   Ξ ⊢ (Γ,x :1 B = e| x  ⇓  Δ|z) :1 A,  Σ
 
 
 
   Ξ ⊢ (Γ,    x :ρq B = e1 |  t ⇓ Δ|z) :ρ A, Σ
----------------------------------------------------------- let
-  Ξ ⊢ (Γ|let x :q B  = e1 in t ⇓ Δ|z) :ρ A,  Σ
+------------------------------------------------- let
+  Ξ ⊢ (Γ|let x :q B  = e1 in t ⇓ Δ|z) :ρ A, Σ
 
 
 
     Ξ  ⊢  (Γ|e      ⇓ Δ|λy.u):ρ A →q B, x:qρ A, Σ
     Ξ  ⊢  (Δ|u[x/y] ⇓ Θ|z)   :ρ A →q B,         Σ
------------------------------------------------------------------- app
+----------------------------------------------------- app
     Ξ  ⊢  (Γ|e x ⇓ Θ|z) :ρ B ,Σ
 
 
   Ξ,y:pqρ A ⊢ (Γ|e ⇓ Δ|c x) :qρ D, u:ρ C, Σ
   Ξ ⊢ (Δ|u[x/y] ⇓ Θ|z) :ρ C, Σ
-------------------------------------------------------------------- case
+---------------------------------------------------- case
   Ξ ⊢ (Γ|case[q] e of {c y ↦ u} ⇓ Θ|z) :ρ C, Σ
 
 
