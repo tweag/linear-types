@@ -197,7 +197,7 @@ features of the language, which allow more control.
 For example, one may ensure that file handles do not remain dangling
 by giving the following type to a file-accessing functions:
 \begin{code}
-  withFile :: FilePath -> (Handle ⊸ IO (Bang a)) -> IO a
+  withFile :: FilePath -> (Handle ⊸ IO (Bang a)) ⊸ IO a
   hClose :: Handle ⊸ IO ()
 \end{code}
 \unsure{This example is actually broken, because it requires a linear
@@ -814,6 +814,7 @@ The linearity of client/server states ensures that:
 \item The implementation will not `hold onto' any stale client or
   state any longer than strictly necessary: no memory leak can occur.
 \end{enumerate}
+
 \subsection{FFI}
 \label{sec:ffi}
 
@@ -1481,6 +1482,7 @@ operations, and the variable rule adapted accordingly.
   (x+1)|.
 \item What kind of top-level application are we mostly interested in?
   Long-lived? Allocation pattern?
+\item Array example.
 \end{itemize}
 \printbibliography
 \end{document}
