@@ -1194,8 +1194,8 @@ be on the GC heap. However, it is possible to provide special-purpose
 evaluation rules to escape dynamic evaluation to linear evaluation.
 One such rule concerns case analysis of |Bang x|:
 \[
-    \inferrule{Γ: t ⇓_{1} Δ : Bang x \\ Δ : u[x/y] ⇓_ρ Θ : z}
-    {Γ : \case[q] t {Bang y ↦ u} ⇓_ρ Θ : z}\text{case-bang}
+    \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
+    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
 \]
 The observations justifying this rule is that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
