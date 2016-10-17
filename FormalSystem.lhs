@@ -583,7 +583,7 @@ to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
 of the weighted arrows which allow to have the $λ$-calculus
 as a subset of \calc{}.
 
-\begin{aside}
+\begin{aside}\improvement{don't recall}
 Indeed, recall the example from the
 beginning of Section~\ref{sec:ill} which had us write |dup
 (Bang (id (Bang 42)))|.
@@ -667,14 +667,15 @@ constructor to be $1$ while the weights on the arguments of existing
 functions to be $ω$, the typable programs are exactly the same as an
 intuitionistic $λ$-calculus.
 \end{aside}
-\info{Remark: the reason why
-  we can have ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we
-  have a model in mind where all sub-data is boxed (and managed by GC)
-  if the data is managed by GC. In a model where sub-data is unboxed,
-  we would need the ability to copy sub-data (\emph{chunks of data})
-  into the GC-ed heap, which is not necessarily available for all
-  data. So this extension of linear logic fits our Haskellian model
-  rather snugly. It is not the only possible path, however.}
+\info{Remark: the reason why we can have
+  ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we have a
+  model in mind where all sub-data is boxed (and managed by GC) if the
+  data is managed by GC. In a model where sub-data is unboxed, we
+  would need the ability to copy sub-data (\emph{chunks of data}) into
+  the GC-ed heap, which is not necessarily available for all data. So
+  this extension of linear logic fits our Haskellian model rather
+  snugly. (Attn: it won't work for weight 0 though!). It is not the
+  only possible path, however.}
 
 \subsection{Examples of simple programs and their types}
 \unsure{Scrap this section?}
