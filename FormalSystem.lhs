@@ -1127,6 +1127,7 @@ and the translation from \calc{} can be found in
 the runtime language are that the latter is untyped, has fewer weight
 annotations, and applications always have variable arguments.
 
+The complete semantics is given in \fref{fig:dynamics}.
 Compared to \citeauthor{launchbury_natural_1993}'s original, our
 semantics exhibits the following salient differences:
 \begin{itemize}
@@ -1140,21 +1141,23 @@ semantics exhibits the following salient differences:
   \emph{application} are changed to account for weights (let-bindings
   and application are annotated by a weight for this reason).
 \end{itemize}
-The complete semantics is given in \fref{fig:dynamics}.
 
+The dynamics assume that weight expressions are reduced
+to a constant using weight-equality laws. If that is not possible the
+reduction will block on the weight parameter.
 The weight parameter of the reduction relation is used to interpret
 $\flet x =_1 …$ bindings into allocations on the appropriate
 heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
 allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
 allocate on the GC heap, not on the linear one. To see why, consider
 the following example:
-
+%
 \begin{code}
 let f = _ omega (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
 let a = _ rho f ()
 \end{code}
-
-The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, this
+%
+The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
 thunk must be allocated in the linear heap if the context requires a
 linear value, while if the context requires an unrestricted value, the
 thunk must be allocated on the garbage-collected heap. However, the
@@ -1166,14 +1169,14 @@ pure linear logic features an explicit promotion, which also permits
 linear functions to produce linear values which can be promoted to
 produce unrestricted values.
 
-In all evaluation rules, this dynamic weight is propagated to
+In all evaluation rules, this dynamic weight is propagated to the
 evaluation of subterms, sometimes multiplied by another weight
 originating from the term. This means that, essentially, once one
 starts evaluating unrestricted results (weight = $ω$), one will remain
 in this dynamic evaluation mode, and thus all further allocations will
-be on the GC heap. However, it is possible to provide special-purpose
-evaluation rules to escape dynamic evaluation to linear evaluation.
-One such rule concerns case analysis of |Bang x|:
+be on the GC heap. However, it is possible to provide a special-purpose
+evaluation rule to escape dynamic evaluation to linear evaluation.
+This rule concerns case analysis of |Bang x|:
 \[
     \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
     {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
@@ -1183,11 +1186,15 @@ constructor, one will obtain $ω$ times the contents. 2. the contents
 of |Bang| ($x$) always reside on the GC heap. Indeed, because this
 result has weight $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
-have been completely eliminated before being able to return $x$.
-
-The dynamics additionally assume that weight expressions are reduced
-to a constant using weight-equality laws. If that is not possible the
-reduction will block.
+have been completely eliminated before being able to return $x$. It is
+also possible to present local linear heap usage with the following function:
+\begin{code}
+withLinearHeap :: a ⊸ (a ⊸ Bang b) ⊸ b
+withLinearHeap x k = case k x of
+  Bang y -> y
+\end{code}
+Even when |withLinearHeap| is called $ω$ times, its argument will be
+called $1$ time.
 
 \begin{figure}
   \begin{mathpar}
@@ -1227,9 +1234,10 @@ reduction will block.
   \caption{Dynamic semantics}
   \label{fig:dynamics}
 \end{figure}
-Remark: the \emph{shared variable} rule also triggers when the weight
+
+The \emph{shared variable} rule also triggers when the weight
 parameter is $1$, thus effectively allowing linear variables to look
-on the garbage-collected heap and linear data to have unrestricted
+on the garbage-collected heap, and in turn linear data to have unrestricted
 sub-data.
 
 \begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
