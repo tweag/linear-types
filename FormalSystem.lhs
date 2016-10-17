@@ -453,6 +453,20 @@ arrow types is dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of weight $1$ or $ω$.
+  Thus one may expect the type $A⊸B$ to be a subtype of $A→B$, however
+  we chose not to provide subtyping, for the sake of simplicity.
+  \begin{aside}
+    One can systematically promote linear functions thus:
+    \begin{code}
+      promote :: (A ⊸ B) ⊸ (A → B)
+      promote f x = f x
+    \end{code}
+    So a programmer shall prefer to provide a linear function (and
+    conversely accept unrestricted functions), all other
+    considerations being equal.
+  \end{aside}
+
+
 
   Data type declarations, also presented in \fref{fig:syntax},
   deserve some additional explanation.
@@ -1183,18 +1197,25 @@ This rule concerns case analysis of |Bang x|:
 \]
 The observations justifying this rule is that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
-of |Bang| ($x$) always reside on the GC heap. Indeed, because this
-result has weight $ω$, the type-system ensures that all the
+of |Bang| (namely $x$) always reside on the GC heap, and transitively so. Indeed, because this
+$x$ has weight $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
-have been completely eliminated before being able to return $x$. It is
-also possible to present local linear heap usage with the following function:
+have been completely eliminated before being able to return $x$.
+
+The following function is a convenient wrapper around the case-bang
+rule:
 \begin{code}
 withLinearHeap :: a ⊸ (a ⊸ Bang b) ⊸ b
 withLinearHeap x k = case k x of
   Bang y -> y
 \end{code}
-Even when |withLinearHeap| is called $ω$ times, its argument will be
-called $1$ time.
+Indeed, even when |withLinearHeap| is called $ω$ times, its argument
+will be called $1$ time. In an implementation, one may prefer to
+provide |withLinearHeap| as a primitive operation instead of having a
+special-purpose implementation of |case|. In particular, when
+implementing bindings to imperative APIs, any function of type |(A ⊸
+Bang B) ⊸ C| may allocate |A| on a linear heap if it forces the
+|Bang| constructor before returning the result (|C|).
 
 \begin{figure}
   \begin{mathpar}
@@ -1249,6 +1270,7 @@ sub-data.
   acting as roots).
 \end{lemma}
 
+\subsection{Explicit memory management}
 To illustrate how the semantics of \fref{fig:dynamics} works, let us
 consider how it indeed allows explicit memory management of data in
 the linear heap. Specifically, first-order inductive data types can
@@ -1318,6 +1340,20 @@ force the thunk with a case:
   in case move x of Bang x' ->
   … -- |x'| is unrestricted
 \end{code}
+
+\subsection{Discussion: Affinity}
+
+Consider the expression |let x = _ 1 e in Just (x+1)|.  One remarks
+that, because of laziness, even when the expression is run in $ω$
+mode, |x| will be demanded at most one time. (In general any linear
+variable with have at most one pointer to it). Thus it is tantalizing
+to allocate |x| on a linear heap (and in general any local linear
+variable). Yet, the issue is that |x| is pointed to by the |Just|
+constructor, which itself resides on the GC heap (because it can have
+any number of pointers to it). Thus, |x| is itself subject to garbage
+collection: when |Just| is freed so must be |x|, Yet, an optimisation
+is available for all local linear variables, namely, when they are
+entered, they can be freed immediately.
 
 \section{Alternative designs}
 
@@ -1484,10 +1520,6 @@ operations, and the variable rule adapted accordingly.
 
 \subsection{TODOs}
 \begin{itemize}
-\item Linear vs. Affine discussion. Explain why no GC goes with linear
-  instead of affine. Demonstrate why we go for linear instead of
-  affine. Why can't we have |x| linear in |let x = _ 1 e in Just
-  (x+1)|.
 \item What kind of top-level application are we mostly interested in?
   Long-lived? Allocation pattern?
 \item Array example.
