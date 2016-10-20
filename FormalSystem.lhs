@@ -839,12 +839,15 @@ re-entrant. That is, they have a single global context, thus if ones
 tries to call the C library several times from different logical
 contexts, one will get incorrect results. A typical attempt to this
 issue involves
-1. using a monadic interface to the library and
-2. having an existentially bound a type parameter in the type:
-
+\begin{itemize}
+\item using a monadic interface to the library and,
+\item having an existentially bound a type parameter in the type:
+  \begin{code}
+    type M s a
+    instance Monad (M s)
+  \end{code}
+\end{itemize}
 \begin{code}
-type M s a
-instance Monad (M s)
 
 primitive :: M s X
 runLowLevel :: M s a -> IO x
