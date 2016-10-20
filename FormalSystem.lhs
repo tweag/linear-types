@@ -1456,7 +1456,7 @@ demonstrates in detail). In practice, we find that plain linear types
 are perfectly sufficient to represent protocols, as as we show in
 \fref{sec:protocols}.
 
-\subsection{Weights in type derivation}
+\subsection{Related type systems}
 
 \Textcite{mcbride_rig_2016} presents a similar type-theory, but with
 weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
@@ -1475,7 +1475,10 @@ value.
 Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
 abstractions while retaining the linearity property. In that respect,
 our system is closer to that of \textcite{ghica_bounded_2014}, which
-does not exhibit the issue.
+does not exhibit the issue. The differences between our type system
+and that of \textcite{ghica_bounded_2014} is that 1. we work with a
+concrete set of weights 2. we support a special case-analysis
+construction which works only for non-zero weights.
 
 \section{Other related work}
 \subsection{Operational aspects of linear languages}

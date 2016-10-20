@@ -1,4 +1,4 @@
-* Local linear things
+* DONE Local linear things
 
 ** Old
 One would linke to construct a function which allows to locally use
@@ -82,7 +82,7 @@ case1 t of Bang x -> u[x]
 specially. That is, even in ω contexts, t can be evaluated just
 once. (We'll get ω things out of the Bang anyway.)
 
-* Weight Polymorphism 
+* DONE Weight Polymorphism 
 
 
 A ::= ∀ρ. A
