@@ -831,68 +831,65 @@ The linearity of client/server states ensures that:
 \label{sec:resources}
 \todo{Unfinished section}{}
 
+One potential approach to resource management is to put one server in
+charge of it. The protocal can be encoded using linear types, as
+explained in the previous section. Concretely, the API may look as
+follows:
 \begin{code}
 data IOClient where
   OpenFile  :: FilePath -> Dual (Handle ⊗ IOServer) ⊸ IOClient
 \end{code}
 
-A problem is that the above requires rewriting  IO code around this idea.
-
+A problem with the above API is that the above requires rewriting all
+IO code around this idea. One may instead piggyback on the existing
+|IO| monad. A possible API for file opening may be:
 \begin{code}
 withFile :: FilePath -> (Handle ⊸ IO (Bang a)) ⊸ IO a
 \end{code}
-
-The handle must be consumed exactly once by the continuation. Because
-it is an abstract type user code cannot duplicate handles. It must
-return a |Bang| type because the continuation should be called once
-per call to |withFile|, but the in-IO result of |withFile| (of type
-|a|) can be shared. A consequence of this type is that it is
-impossible to put the |Handle| inside the result. This is the first
-advantage of the above function compared to, say, |withFile ::
-FilePath → (Handle → IO a) → IO a|.
+Given the above type, the handle must be consumed exactly once by the
+continuation, and because |Handle| is an abstract type, the user code
+cannot discard nor duplicate handles. The API demands that the
+continuation returns a |Bang| type, because the continuation should be
+called once per call to |withFile|, but the in-IO result of |withFile|
+(of type |a|) can be shared. A consequence of returning |Bang| is that
+it is impossible to put the |Handle| inside the result. This
+restriction is the first advantage of the above function compared to,
+say, |withFile :: FilePath → (Handle → IO a) → IO a|. Namely, the
+static scope of a handle is guaranteed not match its dynamic scope.
 
 The second advantage is is that the Handle can be closed \emph{at any
   point} within the continuation (not just at the end). However, to
 take advantage of this feature, one must change the type of the
 monadic bind for IO. Indeed, consider:
-
 \begin{code}
 (>>=) :: IO a → (a → IO b) → IO b
 \end{code}
-
-If one were to call |hClose handle| in either of the arguments of
+If one were to call |hClose handle| within either of the arguments of
 |(>>=)|, the type system would require |handle : _ ω Handle|, because
-the arguments of |(>>=)| carry the |ω| weight. Fortunately, |IO|
-guarantees that the arguments of |(>>=)| are called exactly once. Thus
-we may give it the type:
-
+the arguments of |(>>=)| carry the |ω| weight. A way to escape this
+problem is to change the type of |(>>=)|. Such a change is fortunately
+possible because |IO| guarantees that the arguments of |(>>=)| are
+called exactly once. Thus we may have the type:
 \begin{code}
 (>>=) :: IO (Bang a) ⊸ (a → IO b) ⊸ IO b
 \end{code}
-The above is on the face of it not very convenient as it requires the
-first argument to systematically return a |Bang| type. We can however
-embed the multiplicity of the return type in IO by having
+The above type is on the face of it not very convenient as it requires
+the first argument to systematically return a |Bang| type. We can
+however embed the multiplicity of the return type directly within the
+type IO by demanding |return| to take $ω$ inputs:
 \begin{code}
 return :: a → IO a
 (>>=) :: IO a ⊸ (a → IO b) ⊸ IO b
 \end{code}
 
-
-As \textcite{morris_best_2016}, we might want to make the linearity of
-|(>>=)| a function of the monadic type:
+Not all monads are linear. One way to generalise both cases is to make
+the linearity of |(>>=)| a function of the monadic type,
+\textcite{morris_best_2016} does:
 \begin{code}
 class Monad q m | m -> q where
   return :: a → m a
   (>>=) :: m a → _ q (a → m b) → _ q m b
 \end{code}
-
-Some monads may want not to share results, and thus have the signature:
-\begin{code}
-  return :: a ⊸ m a
-  (>>=) :: m a → _ (pq) (a → _ p m b) → _ q m b
-\end{code}
-
-Question: how to generalise the above two?
 
 \subsection{FFI}
 \label{sec:ffi}
