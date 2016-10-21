@@ -865,32 +865,76 @@ monadic bind for IO. Indeed, consider:
 (>>=) :: IO a → (a → IO b) → IO b
 \end{code}
 If one were to call |hClose handle| within either of the arguments of
-|(>>=)|, the type system would require |handle : _ ω Handle|, because
-the arguments of |(>>=)| carry the |ω| weight. A way to escape this
-problem is to change the type of |(>>=)|. Such a change is fortunately
-possible because |IO| guarantees that the arguments of |(>>=)| are
-called exactly once. Thus we may have the type:
+|(>>=)|, the type system would require |handle :: _ omega Handle|,
+because the arguments of |(>>=)| carry the $ω$ weight. A way to escape
+this problem is to change the type of |(>>=)|. Such a change is
+fortunately possible because |IO| guarantees that the arguments of
+|(>>=)| are called exactly once (we say that |IO| is a linear
+monad). Thus we may have the type:
 \begin{code}
 (>>=) :: IO (Bang a) ⊸ (a → IO b) ⊸ IO b
 \end{code}
-The above type is on the face of it not very convenient as it requires
-the first argument to systematically return a |Bang| type. We can
-however embed the multiplicity of the return type directly within the
-type IO by demanding |return| to take $ω$ inputs:
+
+The above type is as such not very convenient as it requires the first
+argument to systematically return a |Bang| type. We can however embed
+the multiplicity of the payload as an argument to |IO|.  An action of
+type |IO 1 a| returns a linear payload, while one of type |IO omega a|
+returns a shareable payload. Thus the second argument of bind may use
+as many times its argument as the first argument embeds.
 \begin{code}
-return :: a → IO a
-(>>=) :: IO a ⊸ (a → IO b) ⊸ IO b
+return :: a → _ rho IO rho a
+(>>=) :: ∀ pi. IO pi a ⊸ (a → _ rho IO b) ⊸ IO pi b
+\end{code}
+Given such an interface, one can write |openFile| in direct style,
+thus:
+\begin{code}
+openFile :: FilePath ⊸ IO 1 Handle
 \end{code}
 
-Not all monads are linear. One way to generalise both cases is to make
-the linearity of |(>>=)| a function of the monadic type,
-\textcite{morris_best_2016} does:
+
+Not all monads are linear though, so one may want to generalize in
+this direction as well. One way to generalise linear and non-linear
+monads is to make the 1st-order linearity of |(>>=)| a function of the
+monadic type, as \textcite{morris_best_2016} does:
 \begin{code}
 class Monad q m | m -> q where
   return :: a → m a
   (>>=) :: m a → _ q (a → m b) → _ q m b
 \end{code}
+Generalizing in both directions yields:
+\begin{code}
+class Monad q m | m -> q where
+  return :: a → _ r m r a
+  (>>=) :: m r a → _ (q) (a → _ (qr) m r' b) → _ q m r' b
+\end{code}
+Let us count: bind calls is second argument |q| times, and it itself
+needs its argument |qr| times. So, the first argument of bind needs to
+produce |qqr = qr| times |a|. We get |r| times |a| from it from one
+instance, so we need to call it |q| times.
 
+|Maybe| and State instances of |Monad| thus become:\unsure{At (1) we
+  have |r| times |x| and need to produce |1| time |x|. So we must have
+  |r>=0| in the model.}
+\begin{code}
+data Maybe a where
+  Nothing :: Maybe a
+  Just :: a ⊸ Maybe a
+
+instance Monad omega Maybe where
+  return x = Just x -- (1)
+  Just x >>= f = f x
+\end{code}
+
+\begin{code}
+instance Monad 1 (Λr. Λs. s ⊸ (s⊗r a)) where
+  return x s = (s,x)
+  (ma >>= lmb) s = case ma s of
+    (y,s) -> lmb y s
+\end{code}
+
+The above only points at several possible designs based on our system.
+While experience will tell which option is the best, we have
+demonstrated that several viable options exist.
 \subsection{FFI}
 \label{sec:ffi}
 
