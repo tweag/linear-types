@@ -200,10 +200,8 @@ by giving the following type to a file-accessing functions:
   withFile :: FilePath -> (Handle ⊸ IO (Bang a)) ⊸ IO a
   hClose :: Handle ⊸ IO ()
 \end{code}
-\unsure{This example is actually broken, because it requires a linear
-  bind. Additionally, at this point, |Bang| has not been
-  introduced. It should be detailed in sec:app.} Given this
-primitive, the running example becomes:
+Given this primitive, the running example becomes\footnote{see
+  \fref{sec:resources} for a detailed discussion of this example}:
 \begin{code}
 withFile "myfile" ReadMore $ \h -> do
     -- some code that reads the file
@@ -211,7 +209,6 @@ withFile "myfile" ReadMore $ \h -> do
     return (Bang ()) -- Ensures that there is no linear resource left
 \end{code}
 % Add a dollar to prevent syntax highlighting to go wild: $
-\unsure{This may not be the right example, because it requires a change in the monad class.}
 
 A type system based on linear logic is considerably simpler than one
 based on uniqueness or ownership. Additionally, and it makes it
@@ -767,7 +764,7 @@ variable:
   of linear variables?}
 
 \section{Applications}
-\label{sec:ghc}
+\label{sec:app}
 
 \subsection{Protocols}
 \label{sec:protocols}
@@ -829,6 +826,73 @@ The linearity of client/server states ensures that:
 \item The implementation will not `hold onto' any stale client or
   state any longer than strictly necessary: no memory leak can occur.
 \end{enumerate}
+
+\subsection{Resources}
+\label{sec:resources}
+\todo{Unfinished section}{}
+
+\begin{code}
+data IOClient where
+  OpenFile  :: FilePath -> Dual (Handle ⊗ IOServer) ⊸ IOClient
+\end{code}
+
+A problem is that the above requires rewriting  IO code around this idea.
+
+\begin{code}
+withFile :: FilePath -> (Handle ⊸ IO (Bang a)) ⊸ IO a
+\end{code}
+
+The handle must be consumed exactly once by the continuation. Because
+it is an abstract type user code cannot duplicate handles. It must
+return a |Bang| type because the continuation should be called once
+per call to |withFile|, but the in-IO result of |withFile| (of type
+|a|) can be shared. A consequence of this type is that it is
+impossible to put the |Handle| inside the result. This is the first
+advantage of the above function compared to, say, |withFile ::
+FilePath → (Handle → IO a) → IO a|.
+
+The second advantage is is that the Handle can be closed \emph{at any
+  point} within the continuation (not just at the end). However, to
+take advantage of this feature, one must change the type of the
+monadic bind for IO. Indeed, consider:
+
+\begin{code}
+(>>=) :: IO a → (a → IO b) → IO b
+\end{code}
+
+If one were to call |hClose handle| in either of the arguments of
+|(>>=)|, the type system would require |handle : _ ω Handle|, because
+the arguments of |(>>=)| carry the |ω| weight. Fortunately, |IO|
+guarantees that the arguments of |(>>=)| are called exactly once. Thus
+we may give it the type:
+
+\begin{code}
+(>>=) :: IO (Bang a) ⊸ (a → IO b) ⊸ IO b
+\end{code}
+The above is on the face of it not very convenient as it requires the
+first argument to systematically return a |Bang| type. We can however
+embed the multiplicity of the return type in IO by having
+\begin{code}
+return :: a → IO a
+(>>=) :: IO a ⊸ (a → IO b) ⊸ IO b
+\end{code}
+
+
+As \textcite{morris_best_2016}, we might want to make the linearity of
+|(>>=)| a function of the monadic type:
+\begin{code}
+class Monad q m | m -> q where
+  return :: a → m a
+  (>>=) :: m a → _ q (a → m b) → _ q m b
+\end{code}
+
+Some monads may want not to share results, and thus have the signature:
+\begin{code}
+  return :: a ⊸ m a
+  (>>=) :: m a → _ (pq) (a → _ p m b) → _ q m b
+\end{code}
+
+Question: how to generalise the above two?
 
 \subsection{FFI}
 \label{sec:ffi}
@@ -1083,7 +1147,7 @@ explored in detail by \textcite{bernardy_duality_2015}.
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-Supporting the examples of~\fref{sec:ghc} would require only surface changes to
+Supporting the examples of~\fref{sec:app} would require only surface changes to
 an Haskell implementation: only the type system for \fref{sec:ffi} and
 \fref{sec:primops}, while \fref{sec:fusion} only requires additional
 annotations in the optimization phase.
@@ -1093,7 +1157,7 @@ further benefit can be reaped: prompt deallocation of thunks. While
 this extension of the runtime system is necessary only to enjoy prompt deallocation of thunks,
 the dynamic semantics presented in this section can also
 help give confidence in the correctness of the extensions
-of~\fref{sec:ghc}.
+of~\fref{sec:app}.
 
 Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
