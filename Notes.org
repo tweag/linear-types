@@ -139,8 +139,7 @@ and so:
 In words: if you expect 1, I can give you ω. So, if you expect an
 unrestricted function, I can give you a linear function.
 
-
-* Copying
+* DONE Copying
 for a program to turn a $1$-weight into an $ω$-weight, one may use
 the following definition:
 \begin{code}
@@ -191,7 +190,7 @@ doSomethingWithLinearHeap x k = case x of
   Bang y -> k y
 \end{code}
 
-* Safe handles.
+* DONE Safe handles.
 
 There are several options to introduce a Handle safely:
 
@@ -257,7 +256,7 @@ roughly:
 openFile :: ∀ paths. (path :: FilePath) -> Context (path:paths) ⊸ (Context paths ⊗ Handle path)
 closeFile :: ∀ path paths. (Context paths ⊗ Handle path) ⊸ Context paths
 
-* (Mutable) Array of linear variables
+* DONE (Mutable) Array of linear variables
 
 withNewArray :: List a ⊸ (Array a ⊸ Bang k) ⊸ k -- ensuring that arrays are always linear.
 updateArray :: Int → a ⊸ Array a ⊸ (Array a ⊗ a)
@@ -290,7 +289,7 @@ byteArraySize [] = (0,[])
 byteArraySize (x:xs) = case byteArraySize xs of
   (n,ys) -> (1+n,y:ys)
 
-* Proof of consistency for dyn. semantics
+* DONE Proof of consistency for dyn. semantics
 
 ** Definition: typed reduction rules
 We extend the reduction with types, as follows:

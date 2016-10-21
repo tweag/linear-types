@@ -1558,6 +1558,61 @@ collection: when |Just| is freed so must be |x|, Yet, an optimisation
 is available for all local linear variables, namely, when they are
 entered, they can be freed immediately.
 
+\section{More applications}
+
+Given the above operational semantics, one can propose an API for
+non-GC arrays and denotational semantics for them.
+The proposed API is the following:
+
+\begin{code}
+withNewArray :: List a ⊸ (Array a ⊸ Bang k) ⊸ k
+updateArray :: Int → a ⊸ Array a ⊸ (Array a ⊗ a)
+splitArray :: Int → Array a ⊸ (Array a ⊗ Array a)
+foldArray :: b ⊸ (Int → a ⊸ b ⊸ b) → Array a ⊸ b
+arraySize :: Array a ⊸ (Int ⊗ Array a)
+\end{code}
+
+We can give a semantics simply by implementing the type |Array| and
+the functions directly in \HaskeLL. This denotational semantics does
+not preclude a more efficient implementation.
+
+The interpretation of the array type is simply that of a linear list, as
+defined above:
+\begin{code}
+type Array = List
+\end{code}
+
+The allocation of a new array needs to guarantee that local usage of
+the array are linear and can operate in the linear heap. To do so we
+leverage the case-bang rule described in the previous section.
+\begin{code}
+withNewArray xs k = case k xs of
+  Bang r -> r
+\end{code}
+
+The rest of the API is interpreted by recursive functions over lists.
+We stress that thanks to linearity the new lists will not go to the GC.
+The implementation is as follows:
+\begin{code}
+updateArray 0 y (x:xs)   = (x, y:xs)
+updateArray n y []       = (error "array too small!") y
+updateArray n y (x:xs)   = case updateArray (n-1) y xs of
+  (y',xs') -> (y',x:xs')
+
+splitArray n []      = []
+splitArray 0 xs      = ([],xs)
+splitArray n (x:xs)  = case splitArray (n-1) xs of
+  (ys,zs) -> (x:ys,zs)
+
+foldArray k _    []        = k
+foldArray k (+)  (x:xs)    = x + foldArray k xs
+
+arraySize []      = (0,[])
+arraySize (x:xs)  = case byteArraySize xs of
+  (n,ys) -> (1+n,y:ys)
+\end{code}
+
+
 \section{Alternative designs}
 
 \subsection{An ILL-guided design}
