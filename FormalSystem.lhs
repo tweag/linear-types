@@ -944,7 +944,7 @@ to |main|, in the sense that it may raise link-time type-errors.
 \subsection{Primitive arrays}
 \label{sec:primops}
 One of the usage of linear types is to make memory management
-(semi-)explicit. As an illustration we provide two possible APIs to
+(semi-) explicit. As an illustration we provide two possible APIs to
 manipulate randomly addressable memory regions (so called ``byte
 arrays'' in GHC parlance). We also propose a possible implementation
 strategy for the primitives, and argue briefly for correctness.
@@ -1334,7 +1334,99 @@ sub-data.
   references to the garbage-collected heap from the linear heap,
   acting as roots).
 \end{lemma}
+\begin{proof}
+To prove the above we need a typed version of the reduction
+relation. (See \fref{fig:typed-semop}) The judgement $Γ:t ⇓_ρ Δ:z$ is extended to the form
+$Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, where
+\begin{itemize}
+\item $Ξ$ is a context of free variables
+\item $Σ$ is a stack of typed terms which are yet to reduce
+\item $t,z$ are typed terms
+\item $Γ,Δ$ are heap states, that is associations of variables to
+  typed and weighted terms.
+\end{itemize}
+We then show that this new relation preserves types. A well-typed
+reduction state implies that the heap is consistent as per this lemma.
+Hence, starting from a well-typed state, the reduction relation will
+only produce consistent heaps.
+\end{proof}
 
+\begin{figure}
+  \centering
+\begin{definition}[Well-typed reduction relation]
+  The judgement \[Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ\] is defined inductively by
+  the following rules:
+
+\begin{mathpar}
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || λx.t  ⇓ Γ || λx.t) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λy.u):_ρ A →_q B, x:_{qρ} A, Σ \\
+     Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
+    {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
+{\text{app}}
+
+\inferrule
+  {Ξ, x:_ωB ⊢ (Γ||e ⇓ Δ||z) :_ρ A, Σ}
+  {Ξ ⊢ (Γ,x :_ω B = e || x  ⇓ Δ, x :_ω B = z || z) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ||e ⇓ Δ||z) :_1 A, Σ}
+  {Ξ ⊢ (Γ,x :_1 B = e|| x  ⇓  Δ||z) :_1 A,  Σ}
+{\text{linear variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{q_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+{\text{let}}
+
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || c x_1…x_n  ⇓ Γ || c x_1…x_n) :_ρ A, Σ}
+{\text{constructor}}
+
+\inferrule
+  {Ξ,y:_{pqρ} A ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+   Ξ ⊢ (Δ||u_k[xᵢ/yᵢ] ⇓ Θ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
+{\text{case}}
+
+\inferrule
+   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 D, u:_ω C, Σ \\
+    Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
+   {Ξ ⊢ (Γ||\case[1] e {\varid{Bang}  y ↦ u} ⇓ Θ||z) :_ω C, Σ}
+{\text{case-Bang}}
+  \end{mathpar}
+\end{definition}
+  \caption{Typed operational semantics. (Omitting the obvious w.abs and w.app for concision)}
+  \label{fig:typed-semop}
+\end{figure}
+
+\begin{definition}[Well-typed state]
+  We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
+  \[
+    Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
+    (ρA⊗\mathnormal{weightedTypes}(Σ))‌
+  \]
+  In the above expression $\flet Γ$ stands in turn for a nested
+  $\mathsf{let}$ expression where all variables in $Γ$ are bound to
+  the corresponding term in $Γ$, with the given type and weight. We
+  write $(ρA⊗\mathnormal{weightedTypes}(Σ))‌$ for the weighted tensor
+  type comprised of $A$ with weight $ρ$, the types in $Σ$ and the
+  corresponding weights.
+\end{definition}
+
+\begin{lemma}[The typed reduction relation preserves typing.]~\\
+  if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  \[Ξ ⊢ (Γ||t :ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :ρ A),Σ.\]
+\end{lemma}
+\begin{proof}
+  By induction.
+\end{proof}
 
 
 \subsection{Explicit memory management}
