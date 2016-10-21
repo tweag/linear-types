@@ -122,12 +122,12 @@ leads easily to unsafe code with free-after-free or use-after free
 errors. In concurrent settings, one may even face deadlocks.
 
 The ``dynamic support'' class offers to dynamically detect when a
-program won't use a resource, and to free it at that moment. Given such
-support, the programmer will essentially omit the instruction to release the resource
-(|hClose h| in the above program), and hope for the best. Automatic
+program will not use a resource, and to free it at that moment. Given such
+support, the programmer essentially omits the instruction to release the resource
+(|hClose h| in the above program), and hopes for the best. Automatic
 dynamic management of memory is an essential constituent to the
 abstractions which make modern high-level programming languages
-powerful, widely known as garbage collection. Automatic dynamic
+powerful, and is widely known as garbage collection. Automatic dynamic
 management of other resources is not as popular, but can still be
 found, often under the name of ``weak references''. In Haskell,
 automatic management of files is available, and is known as ``lazy IO''.
@@ -152,7 +152,7 @@ what follows would be written:
 \end{verbatim}
 \unsure{What if |file| is put in a closure which is returned?}
 
-Also giving up on garbage collection offers, in particular, the following
+In particular giving up garbage collection offers the following
 benefits:
 \begin{itemize}
 \item control of \emph{how much} latency is incurred by memory management;
@@ -180,7 +180,7 @@ lazy\footnote{Laziness is not an essential characteristic: a similar
   extension can be designed for a strict language. Yet the
   presentation in this article is inherently lazy: both the static and
   dynamic semantics would change slightly in a strict language} lambda
-calculus (inspired by~\cite{mcbride_rig_2016} and~\cite{ghica_bounded_2014}),
+calculus (inspired by \textcite{mcbride_rig_2016} and \textcite{ghica_bounded_2014}),
 which contains the simply-typed lambda calculus as a subset.
 
 This lambda calculus can be scaled up to a full-fledged programming
@@ -202,7 +202,7 @@ by giving the following type to a file-accessing functions:
 \end{code}
 \unsure{This example is actually broken, because it requires a linear
   bind. Additionally, at this point, |Bang| has not been
-  introduced. It should be detailed in sec:app.}. Given this
+  introduced. It should be detailed in sec:app.} Given this
 primitive, the running example becomes:
 \begin{code}
 withFile "myfile" ReadMore $ \h -> do
@@ -674,7 +674,7 @@ intuitionistic $λ$-calculus.
   would need the ability to copy sub-data (\emph{chunks of data}) into
   the GC-ed heap, which is not necessarily available for all data. So
   this extension of linear logic fits our Haskellian model rather
-  snugly. (Attn: it won't work for weight 0 though!). It is not the
+  snugly. (Attn: it will not work for weight 0 though!). It is not the
   only possible path, however.}
 
 \subsection{Examples of simple programs and their types}
@@ -1267,12 +1267,14 @@ sub-data.
 
 \begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
   It is an essential property that the garbage collected heap does not
-  contain reference to the linear heap. Otherwise, garbage collection
+  contain any reference to the linear heap. Otherwise, garbage collection
   would have to also free the linear heap, making the linear heap
   garbage-collected as well (the converse does not hold: there can be
   references to the garbage-collected heap from the linear heap,
   acting as roots).
 \end{lemma}
+
+
 
 \subsection{Explicit memory management}
 To illustrate how the semantics of \fref{fig:dynamics} works, let us

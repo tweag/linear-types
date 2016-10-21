@@ -292,6 +292,7 @@ byteArraySize (x:xs) = case byteArraySize xs of
 
 * Proof of consistency for dyn. semantics
 
+** Definition: typed reduction rules
 We extend the reduction with types, as follows:
 
    Γ:t  ⇓ρ  Δ:z
@@ -307,7 +308,7 @@ t,z : term states
 
 Then we can prove
 
-if Ξ ⊢ (Γ|t :ρ A),Σ then Ξ ⊢ (Δ|z :ρ A),Σ
+Ξ ⊢ (Γ|t ⇓ Δ|z) :ρ A, Σ implies  (if Ξ ⊢ (Γ|t :ρ A),Σ ⟶ Ξ ⊢ (Δ|z :ρ A),Σ)
 
 where Ξ ⊢ (Γ|t :ρ A),Σ  ≝   Ξ ⊢ let Γ in (t,terms(Σ)) : (ρA⊗weighted_types(Σ))
 
