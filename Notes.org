@@ -1,7 +1,7 @@
 * DONE Local linear things
 
 ** Old
-One would linke to construct a function which allows to locally use
+One would like to construct a function which allows to locally use
 the linear heap. We attempt:
 
 > extract :: Bang A ⊸ A
@@ -363,3 +363,57 @@ The rules are:
   Γ,z ↦ λy. u ⊢ z,x,Σ                       ⟶  Γ,z' ↦ u[x/y] ⊢ z',Σ
 
 This is ugly and should be polarized.
+
+* Notes on implementation
+
+** Self-deallocating cons cells
+
+Because of the nature of "subtyping" of weights: a location which
+expects data of weight $1$ can receive data of weight $ω$; the dynamic
+weight of a cons cell is known at creation time but not at the
+use-site.
+
+Therefore, the current envisioned implementation path for deallocating
+cons cells on use-site (/i.e./ on a ~case~) is to use the thunk
+closure: when creating a linear cons cell, the closure, instead of
+having code for memoisation would contain the code to deallocate
+itself. So forcing a linear thunk would also deallocate it.
+
+This disallows optimisations for linear thunks (but would not affect
+shared/gc-d thunks) as linear thunks would need to be actual thunks
+(where gc-d thunks can be in a pre-evaluated form).
+
+If such optimisation is useful for linear (self-deallocating) cons
+cells, then some dynamic test would have to be performed at the ~case~
+site. But it may have an impact on performance of regular Haskell code
+(which we would not want: regular Haskell comes first). But the focus
+of this proposal is more about minimising gc-pauses (in length and
+frequency) than about raw speed.
+
+** Generation of linear-aware code
+
+Ryan Newton:
+#+BEGIN_QUOTE
+A big selling point of the proposed type system is its backwards
+compatibility.  Unannotated programs continue to operate fine in
+unrestricted mode.
+
+Maybe the implementation should treat the unrestricted case as default
+and the linear one as exceptional. Perhaps generating code for a
+function `f :: A -o B` should be seen as a form of SPECIALISE?
+
+Then you can have as many (potentially) linear functions as you like
+in the source.  But demand for linear *implementations* would only
+kick in at call site in linear context.
+#+END_QUOTE
+
+** Toplevel definitions with weight 1
+
+Some application seem to require toplevel definitions with
+weight 1. Because these are global, the weight constraint would be
+applied at link time.
+
+This has the interesting consequence that such an extension would give
+a more first class status to the ~main~ function (for instance there
+could be a ~Word#~ of weight 1, and it would be consumed by said
+~main~ function to create an executable).
