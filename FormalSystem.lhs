@@ -855,9 +855,9 @@ called once per call to |withFile|, but the in-IO result of |withFile|
 it is impossible to put the |Handle| inside the result. This
 restriction is the first advantage of the above function compared to,
 say, |withFile :: FilePath → (Handle → IO a) → IO a|. Namely, the
-static scope of a handle is guaranteed not match its dynamic scope.
+static scope of a handle is guaranteed to match its dynamic scope.
 
-The second advantage is is that the Handle can be closed \emph{at any
+The second advantage is is that the |Handle| can be closed \emph{at any
   point} within the continuation (not just at the end). However, to
 take advantage of this feature, one must change the type of the
 monadic bind for IO. Indeed, consider:
@@ -907,9 +907,11 @@ class Monad q m | m -> q where
   return :: a → _ r m r a
   (>>=) :: m r a → _ (q) (a → _ (qr) m r' b) → _ q m r' b
 \end{code}
-Let us count: bind calls is second argument |q| times, and it itself
+Let us count: bind calls its second argument |q| times, and it itself
 needs its argument |qr| times. So, the first argument of bind needs to
-produce |qqr = qr| times |a|. We get |r| times |a| from it from one
+produce |qqr = qr|\unsure{Do we want to rely on the weights having
+  idempotent product? What if the second arrow had just weight |r|
+  instead of |qr|?} times |a|. We get |r| times |a| from it from one
 instance, so we need to call it |q| times.
 
 |Maybe| and State instances of |Monad| thus become:\unsure{At (1) we
@@ -946,17 +948,15 @@ contexts, one will get incorrect results. A typical attempt to this
 issue involves
 \begin{itemize}
 \item using a monadic interface to the library and,
-\item having an existentially bound a type parameter in the type:
+\item having an existentially bound type parameter in the type:
   \begin{code}
     type M s a
     instance Monad (M s)
+
+    primitive :: M s X
+    runLowLevel :: M s a -> IO x
   \end{code}
 \end{itemize}
-\begin{code}
-
-primitive :: M s X
-runLowLevel :: M s a -> IO x
-\end{code}
 The above solution is adequate as long as one refrains from calling
 \begin{code}
 forkIO :: IO a -> IO ()
@@ -1004,7 +1004,8 @@ freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
-\improvement{sem. op. for these things}
+\improvement{operational semantics for these things. See
+  \fref{sec:more-applications} in the meantime.}.
 
 The key primitive in the above API is |withNewByteArray|, whose first
 argument is the size of an array to allocate. The second argument is a
@@ -1284,7 +1285,7 @@ The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
 thunk must be allocated in the linear heap if the context requires a
 linear value, while if the context requires an unrestricted value, the
 thunk must be allocated on the garbage-collected heap. However, the
-thunk is allocated by $let z =_1 …$, so this let-binding may have to
+thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
 allocate on the garbage-collected heap despite being annotated with
 weight $1$. This behaviour is not a consequence of implicit promotion
 from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
@@ -1546,22 +1547,29 @@ force the thunk with a case:
 
 \subsection{Discussion: Affinity}
 
-Consider the expression |let x = _ 1 e in Just (x+1)|.  One remarks
-that, because of laziness, even when the expression is run in $ω$
-mode, |x| will be demanded at most one time. (In general any linear
-variable with have at most one pointer to it). Thus it is tantalizing
-to allocate |x| on a linear heap (and in general any local linear
-variable). Yet, the issue is that |x| is pointed to by the |Just|
-constructor, which itself resides on the GC heap (because it can have
-any number of pointers to it). Thus, |x| is itself subject to garbage
-collection: when |Just| is freed so must be |x|, Yet, an optimisation
-is available for all local linear variables, namely, when they are
-entered, they can be freed immediately.
+Consider the expression |let x = _ 1 e in let y = _ omega Just (x+1)
+in …|. One remarks that, thanks to laziness, even if |y| has weight
+$ω$, |x| will be demanded at most one time. Thus it is tantalizing
+to allocate |x| on the linear heap.
+
+But, because |x| is pointed to by |y| and |y| can be deallocated
+without ever being used, the garbage collector may have to deallocate
+|x| as well when |y| is deallocated. So, while it is possible to
+promptly deallocate |x| when it is forced, |x| would still need to be
+subject to garbage collection, hence garbage collection traversal,
+which runs afoul of the goal of diminishing the pressure on the
+garbage collector.
+
+Variables which will be used at most once are called
+\emph{affine}. Linear variables, by contrast, \emph{must} be used
+\emph{exactly} once. The fact that linear variables must be used allow
+more optimisations to be applied than to affine variables.
 
 \section{More applications}
+\label{sec:more-applications}
 
-Given the above operational semantics, one can propose an API for
-non-GC arrays and denotational semantics for them.
+Given the above operational semantics of \fref{sec:dynamics}, one can
+propose an API for non-GC arrays and denotational semantics for them.
 The proposed API is the following:
 
 \begin{code}
@@ -1572,9 +1580,13 @@ foldArray :: b ⊸ (Int → a ⊸ b ⊸ b) → Array a ⊸ b
 arraySize :: Array a ⊸ (Int ⊗ Array a)
 \end{code}
 
-We can give a semantics simply by implementing the type |Array| and
-the functions directly in \HaskeLL. This denotational semantics does
-not preclude a more efficient implementation.
+We can give a semantics simply by representing the type |Array| and
+the API functions in terms of \HaskeLL. This denotational semantics
+does not preclude a more efficient implementation.\improvement{Even if
+  we don't implement prompt-deallocation of cons cells we can have
+  arrays out of the GC heap, such as these. But we would need to
+  restrict the class of type |a| and |b| in most the API functions
+  (probably to |Storable|)}
 
 The interpretation of the array type is simply that of a linear list, as
 defined above:
