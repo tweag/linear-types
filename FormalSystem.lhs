@@ -1797,6 +1797,50 @@ operations, and the variable rule adapted accordingly.
   Long-lived? Allocation pattern?
 \item Array example.
 \end{itemize}
+
+\section{Conclusion}
+
+The calculus \calc{} demonstrates how an existing lazy language, such
+as Haskell, can be extended with linear types, without compromising
+the language. That is we require the following:
+\begin{itemize}
+\item Existing programs can be written in the extended language
+  \emph{without modification}.
+\item The performance of existing programs is not affected.
+\end{itemize}
+In other words: regular Haskell comes first. We get the additional
+benefits of linear type~—~new abstractions (\fref{sec:protocols},
+\fref{sec:resources}, and \fref{sec:ffi}), lower GC pressure
+(\fref{sec:primops}), control over occurrence of GC pauses
+(\fref{sec:fusion} and \fref{sec:dynamics})~—~without penalty to
+unmodified Haskell.
+
+The benefits can be classified in three stages depending on how much
+modification to an existing language they require:
+\begin{enumerate}
+\item Adapting the \textbf{type system} enables
+  \begin{itemize}
+  \item new abstractions such as protocols (\fref{sec:protocols}) and
+    safe resource management (\fref{sec:resources})
+  \item pure abstractions to C libraries (\fref{sec:ffi})
+  \item primitive operations to keep data out of the garbage collector
+    (\fref{sec:primops})
+  \end{itemize}
+\item Propagating type annotation to the \textbf{intermediate
+    language} makes it possible to exploit linear types for further
+  optimisation (\fref{sec:fusion})
+\item Modifying the \textbf{run-time system} further enables prompt
+  deallocation of thunks which can be leveraged to prevent GC pauses
+  in critical computations (\fref{sec:dynamics}).
+\end{enumerate}
+
+Of these three stages, modifying the type system is the cheapest, but
+also the most immediately beneficial, enabling a lot of new uses of a
+programming language. Propagating the information down to the run-time
+system is still worth pursuing as we are expecting significant
+benefits, due to reduced and controlled latency, for systems
+programming, and in particular for distributed applications.
+
 \printbibliography
 \end{document}
 
@@ -1819,4 +1863,4 @@ operations, and the variable rule adapted accordingly.
 %  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile
 %  LocalWords:  forall aspiwack dually involutive runComputation
 %  LocalWords:  withNewByteArray expensiveFunction affine booleans
-%  LocalWords:  Kleisli ghica wakeling TODOs
+%  LocalWords:  Kleisli ghica wakeling TODOs Haskell
