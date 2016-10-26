@@ -579,15 +579,7 @@ Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
 to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
 of the weighted arrows which allow to have the $λ$-calculus
-as a subset of \calc{}.
-
-\begin{aside}\improvement{don't recall}
-Indeed, recall the example from the
-beginning of Section~\ref{sec:ill} which had us write |dup
-(Bang (id (Bang 42)))|.
-%
-Thanks to the application rule we have
-instead:\improvement{maybe work a little on the presentation of this
+as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
   example}
 $$
 \inferrule
@@ -595,17 +587,15 @@ $$
   {\inferrule
     {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
     {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
-  {⊢ λ (x :_w A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id 42 : A}}
-{()+ω() ⊢ (λ (x :_w A). Tensor x x)_w \; (id_w \; 42)}\text{app}
+  {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
+{()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
 $$
-\unsure{Simon: this example has several missing type annotations tec. I've added them; check.}
-\end{aside}
 \begin{aside}
 In the application rule the promotion rule of linear logic is applied
 implicitly.
 $$\inferrule{{!}Γ ⊢ A}{{!}Γ ⊢ {!}A}$$
 where ${!}Γ$ is a context with all the hypotheses of the form ${!}A$
-for some $A$.
+for some $A$. See \fref{sec:ill} for further comparison.
 \end{aside}
 This implicit use of the promotion rule is what makes it possible to
 seamlessly mix linear types and intuitionistic types inside the same
