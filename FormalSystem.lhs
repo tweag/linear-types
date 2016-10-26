@@ -442,7 +442,7 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
   \label{fig:contexts}
 \end{figure}
 
-The types of our calculus (see \fref{fig:syntax}) are simple
+The types of \calc{} (see \fref{fig:syntax}) are simple
 types with arrows (albeit weighted ones), data types, and weight
 polymorphism.  The weighted function type is a generalization of the
 intuitionistic arrow and the linear arrow. We will use the following
@@ -654,7 +654,7 @@ well-typed
 These projections exhibit a small deviation from linear logic: the
 existence of these projections mean that ${!}(A⊗B)$ is isomorphic to
 ${!}({!}A⊗{!}B)$. While this additional law may restrict the
-applicable models of our calculus (hence may be inconvenient for some
+applicable models of \calc{} (hence may be inconvenient for some
 applications), it is key to retro-fitting linearity in an existing
 language: if we interpret the weights on the arguments of existing
 constructor to be $1$ while the weights on the arguments of existing
@@ -673,7 +673,7 @@ intuitionistic $λ$-calculus.
 
 \subsection{Examples of simple programs and their types}
 \unsure{Scrap this section?}
-In order to assess the power of our language, let us consider a few
+In order to assess the power of \calc{}, let us consider a few
 simple programs and the types that they inhabit.
 
 \paragraph{K combinator}
@@ -1630,7 +1630,7 @@ arraySize (x:xs)  = case byteArraySize xs of
 Simply using linear logic --- or, as it were, intuitionistic linear
 logic, because we do not require a notion of type duality --- as a type
 system would not suffice to meet our goal that a (intuitionistic,
-lazy) $\lambda$-calculus be a subset of our calculus. Indeed, even if
+lazy) $\lambda$-calculus be a subset of \calc{}. Indeed, even if
 intuitionistic $\lambda$-calculus can be embedded in linear
 $\lambda$-calculus, this embedding requires an encoding. Usually, one
 would have a linear arrow $A⊸B$ and the usual unrestricted (intuitionistic) arrow would be
