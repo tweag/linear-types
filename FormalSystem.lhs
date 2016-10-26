@@ -150,7 +150,8 @@ what follows would be written:
   // some code that reads the file
 } // the file is closed when this scope ends
 \end{verbatim}
-\unsure{What if |file| is put in a closure which is returned?}
+\unsure{What if |file| is put in a closure which is returned?\\ --~Arnaud:
+  it can't due to the lifetime analysis}
 
 In particular giving up garbage collection offers the following
 benefits:
