@@ -863,8 +863,10 @@ restriction is the first advantage of the above function compared to,
 say, |withFile :: FilePath → (Handle → IO a) → IO a|. Namely, the
 static scope of a handle is guaranteed to match its dynamic scope.
 
-The second advantage is is that the |Handle| can be closed \emph{at any
-  point} within the continuation (not just at the end). However, to
+The second advantage is is that the |Handle| can be closed \emph{at
+  any point} within the continuation\improvement{This needs to be
+  shown by an example. Possible example: open two files, close the
+  first one before the second one.} (not just at the end). However, to
 take advantage of this feature, one must change the type of the
 monadic bind for IO. Indeed, consider:
 \begin{code}
@@ -993,11 +995,15 @@ to |main|, in the sense that it may raise link-time type-errors.
 
 \subsection{Primitive arrays}
 \label{sec:primops}
-One of the usage of linear types is to make memory management
-(semi-) explicit. As an illustration we provide two possible APIs to
+One of the usage of linear types is to make memory management (semi-)
+explicit. As an illustration we provide two possible APIs to
 manipulate randomly addressable memory regions (so called ``byte
 arrays'' in GHC parlance). We also propose a possible implementation
-strategy for the primitives, and argue briefly for correctness.
+strategy for the primitives, and argue briefly for
+correctness.\improvement{This makes sense because variables are linear
+  and not affine (otherwise the arrays would need to be traversed by
+  \textsc{gc}). This should be clarified.}
+\improvement{TODO: example program (ideally measurements)}
 
 \subsubsection{Version 1}
 A possible API is the following:
@@ -1010,8 +1016,10 @@ freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
-\improvement{operational semantics for these things. See
-  \fref{sec:more-applications} in the meantime.}.
+\improvement{TODO: describe operational semantics for these
+  things. See \fref{sec:more-applications} in the meantime.}
+\improvement{TODO: explain why freeze goes to the non-linear context,
+  rather than just loosing capabilities.}
 
 The key primitive in the above API is |withNewByteArray|, whose first
 argument is the size of an array to allocate. The second argument is a
