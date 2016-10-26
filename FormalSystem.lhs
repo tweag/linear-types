@@ -501,6 +501,14 @@ argument of weight $1$ or $ω$.
   $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
   construct a quantity $ω$ of $D$.
 
+  Note that constructors with arguments of weight $1$ are not more
+  general than constructors with arguments of weight $ω$, because if,
+  when constructing $c u$, with the argument of $c$ of weight $1$, $u$
+  \emph{may} be either of weight $1$ or of weight $ω$, dually, when
+  pattern-matching on $c x$, $x$ \emph{must} be of weight $1$ (if the
+  argument of $c$ had been of weight $ω$, on the other hand, then $x$
+  could be used either as having weight $ω$ or $1$).
+
 The following example of data-type declarations illustrate the role of
 weights in constructor arguments:
 \begin{itemize}
@@ -639,7 +647,8 @@ have a quantity $1$ of $A⊗B$ we have a quantity $1$ of $A$ and a
 quantity $1$ of $B$, and if we have a quantity $ω$ of $A⊗B$ we have a
 quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
 following program, which asserts the existence of projections, is
-well-typed
+well-typed (note that, both in |first| and |snd|, the arrow is~---~and
+must be~---~non-linear)
 \begin{code}
   data (⊗) a b where
     (,) : a ⊸ b ⊸ a⊗b
