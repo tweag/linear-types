@@ -391,6 +391,14 @@ module structure on typing contexts as follows.
 
 \subsection{Typing}
 
+The static semantics of \calc{} is expressed in terms of the
+familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
+judgement, however, may be less familiar. Indeed, remember that $Γ$ is
+weight-annotated, the weight of a variable denoting the quantity of
+that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
+be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
+  one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
+
 \begin{figure}
   \figuresection{Weights}
   \begin{align*}
@@ -564,11 +572,9 @@ context, especially in the case of applications.
 \improvement{It may be useful to have a better transition between
   syntax and typing judgement}
 
-The typing judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$ consumes $Γ$ and
+Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term $t$ consumes $Γ$ and
 builds \emph{exactly one} $A$.
-\unsure{Simon: this is a super-important statement.  Let's say it
-right at the beginning of the section on types.}
-We provide
+This is the only kind of judgement in \calc{}: we provide
 no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
 one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
