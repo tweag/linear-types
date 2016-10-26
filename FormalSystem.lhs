@@ -267,7 +267,7 @@ as follows:
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
 Operationally, this means that the resulting list does not need to
-live on a GC'ed heap\footnote{even though it can} --- instead it can
+live on a \textsc{gc}'ed heap\footnote{even though it can} --- instead it can
 be put on an explicitly managed heap (which we call the linear heap in
 what follows). If so, that list can thus be deallocated exactly at the
 point of its consumption. In a lazy language, the thunks on the linear
@@ -276,8 +276,8 @@ heap can even free themselves.
 Yet, conceptually, if one has a quantity $ω$ for both inputs, one can
 call $ω$ times |(++)| to obtain $ω$ times the concatenation.
 Operationally, having an $ω$ quantity of the inputs implies that they
-reside on the GC heap, and thus can be shared as much as
-necessary. Constructing $ω$ times the output means to put it on the GC
+reside on the \textsc{gc} heap, and thus can be shared as much as
+necessary. Constructing $ω$ times the output means to put it on the \textsc{gc}
 heap as well, with all the usual implications in terms of laziness and
 sharing.
 
@@ -288,7 +288,7 @@ type:
 \begin{code}
 cycle :: List a → List a
 \end{code}
-Operationally, |cycle| requires its argument to be on the GC heap.  In
+Operationally, |cycle| requires its argument to be on the \textsc{gc} heap.  In
 practice, libraries will never provide $ω$ times a scarce resource
 (e.g. a handle to a physical entity); such a resource will thus never
 end up in the argument to |cycle|.
@@ -667,10 +667,10 @@ intuitionistic $λ$-calculus.
 \end{aside}
 \info{Remark: the reason why we can have
   ${!}(A\otimes B) \simeq {!}({!}A\otimes{!}B)$ is that we have a
-  model in mind where all sub-data is boxed (and managed by GC) if the
-  data is managed by GC. In a model where sub-data is unboxed, we
+  model in mind where all sub-data is boxed (and managed by \textsc{gc}) if the
+  data is managed by \textsc{gc}. In a model where sub-data is unboxed, we
   would need the ability to copy sub-data (\emph{chunks of data}) into
-  the GC-ed heap, which is not necessarily available for all data. So
+  the \textsc{gc}-ed heap, which is not necessarily available for all data. So
   this extension of linear logic fits our Haskellian model rather
   snugly. (Attn: it will not work for weight 0 though!). It is not the
   only possible path, however.}
@@ -1044,7 +1044,7 @@ that it cannot be shared.
 
 Finally, |freezeByteArray| turns a linear |MutableByteArray| into a
 shareable |ByteArray|. It does so by moving the data from the linear
-heap onto the GC heap. It consumes the static |MutableByteArray|,
+heap onto the \textsc{gc} heap. It consumes the static |MutableByteArray|,
 so that no further function can access it. In particular, such a frozen
 byte array can be returned by the argument to |withNewByteArray|:
 \begin{code}
@@ -1274,7 +1274,7 @@ The weight parameter of the reduction relation is used to interpret
 $\flet x =_1 …$ bindings into allocations on the appropriate
 heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
 allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
-allocate on the GC heap, not on the linear one. To see why, consider
+allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
 the following example:
 %
 \begin{code}
@@ -1299,7 +1299,7 @@ evaluation of subterms, sometimes multiplied by another weight
 originating from the term. This means that, essentially, once one
 starts evaluating unrestricted results (weight = $ω$), one will remain
 in this dynamic evaluation mode, and thus all further allocations will
-be on the GC heap. However, it is possible to provide a special-purpose
+be on the \textsc{gc} heap. However, it is possible to provide a special-purpose
 evaluation rule to escape dynamic evaluation to linear evaluation.
 This rule concerns case analysis of |Bang x|:
 \[
@@ -1308,7 +1308,7 @@ This rule concerns case analysis of |Bang x|:
 \]
 The observations justifying this rule is that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
-of |Bang| (namely $x$) always reside on the GC heap, and transitively so. Indeed, because this
+of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
 $x$ has weight $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
 have been completely eliminated before being able to return $x$.
@@ -1570,7 +1570,7 @@ more optimisations to be applied than to affine variables.
 \label{sec:more-applications}
 
 Given the above operational semantics of \fref{sec:dynamics}, one can
-propose an API for non-GC arrays and denotational semantics for them.
+propose an API for non-\textsc{gc} arrays and denotational semantics for them.
 The proposed API is the following:
 
 \begin{code}
@@ -1585,7 +1585,7 @@ We can give a semantics simply by representing the type |Array| and
 the API functions in terms of \HaskeLL. This denotational semantics
 does not preclude a more efficient implementation.\improvement{Even if
   we don't implement prompt-deallocation of cons cells we can have
-  arrays out of the GC heap, such as these. But we would need to
+  arrays out of the \textsc{gc} heap, such as these. But we would need to
   restrict the class of type |a| and |b| in most the API functions
   (probably to |Storable|)}
 
@@ -1604,7 +1604,7 @@ withNewArray xs k = case k xs of
 \end{code}
 
 The rest of the API is interpreted by recursive functions over lists.
-We stress that thanks to linearity the new lists will not go to the GC.
+We stress that thanks to linearity the new lists will not go to the \textsc{gc}.
 The implementation is as follows:
 \begin{code}
 updateArray 0 y (x:xs)   = (x, y:xs)
@@ -1762,7 +1762,7 @@ complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
 linear heap (as we do in \fref{sec:dynamics}). They did not manage to
 obtain consistent performance gains. However, they still manage to
-reduce GC usage, which may be critical in distributed and
+reduce \textsc{gc} usage, which may be critical in distributed and
 real-time environments, as we explained in the introduction.
 Thus the trade-off is beneficial is certain situations.
 
@@ -1789,7 +1789,7 @@ and the variable rule should be extended to $α$-contexts. Similarly one
 can add a $0$, as \textcite{mcbride_rig_2016} does, and in turn
 support dependent types.
 
-We can even make the set weight constants = $2^ℕ$, with the obvious
+We can even make the set weight constants be $2^ℕ$, with the obvious
 operations, and the variable rule adapted accordingly.
 
 \subsection{TODOs}
@@ -1811,8 +1811,8 @@ the language. That is we require the following:
 \end{itemize}
 In other words: regular Haskell comes first. We get the additional
 benefits of linear type~—~new abstractions (\fref{sec:protocols},
-\fref{sec:resources}, and \fref{sec:ffi}), lower GC pressure
-(\fref{sec:primops}), control over occurrence of GC pauses
+\fref{sec:resources}, and \fref{sec:ffi}), lower \textsc{gc} pressure
+(\fref{sec:primops}), control over occurrence of \textsc{gc} pauses
 (\fref{sec:fusion} and \fref{sec:dynamics})~—~without penalty to
 unmodified Haskell.
 
@@ -1831,7 +1831,7 @@ modification to an existing language they require:
     language} makes it possible to exploit linear types for further
   optimisation (\fref{sec:fusion})
 \item Modifying the \textbf{run-time system} further enables prompt
-  deallocation of thunks which can be leveraged to prevent GC pauses
+  deallocation of thunks which can be leveraged to prevent \textsc{gc} pauses
   in critical computations (\fref{sec:dynamics}).
 \end{enumerate}
 
