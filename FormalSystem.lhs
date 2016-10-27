@@ -841,7 +841,7 @@ The linearity of client/server states ensures that:
 \subsection{Resources}
 \label{sec:resources}
 One potential approach to resource management is to put one server in
-charge of it. The protocal can be encoded using linear types, as
+charge of it. The protocol can be encoded using linear types, as
 explained in the previous section. Concretely, the API may look as
 follows:
 \begin{code}
@@ -1593,7 +1593,7 @@ garbage collector.
 Variables which will be used at most once are called
 \emph{affine}. Linear variables, by contrast, \emph{must} be used
 \emph{exactly} once. The fact that linear variables must be used allow
-more optimisations to be applied than to affine variables.
+more optimizations to be applied than to affine variables.
 
 \section{More applications}
 \label{sec:more-applications}
@@ -1858,7 +1858,7 @@ modification to an existing language they require:
   \end{itemize}
 \item Propagating type annotation to the \textbf{intermediate
     language} makes it possible to exploit linear types for further
-  optimisation (\fref{sec:fusion})
+  optimization (\fref{sec:fusion})
 \item Modifying the \textbf{run-time system} further enables prompt
   deallocation of thunks which can be leveraged to prevent \textsc{gc} pauses
   in critical computations (\fref{sec:dynamics}).
@@ -1889,8 +1889,12 @@ programming, and in particular for distributed applications.
 %  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
 %  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
 %  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation WHNF
-%  LocalWords:  duplications bernardy deallocate morris latencies
-%  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile
-%  LocalWords:  forall aspiwack dually involutive runComputation
-%  LocalWords:  withNewByteArray expensiveFunction affine booleans
-%  LocalWords:  Kleisli ghica wakeling TODOs Haskell
+%  LocalWords:  duplications bernardy deallocate morris latencies gc
+%  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile ap
+%  LocalWords:  forall aspiwack dually involutive runComputation lmb
+%  LocalWords:  withNewByteArray expensiveFunction affine booleans zs
+%  LocalWords:  Kleisli ghica wakeling TODOs Haskell subtype IOClient
+%  LocalWords:  OpenFile IOServer shareable openFile monads withAHeap
+%  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
+%  LocalWords:  optimizations denotational withNewArray updateArray
+%  LocalWords:  splitArray arraySize Storable byteArraySize
