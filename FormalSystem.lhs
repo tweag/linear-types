@@ -1825,24 +1825,29 @@ operations, and the variable rule adapted accordingly.
 \begin{itemize}
 \item What kind of top-level application are we mostly interested in?
   Long-lived? Allocation pattern?
-\item Array example.
 \end{itemize}
 
 \section{Conclusion}
 
 The calculus \calc{} demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
-the language. That is we require the following:
+the language, in the following sense:
 \begin{itemize}
-\item Existing programs can be written in the extended language
+\item Existing programs are valid in the extended language
   \emph{without modification}.
-\item The performance of existing programs is not affected.
+\item Such programs retain the same semantics.
+\item Furthermore, the performance of existing programs is not affected.
 \end{itemize}
-In other words: regular Haskell comes first. We get the additional
-benefits of linear type~—~new abstractions (\fref{sec:protocols},
-\fref{sec:resources}, and \fref{sec:ffi}), lower \textsc{gc} pressure
-(\fref{sec:primops}), control over occurrence of \textsc{gc} pauses
-(\fref{sec:fusion} and \fref{sec:dynamics})~—~without penalty to
+In other words: regular Haskell comes first. Additionally, linearly
+typed functions and data structures are usable directly from regular
+Haskell code. In such a situation their semantics is that of the same
+code with linearity erased.  When the programmer is ready to pay the
+cost of finely dealing with usage through linearity, they get the
+additional benefits of linear type: new abstractions
+(\fref{sec:protocols}, \fref{sec:resources}, and \fref{sec:ffi}),
+lower \textsc{gc} pressure (\fref{sec:primops}), control over
+occurrence of \textsc{gc} pauses (\fref{sec:fusion} and
+\fref{sec:dynamics}). All these benefits induce no penalty to
 unmodified Haskell.
 
 The benefits can be classified in three stages depending on how much
@@ -1865,7 +1870,7 @@ modification to an existing language they require:
 \end{enumerate}
 
 Of these three stages, modifying the type system is the cheapest, but
-also the most immediately beneficial, enabling a lot of new uses of a
+also the most immediately beneficial, enabling a lot of new uses for the
 programming language. Propagating the information down to the run-time
 system is still worth pursuing as we are expecting significant
 benefits, due to reduced and controlled latency, for systems
