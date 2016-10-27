@@ -1666,13 +1666,13 @@ lists, requiring $O(n)$ traversals. Thus it may be useful to spell out
 a possible operational semantics which represents arrays natively. The
 semantics of |withNewArray| and |updateArray| is as follows:
 \begin{mathpar}
-  \inferrule{Γ_1:n ⇓_ρ Γ₂:n'\\
+  \inferrule{Γ_1:n ⇓_ω Γ₂:n'\\
     Γ₂:k ⇓_ρ Γ_3:λy.t[y]\\
     Γ_3,y↦_1[x…x]:t ⇓_1 Γ_4:\Conid{Bang} z
   }
   {Γ₁:\Varid{withNewArray} n x k ⇓_ρ Γ_4:z}
 
-  \inferrule{Γ:n ⇓_1 Δ:n'
+  \inferrule{Γ:n ⇓_ω Δ:n'
   }
   {Γ,y↦_1[x_1…x_m] :\Varid{updateArray} n x y ⇓_1 Δ,y↦_1[x_1…x_{n'-1},x,x_{n'+1}…x_m]:(y,x_{n'})}
 \end{mathpar}
@@ -1681,7 +1681,7 @@ As for the case-bang rule, we can run the continuation of
 from a |Bang|. Consequently the |updateArray| rule needs only to
 handle the 1 weight. Indeed the type-system will ensure that |Array|s
 will ever have static weights of 1, and because we start with a
-dynamic weight of 1 we can never endup with weight ω for an array.
+dynamic weight of 1 we can never endup with weight $ω$ for an array.
 
 We omit the semantics of other combinators, which are similar to the
 |updateArray| rule.
