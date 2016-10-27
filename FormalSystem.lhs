@@ -5,9 +5,9 @@
 %format .         = ". "
 %format forall a         = "∀" a
 %format _ (a)         = "_{" a "}"
-%format omega = "ω"
-%format rho = "ρ"
-%format pi = "π"
+%format ω = "\omega"
+%format π = "\pi"
+%format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{PaperTools/bibtex/jp.bib}
@@ -44,6 +44,11 @@
 % \setmainfont{TeX Gyre Pagella}
 % \setmathfont{TeX Gyre Pagella Math}
 % \setmainfont{Latin Modern Roman}
+\setmathfont[ExternalLocation=fonts/]{latinmodern-math}
+\setmainfont[ExternalLocation=fonts/,
+ItalicFont=lmroman10-italic,
+BoldFont=lmroman10-bold,
+]{lmroman10-regular}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -302,11 +307,11 @@ map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
-|∀rho. (a -> _ rho b) -> List a -> _ rho List b|. 
+|∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b|. 
 %
 Likewise, function composition can be given the following type:
 \begin{code}
-(∘) :: forall pi rho. (b → _ pi c) ⊸ (a → _ rho b) → _ pi a → _ (pi rho) c
+(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
 (f ∘ g) x = f (g x)
 \end{code}
 What the above type says is that two functions of arbitrary linearities $ρ$
@@ -871,7 +876,7 @@ consider the Haskell type for bind:
 (>>=) :: IO a → (a → IO b) → IO b
 \end{code}
 If one were to call |hClose handle| within either of the arguments of
-|(>>=)|, the type system would require |handle :: _ omega Handle|,
+|(>>=)|, the type system would require |handle :: _ ω Handle|,
 because the arguments of |(>>=)| carry the $ω$ weight. A way to escape
 this problem is to change the type of |(>>=)|. Such a change is
 fortunately possible because |IO| guarantees that the arguments of
@@ -883,12 +888,12 @@ monad). Thus we may have the type:
 The above type is as such not very convenient as it requires the first
 argument to systematically return a |Bang| type. We can however embed
 the multiplicity of the payload as an argument to |IO|.  An action of
-type |IO 1 a| returns a linear payload, while one of type |IO omega a|
+type |IO 1 a| returns a linear payload, while one of type |IO ω a|
 returns a shareable payload. Thus the second argument of bind may use
 as many times its argument as the first argument embeds.
 \begin{code}
-return :: a → _ rho IO rho a
-(>>=) :: ∀ pi. IO pi a ⊸ (a → _ rho IO b) ⊸ IO pi b
+return :: a → _ ρ IO ρ a
+(>>=) :: ∀ π. IO π a ⊸ (a → _ ρ IO b) ⊸ IO π b
 \end{code}
 Given such an interface, one can type |openFile| in direct style,
 thus:
@@ -941,7 +946,7 @@ data Maybe a where
   Nothing :: Maybe a
   Just :: a ⊸ Maybe a
 
-instance Monad omega Maybe where
+instance Monad ω Maybe where
   return x = Just x -- (1)
   Just x >>= f = f x
 \end{code}
@@ -1302,8 +1307,8 @@ allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
 the following example:
 %
 \begin{code}
-let f = _ omega (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
-let a = _ rho f ()
+let f = _ ω (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
+let a = _ ρ f ()
 \end{code}
 %
 The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
@@ -1545,7 +1550,7 @@ heap to the linear heap:
 \begin{code}
   let  x  : _ 1 List Bool
           = [True,False]
-       y  : _ omega Bang (List Bool)
+       y  : _ ω Bang (List Bool)
           = move x
   in …
 \end{code}
@@ -1572,7 +1577,7 @@ force the thunk with a case:
 
 \subsection{Discussion: Affinity}
 
-Consider the expression |let x = _ 1 e in let y = _ omega Just (x+1)
+Consider the expression |let x = _ 1 e in let y = _ ω Just (x+1)
 in …|. One remarks that, thanks to laziness, even if |y| has weight
 $ω$, |x| will be demanded at most one time. Thus it is tantalizing
 to allocate |x| on the linear heap.
