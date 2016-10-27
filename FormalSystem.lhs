@@ -141,7 +141,9 @@ years.  The idea is to forgo automatic management in favor of safe,
 but explicit management of resources, including memory. This trend is
 best exemplified by the popularity of the Rust programming
 language~\cite{matsakis_rust_2014}, where file-reading code such as
-what follows would be written:
+what follows would be written\footnote{The Rust compiler has a
+  special, so called ``life-time'' analysis, which checks that the
+  \texttt{file} is not put in a closure.}:
 
 \begin{verbatim}
 {
@@ -150,8 +152,6 @@ what follows would be written:
   // some code that reads the file
 } // the file is closed when this scope ends
 \end{verbatim}
-\unsure{What if |file| is put in a closure which is returned?\\ --~Arnaud:
-  it can't due to the lifetime analysis}
 
 In particular giving up garbage collection offers the following
 benefits:
@@ -835,8 +835,6 @@ The linearity of client/server states ensures that:
 
 \subsection{Resources}
 \label{sec:resources}
-\todo{Unfinished section}{}
-
 One potential approach to resource management is to put one server in
 charge of it. The protocal can be encoded using linear types, as
 explained in the previous section. Concretely, the API may look as
@@ -858,17 +856,17 @@ cannot discard nor duplicate handles. The API demands that the
 continuation returns a |Bang| type, because the continuation should be
 called once per call to |withFile|, but the in-IO result of |withFile|
 (of type |a|) can be shared. A consequence of returning |Bang| is that
-it is impossible to put the |Handle| inside the result. This
+it is impossible to put the |Handle| inside the result\footnote{Thus the
+  general linearity check subsumes ``life-time analysis'' a-la Rust.}. This
 restriction is the first advantage of the above function compared to,
 say, |withFile :: FilePath → (Handle → IO a) → IO a|. Namely, the
 static scope of a handle is guaranteed to match its dynamic scope.
 
 The second advantage is is that the |Handle| can be closed \emph{at
-  any point} within the continuation\improvement{This needs to be
-  shown by an example. Possible example: open two files, close the
-  first one before the second one.} (not just at the end). However, to
-take advantage of this feature, one must change the type of the
-monadic bind for IO. Indeed, consider:
+  any point} within the continuation (not just at the end --- we show
+an example in \fref{fig:lin-IO}). However, to take advantage of this
+feature, one must change the type of the monadic bind for IO. Indeed,
+consider the Haskell type for bind:
 \begin{code}
 (>>=) :: IO a → (a → IO b) → IO b
 \end{code}
@@ -882,7 +880,6 @@ monad). Thus we may have the type:
 \begin{code}
 (>>=) :: IO (Bang a) ⊸ (a → IO b) ⊸ IO b
 \end{code}
-
 The above type is as such not very convenient as it requires the first
 argument to systematically return a |Bang| type. We can however embed
 the multiplicity of the payload as an argument to |IO|.  An action of
@@ -893,12 +890,28 @@ as many times its argument as the first argument embeds.
 return :: a → _ rho IO rho a
 (>>=) :: ∀ pi. IO pi a ⊸ (a → _ rho IO b) ⊸ IO pi b
 \end{code}
-Given such an interface, one can write |openFile| in direct style,
+Given such an interface, one can type |openFile| in direct style,
 thus:
 \begin{code}
 openFile :: FilePath ⊸ IO 1 Handle
 \end{code}
-
+User code may then look like the example of \fref{fig:lin-IO}.
+\begin{figure}
+  \centering
+  \begin{code}
+  example = do
+    h1 <- openFile "file1"
+    -- h1 in scope
+    h2 <- openFile "file2"
+    -- h1 and h2 in scope
+    hClose h1
+    -- h2 in scope
+    hClose h2
+    -- no handle in scope
+  \end{code}
+  \caption{Example of code with linear IO}
+  \label{fig:lin-IO}
+\end{figure}
 
 Not all monads are linear though, so one may want to generalize in
 this direction as well. One way to generalise linear and non-linear
@@ -913,14 +926,12 @@ Generalizing in both directions yields:
 \begin{code}
 class Monad q m | m -> q where
   return :: a → _ r m r a
-  (>>=) :: m r a → _ (q) (a → _ (qr) m r' b) → _ q m r' b
+  (>>=) :: m r a → _ (q) (a → _ (r) m r' b) → _ q m r' b
 \end{code}
 Let us count: bind calls its second argument |q| times, and it itself
-needs its argument |qr| times. So, the first argument of bind needs to
-produce |qqr = qr|\unsure{Do we want to rely on the weights having
-  idempotent product? What if the second arrow had just weight |r|
-  instead of |qr|?} times |a|. We get |r| times |a| from it from one
-instance, so we need to call it |q| times.
+needs its argument |r| times. So, the first argument of bind needs to
+produce |qr| times |a|. We get |r| times |a| from one call to the
+first argument, so we need to call it |q| times.
 
 |Maybe| and State instances of |Monad| thus become:\unsure{At (1) we
   have |r| times |x| and need to produce |1| time |x|. So we must have
@@ -1003,7 +1014,7 @@ strategy for the primitives, and argue briefly for
 correctness.\improvement{This makes sense because variables are linear
   and not affine (otherwise the arrays would need to be traversed by
   \textsc{gc}). This should be clarified.}
-\improvement{TODO: example program (ideally measurements)}
+\improvement{example program (ideally measurements)}
 
 \subsubsection{Version 1}
 A possible API is the following:
@@ -1016,10 +1027,10 @@ freezeByteArray :: MutableByteArray ⊸ Bang ByteArray
 indexByteArray :: Int -> ByteArray -> Byte
 \end{code}
 
-\improvement{TODO: describe operational semantics for these
-  things. See \fref{sec:more-applications} in the meantime.}
-\improvement{TODO: explain why freeze goes to the non-linear context,
-  rather than just loosing capabilities.}
+\unsure{describe operational semantics for these things OR retire this
+  and use arrays of 'something' \fref{sec:more-applications} }
+\improvement{explain why freeze goes to the
+  non-linear context, rather than just loosing capabilities.}
 
 The key primitive in the above API is |withNewByteArray|, whose first
 argument is the size of an array to allocate. The second argument is a
