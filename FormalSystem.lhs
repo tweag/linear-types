@@ -812,7 +812,7 @@ data Client where
 type Server = Dual Client
 \end{code}
 
-The |Client| type describes the possible behaviours of the
+The |Client| type describes the possible behaviors of the
 client. When it |Deposit|s, it provides a certain amount and a means
 to get a response from the server (|Dual Server|). Upon |Withdraw|al, the
 response will additionally indicate if withdrawal was successful.
@@ -1317,7 +1317,7 @@ linear value, while if the context requires an unrestricted value, the
 thunk must be allocated on the garbage-collected heap. However, the
 thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
 allocate on the garbage-collected heap despite being annotated with
-weight $1$. This behaviour is not a consequence of implicit promotion
+weight $1$. This behavior is not a consequence of implicit promotion
 from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
 pure linear logic features an explicit promotion, which also permits
 linear functions to produce linear values which can be promoted to
@@ -1681,7 +1681,7 @@ As for the case-bang rule, we can run the continuation of
 from a |Bang|. Consequently the |updateArray| rule needs only to
 handle the 1 weight. Indeed the type-system will ensure that |Array|s
 will ever have static weights of 1, and because we start with a
-dynamic weight of 1 we can never endup with weight $ω$ for an array.
+dynamic weight of 1 we can never end-up with weight $ω$ for an array.
 
 We omit the semantics of other combinators, which are similar to the
 |updateArray| rule.
@@ -1928,4 +1928,4 @@ programming, and in particular for distributed applications.
 %  LocalWords:  OpenFile IOServer shareable openFile monads withAHeap
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
-%  LocalWords:  splitArray arraySize Storable byteArraySize
+%  LocalWords:  splitArray arraySize Storable byteArraySize natively
