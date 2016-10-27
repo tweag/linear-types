@@ -1598,18 +1598,20 @@ more optimizations to be applied than to affine variables.
 \section{More applications}
 \label{sec:more-applications}
 
+\subsection{Linear Array}
 Given the above operational semantics of \fref{sec:dynamics}, one can
-propose an API for non-\textsc{gc} arrays and denotational semantics for them.
+propose an API for non-\textsc{gc} arrays and semantics for them.
 The proposed API is the following:
 
 \begin{code}
-withNewArray :: List a ⊸ (Array a ⊸ Bang k) ⊸ k
+withNewArray :: Int -> a -> (Array a ⊸ Bang k) ⊸ k
 updateArray :: Int → a ⊸ Array a ⊸ (Array a ⊗ a)
 splitArray :: Int → Array a ⊸ (Array a ⊗ Array a)
 foldArray :: b ⊸ (Int → a ⊸ b ⊸ b) → Array a ⊸ b
 arraySize :: Array a ⊸ (Int ⊗ Array a)
 \end{code}
 
+\paragraph{Denotational semantics}
 We can give a semantics simply by representing the type |Array| and
 the API functions in terms of \HaskeLL. This denotational semantics
 does not preclude a more efficient implementation.\improvement{Even if
@@ -1628,7 +1630,11 @@ The allocation of a new array needs to guarantee that local usage of
 the array are linear and can operate in the linear heap. To do so we
 leverage the case-bang rule described in the previous section.
 \begin{code}
-withNewArray xs k = case k xs of
+replicate :: Int -> a -> List a
+replicate 0 x = []
+replicate n x = x:replicate (n-1) x
+
+withNewArray n x k = case k (replicate n xs) of
   Bang r -> r
 \end{code}
 
@@ -1654,6 +1660,31 @@ arraySize (x:xs)  = case byteArraySize xs of
   (n,ys) -> (1+n,y:ys)
 \end{code}
 
+\paragraph{Operational semantics}
+Of course, an efficient implementation should not represent arrays as
+lists, requiring $O(n)$ traversals. Thus it may be useful to spell out
+a possible operational semantics which represents arrays natively. The
+semantics of |withNewArray| and |updateArray| is as follows:
+\begin{mathpar}
+  \inferrule{Γ_1:n ⇓_ρ Γ₂:n'\\
+    Γ₂:k ⇓_ρ Γ_3:λy.t[y]\\
+    Γ_3,y↦_1[x…x]:t ⇓_1 Γ_4:\Conid{Bang} z
+  }
+  {Γ₁:\Varid{withNewArray} n x k ⇓_ρ Γ_4:z}
+
+  \inferrule{Γ:n ⇓_1 Δ:n'
+  }
+  {Γ,y↦_1[x_1…x_m] :\Varid{updateArray} n x y ⇓_1 Δ,y↦_1[x_1…x_{n'-1},x,x_{n'+1}…x_m]:(y,x_{n'})}
+\end{mathpar}
+As for the case-bang rule, we can run the continuation of
+|withNewArray| with weight 1 because we eventually extract the result
+from a |Bang|. Consequently the |updateArray| rule needs only to
+handle the 1 weight. Indeed the type-system will ensure that |Array|s
+will ever have static weights of 1, and because we start with a
+dynamic weight of 1 we can never endup with weight ω for an array.
+
+We omit the semantics of other combinators, which are similar to the
+|updateArray| rule.
 
 \section{Alternative designs}
 
