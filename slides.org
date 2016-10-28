@@ -1,0 +1,54 @@
+#+TITLE:     Linear types in Haskell: a proposal
+#+AUTHOR:    JP Bernardy and Arnaud Spiwack
+
+* Goals
+- Linear types (not affine, not uniqueness)
+- Conceived from the start as an extension to GHC
+- Linear types for...
+  - controlling optimisation (fusion; full-laziness)
+  - protocols as types
+  - controlled resource management, including memory
+
+* How it looks like: basics
+
+Two arrow types:
+- $a → b$: the usual
+- $a ⊸ b$: use $a$ exactly once to produce $b$.
+
+* How it looks like: lists
+
+#+BEGIN_SRC Haskell
+data List a where
+  [] :: List a
+  (:) :: a ⊸ List a ⊸ List a
+
+(++) :: List a ⊸ List a ⊸ List a
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+#+END_SRC
+
+Auto scaling:
+
+#+BEGIN_SRC haskell
+xs ::1 List a, ys ::1 List a ⊢ xs ++ ys ::1 List a
+xs ::ω List a, ys ::ω List a ⊢ xs ++ ys ::ω List a
+#+END_SRC
+
+... no need for 2 versions of ~(++)~
+* How it looks like: polymorphism
+
+#+BEGIN_SRC
+∀ρ. (a ->ρ b) -> List a ->ρ List b
+map f []      = []
+map f (x:xs)  = f x : map f xs
+#+END_SRC
+
+* Application: protocol
+
+* Application: controlling optimisation
+
+* Application: memory management (1)
+
+* Application: memory management (2)
+
+
