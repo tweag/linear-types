@@ -217,16 +217,19 @@ withFile "myfile" ReadMore $ \h -> do
 % Add a dollar to prevent syntax highlighting to go wild: $
 
 A type system based on linear logic is considerably simpler than one
-based on uniqueness or ownership. Additionally, and it makes it
-possible to leverage the wealth of literature of the past thirty
-years. Linear logic has been shown, for instance, to be applicable to
-explicit memory
+based on uniqueness or ownership. Additionally, it makes it possible
+to leverage the wealth of literature of the past thirty years. Linear
+logic has been shown, for instance, to be applicable to explicit
+memory
 management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
 memory-efficient array computations through
-fusion~\cite{bernardy_duality_2015,lippmeier_parallel_2016}, and
-protocol specification (as session types)~\cite{honda_session_1993}
-(the correspondence between session types and linear types is
-explained in~\cite{wadler_propositions_2012}).
+fusion~\cite{bernardy_duality_2015,lippmeier_parallel_2016}, protocol
+specification (as session types)~\cite{honda_session_1993} (the
+correspondence between session types and linear types is explained
+in~\cite{wadler_propositions_2012}), privacy
+guarantees\cite{gaboardi_linear_2013}, and graphical
+interfaces\cite{krishnaswami_gui_2011}.
+
 
 \section{Programming in \HaskeLL}
 \label{sec:programming-intro}
