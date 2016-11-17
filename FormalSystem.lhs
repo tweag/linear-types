@@ -1861,6 +1861,14 @@ operations, and the variable rule adapted accordingly.
   Long-lived? Allocation pattern?
 \end{itemize}
 
+\section{RTS Implementation strategy}
+\improvement{This section}
+
+We can implement the ``dynamic ρ flag'' as specialisation. Note that
+any linear allocation can in fact be implemented as allocation in the
+linear heap, they can always go to the GC heap. Consequently, we do
+not \emph{have to} specialize any function.
+
 \section{Conclusion}
 
 The calculus \calc{} demonstrates how an existing lazy language, such
