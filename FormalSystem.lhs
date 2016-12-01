@@ -1862,12 +1862,28 @@ operations, and the variable rule adapted accordingly.
 \end{itemize}
 
 \section{RTS Implementation strategy}
-\improvement{This section}
 
-We can implement the ``dynamic ρ flag'' as specialisation. Note that
-any linear allocation can in fact be implemented as allocation in the
-linear heap, they can always go to the GC heap. Consequently, we do
-not \emph{have to} specialize any function.
+In terms of implementation, the dynamic semantics unfolds as:
+
+\begin{itemize}
+\item When doing case analysis of a linearly-typed input, one should
+  check if the object comes from the linear heap. If it does, then the
+  case analysis should behave specially. (Probably deallocate the
+  object on the spot.). Note in particular that regular objects can be
+  passed to functions expecting a linear object. So one MUST check
+  where the data comes from before performing eager deallocation.
+\item When making an allocation, one should check the ``dynamic ρ
+  flag''. If $ρ=1$, then the allocation should happen on the linear
+  heap. We say ``should'' because, as we have seen above, linear
+  objects can always be allocated on the GC heap. One can summarize
+  this fact as: $ρ=ω$ is a safe approximation of $ρ=1$.
+\end{itemize}
+
+We can implement the ``dynamic ρ flag'' as specialisation: each
+function will have two implementations, one with $ρ=1$ and one with
+$ρ=ω$. Because $ρ=ω$ is a safe approximation of $ρ=1$, we do not
+\emph{have to} specialize any given function. Doing so is only going
+to have an impact on performance, not on correctness.
 
 \section{Conclusion}
 
