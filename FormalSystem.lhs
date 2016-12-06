@@ -249,7 +249,7 @@ provides such guarantees. Code to read a file, in Rust, is as follows:
 } // the variable `path` falls out of scope, it cannot exit this
   // scope, as part of a closure or otherwise, therefore the file can
   // be, and in fact is, closed when this scope ends.
- \end{verbatim}
+\end{verbatim}
 
 With such guarantees, an \textsc{api} with just a few function is
 sufficient to guarantee soundness and timely resource liberatione
