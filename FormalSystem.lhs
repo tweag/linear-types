@@ -173,11 +173,49 @@ and machines~\cite{kmett_machines_2015} offer stream-processing
 combinators to that effect.
 
 The number of libraries aiming at tackling speaks for the sheer size
-of the design space just for stream processing. Machines are pure
-stream processors: they cannot return a value which is not a stream
-(for instance the size of its input); conduits can return such a
-value, but they do not have a good story for manipulating multiple
-input streams.
+of the design space just for stream processing. None of them are
+complete. Machines are pure stream processors: they cannot return a
+value which is not a stream (for instance the size of its input),
+while conduits can easily do that:
+\begin{code}
+-- |wc -ls| (line count) in conduit
+-- run with |runConduitRes $ wcConduit f :: IO Int|
+wcConduit :: FilePath -> ConduitM () Void (ResourceT IO) Int
+wcConduit rp = do
+    Sum i <- rlines =$= C.map (\_ -> Sum 1) =$= C.fold
+    return i
+  where
+    r :: Source (ResourceT IO) String = C.sourceFile rp
+    rlines = r =$= C.linesUnbounded
+\end{code}
+
+On the other hand, conduits do not have as good a story as machines
+for manipulating multiple input streams.
+\begin{code}
+data Three a b c x where
+  A :: Three a b c a
+  B :: Three a b c b
+  C :: Three a b c c
+
+-- tuples up the data from three input streams
+interleave3 :: Machine (Three a b c) (a,b,c)
+interleave3 =
+    repeatedly $ do
+    a <- awaits A
+    b <- awaits B
+    c <- awaits C
+    yield (a,b,c)
+
+-- read one value from an input stream and two from another input stream
+interleave12 :: forall a b. Tee a b (a,b,b)
+interleave12 =
+    fit dup2 interleave3
+  where
+    dup2 :: forall x. (Three a b b x) -> (T a b x)
+    dup2 A = L
+    dup2 B = R
+    dup2 C = R
+\end{code}
 
 None of the combinator library seem complete, and, while they are all
 rather effective at defining a large family of stream processors, some
@@ -211,10 +249,10 @@ provides such guarantees. Code to read a file, in Rust, is as follows:
 } // the variable `path` falls out of scope, it cannot exit this
   // scope, as part of a closure or otherwise, therefore the file can
   // be, and in fact is, closed when this scope ends.
-\end{verbatim}
+ \end{verbatim}
 
 With such guarantees, an \textsc{api} with just a few function is
-sufficient to guarantee soundness and timely resource liberation,
+sufficient to guarantee soundness and timely resource liberatione
 while being about as expressive as a manually-managed resources.
 
 \paragraph{Memory management}
