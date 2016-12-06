@@ -165,7 +165,57 @@ subtle performance and/or correctness bugs.
 
 \paragraph{Combinator libraries}
 
+Combinator libraries strive to provide both soundness and timely
+release of resources by restricting the available programming
+model. Libraries such as iteratees~\cite{kiselyov_iteratees_2012},
+conduit~\cite{snoyman_conduit_2015}, pipes~\cite{gonzalez_pipes_2015},
+and machines~\cite{kmett_machines_2015} offer stream-processing
+combinators to that effect.
 
+The number of libraries aiming at tackling speaks for the sheer size
+of the design space just for stream processing. Machines are pure
+stream processors: they cannot return a value which is not a stream
+(for instance the size of its input); conduits can return such a
+value, but they do not have a good story for manipulating multiple
+input streams.
+
+None of the combinator library seem complete, and, while they are all
+rather effective at defining a large family of stream processors, some
+patterns will inevitably run afoul of them. These only cover the case
+of stream processing (typical of file processing and network
+channels): other libraries will have to be designed for locking
+concurrency or database handles.
+
+Lippmeier \& al~\cite{lippmeier_parallel_2016} propose another
+combinator library for stream processing, with a rather different
+trade-off: the programming model is the λ-calculus (specifically
+Haskell) with streams, therefore using multiple input stream, or
+producing values is simply a matter of choosing the output type of a
+Haskell function. On the other hand their library is not safe: it is
+susceptible to use-after-free errors. To make the library safe,
+Lippmeier \& al need Haskell's type system to track the linearity of
+binders.
+
+At the other end of the spectrum, a much simpler, safe and complete
+\textsc{api} for files can be given, provided that the programmer is
+statically forced to close all the file they open.
+
+For instance, the Rust programming language~\cite{matsakis_rust_2014}
+provides such guarantees. Code to read a file, in Rust, is as follows:
+
+\begin{verbatim}
+{
+  let path = Path::new("hello.txt");
+  let mut file = try!(File::open(&path));
+  // some code that reads the file
+} // the variable `path` falls out of scope, it cannot exit this
+  // scope, as part of a closure or otherwise, therefore the file can
+  // be, and in fact is, closed when this scope ends.
+\end{verbatim}
+
+With such guarantees, an \textsc{api} with just a few function is
+sufficient to guarantee soundness and timely resource liberation,
+while being about as expressive as a manually-managed resources.
 
 \paragraph{Memory management}
 
