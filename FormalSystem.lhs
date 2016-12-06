@@ -215,7 +215,7 @@ interleave12 =
     dup2 A = L
     dup2 B = R
     dup2 C = R
-\end{code}
+\end{code} ; $
 
 None of the combinator library seem complete, and, while they are all
 rather effective at defining a large family of stream processors, some
@@ -252,7 +252,7 @@ provides such guarantees. Code to read a file, in Rust, is as follows:
 \end{verbatim}
 
 With such guarantees, an \textsc{api} with just a few function is
-sufficient to guarantee soundness and timely resource liberatione
+sufficient to guarantee soundness and timely resource liberation
 while being about as expressive as a manually-managed resources.
 
 \paragraph{Memory management}
