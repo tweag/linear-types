@@ -108,6 +108,168 @@ BoldFont=lmroman10-bold,
 
 \section{Introduction}
 
+Some of the prominent recent advances in typed functional programming
+applied research have focused on extending type systems to make it
+easier to encode strong invariants key to the {\em correctness} of
+programs. Extensions from GADT's \cite{xi_guarded_2003} (now in both
+GHC and OCaml), to type-level functions such as type families
+\cite{chakravarty_associated_2005-1}, to increasingly automatic and
+complete promotion of term-level data types to the type-level
+\cite{eisenburg_promoting_2014}. Yet in practice, that a user's
+program is denotationally correct with respect to some abstract
+specification matters little if doesn't abide to efficient and timely
+release of scarce hardware resources. Indeed, {\em predictable} and
+easy to reason about use of resources is frequently part of the
+specification too. We argue that teaching the type system to track
+resources and their lifetimes will prove crucial, for many
+applications, to resolving the impedance mismatch between the
+expressive power of high-level programming languages and the age-old
+low-level concerns of taming memory consumption and running fast on
+real hardware.
+
+\paragraph{Static resource tracking}
+
+Scarce system resources include memory mappings, locks, sockets and
+file handles, among others. With no primitive support from the
+programming language for managing these resources, acquiring a file
+handle for reading and then disposing of a file handle looks something
+like this:
+\begin{code}
+do  h <- openfile "myfile" ReadMode
+    ...     -- some code that reads the file
+    hClose h
+\end{code}
+This style of programming is unsafe. In the above, there is nothing
+preventing the programmer from accidentally reusing the file handle
+after calling |hClose|, even though the handle is now defunct forever
+in the future, or indeed call |hClose| twice. In short, programming
+with explicit file handle creation/deletion operators is prone to the
+same bugs that plague programming with explicit
+allocation/deallocation memory operators. Two common strategies to
+avoid the bane of use-after-free and free-after-free bugs are:
+
+\begin{enumerate}
+\item provide higher-level combinators or patterns of programming that
+  reduce their likelihood, as in streaming I/O frameworks and the RAII
+  pattern popularized by modern C++;
+\item make resource disposal implicit and completely automatic via
+  a garbage collection (GC) mechanism;
+\end{enumerate}
+
+Each of these is the topic of the next two headings. Higher-level
+combinators fall short of enforcing all the resource management
+correctness invariants we'd like. Further, they impose a sometimes
+substantial encoding overhead. While automatic resource disposal is
+a problematic source of non-determinism that can be the cause of
+subtle performance and/or correctness bugs.
+
+\paragraph{Combinator libraries}
+
+
+
+\paragraph{Memory management}
+
+Kiselyov \cite{kiselyov_iteratees_2012} argues against fully automatic
+resource management for managing I/O resources, such as file
+descriptors and buffers. In particular, relying on the garbage
+collector to reclaim file descriptors, leads to file descriptor leaks.
+In general, the problem with automatic resource management is that the
+runtime provides no guarantees as to the timeliness of the resource
+reclaiming process. File handle finalizers might run at an arbitrarily
+late time in the future. Locks are certainly a bad idea to release
+automatically for this reason.
+
+A central tenet of this paper is,
+\begin{center}
+\em memory is just a system resource like any other, which, as such,
+deserves the parsimonious consumption and timely release that other
+resources can.
+\end{center}
+Fully automatic memory management is certainly convenient, and an
+effective means of avoiding use-after-free and free-after-free bugs,
+since it is the language runtime that guarantees, via a global dynamic
+analysis, that resources are reclaimed only when it is entirely safe
+to do so. But this dynamic global analysis is expensive to run. For
+this reason, resources are reclaimed in batch to amortize its cost,
+only when resource pressure is deemed to warrant reclaiming those
+resources that can be. Worse, this global analysis, aka garbage
+collection, often requires exclusive access to resources, hence
+stalling and potentially starving other threads of control.
+
+In interactive low-latency systems (web servers, graphical user
+interfaces, high-speed trading systems, real-time analytics and query
+services, games, etc), pausing threads performing useful work is
+problematic. Because these pauses can happen at any time, for
+indeterminate periods of time, an unbounded number of times, the
+tail-end of runtime distributions increases. This in turn makes
+synchronization among many threads more costly and less frequent,
+because threads can only synchronize as often as the last thread
+reaches the synchronization point.
+
+TODO Refer to worked out example.
+
+TODO compare with compact regions
+
+TODO mention that ours supports workloads that don't fit
+``generational hypothesis''.
+
+Speeding up this global analysis, be it by considering only a portion
+of the entire heap of resources most of the time (generational GC's),
+making the analysis interruptible (incremental GC's) or coalescing
+resources into coarser grained units that are reclaimed atomically
+(compact regions), is a decent workaround for many applications. But
+better yet not have to perform this analysis at all! Or over a much
+smaller heap. Indeed many of the above mentioned interactive systems
+depend on latency requirements several orders of magnitude lower than
+the state of the art garbage collectors are able to sustain.
+
+Whereas GC pauses have frequently been observed to reach 50ms or more
+for large heaps of long-lived objects, games typically target
+a maximum latency budget of 16ms per rendered frame, corresponding to
+a 60 frames per second refresh rate. Whereas incremental GC's might
+target single digit millisecond latencies, often at a substantial cost
+on throughput, bulk synchronous parallel programs synchronize over
+networks with single digit microsecond roundtrip latencies.
+
+TODO mention actual latency constraints. Games: 16ms.
+
+Because either memory allocation or memory reclamation (but often
+both) are expensive operations, it becomes increasingly harder to fit
+within a set latency budget the further down the ``allocation
+hierarchy'' we go:
+\begin{enumerate}
+\item {\bf No allocation:} The cheapest allocation is the one that
+  doesn't exist. Any allocation guaranteed by the compiler not to
+  occur is one that does not eat into the application's small latency
+  budget, and that's a fact the programmer can count on.
+\item {\bf Off GC-heap allocation:} if you must allocate, then better
+  allocate outside of the GC's bailiwick, in a separate memory region.
+  In this way, the size of the GC heap does not increase, so GC pauses
+  are shorter and farther between.
+\item {\bf On GC-heap allocation:} If neither of the above are
+  possible, or for small short-lived objects that never graduate
+  beyond a generation-0 garbage sweep, which is cheap, then perhaps
+  playing it fast and loose by allocating in the main heap and letting
+  the GC take care of the rest can be acceptable.
+\end{enumerate}
+
+The type system extension that we propose in this paper fits the top
+two tiers of this hierarchy:
+\begin{enumerate}
+\item While first-class type system support for tracking resources
+  isn't necessary to perform fusion, a common technique for statically
+  eliminating redundant allocations while retaining good code
+  modularity. Our type system {\em guarantees} the absence of
+  allocation.
+\item where allocation cannot be avoided without trading in an
+  excessive time budget, we allow safely allocating in a dedicated
+  heap not managed by the GC, where objects can be deallocated
+  explicitly at exactly the right time, yet without compromising
+  memory safety.
+\end{enumerate}
+
+\section{Introduction}
+
 When one writes a program interacting with its environment, sooner or
 later one needs to manage shared resources. Programming languages
 typically offer three kind of facilities to help with shared resources
