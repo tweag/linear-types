@@ -294,13 +294,6 @@ synchronization among many threads more costly and less frequent,
 because threads can only synchronize as often as the last thread
 reaches the synchronization point.
 
-TODO Refer to worked out example.
-
-TODO compare with compact regions
-
-TODO mention that ours supports workloads that don't fit
-``generational hypothesis''.
-
 Speeding up this global analysis, be it by considering only a portion
 of the entire heap of resources most of the time (generational GC's),
 making the analysis interruptible (incremental GC's) or coalescing
@@ -312,19 +305,64 @@ depend on latency requirements several orders of magnitude lower than
 the state of the art garbage collectors are able to sustain.
 
 Whereas GC pauses have frequently been observed to reach 50ms or more
-for large heaps of long-lived objects, games typically target
-a maximum latency budget of 16ms per rendered frame, corresponding to
-a 60 frames per second refresh rate. Whereas incremental GC's might
-target single digit millisecond latencies, often at a substantial cost
-on throughput, bulk synchronous parallel programs synchronize over
-networks with single digit microsecond roundtrip latencies.
+for large heaps of long-lived
+objects\footnote{https://blog.pusher.com/latency-working-set-ghc-gc-pick-two/},
+games typically target a maximum latency budget of 16ms per rendered
+frame, corresponding to a 60 frames per second refresh rate. Whereas
+incremental GC's might target single digit millisecond latencies,
+often at a substantial cost on throughput, bulk synchronous parallel
+programs (see below) synchronize over networks with single digit
+microsecond roundtrip latencies.
 
-TODO mention actual latency constraints. Games: 16ms.
+\paragraph{Latency matters} A very popular model for applications in
+high-performance computing is bulk synchronous parallelism
+\cite{valiant_bridging_1990}. In this model, computations are
+structured as iterating a three step process:
+\begin{description}
+\item[Compute:] simultaneously start as many threads as there are
+  cores in the cluster, each computing over a subset of the data.
+\item[Communicate:] all processes communicate results with other nodes
+  (e.g. their neighbors in a mesh physics simulation).
+\item[Synchronize:] the next iteration doesn't start until all threads
+  synchronize on a global write barrier.
+\end{description}
+The reason for introducing a global write barrier is because this
+allows {\em one-sided communication}. Traditional message passing
+requires synchronization between the sender and the receiver, in
+particular to decide on the receiving end where to store the message
+in memory (say in some other thread's mailbox). Whereas one-sided
+communication is purely asynchronous: writing messages directly at
+their final location on the destination node can be coordinated from
+the sender, without involving the receiver, and without any
+indirection. These asynchronous message sends can be performed across
+a cluster in mere microseconds on current hardware. But the write
+barrier serves to ensure that all one-sided sends are complete before
+starting the next iteration.
 
-Because either memory allocation or memory reclamation (but often
-both) are expensive operations, it becomes increasingly harder to fit
-within a set latency budget the further down the ``allocation
-hierarchy'' we go:
+As we start increasing the number of threads to synchronize on the
+global barrier to thousands of threads and beyond, any ``jitter''
+(i.e. variance in the thread runtimes) increases the time to fully
+reaching the barrier for all threads. Performance crucially depends on
+achieving predictable latencies, because the lower the variance, the
+tighter we space each barrier in time, and the less threads sit idle
+waiting on their peers.
+
+There are of course ways to perform latency hiding. Threads can be
+oversubscribed, data can be prefetched, or de-normalized and
+computations duplicated to reduce the number of neighbours threads
+have to communicate with. These solutions all come at a complexity
+cost in systems that have often exceeded any reasonable complexity
+budget.
+
+TODO compare with compact regions
+
+TODO mention that ours supports workloads that don't fit
+``generational hypothesis''.
+
+\paragraph{the allocation hierarchy} Because either memory allocation
+or memory reclamation (but often both) are expensive operations, it
+becomes increasingly harder to fit within a set latency budget the
+further down the ``allocation hierarchy'' we go:
 \begin{enumerate}
 \item {\bf No allocation:} The cheapest allocation is the one that
   doesn't exist. Any allocation guaranteed by the compiler not to
