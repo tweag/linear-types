@@ -229,7 +229,33 @@ combinator library for stream processing, with a rather different
 trade-off: the programming model is the λ-calculus (specifically
 Haskell) with streams, therefore using multiple input stream, or
 producing values is simply a matter of choosing the output type of a
-Haskell function. On the other hand their library is not safe: it is
+Haskell function.
+\begin{code}
+interleave3 :: (Flow a, Build a, Flow b, Build b, Flow c, Build c) => Sources a -> Sources b -> Sources c -> IO (Sources (a,(b,c)))
+interleave3 sa sb sc = do
+    z <- zipWith_i (,) sb sc
+    zipWith_i (,) sa z
+
+interleave21 :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> IO (Sources (a,(b,b)))
+interleave21 sa sb = do
+    (sb1,sb2) <- connect_i sb
+    interleave3 sa sb1 sb2
+
+count :: (Flow a) => Sources a -> IO Int
+count s = do
+  s' <- map_i (\_->1) s
+  s'' <- foldlS (+) 0 s'
+  return $ index s'' 0
+
+-\- interleave two input stream and return the length of the stream
+interleaveCount :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> Sinks (a,(b,b)) -> IO Int
+interleaveCount sa sb k = do
+  sabb <- interleave21 sa sb
+  sabb' <- dup_io sabb k
+  count sabb'
+\end{code}
+
+On the other hand their library is not safe: it is
 susceptible to use-after-free errors. To make the library safe,
 Lippmeier \& al need Haskell's type system to track the linearity of
 binders.
