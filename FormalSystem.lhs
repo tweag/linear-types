@@ -215,7 +215,7 @@ interleave12 =
     dup2 A = L
     dup2 B = R
     dup2 C = R
-\end{code} ; $
+\end{code} % $
 
 None of the combinator library seem complete, and, while they are all
 rather effective at defining a large family of stream processors, some
@@ -247,13 +247,13 @@ count s = do
   s'' <- foldlS (+) 0 s'
   return $ index s'' 0
 
--\- interleave two input stream and return the length of the stream
+-- interleave two input stream and return the length of the stream
 interleaveCount :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> Sinks (a,(b,b)) -> IO Int
 interleaveCount sa sb k = do
   sabb <- interleave21 sa sb
   sabb' <- dup_io sabb k
   count sabb'
-\end{code}
+\end{code} % $
 
 On the other hand their library is not safe: it is
 susceptible to use-after-free errors. To make the library safe,
