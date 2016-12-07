@@ -178,6 +178,17 @@ complete. Machines are pure stream processors: they cannot return a
 value which is not a stream (for instance the size of its input),
 while conduits can easily do that:
 \begin{code}
+-- Summary of Conduit API
+type Producer m o = forall i. ConduitM i o m ()
+type Conduit i m o = ConduitM i o m ()
+instance Monad (Conduit M i o m)
+runConduitRes :: MonadBaseControl IO m => ConduitM () Void (ResourceT m) r -> m r
+(=$=) :: Monad m => Conduit a m b -> ConduitM b c m r -> ConduitM a c m r
+C.sourceFile :: (MonadResource m, IOData a, MonoFoldable a) => FilePath -> Producer m a
+C.map :: Monad m => (a -> b) -> Conduit a m b
+C.linesUnbounded :: (Monad m, IsSequence seq, Element seq ~ Char) => Conduit seq m seq
+-- /API
+
 -- |wc -ls| (line count) in conduit
 -- run with |runConduitRes $ wcConduit f :: IO Int|
 wcConduit :: FilePath -> ConduitM () Void (ResourceT IO) Int
@@ -187,11 +198,20 @@ wcConduit rp = do
   where
     r :: Source (ResourceT IO) String = C.sourceFile rp
     rlines = r =$= C.linesUnbounded
-\end{code}
+\end{code} % $
 
 On the other hand, conduits do not have as good a story as machines
 for manipulating multiple input streams.
 \begin{code}
+-- summary of Machines API
+type Plan k o a = forall m. PlanT k o m a
+type Tee a b c = Machine (T a b) c
+repeatedly :: Monad m => PlanT k o m a -> MachineT m k o
+awaits :: k i -> Plan k o i
+yield :: o -> Plan k o ()
+fit :: Monad m => (forall a. k a -> k' a) -> MachineT m k o -> MachineT m k' o
+-- /API
+
 data Three a b c x where
   A :: Three a b c a
   B :: Three a b c b
@@ -231,6 +251,14 @@ Haskell) with streams, therefore using multiple input stream, or
 producing values is simply a matter of choosing the output type of a
 Haskell function.
 \begin{code}
+-- Summary of repa-flow API
+zipWith_i :: (Flow a, Flow b, Build c) => (a -> b -> c) -> Sources a -> Sources b -> IO (Sources c)
+connect_i :: Sources a -> IO (Sources a, Sources a)
+map_i :: (Flow a, Build b) => (a -> b) -> Sources a -> IO (Sources b)
+foldlAllS :: Flow b => (a -> b -> a) -> a -> Sources b -> IO a
+dup_io :: Sources a -> Sinks a -> IO (Sources a)
+-- /API
+
 interleave3 :: (Flow a, Build a, Flow b, Build b, Flow c, Build c) => Sources a -> Sources b -> Sources c -> IO (Sources (a,(b,c)))
 interleave3 sa sb sc = do
     z <- zipWith_i (,) sb sc
@@ -244,8 +272,7 @@ interleave21 sa sb = do
 count :: (Flow a) => Sources a -> IO Int
 count s = do
   s' <- map_i (\_->1) s
-  s'' <- foldlS (+) 0 s'
-  return $ index s'' 0
+  foldlSAll (+) 0 s'
 
 -- interleave two input stream and return the length of the stream
 interleaveCount :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> Sinks (a,(b,b)) -> IO Int
