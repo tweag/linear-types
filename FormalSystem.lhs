@@ -573,11 +573,27 @@ unsafe! For example, there is nothing stopping the provided action
 from stashing a freshly allocated value down a |Chan| to another
 thread, hence escaping the dynamic scope of the region.
 
-One solution to this in Haskell is to use monadic regions
+One tentative solution to this in Haskell is to use monadic regions
 \cite{kiselyov_regions_2008}. At a significant syntactic cost: {\em
   all} allocations must then be done explicitly, using specially
-provided monadic operators, inside a bespoke |ST|-like monad.
-Otherwise pure code now has to be written in a monadic style.
+provided monadic operators,
+
+\begin{code}
+data FileHandle s
+
+newHandle :: FilePath -> RegionIO s (FileHandle s)
+readLine :: FileHandle s -> RegionIO s String
+
+runRegion :: (forall s. RegionIO s a) -> IO a
+\end{code}
+
+inside a bespoke |ST|-like monad (called |RegionIO| above). Otherwise
+pure code now has to be written in a monadic style. Worse, this
+approach requires resource specific handle types, with resource
+specific projection functions (such as |readLine| above) lifted to
+monadic projection actions. The projections are themselves part of the
+trusted base, which is ever growing. And nothing guarantees that the
+result of projections is allocated in the current region...
 
 \subsubsection{the allocation hierarchy}
 
