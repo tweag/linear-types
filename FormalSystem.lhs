@@ -461,15 +461,16 @@ This approach is certainly a useful tool for the discriminating
 high-performance programmer. We believe that tracking resources in the
 type system can work hand-in-hand to enhance the power of this tool.
 
-Consider the following example, a slight generalization extracted from
-a real-world business use case at Pusher, cited above. The challenge
-is to maintain a concurrent queue of messages. Each message can be of
-arbitrary size, but usually in the order of kilobytes. There can be
-many hundreds of thousands of message to maintain in memory. Old
-messages are evicted, upon being read by clients, or if the queue
-grows too long (so it's okay to lose messages). Any client can also
-request for any message in the queue to be removed. In short, the
-concurrent queue supports the following operations:
+\paragraph{Example 1} Consider the following example, a slight
+generalization extracted from a real-world business use case at
+Pusher, cited above. The challenge is to maintain a concurrent queue
+of messages. Each message can be of arbitrary size, but usually in the
+order of kilobytes. There can be many hundreds of thousands of message
+to maintain in memory. Old messages are evicted, upon being read by
+clients, or if the queue grows too long (so it's okay to lose
+messages). Any client can also request for any message in the queue to
+be removed. In short, the concurrent queue supports the following
+operations:
 
 \begin{code}
 push :: Queue -> Msg -> IO ()
@@ -525,10 +526,58 @@ and write-after-write semantics. So just like the above example, we
 require adding objects to our long-lived object cache, as well as
 evicting random objects based on requests from peers in the cluster.
 
-\subsubsection{GC's are just one tool in the toolbox}
+\paragraph{Example 2} Consider the implementation of a low-latency web
+server. Typically, a web server maintains no state between requests,
+or any state is serialized to some external database on a different
+server. That is to say, the state of the heap for the web server
+should stay constant. We'll need to allocate temporary data structures
+to represent the parameters of a request, as well as to assemble
+a response. But any allocation in response to a request ought to be
+allocated in some stratch space, which is wholly discarded at the end
+of each request.
 
-TODO mention that ours supports workloads that don't fit
-``generational hypothesis''.
+A garbage collector isn't needed in such an application: all data
+structures are either static or very short-lived. If we avoid it
+entirely then it becomes possible to achieve very short and
+predictable latencies indeed. Further, it would be nice if we could
+{\em guarantee} that the heap will stay constant across requests.
+
+The basic server loop looks like this:
+
+\begin{code}
+-- Holds server configuration data
+data ServerContext
+
+requestHandler :: Request -> IO Response
+  
+server :: ServerContext -> IO ()
+server cxt = do
+  req <- getRequest cxt
+  resp <- requestHandler req
+  putResponse cxt resp
+  server cxt
+\end{code}
+
+We could imagine wrapping the call to |requestHandler| with a new
+primitive, called
+
+\begin{code}
+withRegion :: NFData a => IO a -> IO a
+\end{code}
+
+that runs the provided action in the scope of a whole new heap that is
+not garbage collected, then makes sure that the given action yields
+a fully evaluated value, and finally unilaterally reclaims the scratch
+heap in one go. However, a |withRegion| of the above type would be
+unsafe! For example, there is nothing stopping the provided action
+from stashing a freshly allocated value down a |Chan| to another
+thread, hence escaping the dynamic scope of the region.
+
+One solution to this in Haskell is to use monadic regions
+\cite{kiselyov_regions_2008}. At a significant syntactic cost: {\em
+  all} allocations must then be done explicitly, using specially
+provided monadic operators, inside a bespoke |ST|-like monad.
+Otherwise pure code now has to be written in a monadic style.
 
 \subsubsection{the allocation hierarchy}
 
