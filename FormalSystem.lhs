@@ -127,7 +127,7 @@ expressive power of high-level programming languages and the age-old
 low-level concerns of taming memory consumption and running fast on
 real hardware.
 
-\paragraph{Static resource tracking}
+\subsection{Static resource tracking}
 
 Scarce system resources include memory mappings, locks, sockets and
 file handles, among others. With no primitive support from the
@@ -163,7 +163,7 @@ substantial encoding overhead. While automatic resource disposal is
 a problematic source of non-determinism that can be the cause of
 subtle performance and/or correctness bugs.
 
-\paragraph{Combinator libraries}
+\subsection{Combinator libraries}
 
 Combinator libraries strive to provide both soundness and timely
 release of resources by restricting the available programming
@@ -308,7 +308,7 @@ With such guarantees, an \textsc{api} with just a few function is
 sufficient to guarantee soundness and timely resource liberation
 while being about as expressive as a manually-managed resources.
 
-\paragraph{Memory management}
+\subsection{Memory management}
 
 Kiselyov \cite{kiselyov_iteratees_2012} argues against fully automatic
 resource management for managing I/O resources, such as file
@@ -367,10 +367,12 @@ often at a substantial cost on throughput, bulk synchronous parallel
 programs (see below) synchronize over networks with single digit
 microsecond roundtrip latencies.
 
-\paragraph{Latency matters} A very popular model for applications in
-high-performance computing is bulk synchronous parallelism
-\cite{valiant_bridging_1990}. In this model, computations are
-structured as iterating a three step process:
+\subsubsection{Latency matters}
+
+\paragraph{bulk synchronous programming} A very popular model for
+applications in high-performance computing is bulk synchronous
+parallelism \cite{valiant_bridging_1990}. In this model, computations
+are structured as iterating a three step process:
 \begin{description}
 \item[Compute:] simultaneously start as many threads as there are
   cores in the cluster, each computing over a subset of the data.
@@ -379,6 +381,15 @@ structured as iterating a three step process:
 \item[Synchronize:] the next iteration doesn't start until all threads
   synchronize on a global write barrier.
 \end{description}
+Each iteration is called a ``superstep''. This model isn't just the
+concern of a small niche: it is comparable to the MapReduce model used
+elsewhere, which likewise proceeds in lockstep. The map phase precedes
+the shuffle and reduce phases. Mapping again becomes possible once the
+previous reduce is complete. A new supestep begins when a previous one
+finishes. Even interactive user queries with a total latency envelope
+of 100ms can be processed as a sequence of dozens of such parallel
+phases.
+
 The reason for introducing a global write barrier is because this
 allows {\em one-sided communication}. Traditional message passing
 requires synchronization between the sender and the receiver, in
@@ -388,9 +399,9 @@ communication is purely asynchronous: writing messages directly at
 their final location on the destination node can be coordinated from
 the sender, without involving the receiver, and without any
 indirection. These asynchronous message sends can be performed across
-a cluster in mere microseconds on current hardware. But the write
-barrier serves to ensure that all one-sided sends are complete before
-starting the next iteration.
+a cluster in mere microseconds on current hardware. The write barrier
+serves to ensure that all one-sided sends are complete before starting
+the next iteration.
 
 As we start increasing the number of threads to synchronize on the
 global barrier to thousands of threads and beyond, any ``jitter''
@@ -401,21 +412,130 @@ tighter we space each barrier in time, and the less threads sit idle
 waiting on their peers.
 
 There are of course ways to perform latency hiding. Threads can be
-oversubscribed, data can be prefetched, or de-normalized and
-computations duplicated to reduce the number of neighbours threads
-have to communicate with. These solutions all come at a complexity
-cost in systems that have often exceeded any reasonable complexity
-budget.
+oversubscribed, data can be prefetched, or de-normalized (made
+redundant copies of in many locations) and computations duplicated to
+reduce the number of neighbours threads have to communicate with.
+These solutions all come at a complexity cost in systems that have
+often already far exceeded any reasonable complexity budget.
+Maintaining low and predictable latencies is therefore a means to
+achiev simpler designs.
 
-TODO compare with compact regions
+\paragraph{Stream processing} The Square Kilometer
+Array\footnote{https://www.skatelescope.org/} is projected to produce
+hundreds of terabytes per second of raw data each second streaming
+from its thousands of sensors. Keeping up with such a deluge requires
+processing the data over multiple machines at once, since the
+necessary throughput far exceeds the memory bandwidth of a single
+machine. Yet as we scale up the amount of hardware resources that we
+throw at a problem, it is the total energy cost of the system that
+eventually becomes a bottleneck \cite{doe_exascale_2010}. The total
+amount of memory available on each machine is ultimately limited by
+cost and energy requirements. This means that there is only so much
+data that can remain in-flight in the system at any given time. The
+mean throughput of a steady state system is governed by Little's law
+\cite{little_proof_1961}:
+
+\begin{displaymath}
+  \textrm{mean throughput} = {\textrm{mean number of in-flight
+      requests} \over \textrm{mean request latency}}
+\end{displaymath}
+
+Since the number of in-flight requests is limited by the available
+memory, higher throughput can only be achieved by decreasing
+latencies. In such a setting, GC productivity becomes crucial to
+optimize for.
+
+\subsubsection{Easing GC pressure with compact regions}
+
+In general, in any mark-and-sweep GC the time necessary for a full
+garbage collection pass is proportional to the amount of live data in
+memory. Or rather, to the number of objects. A recent proposal
+\cite{yang_compact_2015} has suggested that an effective means of
+reducing the number of objects that the GC needs to traverse is to
+{\em compact} many long-lived objects into a single immutable chunk of
+memory. In effect, the lifetimes of these objects are assumed equal.
+The GC can pretend that the chunk is a single object because objects
+inside it live and die together, in one fell swoop.
+
+This approach is certainly a useful tool for the discriminating
+high-performance programmer. We believe that tracking resources in the
+type system can work hand-in-hand to enhance the power of this tool.
+
+Consider the following example, a slight generalization extracted from
+a real-world business use case at Pusher, cited above. The challenge
+is to maintain a concurrent queue of messages. Each message can be of
+arbitrary size, but usually in the order of kilobytes. There can be
+many hundreds of thousands of message to maintain in memory. Old
+messages are evicted, upon being read by clients, or if the queue
+grows too long (so it's okay to lose messages). Any client can also
+request for any message in the queue to be removed. In short, the
+concurrent queue supports the following operations:
+
+\begin{code}
+push :: Queue -> Msg -> IO ()
+delete :: Queue -> Msg -> IO ()
+-- Remove the N oldest messages.
+evict :: Queue -> Int -> IO (Vector Msg)
+\end{code}
+
+If the queue grows very large, then most objects in the queue are very
+long-lived. This runs counter to the ``generational hypothesis'' that
+is so crucial to the performance of generational garbage collectors.
+In this example, most objects that get created do {\em not} die
+shortly after being created. So a partial sweep of only the most
+recent allocations is unlikely to find any garbage. Yet performing
+a full sweep of the entire object graph is onerous, and wasteful.
+
+One possible implementation strategy consists in accumulating new
+messages into regions holding a fixed number $k$ of messages as they
+come in. Once the region is full, we seal the region, push it into the
+main GC-managed heap as any odd heap allocated object, and open a new
+one.
+
+There are two challenges with this strategy:
+\begin{enumerate}
+\item While the queue can gainfully be represented as a chain of
+  compact regions rather than a chain of messages, the larger the $k$
+  value chosen, the more unlikely it is that removing $p$ messages
+  from the queue, even consecutive ones, will reclaim any memory.
+  compact regions can be rewritten upon deletion of a message, at the
+  cost of extra latency. Regions can't be mutated once sealed, so even
+  to mark a message as deleted without bothering to reclaim the memory
+  would require maintaining an auxiliary blacklist, which we'd need to
+  lookup before any read request, at the cost of extra implementation
+  complexity. In short, compact regions work great for largely static
+  structures parts of which can be considered temporarily immutable
+  (and copied when they're not), while in this case the natural
+  representation of our queue would be a linked list or tree to allow
+  for random deletions.
+\item \todo{ASPIWACK}
+\end{enumerate}
+
+Note that this example is but one instance of a wide class of similar
+use cases, such as in-kernel buffer caches. Our initial use case at
+Tweag I/O was an in-memory cache for a distributed on-disk object
+storage system. To mask disk access latencies, we hold as many objects
+in memory as possible. But to keep the hit rate of the cache high, we
+continuously evict old or infreuently used objects to make room for
+more recently accessed objects. The objects are mutable. Whenever
+a client wants to mutate an object, it needs to {\em lock} the object.
+Locking an object requires evicting any copy of the object in any
+cache anywhere in the cluster, to maintain consistent read-after-write
+and write-after-write semantics. So just like the above example, we
+require adding objects to our long-lived object cache, as well as
+evicting random objects based on requests from peers in the cluster.
+
+\subsubsection{GC's are just one tool in the toolbox}
 
 TODO mention that ours supports workloads that don't fit
 ``generational hypothesis''.
 
-\paragraph{the allocation hierarchy} Because either memory allocation
-or memory reclamation (but often both) are expensive operations, it
-becomes increasingly harder to fit within a set latency budget the
-further down the ``allocation hierarchy'' we go:
+\subsubsection{the allocation hierarchy}
+
+Because either memory allocation or memory reclamation (but often
+both) are expensive operations, it becomes increasingly harder to fit
+within a set latency budget the further down the ``allocation
+hierarchy'' we go:
 \begin{enumerate}
 \item {\bf No allocation:} The cheapest allocation is the one that
   doesn't exist. Any allocation guaranteed by the compiler not to
@@ -435,17 +555,32 @@ further down the ``allocation hierarchy'' we go:
 The type system extension that we propose in this paper fits the top
 two tiers of this hierarchy:
 \begin{enumerate}
-\item While first-class type system support for tracking resources
-  isn't necessary to perform fusion, a common technique for statically
-  eliminating redundant allocations while retaining good code
-  modularity. Our type system {\em guarantees} the absence of
-  allocation.
+\item Fusion is a common technique for statically eliminating
+  redundant allocations while retaining good code modularity. While
+  first-class type system support for tracking resources certainly
+  isn't a necessity to perform fusion, a common complaint born out of
+  using \verb|RULE| pragma based fusion on large codebases is that it
+  is brittle and hard to reason about. our type system {\em
+    guarantees} fusion where the programmer has expressed an intent.
+  It can therefore guarantee the absence of allocation at precise
+  points in the program. Crucially, this guarantee is robust in the
+  face of compiler optimizations.
 \item where allocation cannot be avoided without trading in an
   excessive time budget, we allow safely allocating in a dedicated
   heap not managed by the GC, where objects can be deallocated
   explicitly at exactly the right time, yet without compromising
   memory safety.
 \end{enumerate}
+
+
+
+
+
+
+
+
+
+
 
 \section{Introduction}
 
