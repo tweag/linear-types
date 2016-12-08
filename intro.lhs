@@ -714,3 +714,7 @@ two tiers of this hierarchy:
   explicitly at exactly the right time, yet without compromising
   memory safety.
 \end{enumerate}
+
+\printbibliography
+
+\end{document}
