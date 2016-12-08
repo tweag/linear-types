@@ -219,21 +219,24 @@ splitting them.
 \begin{code}
 -- A machine reads from |k| inputs
 -- and may yield |o| results before stopping.
-data Machine k o
+data Machine (k :: * -> *) o
 
-data T a b where
+data T a b :: * -> * where
   L :: T a b a
-  R :: T a b c
+  R :: T a b b
 
+-- Machine that reads either an |a| or a |b| to produce |c|'s.
 type Tee a b c = Machine (T a b) c
-type Plan k o a = forall m. PlanT k o m a
-repeatedly :: Monad m => PlanT k o m a -> MachineT m k o
+
+data Plan (k :: * -> *) o a
+
+repeatedly :: Plan k o a -> Machine k o
 awaits :: k i -> Plan k o i
 yield :: o -> Plan k o ()
-fit :: Monad m => (forall a. k a -> k' a) -> MachineT m k o -> MachineT m k' o
+fit :: (forall a. k a -> k' a) -> Machine k o -> Machine k' o
 \end{code}
-
-
+With these basic verbs in place, it becomes possible to express stream
+computations that operate over multiple inputs at once.
 \begin{code}
 data Three a b c x where
   A :: Three a b c a
@@ -261,24 +264,34 @@ interleave12 =
 \end{code} % $
 
 In sum, each pattern of access to streamed system resources gives rise
-to different encoding challenges in each streaming I/O framework.
+to different encoding challenges in each streaming I/O framework. The
+essential challenge here is that to guarantee safe resource
+management, these libraries hide the very notion of a stream to the
+user. Users can't directly manipulate streams in arbitrary expressions
+of their choosing. Users combine {\em stream processors} (``conduits''
+or ``machines'') rather than combining streams directly.
 
-Lippmeier \& al~\cite{lippmeier_parallel_2016} propose another
-combinator library for stream processing, with a rather different
-trade-off: the programming model is the λ-calculus (specifically
-Haskell) with streams, therefore using multiple input stream, or
-producing values is simply a matter of choosing the output type of a
-Haskell function.
+In search of a more flexible framework, Lippmeier \&
+al~\cite{lippmeier_parallel_2016} propose an alternative model for
+stream processing while attempting to nevertheless offer the same
+resource safety guarantees (timely release of resources, no
+use-after-free, no free-after-free). In |repa-flow|, stream processors
+are just functions, not an abstract type of values that can only be
+constructed using a limited vocabulary.
+
+Given a handful of off-the-shelf combinators (which we could as well
+have written ourselves since they're not primtives of the framework),
 \begin{code}
--- Summary of repa-flow API
 zipWith_i :: (Flow a, Flow b, Build c)
           => (a -> b -> c) -> Sources a -> Sources b -> IO (Sources c)
 connect_i :: Sources a -> IO (Sources a, Sources a)
 map_i :: (Flow a, Build b) => (a -> b) -> Sources a -> IO (Sources b)
 foldlAllS :: Flow b => (a -> b -> a) -> a -> Sources b -> IO a
 dup_io :: Sources a -> Sinks a -> IO (Sources a)
--- /API
-
+\end{code}
+it becomes straightforward to define an example that combines the
+features of both the Conduit example and the machines example above:
+\begin{code}
 interleave3
     :: (Flow a, Build a, Flow b, Build b, Flow c, Build c)
     => Sources a -> Sources b -> Sources c -> IO (Sources (a,(b,c)))
@@ -305,32 +318,33 @@ interleaveCount sa sb k = do
   sabb' <- dup_io sabb k
   count sabb'
 \end{code} % $
+The catch is that this library is not resource safe. There is nothing
+preventing the user from introducing a use-after-free bug. Lippmeier
+\& al point out that if only Haskell had linear types (or for that
+matter any other means of tracking resources at the type-level), then
+a few type signatures in his library could be changed to in fact make
+the library resource safe.
 
-On the other hand their library is not safe: it is
-susceptible to use-after-free errors. To make the library safe,
-Lippmeier \& al need Haskell's type system to track the linearity of
-binders.
-
-At the other end of the spectrum, a much simpler, safe and complete
-\textsc{api} for files can be given, provided that the programmer is
-statically forced to close all the file they open.
-
-For instance, the Rust programming language~\cite{matsakis_rust_2014}
-provides such guarantees. Code to read a file, in Rust, is as follows:
+In fact, a cornerstone of the Rust programming
+language~\cite{matsakis_rust_2014} is that it provides this resource
+safety out-of-the-box. Through its borrow checker, Rust captures
+a notion of affine types in its type system. The borrow checker is
+powerful enough to for example ensure that a file handle never escapes
+the current lexical scope:
 
 \begin{verbatim}
 {
   let path = Path::new("hello.txt");
   let mut file = try!(File::open(&path));
-  // some code that reads the file
-} // the variable `path` falls out of scope, it cannot exit this
-  // scope, as part of a closure or otherwise, therefore the file can
-  // be, and in fact is, closed when this scope ends.
+  ... // some code that reads the file
+}
+// the variable `path` falls out of scope, it cannot exit this
+// scope, as part of a closure or otherwise, therefore the file can
+// be, and in fact is, closed when this scope ends.
 \end{verbatim}
 
-With such guarantees, an \textsc{api} with just a few function is
-sufficient to guarantee soundness and timely resource liberation
-while being about as expressive as a manually-managed resources.
+The borrow checker in Rust makes it possible to remain resource safe
+without losing much expressive power at all.
 
 \subsection{Memory management}
 
