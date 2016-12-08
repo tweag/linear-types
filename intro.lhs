@@ -225,12 +225,15 @@ data T a b :: * -> * where
 -- Machine that reads either an |a| or a |b| to produce |c|'s.
 type Tee a b c = Machine (T a b) c
 
+fit :: (forall a. k a -> k' a) -> Machine k o -> Machine k' o
+
+-- A small EDSL for expressing machines.
 data Plan (k :: * -> *) o a
 
-repeatedly :: Plan k o a -> Machine k o
 awaits :: k i -> Plan k o i
 yield :: o -> Plan k o ()
-fit :: (forall a. k a -> k' a) -> Machine k o -> Machine k' o
+-- Interpret the plan into an action machine.
+repeatedly :: Plan k o a -> Machine k o
 \end{code}
 With these basic verbs in place, it becomes possible to express stream
 computations that operate over multiple inputs at once.
