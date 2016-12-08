@@ -698,15 +698,15 @@ hierarchy'' we go:
   the GC take care of the rest can be acceptable.
 \end{enumerate}
 
-The type system extension that we propose in this paper fits the top
-two tiers of this hierarchy:
+The type system extension that we propose in a separate document fits
+the top two tiers of this hierarchy:
 \begin{enumerate}
 \item Fusion is a common technique for statically eliminating
   redundant allocations while retaining good code modularity. While
   first-class type system support for tracking resources certainly
   isn't a necessity to perform fusion, a common complaint born out of
   using \verb|RULE| pragma based fusion on large codebases is that it
-  is brittle and hard to reason about. our type system {\em
+  is brittle and hard to reason about. Our type system {\em
     guarantees} fusion where the programmer has expressed an intent.
   It can therefore guarantee the absence of allocation at precise
   points in the program. Crucially, this guarantee is robust in the
