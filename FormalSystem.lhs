@@ -108,18 +108,18 @@ BoldFont=lmroman10-bold,
 
 \section{Introduction}
 
-Some of the prominent recent advances in typed functional programming
-applied research have focused on extending type systems to make it
-easier to encode strong invariants key to the {\em correctness} of
-programs. Extensions from GADT's \cite{xi_guarded_2003} (now in both
-GHC and OCaml), to type-level functions such as type families
+Several recent advances in typed functional programming applied
+research have focused on extending type systems to make it easier to
+encode strong invariants key to the {\em correctness} of programs.
+Extensions from GADT's \cite{xi_guarded_2003} (now in both GHC and
+OCaml), to type-level functions such as type families
 \cite{chakravarty_associated_2005-1}, to increasingly automatic and
 complete promotion of term-level data types to the type-level
 \cite{eisenburg_promoting_2014}. Yet in practice, that a user's
 program is denotationally correct with respect to some abstract
 specification matters little if doesn't abide to efficient and timely
 release of scarce hardware resources. Indeed, {\em predictable} and
-easy to reason about use of resources is frequently part of the
+{\em easy to reason about} use of resources is frequently part of the
 specification too. We argue that teaching the type system to track
 resources and their lifetimes will prove crucial, for many
 applications, to resolving the impedance mismatch between the
@@ -149,9 +149,10 @@ allocation/deallocation memory operators. Two common strategies to
 avoid the bane of use-after-free and free-after-free bugs are:
 
 \begin{enumerate}
-\item provide higher-level combinators or patterns of programming that
-  reduce their likelihood, as in streaming I/O frameworks and the RAII
-  pattern popularized by modern C++;
+\item restrict programs to using specifically provided higher-level
+  combinators or patterns of programming that reduce their likelihood,
+  as in streaming I/O frameworks and the RAII pattern popularized by
+  modern C++;
 \item make resource disposal implicit and completely automatic via
   a garbage collection (GC) mechanism;
 \end{enumerate}
@@ -172,46 +173,68 @@ conduit~\cite{snoyman_conduit_2015}, pipes~\cite{gonzalez_pipes_2015},
 and machines~\cite{kmett_machines_2015} offer stream-processing
 combinators to that effect.
 
-The number of libraries aiming at tackling speaks for the sheer size
-of the design space just for stream processing. None of them are
-complete. Machines are pure stream processors: they cannot return a
-value which is not a stream (for instance the size of its input),
-while conduits can easily do that:
-\begin{code}
--- Summary of Conduit API
-type Producer m o = forall i. ConduitM i o m ()
-type Conduit i m o = ConduitM i o m ()
-instance Monad (Conduit M i o m)
-runConduitRes :: MonadBaseControl IO m => ConduitM () Void (ResourceT m) r -> m r
-(=$=) :: Monad m => Conduit a m b -> ConduitM b c m r -> ConduitM a c m r
-C.sourceFile :: (MonadResource m, IOData a, MonoFoldable a) => FilePath -> Producer m a
-C.map :: Monad m => (a -> b) -> Conduit a m b
-C.linesUnbounded :: (Monad m, IsSequence seq, Element seq ~ Char) => Conduit seq m seq
--- /API
+The sheer number of libraries aiming at tackling this problem space
+speaks to its difficulty. None subsumes the other in expressive power.
 
--- |wc -ls| (line count) in conduit
--- run with |runConduitRes $ wcConduit f :: IO Int|
-wcConduit :: FilePath -> ConduitM () Void (ResourceT IO) Int
+Machines are pure stream processors: they cannot return a value which
+is not a stream (for instance the size of its input), while conduits
+can easily do that. To express a simple line count example, we'll need
+the following subset of the Conduit API:
+\begin{code}
+-- Provides a stream of output values,
+-- without consuming any input or producing a final result.
+type Producer m o = forall i. ConduitM i o m ()
+
+(=$=)  :: Monad m
+       => ConduitM a b m ()
+       -> ConduitM b c m r
+       -> ConduitM a c m r
+map :: Monad m => (a -> b) -> ConduitM a b m ()
+
+-- Chop up stream of strings along line boundaries.
+linesUnbounded :: ... => ConduitM ByteString ByteString m ()
+sourceFile  :: ... => FilePath -> Producer m a
+\end{code}
+Given the above, we can implement a simple line count in Conduit:
+\begin{code}
+wcConduit :: ... => FilePath -> ConduitM () Void m Int
 wcConduit rp = do
-    Sum i <- rlines =$= C.map (\_ -> Sum 1) =$= C.fold
+    Sum i <- sourceFile rp =$=
+             linesUnbounded =$=
+             map (\_ -> Sum 1) =$=
+             fold
     return i
-  where
-    r :: Source (ResourceT IO) String = C.sourceFile rp
-    rlines = r =$= C.linesUnbounded
 \end{code} % $
 
-On the other hand, conduits do not have as good a story as machines
-for manipulating multiple input streams.
+Unlike lazy I/O, exactly the amount of requested input is read at each
+step of the computation (no silent readahead), is guaranteed to run in
+constant memory if the line length is bounded, and disposes of any
+file handles at precisely the point where we |run| the |ConduitM|
+monad. However, once one starts to manipulate multiple input streams
+at once, things become tricky.
+
+Like Conduit, the machines library provides a set of combinators for
+splicing together stream computations, as well merging them and
+splitting them.
 \begin{code}
--- summary of Machines API
-type Plan k o a = forall m. PlanT k o m a
+-- A machine reads from |k| inputs
+-- and may yield |o| results before stopping.
+data Machine k o
+
+data T a b where
+  L :: T a b a
+  R :: T a b c
+
 type Tee a b c = Machine (T a b) c
+type Plan k o a = forall m. PlanT k o m a
 repeatedly :: Monad m => PlanT k o m a -> MachineT m k o
 awaits :: k i -> Plan k o i
 yield :: o -> Plan k o ()
 fit :: Monad m => (forall a. k a -> k' a) -> MachineT m k o -> MachineT m k' o
--- /API
+\end{code}
 
+
+\begin{code}
 data Three a b c x where
   A :: Three a b c a
   B :: Three a b c b
@@ -237,12 +260,8 @@ interleave12 =
     dup2 C = R
 \end{code} % $
 
-None of the combinator library seem complete, and, while they are all
-rather effective at defining a large family of stream processors, some
-patterns will inevitably run afoul of them. These only cover the case
-of stream processing (typical of file processing and network
-channels): other libraries will have to be designed for locking
-concurrency or database handles.
+In sum, each pattern of access to streamed system resources gives rise
+to different encoding challenges in each streaming I/O framework.
 
 Lippmeier \& al~\cite{lippmeier_parallel_2016} propose another
 combinator library for stream processing, with a rather different
@@ -252,19 +271,24 @@ producing values is simply a matter of choosing the output type of a
 Haskell function.
 \begin{code}
 -- Summary of repa-flow API
-zipWith_i :: (Flow a, Flow b, Build c) => (a -> b -> c) -> Sources a -> Sources b -> IO (Sources c)
+zipWith_i :: (Flow a, Flow b, Build c)
+          => (a -> b -> c) -> Sources a -> Sources b -> IO (Sources c)
 connect_i :: Sources a -> IO (Sources a, Sources a)
 map_i :: (Flow a, Build b) => (a -> b) -> Sources a -> IO (Sources b)
 foldlAllS :: Flow b => (a -> b -> a) -> a -> Sources b -> IO a
 dup_io :: Sources a -> Sinks a -> IO (Sources a)
 -- /API
 
-interleave3 :: (Flow a, Build a, Flow b, Build b, Flow c, Build c) => Sources a -> Sources b -> Sources c -> IO (Sources (a,(b,c)))
+interleave3
+    :: (Flow a, Build a, Flow b, Build b, Flow c, Build c)
+    => Sources a -> Sources b -> Sources c -> IO (Sources (a,(b,c)))
 interleave3 sa sb sc = do
     z <- zipWith_i (,) sb sc
     zipWith_i (,) sa z
 
-interleave21 :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> IO (Sources (a,(b,b)))
+interleave21
+    :: (Flow a, Build a, Flow b, Build b)
+    => Sources a -> Sources b -> IO (Sources (a,(b,b)))
 interleave21 sa sb = do
     (sb1,sb2) <- connect_i sb
     interleave3 sa sb1 sb2
@@ -645,7 +669,7 @@ approach requires resource specific handle types, with resource
 specific projection functions (such as |readLine| above) lifted to
 monadic projection actions. The projections are themselves part of the
 trusted base, which is ever growing. And nothing guarantees that the
-result of projections is allocated in the current region...
+result of projections is allocated in the current region.
 
 \subsubsection{the allocation hierarchy}
 
