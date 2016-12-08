@@ -84,27 +84,24 @@ BoldFont=lmroman10-bold,
 \newcommand\HaskeLL{HaskeLL}
 \newcommand\calc{{\ensuremath{λ^q}}}
 
-\author{Jean-Philippe Bernardy and Arnaud Spiwack}
+\author{Mathieu Boespflug and Arnaud Spiwack}
 \date{\today}
-\title{A practical lazy language with linear and unrestricted types}
-% Linear and unrestricted at the same time
-% 
+\title{The case for resource aware type systems}
 \hypersetup{pdflang={English}}
 
 \begin{document}
 
 \maketitle
-%% \tableofcontents
 \begin{abstract}
-  This article introduces and describes a
-  linearly-typed lazy programming language which is designed to be
-  integrate well with an existing programming language, in particular
-  in GHC/Haskell.
+Correctly programming system resources is a perilous proposition. For
+this reason, many high-level programming languages let the programmer
+delegate freeing resources to a background thread that does so
+dynamically, not at statically defined points in the control flow. We
+detail the challenges of dynamic resource management and make the case
+for an alternative solution to the problem that can be combined with
+dynamic resource management: guaranteeing resource safety through
+static analysis.
 \end{abstract}
-
-\setcounter{tocdepth}{3}
-\tableofcontents
-\listoffigures
 
 \section{Introduction}
 
