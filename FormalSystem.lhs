@@ -548,24 +548,12 @@ There are two challenges with this strategy:
   representation of our queue would be a linked list or tree to allow
   for random deletions.
 \item Using compact region to store long-lived data reduces the
-  pressure on the \textsc{gc} provided that enough data is stored in a
-  compact region. It means that one needs to buffer rather large
-  amounts of data before compacting them into a self-contained
-  region. This copy induces additional latency (in our example |push|
-  ceases to be $O(1)$ as a function of the number $k$ of messages
-  stored in a compact region) which appears to run contrary to the
-  goal of reducing latency. All the allocations of messages in the
-  buffer, as well as the creation of a compact region are on the
-  \textsc{gc} heap, which means that they may trigger pauses. The
-  pause may be significantly slower if the rest of the program also
-  takes care to allocate little (or low-profile, thanks to compact
-  regions) long-lived memory, but the actual duration of pauses is
-  hard to predict, and to reason about. Keeping the data out of the
-  \textsc{gc} altogether would prevent pauses from occurring at all,
-  improving predictability and, above all, composability: unless
-  another thread is allocating at the same time, there will not be a
-  \textsc{gc} pause, regardless of the memory profile of the rest of
-  the program.
+  pressure on the \textsc{gc} provided that enough data is stored in
+  a compact region. It means that one needs to buffer data before
+  compacting it into a self-contained region. There is then a tradeoff
+  between GC pressure and extra latency, since |push| becomes an
+  $O(k)$ time operation, unless we introduce a background
+  opportunistic compaction process.
 \end{enumerate}
 
 % Vaguely related to this [aspiwack: therefore I'm putting it in
