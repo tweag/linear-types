@@ -252,7 +252,7 @@ interleave3 =
     c <- awaits C
     yield (a,b,c)
 
--- read one value from an input stream and two from another input stream
+-- read one value from an input stream and two from another
 interleave12 :: forall a b. Tee a b (a,b,b)
 interleave12 =
     fit dup2 interleave3
@@ -275,9 +275,9 @@ In search of a more flexible framework, Lippmeier \&
 al~\cite{lippmeier_parallel_2016} propose an alternative model for
 stream processing while attempting to nevertheless offer the same
 resource safety guarantees (timely release of resources, no
-use-after-free, no free-after-free). In |repa-flow|, stream processors
-are just functions, not an abstract type of values that can only be
-constructed using a limited vocabulary.
+use-after-free, no free-after-free). In the \verb+repa-flow+ library,
+stream processors are just functions, not an abstract type of values
+that can only be constructed using a limited vocabulary.
 
 Given a handful of off-the-shelf combinators (which we could as well
 have written ourselves since they're not primtives of the framework),
@@ -312,7 +312,9 @@ count s = do
   foldlSAll (+) 0 s'
 
 -- interleave two input stream and return the length of the stream
-interleaveCount :: (Flow a, Build a, Flow b, Build b) => Sources a -> Sources b -> Sinks (a,(b,b)) -> IO Int
+interleaveCount
+    :: (Flow a, Build a, Flow b, Build b)
+     => Sources a -> Sources b -> Sinks (a,(b,b)) -> IO Int
 interleaveCount sa sb k = do
   sabb <- interleave21 sa sb
   sabb' <- dup_io sabb k
@@ -327,8 +329,8 @@ the library resource safe.
 
 In fact, a cornerstone of the Rust programming
 language~\cite{matsakis_rust_2014} is that it provides this resource
-safety out-of-the-box. Through its borrow checker, Rust captures
-a notion of affine types in its type system. The borrow checker is
+safety out-of-the-box. Through its borrow checker, Rust captures a
+notion of affine types in its type system. The lifetime analysis is
 powerful enough to for example ensure that a file handle never escapes
 the current lexical scope:
 
@@ -338,13 +340,14 @@ the current lexical scope:
   let mut file = try!(File::open(&path));
   ... // some code that reads the file
 }
-// the variable `path` falls out of scope, it cannot exit this
-// scope, as part of a closure or otherwise, therefore the file can
-// be, and in fact is, closed when this scope ends.
+// the variable `path` falls out of scope, it cannot exit
+// this scope, as part of a closure or otherwise,
+// therefore the file can be, and in fact is, closed when
+// this scope ends.
 \end{verbatim}
 
-The borrow checker in Rust makes it possible to remain resource safe
-without losing much expressive power at all.
+The lifetime analysis in Rust makes it possible to remain resource
+safe without losing much expressive power at all.
 
 \subsection{Memory management}
 
