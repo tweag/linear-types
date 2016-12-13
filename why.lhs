@@ -129,6 +129,8 @@ programs but where ordinary functional programs are second class
 citizens.
 
 \subsection{Binding foreign functions}
+\label{sec:ffi}
+
 We propose a programming language with two arrow types: one for usual
 intuitionistic functions, and one for linear functions~---~which
 guarantee to consume exactly once their argument. To be precise, the
@@ -172,6 +174,7 @@ function repeating indefinitely its input will have the type:
 cycle :: List a → List a
 cycle l = l ++ cycle l
 \end{code}
+\todo{Remark that |(++)| and |cycle| are promoted in this example}
 
 It may look as though $ω$-weighted arrows are only useful for
 functions while every data type constructor should use linear
@@ -250,7 +253,7 @@ There are a few things going on in this \textsc{api}:
   foreign procedure responsible for clearing the queue.
 \end{itemize}
 
-\todo{Probagly add a remark that functional in-place update is not a goal}
+\todo{Probably add a remark that functional in-place update is not a goal}
 
 \subsection{Guiding fusion}
 
@@ -395,6 +398,74 @@ semantics of the compiler, imposing that the optimiser honours the
 intent of the programmer.
 
 \subsection{Prompt deallocation of cons cells}
+
+To go even further the run-time system can be modified to allow
+regular Haskell data (which we will refer as \emph{cons cells}), as
+opposed to just primitive data, to reside out of the \textsc{gc} heap
+as long as it has been allocated by a linear binding.
+
+With such a modification the queue \textsc{api} from \fref{sec:ffi}
+can be implemented directly in Haskell rather than be implemented in C
+and merely bound via the foreign function interface. Furthermore, we
+can arrange the messages returned by the queue to also reside out of
+the \textsc{gc} heap; this way, using the queue would entail zero
+\textsc{gc} allocation, therefore would never trigger a \textsc{gc}
+collection and have extremely low latency.
+
+To illustrate how it works, consider the following implementation of
+the Fibonacci function:
+
+\begin{code}
+  fib :: Int ⊸ Int
+  ...
+\end{code}
+\todo{With 2x2 matrix multiplication and fast exponentiation, and linear bindings}
+
+Because all the allocation of matrices happen in linear let-bindings,
+it is possible to allocate all of them out of the \textsc{gc} heap,
+\emph{as long as the result is used linearly}. To understand where
+this limitation comes from, consider the following example:
+\begin{code}
+  forget :: Int -> ()
+  forget _ = ()
+
+  forget (fib 42)
+\end{code}
+Here |fib 42| is promoted to weight $ω$ because |42|, being a literal,
+has weight $ω$. But then |fib 42| is dropped without being forced so
+it need to be garbage collected, as well as every value in the
+closure. A partial evaluation of |fib 42| may cause the intermediate
+matrices to be pointed to by the closure, therefore they need to be
+garbage collected and cannot be allocated out of the \textsc{gc}
+heap. A similar issue occurs when the return value of |fib 42| is used
+several times.
+
+To ensure that the linearly-bound matrices are allocated on the
+\textsc{gc} heap, one must ensure that the result of |fib| is copied
+to the \textsc{gc} heap at the end of the computation. This is done in
+two part. First the result is wrapped in a |Bang| using the |copy|
+function (|Int|, like every data type, implements this method):
+\begin{code}
+  copy :: Int ⊸ Bang Int
+\end{code}
+Then, the |Bang| constructor is forced using a pattern-matching. This
+has the effect of producing an |Int| closure of weight $ω$, hence on
+the \textsc{gc} heap. The run-time system is allowed to assume that no
+linear value are still live at this point (a $ω$-weighted value is
+statically guaranteed to have no reference to linear bindings)
+therefore that they can all be allocated, and managed, out of the
+\textsc{gc} heap.
+
+Revisiting our |forget| example, we can write:
+\begin{code}
+  case copy (fib 42) of
+    Bang x -> forget x
+\end{code}
+In this expression, all the intermediate matrices can safely be
+allocated out of the \textsc{gc} heap and be deallocated by
+the run-time system at the point where they are consumed. The downside
+being that we will run |fib 42| to completion even if the result is
+not actually needed.
 
 \printbibliography
 
