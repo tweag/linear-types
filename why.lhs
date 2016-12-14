@@ -173,7 +173,6 @@ function repeating indefinitely its input will have the type:
 cycle :: List a → List a
 cycle l = l ++ cycle l
 \end{code}
-\todo{Remark that |(++)| and |cycle| are promoted in this example}
 
 It may look as though $ω$-weighted arrows are only useful for
 functions while every data type constructor should use linear
