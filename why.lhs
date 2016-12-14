@@ -120,10 +120,10 @@ implement, and brings further benefits. In practice it makes it
 possible to roll stages one at a time, quickly reaping the low hanging
 fruits.
 
-The philosophy behind the design of each of this stage is that it
-strictly extends Haskell as it exists before linear types: every
+The philosophy behind the design of the linear type extension is that
+it strictly extends Haskell as it exists before linear types: every
 Haskell program is still a well-typed program in the linear-type
-extension and run with no performance penalty. This is in contrast
+extension and runs with no performance penalty. This is in contrast
 with languages such as Rust which are optimised for linearly typed
 programs but where ordinary functional programs are second class
 citizens.
@@ -133,14 +133,13 @@ citizens.
 
 We propose a programming language with two arrow types: one for usual
 intuitionistic functions, and one for linear functions~---~which
-guarantee to consume exactly once their argument. To be precise, the
+guarantee to consume their argument \emph{exactly once}. To be precise, the
 arrow type is parametrized by the amount (hereafter referred to as the
 \emph{weight}) of its argument that it requires:
 \begin{itemize}
 \item $A →_1 B$ is the linear arrow $A ⊸ B$
 \item $A →_ω B$ is the usual intuitionistic arrow $A → B$
 \end{itemize}
-
 For instance the following data declaration
 \begin{code}
 data List a where
