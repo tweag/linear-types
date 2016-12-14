@@ -374,14 +374,14 @@ issue:
   map f (x : xs) = f x : map f xs
   map _ [] = []
 \end{code}
-We have that ~force . tails . map (+1)~ consumes memory linearly in
+We have that |force . tails . map (+1)| consumes memory linearly in
 the size of its input whereas the fused
 \begin{code}
   tailsmap :: (a -> b) -> [a] -> [[b]]
   tailsmap f (_ : xs) = map f xs : tailsmap f xs
   tailsmap _ [] = []
 \end{code}
-makes ~force . tailsmap (+1)~  consumes memory quadratically in the
+makes |force . tailsmap (+1)| consumes memory quadratically in the
 size of its input.
 
 This cardinality analysis is performed by the optimiser on a
@@ -466,7 +466,7 @@ it is possible to allocate all of them out of the \textsc{gc} heap,
 this limitation comes from, consider the following example:
 \begin{code}
   forget :: Int -> ()
-  forget _ = ()
+  forget _i = ()
 
   forget (fib 42)
 \end{code}
