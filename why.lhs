@@ -413,13 +413,54 @@ the \textsc{gc} heap; this way, using the queue would entail zero
 collection and have extremely low latency.
 
 To illustrate how it works, consider the following implementation of
-the Fibonacci function:
+the Fibonacci function based on matrix multiplication:
 
 \begin{code}
   fib :: Int ⊸ Int
-  ...
+  fib n =
+    case (free x21,x22) of
+      ((),()) -> x11+x12
+    where
+      (Matrix x11 x12 x21 x22) :: _ 1 Matrix = expMatrix (n-1) (Matrix 0 1 1 1)
+
+  -- Like every data type, |Int| can be duplicated or dropped linearly
+  dup :: Int ⊸ (Int,Int)
+  free :: Int ⊸ ()
+
+  data Matrix where
+    Matrix Int Int Int Int
+
+  -- With a bit of care, matrix multiplication can be implemented
+  -- linearly. This assumes a linear implementation of |(+)| and |(*)|
+  -- for integers.
+  multMatrix : Matrix ⊸ Matrix ⊸ Matrix
+  mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
+      Matrix
+       (x11*y11+x12*y21)
+       (x11*y12+x12*y22)
+       (x21*y11+x22*y21)
+       (x21*y12+x22*y22)
+    where
+      (x11',x11'') :: _ 1 (Int,Int) = dup x11
+      (x12',x12'') :: _ 1 (Int,Int) = dup x12
+      …
+
+  dupMatrix :: Matrix ⊸ (Matrix,Matrix)
+  dupMatrix = …
+
+  -- This function uses patterns which Haskell does not naturally
+  -- understands as a short hand for a view data type.
+  expMatrix :: Int ⊸ Matrix ⊸ Matrix
+  expMatrix 0        _m  = Matrix (1 0 0 1)
+  expMatrix (2*n)    m   = square m
+  expMatrix (2*n+1)  m   =
+    let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+    mult (square m') m''
+  where
+    square m =
+      let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+      in multMatrix m' m''
 \end{code}
-\todo{With 2x2 matrix multiplication and fast exponentiation, and linear bindings}
 
 Because all the allocation of matrices happen in linear let-bindings,
 it is possible to allocate all of them out of the \textsc{gc} heap,
