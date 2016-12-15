@@ -559,40 +559,6 @@ There are two challenges with this strategy:
   opportunistic compaction process.
 \end{enumerate}
 
-% Vaguely related to this [aspiwack: therefore I'm putting it in
-% comments for the moment] is the fact that using linear types help
-% create a flexible \textsc{api} for regions-based allocations. The
-% idea of region-based allocation is to delimit a portion of code
-% where all allocation will happen in a custom region which is not
-% garbage collected. There are two ways to close the region at the end
-% of said portion of code: one is to let the garbage collector clean
-% the region up, hopefully the region has very little live data at the
-% end of the computation, hence the work of the GC will be minimal,
-% the other one is to ensure that their are no dangling pointers on
-% the region anymore. The latter option is where linear types can
-% help. Here is an example of an \textsc{api} for such a feature:
-%
-% \begin{code}
-%   -- Creates a new region, linearity of the binding ensures that the
-%   -- region, and everything within, must be deallocated. The region
-%   -- is freed at the end of the computation.
-%   withRegion :: (Region ⊸ Bang a) ⊸ a
-%   -- forks the region into two handles, each handle being consumed
-%   -- at allocation time.
-%   dupRegion :: Region ⊸ Region ⊗ Region
-%   -- computes a, but every linear binding is allocated in the region
-%   inRegion :: Region ⊸ a ⊸ a
-%   -- closes region: no more allocation can happen
-%   close :: Region ⊸ ()
-% \end{code}
-%
-% Because the return type of the |withRegion| computation is |Bang a|,
-% everything which is allocated within the region, must be consumed
-% \emph{before} the |withRegion| computation is ended, hence they will
-% have no live pointers to them, and the region can be freed. Values which
-% are intended to survive the computation have to be copied to the GC
-% heap explicitly.
-
 Note that this example is but one instance of a wide class of similar
 use cases, such as in-kernel buffer caches. Our initial use case at
 Tweag I/O was an in-memory cache for a distributed on-disk object
