@@ -510,6 +510,54 @@ the run-time system at the point where they are consumed. The downside
 being that we will run |fib 42| to completion even if the result is
 not actually needed.
 
+\paragraph{Alternative: scratch regions}
+
+An alternative to allocating linear cons cells using a malloc-like
+discipline and freeing them immediately at case matching is to
+allocate cons-cells in temporary scratch regions which are to be
+discarded at the end of a computation. To be able to allocate data in
+regions outside of the \textsc{gc} heap also requires a modification
+of the run-time system, albeit probably a lighter one.
+
+Linear types provide ways to design an \textsc{api} for such scratch
+region. Let us give an example such design: the idea is to (locally)
+allocate linear bindings to a scratch region while non-linear bindings
+are allocated to the \textsc{gc} heap. This way, when all the linear
+bindings have been consumed, it is safe to free the region.
+
+The proposed \textsc{api} revolves around two functions: |withRegion|,
+which allocates a scratch region to perform a computation and frees
+the region at the end of that computation, and |inRegion| which runs a
+computation such that the linear bindings are allocated on a given
+region. Here is an \textsc{api} specifying this idea:
+\begin{code}
+  -- Creates a new region, linearity of the binding ensures that the
+  -- region, and everything within, must be consumed. The region is
+  -- freed at the end of the computation.
+  withRegion :: (Region ⊸ Bang a) ⊸ a
+  -- forks the region into two handles, each handle, still being of
+  -- linear weight must be consumed before the |withRegion|
+  -- computation is ended
+  dupRegion :: Region ⊸ Region ⊗ Region
+  -- computes |a| allocating linear binding in the region
+  inRegion :: Region ⊸ a ⊸ a
+  -- All pending regions must be dropped before the computation
+  -- ends. |drop| only makes the binding inaccessible, the region is
+  -- actually freed at the end of |withRegion|
+  drop :: Region ⊸ ()
+\end{code}
+Like with previous examples, |withRegion c| is safe because the return
+type of |c| is |Bang a| which means that it cannot contain reference
+to linear bindings, \emph{i.e.} neither a region nor data allocated in
+a region can escape |withRegion c|. A region allocated by |withRegion|
+cannot be freed before the end of the |withRegion| computation because
+even if all the region handles are inaccessible, there may still be
+values allocated in regions which are accessible and are yet to be
+dropped or copied to the \textsc{gc} heap. Therefore regions obey a
+stack discipline. Linearly weighted data can transparently refer to
+data allocated in any number of existing regions, since calls to
+|inRegion| can be safely nested or interleaved.
+
 \printbibliography
 
 \end{document}
