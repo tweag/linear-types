@@ -243,9 +243,9 @@ There are a few things going on in this \textsc{api}:
 \item Messages of type |Msg| are copied into regular Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
-  of messages in the queue, there will always be very few messages
-  outside of it, managed by the garbage collector. Consequently,
-  burden on the \textsc{gc} will be much smaller.
+  of messages in the queue, there will always be very few such messages
+  managed by the garbage collector. Consequently, burden on the
+  \textsc{gc} will be much smaller.
 \item Because the queue allocated by |alloc| must be consumed before
   the its scope is ended, |free| must be called, and will call the
   foreign procedure responsible for clearing the queue.
@@ -387,7 +387,7 @@ size of its input.
 This cardinality analysis is performed by the optimiser on a
 best-effort basis. Plainly put, this means that a programmer does not
 control when the optimisation is performed. Instead, they must resort
-to guesswork and and careful adherence to known-workign patterns to
+to guesswork and and careful adherence to known-working patterns to
 obtain efficient code.  In practice, the performance of any
 non-trivial program is unpredicatble: any small change in the program
 may significantly impact the performance of the compiled code.
