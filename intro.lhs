@@ -361,7 +361,7 @@ reclaiming process. File handle finalizers might run at an arbitrarily
 late time in the future. Locks are certainly a bad idea to release
 automatically for this reason.
 
-A central tenet of this\usure{Which one?} paper is,
+A central tenet of this\unsure{Which one?} paper is,
 \begin{center}
 \em memory is just a system resource like any other, which, as such,
 deserves the parsimonious consumption and timely release that other
