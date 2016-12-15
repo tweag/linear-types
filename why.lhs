@@ -473,21 +473,18 @@ dup :: Int ⊸ (Int,Int)
 free :: Int ⊸ ()
 
 data Matrix where
-  Matrix Int Int Int Int -- FIXME: linear or not?
+  Matrix :: Int ⊸ Int ⊸ Int ⊸ Int ⊸ Matrix
 
 -- With a bit of care, matrix multiplication can be implemented
 -- linearly. This assumes a linear implementation of |(+)| and |(*)|
 -- for integers.
--- FIXME: this is an extremely confusing comment, because the elements are used more than once.
--- In reality: we do not care about linearity of integers, only of larger data.
--- So I'd recommend having the matrix defined as unboxed, NON LINEAR fields.
 multMatrix : Matrix ⊸ Matrix ⊸ Matrix
 mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
     Matrix
-     (x11*y11+x12*y21)
-     (x11*y12+x12*y22)
-     (x21*y11+x22*y21)
-     (x21*y12+x22*y22)
+     (x11'*y11'+x12'*y21')
+     (x11''*y12'+x12''*y22')
+     (x21'*y11''+x22'*y21'')
+     (x21''*y12''+x22''*y22'')
   where
     (x11',x11'') :: _ 1 (Int,Int) = dup x11
     (x12',x12'') :: _ 1 (Int,Int) = dup x12
@@ -505,26 +502,17 @@ expMatrix (2*n+1)  m   =
   let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
   mult (square m') m''
 where
-  (x11',x11'') :: _ 1 (Int,Int) = dup x11
-  (x12',x12'') :: _ 1 (Int,Int) = dup x12
-  …
-
-dupMatrix :: Matrix ⊸ (Matrix,Matrix)
-dupMatrix = …
-
--- This function uses patterns which Haskell does not naturally
--- understands as a short hand for a view data type.
-expMatrix :: Int ⊸ Matrix ⊸ Matrix
-expMatrix 0        _m  = Matrix (1 0 0 1)
-expMatrix (2*n)    m   = square m
-expMatrix (2*n+1)  m   =
-  let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
-  mult (square m') m''
-where
   square m =
     let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
     in multMatrix m' m''
 \end{code}
+\improvement{Jean-Philippe remarks that, in practice, a better type
+  for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
+  that is arguments are unboxed and $ω$-weighted (the idea is that
+  unboxed typed are not allocated on the heap so they can be
+  $ω$-weighted for free). Arnaud designed this example with the
+  objective of illustrating how linear types worked, and wanted to
+  avoid making such distinction, but this is open for a debate.}
 
 Because all the allocation of matrices happen in linear let-bindings,
 it is possible to allocate all of them out of the GC heap,
