@@ -529,7 +529,7 @@ weights in constructor arguments:
   \varid{Tensor} A B$ is the linear tensor product (usually written
   $A⊗B$)
 \item The type
-  $\data \varid{Bang} A \where \varid{Bang} A→_ω \varid{Bang} A$ is
+  $\data \varid{Bang} A \where \varid{Bang} : A→_ω \varid{Bang} A$ is
   the exponential modality of linear logic (usually written ${!}A$)
 \end{itemize}
 
