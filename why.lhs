@@ -84,7 +84,7 @@ BoldFont=lmroman10-bold,
 \newcommand\HaskeLL{HaskeLL}
 \newcommand\calc{{\ensuremath{λ^q}}}
 
-\author{Mathieu Boespflug and Arnaud Spiwack}
+\author{Mathieu Boespflug, Arnaud Spiwack, JP Bernardy}
 \date{\today}
 \title{The case for resource aware type systems}
 \hypersetup{pdflang={English}}
@@ -244,8 +244,8 @@ There are a few things going on in this \textsc{api}:
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
   of messages in the queue, there will always be very few messages
-  managed by the garbage collector, therefore imposing a much smaller
-  burden on the \textsc{gc}.
+  outside of it, managed by the garbage collector. Consequently,
+  burden on the \textsc{gc} will be much smaller.
 \item Because the queue allocated by |alloc| must be consumed before
   the its scope is ended, |free| must be called, and will call the
   foreign procedure responsible for clearing the queue.
@@ -360,10 +360,10 @@ explored in detail by \textcite{bernardy_duality_2015}.
 
 \paragraph{Semantics of the optimiser}
 
-In order to perform inlining and fusion, \textsc{ghc}'s optimiser perform a
+In order to perform inlining and fusion, \textsc{ghc}'s optimiser performs a
 cardinality analysis. Indeed, blindly inlining functions may worsen
-the performance of a program. This is illustrated by the following
-example take from \textcite{dominguez_parafusion_2006} illustrates the
+the performance of a program. The following
+example taken from \textcite{dominguez_parafusion_2006} illustrates the
 issue:
 \begin{code}
   tails :: [a] -> [[a]]
@@ -385,10 +385,12 @@ makes |force . tailsmap (+1)| consumes memory quadratically in the
 size of its input.
 
 This cardinality analysis is performed by the optimiser on a
-best-effort basis. Which means that a programmer has no control over
-when the optimisation will be performed and must try its best to fall
-in the good grace of the optimiser. As a consequence the performance
-of a program may change significantly in an unpredictable manner.
+best-effort basis. Plainly put, this means that a programmer does not
+control when the optimisation is performed. Instead, they must resort
+to guesswork and and careful adherence to known-workign patterns to
+obtain efficient code.  In practice, the performance of any
+non-trivial program is unpredicatble: any small change in the program
+may significantly impact the performance of the compiled code.
 
 Using linear types to make sure that the optimiser inlines a function
 makes it possible to consider fusing optimisation part of the
@@ -399,7 +401,7 @@ intent of the programmer.
 
 To go even further the run-time system can be modified to allow
 regular Haskell data (which we will refer as \emph{cons cells}), as
-opposed to just primitive data, to reside out of the \textsc{gc} heap
+opposed to just primitive data, to reside outside of the \textsc{gc} heap
 as long as it has been allocated by a linear binding.
 
 With such a modification the queue \textsc{api} from \fref{sec:ffi}
@@ -412,7 +414,6 @@ collection and have extremely low latency.
 
 To illustrate how it works, consider the following implementation of
 the Fibonacci function based on matrix multiplication:
-
 \begin{code}
   fib :: Int ⊸ Int
   fib n =
@@ -426,11 +427,14 @@ the Fibonacci function based on matrix multiplication:
   free :: Int ⊸ ()
 
   data Matrix where
-    Matrix Int Int Int Int
+    Matrix Int Int Int Int -- FIXME: linear or not?
 
   -- With a bit of care, matrix multiplication can be implemented
   -- linearly. This assumes a linear implementation of |(+)| and |(*)|
   -- for integers.
+  -- FIXME: this is an extremely confusing comment, because the elements are used more than once.
+  -- In reality: we do not care about linearity of integers, only of larger data.
+  -- So I'd recommend having the matrix defined as unboxed, NON LINEAR fields.
   multMatrix : Matrix ⊸ Matrix ⊸ Matrix
   mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
       Matrix
@@ -482,7 +486,7 @@ several times.
 To ensure that the linearly-bound matrices are allocated on the
 \textsc{gc} heap, one must ensure that the result of |fib| is copied
 to the \textsc{gc} heap at the end of the computation. This is done in
-two part. First the result is wrapped in a |Bang| using the |copy|
+two parts. First the result is wrapped in a |Bang| using the |copy|
 function (|Int|, like every data type, implements this method):
 \begin{code}
   copy :: Int ⊸ Bang Int
