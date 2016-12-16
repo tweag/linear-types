@@ -17,10 +17,10 @@ Is simply that folks get tired of typing this:
       (a',b',x,y) = f a b e
 ```
 
-Too much naming of intermediate results.  Further, in Haskell we have
+Too much naming of intermediate results!  Further, in Haskell we have
 the minor syntactic quibble that while `do x <- f x` works for
-shadowing (rather than `x'`,`x''`/`x1`,`x2` etc...), `let` is
-recursive by default so you cannot choose to shadow, reusing the
+intentional shadowing (rather than burning through names like `x'`,`x''`/`x1`,`x2` etc...), `let` is
+recursive by default so you cannot choose to shadow, and thus cannot reuse the
 `a`/`b` names above.
 
 
