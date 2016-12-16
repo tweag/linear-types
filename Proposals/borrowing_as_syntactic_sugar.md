@@ -9,7 +9,7 @@ below takes one step further on that idea.
 
 ## The problem
 
-Is simply that folks get tired of typing this:
+Is simply that folks will get tired of typing this:
 
 ```Haskell
   let a =_1 ...
