@@ -114,7 +114,7 @@ OCaml), to type-level functions such as type families
 complete promotion of term-level data types to the type-level
 \cite{eisenburg_promoting_2014}. Yet in practice, that a user's
 program is denotationally correct with respect to some abstract
-specification matters little if doesn't abide to efficient and timely
+specification matters little if does not abide to efficient and timely
 release of scarce hardware resources. Indeed, {\em predictable} and
 {\em easy to reason about} use of resources is frequently part of the
 specification too. We argue that teaching the type system to track
@@ -156,7 +156,7 @@ avoid the bane of use-after-free and free-after-free bugs are:
 
 Each of these is the topic of the next two headings. Higher-level
 combinators fall short of enforcing all the resource management
-correctness invariants we'd like. Further, they impose a sometimes
+correctness invariants we would like. Further, they impose a sometimes
 substantial encoding overhead. While automatic resource disposal is
 a problematic source of non-determinism that can be the cause of
 subtle performance and/or correctness bugs.
@@ -171,11 +171,11 @@ and machines~\cite{kmett_machines_2015} offer stream-processing
 combinators to that effect.
 
 The sheer number of libraries aiming at tackling this problem space
-speaks to its difficulty. None subsumes the other in expressive power.
+speaks to its difficulty. None subsumes the others in expressive power.
 
-Machines are pure stream processors: they cannot return a value which
-is not a stream (for instance the size of its input), while conduits
-can easily do that. To express a simple line count example, we'll need
+Machines~\cite{kmett_machines_2015} are pure stream processors: they cannot return a value which
+is not a stream (for instance the size of its input), while Conduits~\cite{snoyman_conduit_2015}
+can easily do that. To express a simple line count example, we will need
 the following subset of the Conduit API:
 \begin{code}
 -- Provides a stream of output values,
@@ -210,7 +210,7 @@ file handles at precisely the point where we |run| the |ConduitM|
 monad. However, once one starts to manipulate multiple input streams
 at once, things become tricky.
 
-Like Conduit, the machines library provides a set of combinators for
+Like Conduits, the Machines library provides a set of combinators for
 splicing together stream computations, as well merging them and
 splitting them.
 \begin{code}
@@ -267,7 +267,7 @@ In sum, each pattern of access to streamed system resources gives rise
 to different encoding challenges in each streaming I/O framework. The
 essential challenge here is that to guarantee safe resource
 management, these libraries hide the very notion of a stream to the
-user. Users can't directly manipulate streams in arbitrary expressions
+user. Users cannot directly manipulate streams in arbitrary expressions
 of their choosing. Users combine {\em stream processors} (``conduits''
 or ``machines'') rather than combining streams directly.
 
@@ -280,7 +280,7 @@ stream processors are just functions, not an abstract type of values
 that can only be constructed using a limited vocabulary.
 
 Given a handful of off-the-shelf combinators (which we could as well
-have written ourselves since they're not primtives of the framework),
+have written ourselves since they are not primtives of the framework),
 \begin{code}
 zipWith_i :: (Flow a, Flow b, Build c)
           => (a -> b -> c) -> Sources a -> Sources b -> IO (Sources c)
@@ -361,7 +361,7 @@ reclaiming process. File handle finalizers might run at an arbitrarily
 late time in the future. Locks are certainly a bad idea to release
 automatically for this reason.
 
-A central tenet of this paper is,
+A central tenet of this\unsure{Which one?} paper is,
 \begin{center}
 \em memory is just a system resource like any other, which, as such,
 deserves the parsimonious consumption and timely release that other
@@ -372,7 +372,7 @@ effective means of avoiding use-after-free and free-after-free bugs,
 since it is the language runtime that guarantees, via a global dynamic
 analysis, that resources are reclaimed only when it is entirely safe
 to do so. But this dynamic global analysis is expensive to run. For
-this reason, resources are reclaimed in batch to amortize its cost,
+this reason, resources are reclaimed in batches, to amortize its cost,
 only when resource pressure is deemed to warrant reclaiming those
 resources that can be. Worse, this global analysis, aka garbage
 collection, often requires exclusive access to resources, hence
@@ -419,14 +419,14 @@ are structured as iterating a three step process:
   cores in the cluster, each computing over a subset of the data.
 \item[Communicate:] all processes communicate results with other nodes
   (e.g. their neighbors in a mesh physics simulation).
-\item[Synchronize:] the next iteration doesn't start until all threads
+\item[Synchronize:] the next iteration does not start until all threads
   synchronize on a global write barrier.
 \end{description}
-Each iteration is called a ``superstep''. This model isn't just the
+Each iteration is called a ``superstep''. This model is not just the
 concern of a small niche: it is comparable to the MapReduce model used
 elsewhere, which likewise proceeds in lockstep. The map phase precedes
 the shuffle and reduce phases. Mapping again becomes possible once the
-previous reduce is complete. A new supestep begins when a previous one
+previous reduce is complete. A new superstep begins when a previous one
 finishes. Even interactive user queries with a total latency envelope
 of 100ms can be processed as a sequence of dozens of such parallel
 phases.
@@ -459,7 +459,7 @@ reduce the number of neighbours threads have to communicate with.
 These solutions all come at a complexity cost in systems that have
 often already far exceeded any reasonable complexity budget.
 Maintaining low and predictable latencies is therefore a means to
-achiev simpler designs.
+achieve simpler designs.
 
 \paragraph{Stream processing} The Square Kilometer
 Array\footnote{https://www.skatelescope.org/} is projected to produce
@@ -508,7 +508,7 @@ Pusher, cited above. The challenge is to maintain a concurrent queue
 of messages. Each message can be of arbitrary size, but usually in the
 order of kilobytes. There can be many hundreds of thousands of message
 to maintain in memory. Old messages are evicted, upon being read by
-clients, or if the queue grows too long (so it's okay to lose
+clients, or if the queue grows too long (so it is okay to lose
 messages). Any client can also request for any message in the queue to
 be removed. In short, the concurrent queue supports the following
 operations:
@@ -541,13 +541,13 @@ There are two challenges with this strategy:
   value chosen, the more unlikely it is that removing $p$ messages
   from the queue, even consecutive ones, will reclaim any memory.
   compact regions can be rewritten upon deletion of a message, at the
-  cost of extra latency. Regions can't be mutated once sealed, so even
+  cost of extra latency. Regions cannot be mutated once sealed, so even
   to mark a message as deleted without bothering to reclaim the memory
-  would require maintaining an auxiliary blacklist, which we'd need to
+  would require maintaining an auxiliary blacklist, which we would need to
   lookup before any read request, at the cost of extra implementation
   complexity. In short, compact regions work great for largely static
   structures parts of which can be considered temporarily immutable
-  (and copied when they're not), while in this case the natural
+  (and copied when they are not), while in this case the natural
   representation of our queue would be a linked list or tree to allow
   for random deletions.
 \item Using compact region to store long-lived data reduces the
@@ -558,40 +558,6 @@ There are two challenges with this strategy:
   $O(k)$ time operation, unless we introduce a background
   opportunistic compaction process.
 \end{enumerate}
-
-% Vaguely related to this [aspiwack: therefore I'm putting it in
-% comments for the moment] is the fact that using linear types help
-% create a flexible \textsc{api} for regions-based allocations. The
-% idea of region-based allocation is to delimit a portion of code
-% where all allocation will happen in a custom region which is not
-% garbage collected. There are two ways to close the region at the end
-% of said portion of code: one is to let the garbage collector clean
-% the region up, hopefully the region has very little live data at the
-% end of the computation, hence the work of the GC will be minimal,
-% the other one is to ensure that their are no dangling pointers on
-% the region anymore. The latter option is where linear types can
-% help. Here is an example of an \textsc{api} for such a feature:
-%
-% \begin{code}
-%   -- Creates a new region, linearity of the binding ensures that the
-%   -- region, and everything within, must be deallocated. The region
-%   -- is freed at the end of the computation.
-%   withRegion :: (Region ⊸ Bang a) ⊸ a
-%   -- forks the region into two handles, each handle being consumed
-%   -- at allocation time.
-%   dupRegion :: Region ⊸ Region ⊗ Region
-%   -- computes a, but every linear binding is allocated in the region
-%   inRegion :: Region ⊸ a ⊸ a
-%   -- closes region: no more allocation can happen
-%   close :: Region ⊸ ()
-% \end{code}
-%
-% Because the return type of the |withRegion| computation is |Bang a|,
-% everything which is allocated within the region, must be consumed
-% \emph{before} the |withRegion| computation is ended, hence they will
-% have no live pointers to them, and the region can be freed. Values which
-% are intended to survive the computation have to be copied to the GC
-% heap explicitly.
 
 Note that this example is but one instance of a wide class of similar
 use cases, such as in-kernel buffer caches. Our initial use case at
@@ -611,13 +577,13 @@ evicting random objects based on requests from peers in the cluster.
 server. Typically, a web server maintains no state between requests,
 or any state is serialized to some external database on a different
 server. That is to say, the state of the heap for the web server
-should stay constant. We'll need to allocate temporary data structures
+should stay constant. We will need to allocate temporary data structures
 to represent the parameters of a request, as well as to assemble
 a response. But any allocation in response to a request ought to be
 allocated in some stratch space, which is wholly discarded at the end
 of each request.
 
-A garbage collector isn't needed in such an application: all data
+A garbage collector is not needed in such an application: all data
 structures are either static or very short-lived. If we avoid it
 entirely then it becomes possible to achieve very short and
 predictable latencies indeed. Further, it would be nice if we could
@@ -684,7 +650,7 @@ within a set latency budget the further down the ``allocation
 hierarchy'' we go:
 \begin{enumerate}
 \item {\bf No allocation:} The cheapest allocation is the one that
-  doesn't exist. Any allocation guaranteed by the compiler not to
+  does not exist. Any allocation guaranteed by the compiler not to
   occur is one that does not eat into the application's small latency
   budget, and that's a fact the programmer can count on.
 \item {\bf Off GC-heap allocation:} if you must allocate, then better
@@ -704,7 +670,7 @@ the top two tiers of this hierarchy:
 \item Fusion is a common technique for statically eliminating
   redundant allocations while retaining good code modularity. While
   first-class type system support for tracking resources certainly
-  isn't a necessity to perform fusion, a common complaint born out of
+  is not a necessity to perform fusion, a common complaint born out of
   using \verb|RULE| pragma based fusion on large codebases is that it
   is brittle and hard to reason about. Our type system {\em
     guarantees} fusion where the programmer has expressed an intent.
