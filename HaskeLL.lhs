@@ -895,24 +895,27 @@ function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
 |Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
 regardless of the weight of its argument.
 
-We won't detail here the formal static semantics for the entire
-language, but here are a few intuitive rules:
+In sum, and as a preview to the formal semantics
+\fref{sec:statics}, are a few examples of what is allowed or not:
 \begin{enumerate}
 \item A linear ($1$ quantity) value {\bf can} be passed to a linear
   function.
-\item A regular ($ω$ quantity) value {\bf can} be passed to a linear
+\item A unrestricted ($ω$ quantity) value {\bf can} be passed to a linear
   function.
-\item A linear value {\bf cannot} be passed to a regular function.
-\item A regular value {\bf can} be passed to a regular function.
+\item A linear value {\bf cannot} be passed to a unrestricted function.
+\item A unrestricted value {\bf can} be passed to a unrestricted function.
 \item A linear value {\bf can} be returned by a linear function.
-\item A regular value {\bf can} be returned by a linear function.
-\item A linear value {\bf can} be returned by a regular function (but
-  it will be promoted to a regular value in so doing).
-\item A regular value {\bf can} be returned by a regular function.
+\item A unrestricted value {\bf can} be returned by a linear function.
+\item A linear value {\bf can} be returned by a linear function (and
+  the type-system guarantees that it can be promoted to a unrestricted
+  value when the function is called in an unrestricted context).
+\item A unrestricted value {\bf can} be returned by a unrestricted function.
 \end{enumerate}
+Note in particular that when we say that a function is linear, we are
+only referring to its domain, not its co-domain.
 
-In code, this means that |g| below admits the following
-implementations, but not the last one:
+The same examples can be expressed in code: the function |g| below
+admits the following implementations, but not the last one:
 \begin{code}
 f :: a ⊸ a
 g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
@@ -949,7 +952,7 @@ This makes it possible to statically manage long-lived data without
 adding to GC pressure, since the data lives in a foreign heap.
 A complete API for queues with random access deletion could
 be typed as follows (|Msg| must be |Storable| to (un)marshall values
-to/from the regular GC'ed heap):
+to/from the unrestricted GC'ed heap):
 \begin{code}
 instance Storable Msg
 
@@ -968,12 +971,12 @@ There are a few things going on in this API:
   This queue must be used exactly once. The return type of argument
   function is |Bang a|, ensuring that no linear value can be returned:
   in particular the |Queue| must be consumed.
-\item Messages of type |Msg| are copied into regular Haskell values
+\item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
   of messages in the queue, there will at any given time be very few
   messages managed by the garbage collector. Since these objects will
-  typically be short-lived, they won't normally survive a ``generation
+  typically be short-lived, they will not normally survive a ``generation
   0'' sweep.
 \item Because the queue allocated by |alloc| must be consumed before
   reaching the end of the scope, |free| must be called. Indeed, there
@@ -985,6 +988,7 @@ There are a few things going on in this API:
 \todo{Probably add a remark that functional in-place update is not a goal... But it works though.}
 
 \section{\calc{} statics}
+\label{sec:statics}
 In this section we concentrate on the calculus at the core of
 \HaskeLL{}, namely \calc{}, and give a step by step account of its
 syntax and typing rules.
@@ -2380,7 +2384,7 @@ safety and prompt deallocation by combining both linear types and
 foreign heaps. Ideally, users shouldn't have to buy-in to foreign
 heaps with explicit allocation and explicit object copies to and from
 each heap just to get prompt deallocation. So to go even further, the
-runtime system can be modified to allow regular Haskell data (which we
+runtime system can be modified to allow unrestricted Haskell data (which we
 will refer as \emph{cons cells}), as opposed to just primitive data,
 to reside out of the GC heap as long as it has been allocated
 by a linear binding.
@@ -2494,7 +2498,7 @@ being that we will run |fib 42| to completion even if the result is
 not actually needed.
 
 
-\begin{aside}\paragraph{Alternative: scratch regions}
+\paragraph{Alternative: scratch regions}
 An alternative to allocating linear cons cells using a malloc-like
 discipline and freeing them immediately at case matching is to
 allocate cons-cells in temporary scratch regions which are to be
@@ -2540,7 +2544,6 @@ dropped or copied to the \textsc{gc} heap. Therefore regions obey a
 stack discipline. Linearly weighted data can transparently refer to
 data allocated in any number of existing regions, since calls to
 |inRegion| can be safely nested or interleaved.
-\end{aside}
 
 \section{Alternative designs}
 
@@ -2722,7 +2725,7 @@ In terms of implementation, the dynamic semantics unfolds as:
 \item When doing case analysis of a linearly-typed input, one should
   check if the object comes from the linear heap. If it does, then the
   case analysis should behave specially. (Probably deallocate the
-  object on the spot.). Note in particular that regular objects can be
+  object on the spot.). Note in particular that unrestricted objects can be
   passed to functions expecting a linear object. So one MUST check
   where the data comes from before performing eager deallocation.
 \item When making an allocation, one should check the ``dynamic ρ
