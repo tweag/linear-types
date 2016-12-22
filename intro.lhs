@@ -85,7 +85,7 @@ BoldFont=lmroman10-bold,
 \newcommand\calc{{\ensuremath{λ^q}}}
 
 \author{Mathieu Boespflug and Arnaud Spiwack}
-\date{\today}
+\date{CONSIDER READING HaskeLL.lhs INSTEAD \today}
 \title{The case for resource aware type systems}
 \hypersetup{pdflang={English}}
 

@@ -84,9 +84,9 @@ BoldFont=lmroman10-bold,
 \newcommand\HaskeLL{HaskeLL}
 \newcommand\calc{{\ensuremath{λ^q}}}
 
-\author{Jean-Philippe Bernardy and Arnaud Spiwack and Mathieu Boespflug}
+\author{Jean-Philippe Bernardy, Arnaud Spiwack and Mathieu Boespflug}
 \date{\today}
-\title{A practical lazy language with linear and unrestricted types}
+\title{\HaskeLL: A practical lazy language with linear and unrestricted types}
 % Linear and unrestricted at the same time
 % 
 \hypersetup{pdflang={English}}

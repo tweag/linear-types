@@ -85,7 +85,7 @@ BoldFont=lmroman10-bold,
 \newcommand\calc{{\ensuremath{λ^q}}}
 
 \author{JP Bernardy, Mathieu Boespflug, Arnaud Spiwack}
-\date{\today}
+\date{CONSIDER READING HaskeLL.lhs INSTEAD \today}
 \title{Intuiting linear types}
 \hypersetup{pdflang={English}}
 
