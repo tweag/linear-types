@@ -817,7 +817,7 @@ a list |xs|, appending any other list to it will never duplicate any
 of the elements in |xs|, nor drop any element in |xs|. Note that in
 our system, giving a more precise type to |(++)| strengthens the
 contract that the implementation of |(++)| must satisfy, but it
-doesn't restrict its usage. It is perfectly legal to provide an $ω$
+does not restrict its usage. It is perfectly legal to provide an $ω$
 quantity |xs| as an argument, or indeed to {\em promote} the result of
 the function, of quantity $1$, to quantity $ω$. The intuition is that, in
 a context that wants zero or more of a resource, providing exactly one
@@ -926,8 +926,8 @@ g k x y = k x y          -- Good
 g k x y = k y x          -- Bad
 \end{code}
 
-\paragraph{A GC-less queue API}
-
+\subsection{A GC-less queue API}
+\label{sec:queue-api}
 With linear types, it's possible to write a {\em pure} and {\em
   memory-safe} API for managing foreign C data. Indeed, since linear
 data must be used \emph{exactly once}, it means that such data is
@@ -985,7 +985,181 @@ There are a few things going on in this API:
   one, along with the obligation of getting rid of that one!
 \end{itemize}
 
-\todo{Probably add a remark that functional in-place update is not a goal... But it works though.}
+\todo{Functional in-place update is not a goal, but it will work with
+  a bit of care in the RTS.}
+
+\subsection{Prompt deallocation of cons cells}
+\improvement{keep going with the same example: the queue.}
+
+
+Up until this point, we have only demonstrated how to achieve memory
+safety and prompt deallocation by combining both linear types and
+foreign heaps. Ideally, users should not have to buy-in to foreign
+heaps with explicit allocation and explicit object copies to and from
+each heap just to get prompt deallocation. So to go even further, the
+runtime system can be modified to allow unrestricted Haskell data (which we
+will refer as \emph{cons cells}), as opposed to just primitive data,
+to reside out of the GC heap as long as it has been allocated
+by a linear binding.
+
+With such a modification, we can arrange for the messages that are
+evicted from the queue API in \fref{sec:queue-api} to also reside
+outside of the GC heap. In this way, using the queue could
+entail zero GC allocation. Predictable latencies would be
+within reach.
+
+To illustrate how it works, consider the following implementation of
+the Fibonacci function based on matrix multiplication:
+\begin{code}
+fib :: Int ⊸ Int
+fib n =
+  case (free x21,x22) of
+    ((),()) -> x11+x12
+  where
+    (Matrix x11 x12 x21 x22) :: _ 1 Matrix = expMatrix (n-1) (Matrix 0 1 1 1)
+
+-- Like every data type, |Int| can be duplicated or dropped linearly
+dup :: Int ⊸ (Int,Int)
+free :: Int ⊸ ()
+
+data Matrix where
+  Matrix :: Int ⊸ Int ⊸ Int ⊸ Int ⊸ Matrix
+
+-- With a bit of care, matrix multiplication can be implemented
+-- linearly. This assumes a linear implementation of |(+)| and |(*)|
+-- for integers.
+multMatrix : Matrix ⊸ Matrix ⊸ Matrix
+mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
+    Matrix
+     (x11'*y11'+x12'*y21')
+     (x11''*y12'+x12''*y22')
+     (x21'*y11''+x22'*y21'')
+     (x21''*y12''+x22''*y22'')
+  where
+    (x11',x11'') :: _ 1 (Int,Int) = dup x11
+    (x12',x12'') :: _ 1 (Int,Int) = dup x12
+    …
+
+dupMatrix :: Matrix ⊸ (Matrix,Matrix)
+dupMatrix = …
+
+-- This function uses patterns which Haskell does not naturally
+-- understands as a short hand for a view data type.
+expMatrix :: Int ⊸ Matrix ⊸ Matrix
+expMatrix 0        _m  = Matrix (1 0 0 1)
+expMatrix (2*n)    m   = square m
+expMatrix (2*n+1)  m   =
+  let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+  mult (square m') m''
+where
+  square m =
+    let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+    in multMatrix m' m''
+\end{code}
+\improvement{Jean-Philippe remarks that, in practice, a better type
+  for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
+  that is arguments are unboxed and $ω$-weighted (the idea is that
+  unboxed typed are not allocated on the heap so they can be
+  $ω$-weighted for free). Arnaud designed this example with the
+  objective of illustrating how linear types worked, and wanted to
+  avoid making such distinction, but this is open for a debate.}
+
+Because all the allocation of matrices happen in linear let-bindings,
+it is possible to allocate all of them out of the GC heap,
+\emph{as long as the result is used linearly}. To understand where
+this limitation comes from, consider the following example:
+\begin{code}
+  forget :: Int -> ()
+  forget _i = ()
+
+  forget (fib 42)
+\end{code}
+Here |fib 42| is promoted to weight $ω$ because |42|, being a literal,
+has weight $ω$. But then |fib 42| is dropped without being forced so
+it needs to be garbage collected, as well as every value in the
+closure. A partial evaluation of |fib 42| may cause the intermediate
+matrices to be pointed to by the closure. Therefore, they need to be
+garbage collected and cannot be allocated out of the GC heap.
+A similar issue occurs when the return value of |fib 42| is used
+several times.
+
+To ensure that the linearly-bound matrices are allocated on the
+GC heap, one must ensure that the result of |fib| is copied
+to the GC heap at the end of the computation. This is done in
+two parts. First the result is wrapped in a |Bang| using the |copy|
+function (|Int|, like every data type, implements this method):
+\begin{code}
+  copy :: Int ⊸ Bang Int
+\end{code}
+Then, the |Bang| constructor is forced using a pattern-matching. This
+has the effect of producing an |Int| closure of weight $ω$, hence on
+the GC heap. The run-time system is allowed to assume that no
+linear value are still live at this point (a $ω$-weighted value is
+statically guaranteed to have no reference to linear bindings)
+therefore that they can all be allocated, and managed, out of the
+GC heap.
+
+Revisiting our |forget| example, we can write:
+\begin{code}
+  case copy (fib 42) of
+    Bang x -> forget x
+\end{code}
+In this expression, all the intermediate matrices can safely be
+allocated out of the GC heap and be deallocated by
+the run-time system at the point where they are consumed. The downside
+being that we will run |fib 42| to completion even if the result is
+not actually needed.
+
+
+\begin{aside}
+\paragraph{Alternative: scratch regions}
+An alternative to allocating linear cons cells using a malloc-like
+discipline and freeing them immediately at case matching is to
+allocate cons-cells in temporary scratch regions which are to be
+discarded at the end of a computation. To be able to allocate data in
+regions outside of the \textsc{gc} heap also requires a modification
+of the run-time system, albeit probably a lighter one.
+
+Linear types provide ways to design an \textsc{api} for such scratch
+region. Let us give an example such design: the idea is to (locally)
+allocate linear bindings to a scratch region while non-linear bindings
+are allocated to the \textsc{gc} heap. This way, when all the linear
+bindings have been consumed, it is safe to free the region.
+
+The proposed \textsc{api} revolves around two functions: |withRegion|,
+which allocates a scratch region to perform a computation and frees
+the region at the end of that computation, and |inRegion| which runs a
+computation such that the linear bindings are allocated on a given
+region. Here is an \textsc{api} specifying this idea:
+\begin{code}
+  -- Creates a new region, linearity of the binding ensures that the
+  -- region, and everything within, must be consumed. The region is
+  -- freed at the end of the computation.
+  withRegion :: (Region ⊸ Bang a) ⊸ a
+  -- forks the region into two handles, each handle, still being of
+  -- linear weight must be consumed before the |withRegion|
+  -- computation is ended
+  dupRegion :: Region ⊸ Region ⊗ Region
+  -- computes |a| allocating linear binding in the region
+  inRegion :: Region ⊸ a ⊸ a
+  -- All pending regions must be dropped before the computation
+  -- ends. |drop| only makes the binding inaccessible, the region is
+  -- actually freed at the end of |withRegion|
+  drop :: Region ⊸ ()
+\end{code}
+Like with previous examples, |withRegion c| is safe because the return
+type of |c| is |Bang a| which means that it cannot contain reference
+to linear bindings, \emph{i.e.} neither a region nor data allocated in
+a region can escape |withRegion c|. A region allocated by |withRegion|
+cannot be freed before the end of the |withRegion| computation because
+even if all the region handles are inaccessible, there may still be
+values allocated in regions which are accessible and are yet to be
+dropped or copied to the \textsc{gc} heap. Therefore regions obey a
+stack discipline. Linearly weighted data can transparently refer to
+data allocated in any number of existing regions, since calls to
+|inRegion| can be safely nested or interleaved.
+\end{aside}
+
 
 \section{\calc{} statics}
 \label{sec:statics}
@@ -1149,7 +1323,7 @@ argument of weight $1$ or $ω$.
     makes sense in the dynamic semantics, it's not only to simplify
     the presentation with consideration about type polymorphism. There
     may be a meaning to weight-polymorphic data type, but I [aspiwack]
-    can't see it.}\unsure{Should we explain some of the above in the
+    ca not see it.}\unsure{Should we explain some of the above in the
     text?}
 
   For most purposes, $c_k$ behaves like a constant with the type
@@ -1410,7 +1584,7 @@ weight $1$ where weight $ω$ is required:
   restriction x = unrestricted (x,True)
 \end{code}
 \begin{quote}\color{red}
-  Couldn't match expected weight `$ω$' with actual weight `1'\\
+  Could not match expected weight `$ω$' with actual weight `1'\\
   In the expression: |(x,True)|\\
   In the expression: unrestricted |(x,True)|
 \end{quote}
@@ -1786,7 +1960,7 @@ The problem with this scheme is that it involves two phases of
 heuristics (custom rewrite rules and evaluator), and in practice
 programmers have difficulties to predict the performance of any given
 program subject to shortcut fusion. Additionally, it is not uncommon for a compiler
-to even introduce sharing where the programmer doesn't expect it,
+to even introduce sharing where the programmer does not expect it,
 effectively creating a memory leak
 (\url{https://ghc.haskell.org/trac/ghc/ticket/12620}).
 
@@ -2305,7 +2479,7 @@ arraySize :: Array a ⊸ (Int ⊗ Array a)
 We can give a semantics simply by representing the type |Array| and
 the API functions in terms of \HaskeLL. This denotational semantics
 does not preclude a more efficient implementation.\improvement{Even if
-  we don't implement prompt-deallocation of cons cells we can have
+  we do not implement prompt-deallocation of cons cells we can have
   arrays out of the \textsc{gc} heap, such as these. But we would need to
   restrict the class of type |a| and |b| in most the API functions
   (probably to |Storable|)}
@@ -2376,174 +2550,6 @@ dynamic weight of 1 we can never end-up with weight $ω$ for an array.
 We omit the semantics of other combinators, which are similar to the
 |updateArray| rule.
 
-
-\subsection{Prompt deallocation of cons cells}
-
-Up until this point, we have only demonstrated how to achieve memory
-safety and prompt deallocation by combining both linear types and
-foreign heaps. Ideally, users shouldn't have to buy-in to foreign
-heaps with explicit allocation and explicit object copies to and from
-each heap just to get prompt deallocation. So to go even further, the
-runtime system can be modified to allow unrestricted Haskell data (which we
-will refer as \emph{cons cells}), as opposed to just primitive data,
-to reside out of the GC heap as long as it has been allocated
-by a linear binding.
-
-With such a modification, we can arrange for the messages that are
-evicted from the queue API in \fref{sec:ffi} to also reside
-outside of the GC heap. In this way, using the queue could
-entail zero GC allocation. Predictable latencies would be
-within reach.
-
-To illustrate how it works, consider the following implementation of
-the Fibonacci function based on matrix multiplication:
-\begin{code}
-fib :: Int ⊸ Int
-fib n =
-  case (free x21,x22) of
-    ((),()) -> x11+x12
-  where
-    (Matrix x11 x12 x21 x22) :: _ 1 Matrix = expMatrix (n-1) (Matrix 0 1 1 1)
-
--- Like every data type, |Int| can be duplicated or dropped linearly
-dup :: Int ⊸ (Int,Int)
-free :: Int ⊸ ()
-
-data Matrix where
-  Matrix :: Int ⊸ Int ⊸ Int ⊸ Int ⊸ Matrix
-
--- With a bit of care, matrix multiplication can be implemented
--- linearly. This assumes a linear implementation of |(+)| and |(*)|
--- for integers.
-multMatrix : Matrix ⊸ Matrix ⊸ Matrix
-mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
-    Matrix
-     (x11'*y11'+x12'*y21')
-     (x11''*y12'+x12''*y22')
-     (x21'*y11''+x22'*y21'')
-     (x21''*y12''+x22''*y22'')
-  where
-    (x11',x11'') :: _ 1 (Int,Int) = dup x11
-    (x12',x12'') :: _ 1 (Int,Int) = dup x12
-    …
-
-dupMatrix :: Matrix ⊸ (Matrix,Matrix)
-dupMatrix = …
-
--- This function uses patterns which Haskell does not naturally
--- understands as a short hand for a view data type.
-expMatrix :: Int ⊸ Matrix ⊸ Matrix
-expMatrix 0        _m  = Matrix (1 0 0 1)
-expMatrix (2*n)    m   = square m
-expMatrix (2*n+1)  m   =
-  let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
-  mult (square m') m''
-where
-  square m =
-    let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
-    in multMatrix m' m''
-\end{code}
-\improvement{Jean-Philippe remarks that, in practice, a better type
-  for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
-  that is arguments are unboxed and $ω$-weighted (the idea is that
-  unboxed typed are not allocated on the heap so they can be
-  $ω$-weighted for free). Arnaud designed this example with the
-  objective of illustrating how linear types worked, and wanted to
-  avoid making such distinction, but this is open for a debate.}
-
-Because all the allocation of matrices happen in linear let-bindings,
-it is possible to allocate all of them out of the GC heap,
-\emph{as long as the result is used linearly}. To understand where
-this limitation comes from, consider the following example:
-\begin{code}
-  forget :: Int -> ()
-  forget _i = ()
-
-  forget (fib 42)
-\end{code}
-Here |fib 42| is promoted to weight $ω$ because |42|, being a literal,
-has weight $ω$. But then |fib 42| is dropped without being forced so
-it needs to be garbage collected, as well as every value in the
-closure. A partial evaluation of |fib 42| may cause the intermediate
-matrices to be pointed to by the closure. Therefore, they need to be
-garbage collected and cannot be allocated out of the GC heap.
-A similar issue occurs when the return value of |fib 42| is used
-several times.
-
-To ensure that the linearly-bound matrices are allocated on the
-GC heap, one must ensure that the result of |fib| is copied
-to the GC heap at the end of the computation. This is done in
-two parts. First the result is wrapped in a |Bang| using the |copy|
-function (|Int|, like every data type, implements this method):
-\begin{code}
-  copy :: Int ⊸ Bang Int
-\end{code}
-Then, the |Bang| constructor is forced using a pattern-matching. This
-has the effect of producing an |Int| closure of weight $ω$, hence on
-the GC heap. The run-time system is allowed to assume that no
-linear value are still live at this point (a $ω$-weighted value is
-statically guaranteed to have no reference to linear bindings)
-therefore that they can all be allocated, and managed, out of the
-GC heap.
-
-Revisiting our |forget| example, we can write:
-\begin{code}
-  case copy (fib 42) of
-    Bang x -> forget x
-\end{code}
-In this expression, all the intermediate matrices can safely be
-allocated out of the GC heap and be deallocated by
-the run-time system at the point where they are consumed. The downside
-being that we will run |fib 42| to completion even if the result is
-not actually needed.
-
-
-\paragraph{Alternative: scratch regions}
-An alternative to allocating linear cons cells using a malloc-like
-discipline and freeing them immediately at case matching is to
-allocate cons-cells in temporary scratch regions which are to be
-discarded at the end of a computation. To be able to allocate data in
-regions outside of the \textsc{gc} heap also requires a modification
-of the run-time system, albeit probably a lighter one.
-
-Linear types provide ways to design an \textsc{api} for such scratch
-region. Let us give an example such design: the idea is to (locally)
-allocate linear bindings to a scratch region while non-linear bindings
-are allocated to the \textsc{gc} heap. This way, when all the linear
-bindings have been consumed, it is safe to free the region.
-
-The proposed \textsc{api} revolves around two functions: |withRegion|,
-which allocates a scratch region to perform a computation and frees
-the region at the end of that computation, and |inRegion| which runs a
-computation such that the linear bindings are allocated on a given
-region. Here is an \textsc{api} specifying this idea:
-\begin{code}
-  -- Creates a new region, linearity of the binding ensures that the
-  -- region, and everything within, must be consumed. The region is
-  -- freed at the end of the computation.
-  withRegion :: (Region ⊸ Bang a) ⊸ a
-  -- forks the region into two handles, each handle, still being of
-  -- linear weight must be consumed before the |withRegion|
-  -- computation is ended
-  dupRegion :: Region ⊸ Region ⊗ Region
-  -- computes |a| allocating linear binding in the region
-  inRegion :: Region ⊸ a ⊸ a
-  -- All pending regions must be dropped before the computation
-  -- ends. |drop| only makes the binding inaccessible, the region is
-  -- actually freed at the end of |withRegion|
-  drop :: Region ⊸ ()
-\end{code}
-Like with previous examples, |withRegion c| is safe because the return
-type of |c| is |Bang a| which means that it cannot contain reference
-to linear bindings, \emph{i.e.} neither a region nor data allocated in
-a region can escape |withRegion c|. A region allocated by |withRegion|
-cannot be freed before the end of the |withRegion| computation because
-even if all the region handles are inaccessible, there may still be
-values allocated in regions which are accessible and are yet to be
-dropped or copied to the \textsc{gc} heap. Therefore regions obey a
-stack discipline. Linearly weighted data can transparently refer to
-data allocated in any number of existing regions, since calls to
-|inRegion| can be safely nested or interleaved.
 
 \section{Alternative designs}
 
