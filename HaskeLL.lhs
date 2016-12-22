@@ -763,14 +763,11 @@ interfaces\cite{krishnaswami_gui_2011}.
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
-The latter are
-extensionally equivalent to regular functions but are guaranteed to
-consume their argument exactly once. To be precise, the arrow type is
-parametrized by the amount (hereafter referred to as the weight) of
-its argument that it requires:
-
-We propose a programming language with two arrow types: one for usual
-intuitionistic functions, and one for linear functions. The are a
+We propose a conservative extension of Haskell (every existing Haskell
+program remains valid, with the same semantics) for linearity
+annotations.
+Concretely, we propose to have two arrow types: one for usual
+intuitionistic functions, and one for linear functions. The latter are a
 subset of the former: they are functions which guarantee to consume
 exactly once their argument. To be precise, we propose a
 generalisation, where the arrow type is parametrized by the amount of
@@ -2743,7 +2740,7 @@ to have an impact on performance, not on correctness.
 
 \section{Conclusion}
 
-The calculus \calc{} demonstrates how an existing lazy language, such
+This paper demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
 the language, in the following sense:
 \begin{itemize}
@@ -2755,7 +2752,19 @@ the language, in the following sense:
 In other words: regular Haskell comes first. Additionally, linearly
 typed functions and data structures are usable directly from regular
 Haskell code. In such a situation their semantics is that of the same
-code with linearity erased.  When the programmer is ready to pay the
+code with linearity erased.
+
+This is in contrast with languages such as Rust, which are
+specifically optimized for writing programs that are structured using
+the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens.
+
+In \HaskeLL{}, when the programmer is ready to pay the
 cost of finely dealing with usage through linearity, they get the
 additional benefits of linear type: new abstractions
 (\fref{sec:protocols}, \fref{sec:resources}, and \fref{sec:ffi}),
@@ -2770,7 +2779,9 @@ modification to an existing language they require:
 \item Adapting the \textbf{type system} enables
   \begin{itemize}
   \item new abstractions such as protocols (\fref{sec:protocols}) and
-    safe resource management (\fref{sec:resources})
+    safe resource management (\fref{sec:resources}), enabling {\em
+      safe} API to resources exposed as foreign resources allocated in
+    a foreign heap
   \item pure abstractions to C libraries (\fref{sec:ffi})
   \item primitive operations to keep data out of the garbage collector
     (\fref{sec:primops})
@@ -2779,16 +2790,22 @@ modification to an existing language they require:
     language} makes it possible to exploit linear types for further
   optimization (\fref{sec:fusion})
 \item Modifying the \textbf{run-time system} further enables prompt
-  deallocation of thunks which can be leveraged to prevent \textsc{gc} pauses
-  in critical computations (\fref{sec:dynamics}).
+  deallocation of it possible to
+  have type-directed allocation of objects,  which can be leveraged to prevent \textsc{gc} pauses
+  in critical computations (\fref{sec:dynamics}). An API for explicit
+  allocation and freeing of resources is no longer needed.
 \end{enumerate}
 
-Of these three stages, modifying the type system is the cheapest, but
-also the most immediately beneficial, enabling a lot of new uses for the
-programming language. Propagating the information down to the run-time
-system is still worth pursuing as we are expecting significant
-benefits, due to reduced and controlled latency, for systems
-programming, and in particular for distributed applications.
+Each of these stages imply increasingly invasive changes to the
+compiler, but also increasingly large benefits. In practice it makes
+it possible to roll out stages one at a time, quickly reaping the low
+hanging fruits.  Of these three stages, modifying the type system is
+the cheapest, but also the most immediately beneficial, enabling a lot
+of new uses for the programming language. Propagating the information
+down to the run-time system is still worth pursuing as we are
+expecting significant benefits, due to reduced and controlled latency,
+for systems programming, and in particular for distributed
+applications.
 
 \printbibliography
 \end{document}
