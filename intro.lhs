@@ -136,9 +136,9 @@ do  h <- openfile "myfile" ReadMode
     ...     -- some code that reads the file
     hClose h
 \end{code}
-This style of programming is unsafe. In the above, there is nothing
+This style of programming is unsafe. In the above style, there is nothing
 preventing the programmer from accidentally reusing the file handle
-after calling |hClose|, even though the handle is now defunct forever
+after calling |hClose|, even though the handle is defunct forever
 in the future, or indeed call |hClose| twice. In short, programming
 with explicit file handle creation/deletion operators is prone to the
 same bugs that plague programming with explicit
