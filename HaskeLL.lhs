@@ -989,8 +989,6 @@ There are a few things going on in this API:
   a bit of care in the RTS.}
 
 \subsection{Prompt deallocation of cons cells}
-\improvement{keep going with the same example: the queue.}
-
 
 Up until this point, we have only demonstrated how to achieve memory
 safety and prompt deallocation by combining both linear types and
@@ -1008,8 +1006,43 @@ outside of the GC heap. In this way, using the queue could
 entail zero GC allocation. Predictable latencies would be
 within reach.
 
-To illustrate how it works, consider the following implementation of
-the Fibonacci function based on matrix multiplication:
+\unsure{keep going with the same example: the queue.}
+\begin{aside}
+  Here is how the code for queue may look like:
+\begin{code}
+type Queue = List Msg
+
+alloc   :: (Queue ⊸ Bang a) ⊸ a
+alloc k = case k [] of
+  Bang x -> x
+
+free    :: Queue ⊸ ()
+free (x:xs) = case storableFree x of
+  () -> free xs
+free [] = ()
+
+push    :: Msg -> Queue ⊸ Queue
+push msg msgs = copyToLinHeap msg:msgs
+
+delete  :: Msg -> Queue ⊸ Queue
+delete msg [] = []
+delete msg (x:xs) = if msg' == msg then xs else x':delete msg xs
+  where (x',msg') = dup x
+
+evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
+
+copyToLinHeap :: Storable a => a -> a
+-- 2 implementations of the above:
+-- when used in a linear context it copies to the linear heap
+-- when used in an unrestricted context it is the identity
+
+\end{code}
+\end{aside}
+
+To illustrate how it works, we will implementati the Fibonacci
+function based on matrix multiplication. In standard Haskell, there
+would be allocation for the intermediate matrices on the GC heap --- but we
+will avoid those.
 \begin{code}
 fib :: Int ⊸ Int
 fib n =
@@ -1043,8 +1076,10 @@ mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
 dupMatrix :: Matrix ⊸ (Matrix,Matrix)
 dupMatrix = …
 
+
 -- This function uses patterns which Haskell does not naturally
--- understands as a short hand for a view data type.
+-- understand as a short hand for a view data type.
+
 expMatrix :: Int ⊸ Matrix ⊸ Matrix
 expMatrix 0        _m  = Matrix (1 0 0 1)
 expMatrix (2*n)    m   = square m
@@ -1055,12 +1090,18 @@ where
   square m =
     let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
     in multMatrix m' m''
+
+-- Alternative:
+data Binary = Zero | Times2 Binary | Times2PlusOne Binary
+natToBinary :: Int -> Binary
+
 \end{code}
 \improvement{Jean-Philippe remarks that, in practice, a better type
   for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
   that is arguments are unboxed and $ω$-weighted (the idea is that
   unboxed typed are not allocated on the heap so they can be
-  $ω$-weighted for free). Arnaud designed this example with the
+  $ω$-weighted for free). Doing so would avoid the difficulty of having to copy the elements of the matrix in the multiplication.
+  Arnaud designed this example with the
   objective of illustrating how linear types worked, and wanted to
   avoid making such distinction, but this is open for a debate.}
 
@@ -1320,7 +1361,7 @@ argument of weight $1$ or $ω$.
   at that position \emph{can} have weight $1$ (or $ω$). A further
   requirement is that the weights $q_i$ will either be $1$ or
   $ω$.\info{The requirement that weights are constant in constructor
-    makes sense in the dynamic semantics, it's not only to simplify
+    makes sense in the dynamic semantics, it is not only to simplify
     the presentation with consideration about type polymorphism. There
     may be a meaning to weight-polymorphic data type, but I [aspiwack]
     ca not see it.}\unsure{Should we explain some of the above in the
