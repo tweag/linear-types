@@ -1039,7 +1039,7 @@ copyToLinHeap :: Storable a => a -> a
 \end{code}
 \end{aside}
 
-To illustrate how it works, we will implementati the Fibonacci
+To illustrate how it works, we will implement the Fibonacci
 function based on matrix multiplication. In standard Haskell, there
 would be allocation for the intermediate matrices on the GC heap --- but we
 will avoid those.
@@ -2093,19 +2093,19 @@ the performance of a program. This is illustrated by the following
 example found in \textcite{dominguez_parafusion_2006}:
 \begin{code}
   tails :: [a] -> [[a]]
-  tails (_ : xs) = xs : tails xs
+  tails (_x : xs) = xs : tails xs
   tails [] = []
 
   map :: (a -> b) -> [a] -> [b]
   map f (x : xs) = f x : map f xs
-  map _ [] = []
+  map _f [] = []
 \end{code}
 We have that |force . tails . map (+1)| consumes memory linearly in
 the size of its input whereas the fused
 \begin{code}
   tailsmap :: (a -> b) -> [a] -> [[b]]
-  tailsmap f (_ : xs) = map f xs : tailsmap f xs
-  tailsmap _ [] = []
+  tailsmap f (_x : xs) = map f xs : tailsmap f xs
+  tailsmap _f [] = []
 \end{code}
 makes |force . tailsmap (+1)| consumes memory quadratically in the
 size of its input.
