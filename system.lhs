@@ -115,7 +115,12 @@ polymorphism, it is possible that linear data is actually controlled by
 the garbage collector, but linear data is allowed not to be, and so,
 for most purpose, it must be treated as it is not.
 
-This analogy driv
+This analogy drives the details of \calc{}. In particular unrestricted
+data cannot contain linear data since the garbage collector needs to
+control transitively when unrestricted data is deallocated (otherwise
+we may have dangling pointers or ).
+
+% possible remark: semantic & stactic vs syntactic and vs dynamic.
 
 \subsection{Binding foreign functions}
 \label{sec:ffi}
