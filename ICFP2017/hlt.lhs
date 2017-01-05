@@ -1,4 +1,69 @@
+% -*- latex -*-
 \documentclass[acmlarge]{acmart}
+%include polycode.fmt
+%format .         = ". "
+%format forall a         = "∀" a
+%format _ (a)         = "_{" a "}"
+%format ω = "\omega"
+%format π = "\pi"
+%format ρ = "\rho"
+%subst keyword a = "\mathsf{" a "}"
+% \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
+\bibliography{../PaperTools/bibtex/jp.bib,../local.bib}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+  }
+\usepackage{mathpartir}
+% \usepackage{fontspec}  \usepackage{unicode-math}
+\usepackage[plain]{fancyref}
+\def\frefsecname{Section}
+\def\freffigname{Figure}
+
+\newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
+\newcommand{\data}{\mathsf{data} }
+\newcommand{\where}{ \mathsf{where} }
+\newcommand{\inl}{\mathsf{inl} }
+\newcommand{\inr}{\mathsf{inr} }
+\newcommand{\flet}[1][]{\mathsf{let}_{#1} }
+\newcommand{\fin}{ \mathsf{in} }
+\newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
+\newcommand{\susp}[1]{⟦#1⟧}
+
+\newcommand{\figuresection}[1]{\textbf{#1}}
+
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage{xargs}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
+
+% Link in bibliography interpreted as hyperlinks.
+\newcommand{\HREF}[2]{\href{#1}{#2}}
+
+% \newtheorem{definition}{Definition}
+% \newtheorem{lemma}{Lemma}
+
+\newcommand\HaskeLL{HaskeLL}
+\newcommand\calc{{\ensuremath{λ^q}}}
 
 \usepackage{booktabs} % For formal tables
 
@@ -87,24 +152,11 @@
 
 
 \begin{abstract}
-Multifrequency media access control has been well understood in
-general wireless ad hoc networks, while in wireless sensor networks,
-researchers still focus on single frequency solutions. In wireless
-sensor networks, each device is typically equipped with a single
-radio transceiver and applications adopt much smaller packet sizes
-compared to those in general wireless ad hoc networks. Hence, the
-multifrequency MAC protocols proposed for general wireless ad hoc
-networks are not suitable for wireless sensor network applications,
-which we further demonstrate through our simulation experiments. In
-this article, we propose MMSN, which takes advantage of
-multifrequency availability while, at the same time, takes into
-consideration the restrictions of wireless sensor networks. Through
-extensive experiments, MMSN exhibits the prominent ability to utilize
-parallel transmissions among neighboring nodes. When multiple physical
-frequencies are available, it also achieves increased energy
-efficiency, demonstrating the ability to work against radio
-interference and the tolerance to a wide range of measured time
-synchronization errors.
+  TODO
+  This article introduces and describes a
+  linearly-typed lazy programming language which is designed to be
+  integrate well with an existing programming language, in particular
+  in GHC/Haskell.
 \end{abstract}
 
 
@@ -170,7 +222,7 @@ multi-channel, radio interference, time synchronization}
 % The default list of authors is too long for headers}
 \renewcommand{\shortauthors}{G. Zhou et. al.}
 
-blah
+
 
 
 \end{document}
