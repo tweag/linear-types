@@ -10,7 +10,7 @@
 %format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
-\bibliography{PaperTools/bibtex/jp.bib}
+\bibliography{PaperTools/bibtex/jp.bib,local.bib}
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{longtable}
