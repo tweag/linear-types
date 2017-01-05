@@ -136,7 +136,7 @@ citizens.
 \subsection{Binding foreign functions}
 \label{sec:ffi}
 
-In a companion document, Bernardy and Spiwack propose a programming
+In a companion document\todo{name the document}, Bernardy and Spiwack propose a programming
 language featuring two arrow types: one for the usual unrestricted
 function space and one for linear functions. The latter are
 extensionally equivalent to regular functions but are guaranteed to
@@ -173,7 +173,8 @@ doesn't restrict its usage. It's perfectly legal to provide an $ω$
 quantity |xs| as an argument, or indeed to {\em promote} the result of
 the function, of quantity $1$, to quantity $ω$. The intuition is, in
 a context that wants zero or more of a resource, providing exactly one
-of that resource will do.
+of that resource will do\improvement{clarify promotion: no dependency
+  on resource or something to that effect}.
 
 Of course, not all programs are linear: a function may require $ω$
 times its input, even to construct a single output. For example the
@@ -184,10 +185,11 @@ cycle :: List a → List a
 cycle l = l ++ cycle l
 \end{code}
 
-One might be tempted to mark all constructor types as linear, i.e.
+One might be tempted to mark all constructor types as linear, \emph{i.e.}
 with only |⊸|-arrows in their types, in the style of the |List| type
 above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any quantity. However, $ω$-weighted
+happy to be provided resources\improvement{resource is probably not
+  the right word here} of any weight. However, $ω$-weighted
 arrows in constructors are useful too, as the following data type
 illustrates\footnote{The type constructor |Bang| is in fact an
   encoding of the so-called \emph{exponential} modality written ${!}$
@@ -566,20 +568,20 @@ An alternative to allocating linear cons cells using a malloc-like
 discipline and freeing them immediately at case matching is to
 allocate cons-cells in temporary scratch regions which are to be
 discarded at the end of a computation. To be able to allocate data in
-regions outside of the \textsc{gc} heap also requires a modification
+regions outside of the GC heap also requires a modification
 of the run-time system, albeit probably a lighter one.
 
-Linear types provide ways to design an \textsc{api} for such scratch
-region. Let us give an example such design: the idea is to (locally)
+Linear types provide ways to design an API for such scratch
+regions. Let us give an example such design: the idea is to (locally)
 allocate linear bindings to a scratch region while non-linear bindings
-are allocated to the \textsc{gc} heap. This way, when all the linear
+are allocated to the GC heap. This way, when all the linear
 bindings have been consumed, it is safe to free the region.
 
-The proposed \textsc{api} revolves around two functions: |withRegion|,
+The proposed API revolves around two functions: |withRegion|,
 which allocates a scratch region to perform a computation and frees
 the region at the end of that computation, and |inRegion| which runs a
 computation such that the linear bindings are allocated on a given
-region. Here is an \textsc{api} specifying this idea:
+region. Here is an API specifying this idea:
 \begin{code}
   -- Creates a new region, linearity of the binding ensures that the
   -- region, and everything within, must be consumed. The region is
