@@ -1,6 +1,6 @@
 all: hlt.pdf
 
-%.pdf: acmart.cls %.tex
+%.pdf: %.tex acmart.cls
 	pdflatex $<
 
 %.cls: %.ins

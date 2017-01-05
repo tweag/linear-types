@@ -10,7 +10,15 @@ in stdenv.mkDerivation {
                       # collection-fontutils
                       # tex-gyre tex-gyre-math
                       lm
+                      comment
+                      algorithm2e
+                      relsize
+                      environ
+                      trimspaces
+                      ncctools
+                      ncclatex
                       todonotes
+                      totpages
                       stmaryrd lazylist polytable # for lhs2tex
                       xargs
                       biblatex
