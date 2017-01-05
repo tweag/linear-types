@@ -103,56 +103,37 @@
 \acmDOI{0000001.0000001}
 
 % Paper history
-\received{February 2007}
-\received{March 2009}
-\received[accepted]{June 2009}
+\received{February 2017}
+% \received{March 2009}
+% \received[accepted]{June 2009}
 
 
 % Document starts
 \begin{document}
 % Title portion
 \title{Haskell-PoP}
-\author{Gang Zhou}
-\orcid{1234-5678-9012-3456}
+\author{Jean-Philippe Bernardy}
 \affiliation{%
-  \institution{College of William and Mary}
-  \streetaddress{104 Jamestown Rd}
-  \city{Williamsburg}
-  \state{VA}
-  \postcode{23185}
-  \country{USA}}
-\author{Yafeng Wu}
+  \institution{Gothenburg University}
+  \department{???}
+  \streetaddress{???}
+  \city{Gothenburg}
+  % \state{VA}
+  \postcode{???}
+  \country{Sweden}}
+\author{Mathieu Boespflug}
+\author{Arnaud Spiwack}
 \affiliation{%
-  \institution{University of Virginia}
-  \department{School of Engineering}
-  \city{Charlottesville}
-  \state{VA}
-  \postcode{22903}
-  \country{USA}
-}
-\author{Ting Yan}
-\affiliation{%
-  \institution{Eaton Innovation Center}
-  \city{Prague}
-  \country{Czech Republic}}
-\author{Tian He}
-\affiliation{%
-  \institution{University of Minnesota}
-  \country{USA}}
-\author{Chengdu Huang}
-\author{John A. Stankovic}
-\author{Tarek F. Abdelzaher}
-\affiliation{%
-  \institution{University of Virginia}
-  \department{School of Engineering}
-  \city{Charlottesville}
-  \state{VA}
-  \postcode{22903}
-  \country{USA}
+  \institution{Tweag I/O}
+  \city{Paris}
+  % \state{VA}
+  \postcode{???}
+  \country{France}
 }
 
 
 \begin{abstract}
+  \todo{Expand}
   This article introduces and describes a
   linearly-typed lazy programming language which is designed to be
   integrate well with an existing programming language, in particular
@@ -167,43 +148,33 @@
 %
 \begin{CCSXML}
 <ccs2012>
- <concept>
-  <concept_id>10010520.10010553.10010562</concept_id>
-  <concept_desc>Computer systems organization~Embedded systems</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
- <concept>
-  <concept_id>10010520.10010575.10010755</concept_id>
-  <concept_desc>Computer systems organization~Redundancy</concept_desc>
-  <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>10010520.10010553.10010554</concept_id>
-  <concept_desc>Computer systems organization~Robotics</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>10003033.10003083.10003095</concept_id>
-  <concept_desc>Networks~Network reliability</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
-</ccs2012>  
+<concept>
+<concept_id>10011007.10011006.10011008.10011024</concept_id>
+<concept_desc>Software and its engineering~Language features</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+<concept_desc>Software and its engineering~Functional languages</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011006.10011039</concept_id>
+<concept_desc>Software and its engineering~Formal language definitions</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+</ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Computer systems organization~Embedded systems}
-\ccsdesc[300]{Computer systems organization~Redundancy}
-\ccsdesc{Computer systems organization~Robotics}
-\ccsdesc[100]{Networks~Network reliability}
-
+\ccsdesc[500]{Software and its engineering~Language features}
+\ccsdesc[300]{Software and its engineering~Functional languages}
+\ccsdesc[300]{Software and its engineering~Formal language definitions}
 %
 % End generated code
 %
 
-% We no longer use \terms command
-\terms{Design, Algorithms, Performance}
-
-\keywords{Wireless sensor networks, media access control,
-multi-channel, radio interference, time synchronization}
+\keywords{Haskell, laziness, linear logic, Linear types, systems
+  programming}
 
 
 \thanks{This work is supported by the National Science Foundation,
@@ -220,7 +191,7 @@ multi-channel, radio interference, time synchronization}
 \maketitle
 
 % The default list of authors is too long for headers}
-\renewcommand{\shortauthors}{G. Zhou et. al.}
+% \renewcommand{\shortauthors}{G. Zhou et. al.}
 
 \section{Introduction}
 
