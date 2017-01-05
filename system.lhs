@@ -117,10 +117,20 @@ for most purpose, it must be treated as it is not.
 
 This analogy drives the details of \calc{}. In particular unrestricted
 data cannot contain linear data since the garbage collector needs to
-control transitively when unrestricted data is deallocated (otherwise
-we may have dangling pointers or ).
+control transitively when unrestricted data is deallocated: otherwise
+we may have dangling pointers or memory leaks. On the other hand it is
+perfectly fine for linear data to refer to unrestricted data. So any
+data containing linear data must also be linear. Crucially this
+applies to closures as well (both partial applications and lazy
+thunks): \emph{e.g.} a partial application of a function to a linear
+piece of data is linear. More generally, the application of a function
+to a linear piece of data is linear, since it is, in general, a lazy
+thunk pointing to that linear data. In fact, even in a strict
+language, the result may contain the linear argument and so must be
+linear.
 
-% possible remark: semantic & stactic vs syntactic and vs dynamic.
+% TODO remark: linear is a semantic & stactic property (vs
+% syntactic and vs dynamic).
 
 \subsection{Binding foreign functions}
 \label{sec:ffi}
