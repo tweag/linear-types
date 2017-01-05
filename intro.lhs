@@ -10,7 +10,7 @@
 %format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
-\bibliography{PaperTools/bibtex/jp.bib}
+\bibliography{PaperTools/bibtex/jp.bib,local.bib}
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{longtable}
@@ -112,7 +112,7 @@ Extensions from GADT's \cite{xi_guarded_2003} (now in both GHC and
 OCaml), to type-level functions such as type families
 \cite{chakravarty_associated_2005-1}, to increasingly automatic and
 complete promotion of term-level data types to the type-level
-\cite{eisenburg_promoting_2014}. Yet in practice, that a user's
+\cite{eisenberg_promoting_2014}. Yet in practice, that a user's
 program is denotationally correct with respect to some abstract
 specification matters little if does not abide to efficient and timely
 release of scarce hardware resources. Indeed, {\em predictable} and
