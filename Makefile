@@ -1,4 +1,4 @@
-all: HaskeLL.pdf intro.pdf why.pdf
+all: HaskeLL.pdf intro.pdf why.pdf system.pdf
 
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules:"
