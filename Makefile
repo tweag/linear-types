@@ -6,12 +6,12 @@ PaperTools/bibtex/jp.bib:
 	false
 
 clean:
-	rm -f *.aux *.bbl *.ptb FormalSystem.tex *.pdf
+	rm -f *.tex *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
 
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
 
-%.pdf: %.tex PaperTools/bibtex/jp.bib
+%.pdf: %.tex PaperTools/bibtex/jp.bib local.bib
 	xelatex $*
 	biber $*
 	xelatex $*
