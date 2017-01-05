@@ -1,5 +1,5 @@
 % -*- latex -*-
-\documentclass[acmlarge]{acmart}
+\documentclass[acmlarge,dvipsnames,natbib]{acmart}
 %include polycode.fmt
 %format .         = ". "
 %format forall a         = "∀" a
@@ -29,7 +29,8 @@
     urlcolor={blue!80!black}
   }
 \usepackage{mathpartir}
-% \usepackage{fontspec}  \usepackage{unicode-math}
+% \usepackage{fontspec}
+% \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
 \def\frefsecname{Section}
 \def\freffigname{Figure}
@@ -152,7 +153,6 @@
 
 
 \begin{abstract}
-  TODO
   This article introduces and describes a
   linearly-typed lazy programming language which is designed to be
   integrate well with an existing programming language, in particular
@@ -222,7 +222,627 @@ multi-channel, radio interference, time synchronization}
 % The default list of authors is too long for headers}
 \renewcommand{\shortauthors}{G. Zhou et. al.}
 
+\section{Introduction}
+
+\todo{the usual blabla}
+
+Contribution. We propose a conservative extension of the polymorphic
+lambda calculus (or System F) supporting linear function types, called
+\calc. This extension extension carefully crafted to integrate well
+with existing programming languages based on System F. Indeed:
+1. existing programs continue to work in the same way 2. first-order
+linear functons are automatically converted to unrestricted functions
+3. higher-order functions can be given polymorphic type so that they
+work both on linear and higher-order functions. 4. it is compatible
+even with dependently-typed programs, by having no impact on the
+syntax of kinds.  Additionally, we provide a lazy semantics for the
+calculus which tracks linearity.
 
 
+\subsection{Motivating examples}
 
+
+\unsure{copy paste or new things?}
+
+\section{\calc{} statics}
+\label{sec:statics}
+In this section we concentrate on the calculus at the core of
+\HaskeLL{}, namely \calc{}, and give a step by step account of its
+syntax and typing rules.
+\subsection{Typing contexts}
+\label{sec:typing-contexts}
+
+In \calc{}, each variable in typing contexts is annotated with the number of times
+that the program must use the variable in question. We call this
+number of times the \emph{weight} of the variable.
+
+Concrete weights are either $1$ or $ω$: when the weight is $1$, the program
+\emph{must} consume the variable exactly once; when the weight is $ω$,
+it \emph{may} consume it any number of times (possibly zero). For the
+sake of polymorphism, weights are extended with weight
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
+complete syntax of weights and contexts can be found in
+\fref{fig:contexts}.
+
+In addition, weights are equipped with an equivalence relation $(=)$
+which obeys the following laws:
+
+\begin{itemize}
+\item $+$ and $·$ are associative and commutative
+\item $1$ is the unit of $·$
+\item $·$ distributes over $+$
+\item $ω · ω = ω$
+\item $1 + ω = ω$
+\item $1 + 1 = ω$
+\item $ω + ω = ω$
+\end{itemize}
+Thus, weights form a semi-ring (without a zero), which extends to a
+module structure on typing contexts as follows.
+
+\begin{definition}[Context addition]~
+  \begin{align*}
+    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
+    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
+    () + Δ &= Δ
+  \end{align*}
+\end{definition}
+
+\begin{definition}[Context scaling]
+  \begin{displaymath}
+    p(x :_q A, Γ) =  x :_{pq} A, pΓ
+  \end{displaymath}
+\end{definition}
+
+\begin{lemma}[Contexts form a module]
+  The following laws hold:
+  \begin{align*}
+    Γ + Δ &= Δ + Γ\\
+    p (Γ+Δ) &= p Γ + p Δ\\
+    (p+q) Γ &= p Γ+ q Γ \\
+    (pq) Γ &= p (q Γ)\\
+    1 Γ &= Γ
+  \end{align*}
+\end{lemma}
+
+\subsection{Typing}
+
+The static semantics of \calc{} is expressed in terms of the
+familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
+judgement, however, may be less familiar. Indeed, remember that $Γ$ is
+weight-annotated, the weight of a variable denoting the quantity of
+that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
+be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
+  one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
+
+\begin{figure}
+  \figuresection{Weights}
+  \begin{align*}
+    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
+  \end{align*}
+  \figuresection{Contexts}
+  \begin{align*}
+    Γ,Δ & ::=\\
+        & ||  x :_q A, Γ & \text{weight-annotated binder} \\
+        & ||     & \text {empty context}
+  \end{align*}
+
+  \figuresection{Type declarations}
+  \begin{align*}
+    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \end{align*}
+
+  \figuresection{Types}
+  \begin{align*}
+  A,B &::=\\
+      & ||  A →_q B &\text{function type}\\
+      & ||  ∀ρ. A &\text{weight-dependent type}\\
+      & ||  D &\text{data type}
+  \end{align*}
+
+  \figuresection{Terms}
+  \begin{align*}
+    e,s,t,u & ::= \\
+            & ||  x & \text{variable} \\
+            & ||  λ(x:_qA). t & \text{abstraction} \\
+            & ||  t_q s & \text{application} \\
+            & ||  λπ. t & \text{weight abstraction} \\
+            & ||  t p & \text{weight application} \\
+            & ||  c t₁ … t_n & \text{data construction} \\
+            & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & ||  \flet x_1 :_{q₁}A₁ = t₁ … x_n :_{q_n}A_n = t_n \fin u & \text{let}
+  \end{align*}
+
+  \caption{Syntax of the linear calculus}
+  \label{fig:syntax}
+  \label{fig:contexts}
+\end{figure}
+
+The types of \calc{} (see \fref{fig:syntax}) are simple
+types with arrows (albeit weighted ones), data types, and weight
+polymorphism.  The weighted function type is a generalization of the
+intuitionistic arrow and the linear arrow. We will use the following
+notations:
+\begin{itemize}
+\item \(A → B ≝  A →_ω B\)
+\item \(A ⊸ B ≝ A →_1 B\)
+\end{itemize}
+The intuition behind the weighted arrow \(A →_q B\) is that you can
+get a \(B\) if you can provide a quantity \(q\) of \(A\). Note in
+particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
+$f x$ is well-typed. Therefore, the constraints imposed by weights on
+arrow types is dual to those they impose on variables in the context:
+a function of type $A→B$ \emph{must} be applied to an argument of
+weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
+argument of weight $1$ or $ω$.
+  Thus one may expect the type $A⊸B$ to be a subtype of $A→B$, however
+  we chose not to provide subtyping, for the sake of simplicity.
+
+  Data type declarations, also presented in \fref{fig:syntax},
+  deserve some additional explanation.
+  \begin{align*}
+    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \end{align*}
+  The above declaration means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
+  each with \(n_k\) arguments. Arguments of constructors have a
+  weight, just like arguments of function: an argument of weight $ω$
+  means that the data type can store, at that position, data which
+  \emph{must} have weight $ω$; while a weight of $1$ means that data
+  at that position \emph{can} have weight $1$ (or $ω$). A further
+  requirement is that the weights $q_i$ will either be $1$ or
+  $ω$.\info{The requirement that weights are constant in constructor
+    makes sense in the dynamic semantics, it is not only to simplify
+    the presentation with consideration about type polymorphism. There
+    may be a meaning to weight-polymorphic data type, but I [aspiwack]
+    ca not see it.}\unsure{Should we explain some of the above in the
+    text?}
+
+  For most purposes, $c_k$ behaves like a constant with the type
+  $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+  \fref{fig:typing} make clear, this means in particular
+  that to have a quantity $ω$ of data of type $D$, all its sub-data
+  including the arguments declared with weight $1$ must have weight
+  $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
+  construct a quantity $ω$ of $D$.
+
+  Note that constructors with arguments of weight $1$ are not more
+  general than constructors with arguments of weight $ω$, because if,
+  when constructing $c u$, with the argument of $c$ of weight $1$, $u$
+  \emph{may} be either of weight $1$ or of weight $ω$, dually, when
+  pattern-matching on $c x$, $x$ \emph{must} be of weight $1$ (if the
+  argument of $c$ had been of weight $ω$, on the other hand, then $x$
+  could be used either as having weight $ω$ or $1$).
+
+The following example of data-type declarations illustrate the role of
+weights in constructor arguments:
+\begin{itemize}
+\item The type
+  $\data \varid{Pair} A B \where \varid{Pair} : A →_ω B →_ω
+  \varid{Pair} A B$ is the intuitionistic product (usually written
+  $A×B$)
+\item The type
+  $\data \varid{Tensor} A B \where \varid{Tensor} : A →_1 B →_1
+  \varid{Tensor} A B$ is the linear tensor product (usually written
+  $A⊗B$)
+\item The type
+  $\data \varid{Bang} A \where \varid{Bang} : A→_ω \varid{Bang} A$ is
+  the exponential modality of linear logic (usually written ${!}A$)
+\end{itemize}
+
+The term syntax (\fref{fig:syntax}) is that of a
+type-annotated (\textit{à la} Church) simply typed $λ$-calculus
+with let-definitions. Binders in $λ$-abstractions and type definitions
+are annotated with both their type and their weight (echoing the
+typing context from Section~\ref{sec:typing-contexts}). Weight
+abstraction and application are explicit.
+
+It is perhaps more surprising that applications and cases are
+annotated by a weight. This information is usually redundant, but we
+use it in Section~\ref{sec:dynamics} to define a compositional
+dynamic semantics with prompt deallocation of data. We sometimes omit
+the weights or type annotations when they are obvious from the
+context, especially in the case of applications.
+
+%%% typing rule macros %%%
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t_q u  :  B}\text{app}}
+\newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …,
+      x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
+    {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
+%%% /macros %%%
+
+\begin{figure}
+  \begin{mathpar}
+    \varrule
+
+    \inferrule{Γ, x :_{q} A  ⊢   t : B}
+    {Γ ⊢ λ(x:_q A). t  :  A  →_q  B}\text{abs}
+
+    \apprule
+
+    \inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
+        A_n →_{q_n} D$ constructor}}
+    {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{con}
+
+    \caserule
+
+    \inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
+    { Δ+\sum_i qᵢΓᵢ ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
+
+    \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
+    {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
+
+    \inferrule{Γ ⊢ t :  ∀π. A}
+    {Γ ⊢ t p  :  A[p/π]}\text{w.app}
+  \end{mathpar}
+
+  \caption{Typing rules}
+  \label{fig:typing}
+\end{figure}
+
+\improvement{It may be useful to have a better transition between
+  syntax and typing judgement}
+
+Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term $t$ consumes $Γ$ and
+builds \emph{exactly one} $A$.
+This is the only kind of judgement in \calc{}: we provide
+no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
+make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
+one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
+application rule (the complete set of rules can be found in
+\fref{fig:typing}):
+$$\apprule$$
+Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
+give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
+to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
+of the weighted arrows which allow to have the $λ$-calculus
+as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
+  example}
+$$
+\inferrule
+{\inferrule
+  {\inferrule
+    {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
+    {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
+  {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
+{()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
+$$
+This implicit use of the promotion rule is what makes it possible to
+seamlessly mix linear types and intuitionistic types inside the same
+language. The whole idea is a bit subtle, and it may be worth it to
+ponder for a moment why it works as advertised.  \info{There is a
+  presentation of the application which is closer to the usual
+  promotion rule: requiring $\Delta$ to be divisible by $q$ (and not
+  scale $\Delta$ in the conclusion). This works fine when weights are
+  $1$ and $\omega$, but will fail with $0$ (used for uniform
+  quantification in a dependently typed presentation) or more exotic
+  weights (such as $2$).}  \unsure{Should we make a comment explaining
+  the above?}
+
+The variable rule, used in the above example, may require some
+clarification.
+$$\varrule$$
+The variable rule is the rule which implements the weakening of
+$ω$-weighted variables: that is, it allows ignoring variables of weight
+$ω$. \footnote{Pushing weakening to
+the variable rule is classic in many lambda calculi, and in the case
+of linear logic, dates back at least to Andreoli's work on
+focusing~\cite{andreoli_logic_1992}.} Note that the judgement
+$x :_ω A ⊢ x : A$ is an instance of the variable rule, because
+$(x :_ω A)+(x :_1 A) = x:_ω A$.
+
+Most of the other typing rules are straightforward, but let us linger
+for a moment on the case rule:
+$$\caserule$$
+Like the application rule it is parametrized by a weight $p$. But,
+while in the application rule only the argument is affected by $p$, in
+the case rule, not only the scrutinee but also the variable bindings
+in the branches are affected by $p$. What it means, concretely, is
+that the weight of data is \emph{inherited} by its sub-data: if we
+have a quantity $1$ of $A⊗B$ we have a quantity $1$ of $A$ and a
+quantity $1$ of $B$, and if we have a quantity $ω$ of $A⊗B$ we have a
+quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
+following program, which asserts the existence of projections, is
+well-typed (note that, both in |first| and |snd|, the arrow is~---~and
+must be~---~non-linear)
+\begin{code}
+  data (⊗) a b where
+    (,) : a ⊸ b ⊸ a⊗b
+
+  first  :: a⊗b → a
+  first (a,b)  = a
+
+  snd  :: a⊗b → b
+  snd (a,b)  = b
+\end{code}
+
+\section{\calc{} dynamics}
+\label{sec:dynamics}
+
+Supporting the examples of~\fref{sec:app} would require only surface changes to
+an Haskell implementation: only the type system for \fref{sec:ffi} and
+\fref{sec:primops}, while \fref{sec:fusion} only requires additional
+annotations in the optimization phase.
+
+If one is willing to dive deeper and modify the runtime system, a
+further benefit can be reaped: prompt deallocation of thunks. While
+this extension of the runtime system is necessary only to enjoy prompt deallocation of thunks,
+the dynamic semantics presented in this section can also
+help give confidence in the correctness of the extensions
+of~\fref{sec:app}.
+
+Concretely, we show that it is possible to allocate linear objects on
+a heap which is not managed by the garbage collector, and
+correspondingly deallocate them upon (lazy) evaluation. To do so we
+present an extension of the semantics of
+\citet{launchbury_natural_1993} to \calc{}. Prompt
+deallocation is not necessarily faster than garbage collection but it
+reduces latencies and allows more control on when garbage-collection
+pause occur.
+
+\begin{figure}
+
+  \figuresection{Syntax of the runtime language}
+  \begin{align*}
+    r &::=\\
+      &||  x\\
+      &||  λx. r\\
+      &||  r x\\
+      &||  λπ. r\\
+      &||  r p\\
+      &||  c x₁ … x_n\\
+      &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
+      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r
+  \end{align*}
+
+  \figuresection{Translation of typed terms}
+
+  \begin{align*}
+    (λ(x:_qA). t)^* &= λx. (t)^* \\
+    x^*             &= x \\
+    (t_q  x )^*     &= (t)^*  x \\
+    (t_q  u )^*     &= \flet y =_{q} (u)^* \fin (t)^*  y \\
+    c_k  t₁ … t_n   &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^*
+                      \fin c_k x₁ … x_n
+  \end{align*}
+  \begin{align*}
+    (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁ =_{q₁} (t₁)^*,…, x_n=_{q_n} (t_n)^* \fin (u)^*
+  \end{align*}
+
+  \caption{Syntax for the Launchbury-style semantics}
+  \label{fig:launchbury:syntax}
+\end{figure}
+
+A Launchbury-style semantics is a big-step semantics expressed in a
+language suitable to represent sharing. The detail of this language
+and the translation from \calc{} can be found in
+\fref{fig:launchbury:syntax}. The main differences between \calc{} and
+the runtime language are that the latter is untyped, has fewer weight
+annotations, and applications always have variable arguments.
+
+The complete semantics is given in \fref{fig:dynamics}.
+Compared to \citeauthor{launchbury_natural_1993}'s original, our
+semantics exhibits the following salient differences:
+\begin{itemize}
+\item The heap is annotated with weights. The variables with weight
+  $ω$ represent the garbage-collected heap, while the variables with
+  weight $1$ represent the non-garbage-collected heap, which we call
+  the linear heap.
+\item We add a weight parameter to the reduction relation,
+  corresponding to the (dynamic) quantity of values to produce.
+\item The rules for \emph{variable}, \emph{let}, and
+  \emph{application} are changed to account for weights (let-bindings
+  and application are annotated by a weight for this reason).
+\end{itemize}
+
+The dynamics assume that weight expressions are reduced
+to a constant using weight-equality laws. If that is not possible the
+reduction will block on the weight parameter.
+The weight parameter of the reduction relation is used to interpret
+$\flet x =_1 …$ bindings into allocations on the appropriate
+heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
+allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
+allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
+the following example:
+%
+\begin{code}
+let f = _ ω (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
+let a = _ ρ f ()
+\end{code}
+%
+The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
+thunk must be allocated in the linear heap if the context requires a
+linear value, while if the context requires an unrestricted value, the
+thunk must be allocated on the garbage-collected heap. However, the
+thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
+allocate on the garbage-collected heap despite being annotated with
+weight $1$. This behavior is not a consequence of implicit promotion
+from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
+pure linear logic features an explicit promotion, which also permits
+linear functions to produce linear values which can be promoted to
+produce unrestricted values.
+
+In all evaluation rules, this dynamic weight is propagated to the
+evaluation of subterms, sometimes multiplied by another weight
+originating from the term. This means that, essentially, once one
+starts evaluating unrestricted results (weight = $ω$), one will remain
+in this dynamic evaluation mode, and thus all further allocations will
+be on the \textsc{gc} heap. However, it is possible to provide a special-purpose
+evaluation rule to escape dynamic evaluation to linear evaluation.
+This rule concerns case analysis of |Bang x|:
+\[
+    \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
+    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
+\]
+The observations justifying this rule is that 1. when forcing a |Bang|
+constructor, one will obtain $ω$ times the contents. 2. the contents
+of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
+$x$ has weight $ω$, the type-system ensures that all the
+intermediate linear values potentially allocated to produce $x$ must
+have been completely eliminated before being able to return $x$.
+
+The following function is a convenient wrapper around the case-bang
+rule:
+\begin{code}
+withLinearHeap :: a ⊸ (a ⊸ Bang b) ⊸ b
+withLinearHeap x k = case k x of
+  Bang y -> y
+\end{code}
+Indeed, even when |withLinearHeap| is called $ω$ times, its argument
+will be called $1$ time. In an implementation, one may prefer to
+provide |withLinearHeap| as a primitive operation instead of having a
+special-purpose implementation of |case|. In particular, when
+implementing bindings to imperative APIs, any function of type |(A ⊸
+Bang B) ⊸ C| may allocate |A| on a linear heap if it forces the
+|Bang| constructor before returning the result (|C|).
+
+\begin{figure}
+  \begin{mathpar}
+    \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
+
+
+    \inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\ Δ : e'[q/π] ⇓_{ρ} Θ : z} {Γ :
+      e q ⇓_ρ Θ : z} \text{w.app}
+
+    \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
+
+
+    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{ρ} Θ : z} {Γ :
+      e x ⇓_ρ Θ : z} \text{application}
+
+    \inferrule{Γ : e ⇓_ω Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) :
+      z}\text{shared variable}
+
+
+    \inferrule{Γ : e ⇓_1 Δ : z} {(Γ,x ↦_1 e) : x ⇓_1 Δ :
+      z}\text{linear variable}
+
+
+    \inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
+    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ :
+      z}\text{let}
+
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ …
+      x_n}\text{constructor}
+
+
+    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+
+  \end{mathpar}
+
+  \caption{Dynamic semantics}
+  \label{fig:dynamics}
+\end{figure}
+
+The \emph{shared variable} rule also triggers when the weight
+parameter is $1$, thus effectively allowing linear variables to look
+on the garbage-collected heap, and in turn linear data to have unrestricted
+sub-data.
+
+\begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
+  It is an essential property that the garbage collected heap does not
+  contain any reference to the linear heap. Otherwise, garbage collection
+  would have to also free the linear heap, making the linear heap
+  garbage-collected as well (the converse does not hold: there can be
+  references to the garbage-collected heap from the linear heap,
+  acting as roots).
+\end{lemma}
+\begin{proof}
+To prove the above we need a typed version of the reduction
+relation. (See \fref{fig:typed-semop}) The judgement $Γ:t ⇓_ρ Δ:z$ is extended to the form
+$Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, where
+\begin{itemize}
+\item $Ξ$ is a context of free variables
+\item $Σ$ is a stack of typed terms which are yet to reduce
+\item $t,z$ are typed terms
+\item $Γ,Δ$ are heap states, that is associations of variables to
+  typed and weighted terms.
+\end{itemize}
+We then show that this new relation preserves types. A well-typed
+reduction state implies that the heap is consistent as per this lemma.
+Hence, starting from a well-typed state, the reduction relation will
+only produce consistent heaps.
+\end{proof}
+
+\begin{figure}
+  \centering
+\begin{definition}[Well-typed reduction relation]
+  The judgement \[Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ\] is defined inductively by
+  the following rules:
+
+\begin{mathpar}
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || λx.t  ⇓ Γ || λx.t) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λy.u):_ρ A →_q B, x:_{qρ} A, Σ \\
+     Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
+    {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
+{\text{app}}
+
+\inferrule
+  {Ξ, x:_ωB ⊢ (Γ||e ⇓ Δ||z) :_ρ A, Σ}
+  {Ξ ⊢ (Γ,x :_ω B = e || x  ⇓ Δ, x :_ω B = z || z) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ||e ⇓ Δ||z) :_1 A, Σ}
+  {Ξ ⊢ (Γ,x :_1 B = e|| x  ⇓  Δ||z) :_1 A,  Σ}
+{\text{linear variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{q_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+{\text{let}}
+
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || c x_1…x_n  ⇓ Γ || c x_1…x_n) :_ρ A, Σ}
+{\text{constructor}}
+
+\inferrule
+  {Ξ,y:_{pqρ} A ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+   Ξ ⊢ (Δ||u_k[xᵢ/yᵢ] ⇓ Θ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
+{\text{case}}
+
+\inferrule
+   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 D, u:_ω C, Σ \\
+    Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
+   {Ξ ⊢ (Γ||\case[1] e {\varid{Bang}  y ↦ u} ⇓ Θ||z) :_ω C, Σ}
+{\text{case-Bang}}
+  \end{mathpar}
+\end{definition}
+  \caption{Typed operational semantics. (Omitting the obvious w.abs and w.app for concision)}
+  \label{fig:typed-semop}
+\end{figure}
+
+\begin{definition}[Well-typed state]
+  We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
+  \[
+    Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
+    (ρA⊗\mathnormal{weightedTypes}(Σ))‌
+  \]
+  In the above expression $\flet Γ$ stands in turn for a nested
+  $\mathsf{let}$ expression where all variables in $Γ$ are bound to
+  the corresponding term in $Γ$, with the given type and weight. We
+  write $(ρA⊗\mathnormal{weightedTypes}(Σ))‌$ for the weighted tensor
+  type comprised of $A$ with weight $ρ$, the types in $Σ$ and the
+  corresponding weights.
+\end{definition}
+
+\begin{lemma}[The typed reduction relation preserves typing.]~\\
+  if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  \[Ξ ⊢ (Γ||t :ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :ρ A),Σ.\]
+\end{lemma}
+\begin{proof}
+  By induction.
+\end{proof}
+
+\section{}
 \end{document}
