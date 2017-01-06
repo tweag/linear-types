@@ -208,125 +208,25 @@ calculus which tracks linearity.
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
-We propose a conservative extension of Haskell (every existing Haskell
-program remains valid, with the same semantics) for linearity
-annotations.
-Concretely, we propose to have two arrow types: one for usual
-intuitionistic functions, and one for linear functions. The latter are a
-subset of the former: they are functions which guarantee to consume
-exactly once their argument. To be precise, we propose a
-generalisation, where the arrow type is parametrized by the amount of
-its argument that it requires (exactly once or any number of times):
-\begin{itemize}
-\item $A →_1 B$ is the linear arrow $A ⊸ B$
-\item $A →_ω B$ is the usual intuitionistic arrow $A → B$
-\end{itemize}
+Before diving into the technical details, we give an overview of the
+language that we propose, by means of a number of examples. These
+examples also serve to justify certain design choices.
 
-The first main benefit of this approach is that all the code already
-written, assuming an $ω$-sized supply of everything, can work out of
-the box.
-
-The second benefit is that one can write linear code whenever it is
-possible, and use it in unrestricted contexts anyway. The following
-example illustrates. (Note that all top-level bindings, including
-constructors and class methods are assumed to have weight $ω$, unless
-explicitly specified otherwise.)
+Firstly, along with the usual arrow type for intuitionistic functions,
+we propose an additional arrow type for linear arrows, written
+$A ⊸ B$. In the body of a linear function, the type system tracks that
+there is exactly one copy of the parameter available.
 
 \begin{code}
-data List a where
-  [] :: List a
-  (:) :: a ⊸ List a ⊸ List a
+f :: A ⊸ B
+f x =  -- x : _1 A
 \end{code}
 
+We say that the \emph{weight} of |x| is $1$. On the contrary, we say
+that unrestricted (non-linear) parameters have weight $ω$.
 
-The above data declaration defines a linear version of the list
-type.
-
-That is, given \emph{one} instance of a list, one will obtain
-\emph{exactly one} instance of each of the items contained inside it.
-Thus the above list may contain (handles to) resources without
-compromising safety.
-
-Many list-based functions conserve the quantity of data, and thus can
-be given a more precise type. For example we can write |(++)|
-as follows:
-
-\begin{code}
-(++) :: List a ⊸ List a ⊸ List a
-[]      ++ ys = ys
-(x:xs)  ++ ys = x : (xs ++ ys)
-\end{code}
-
-The type of |(++)| tells us that if we have quantity $1$ of
-a list |xs|, appending any other list to it will never duplicate any
-of the elements in |xs|, nor drop any element in |xs|. Note that in
-our system, giving a more precise type to |(++)| strengthens the
-contract that the implementation of |(++)| must satisfy, but it
-does not restrict its usage. It is perfectly legal to provide an $ω$
-quantity |xs| as an argument, or indeed to {\em promote} the result of
-the function, of quantity $1$, to quantity $ω$. The intuition is that, in
-a context that wants zero or more of a resource, providing exactly one
-of that resource will do.
-Concretely if one has a quantity $ω$ for both inputs, one can
-call $ω$ times |(++)| to obtain $ω$ times the concatenation.
-
-Of course, not all programs are linear: a function may legitimately
-demand $ω$ times its input, even to construct a single output. For
-example the function repeating indefinitely its input will have the
-type:
-\begin{code}
-cycle :: List a → List a
-\end{code}
-Operationally, |cycle| requires its argument to be on the \textsc{gc} heap.  In
-practice, libraries will never provide $ω$ times a scarce resource
-(e.g. a handle to a physical entity); such a resource will thus never
-end up in the argument to |cycle|.
-
-While reusing first-order code can be done simply by scaling from $1$
-to $ω$, reusing higher-order programs need polymorphism over
-weights. For example, the standard |map| function
-\begin{code}
-map f []      = []
-map f (x:xs)  = f x : map f xs
-\end{code}
-can be given the two incomparable following types: |(a ⊸ b) -> List a
-⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
-|∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b|. 
-%
-Likewise, function composition can be given the following type:
-\begin{code}
-(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
-(f ∘ g) x = f (g x)
-\end{code}
-What the above type says is that two functions of arbitrary linearities $ρ$
-and $π$ can be combined into a function of linearity $ρπ$.
-
-One might be tempted to mark all constructor types as linear, i.e.
-with only |⊸|-arrows in their types, in the style of the |List| type
-above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any quantity. However, $ω$-weighted
-arrows in constructors are useful too, as the following data type
-illustrates\footnote{The type constructor |Bang| is in fact an
-  encoding of the so-called \emph{exponential} modality written ${!}$
-  in linear logic.}:
-\begin{code}
-  data Bang a where
-    Bang :: a → Bang a
-\end{code}
-It is used to indicate that a linear function returns $ω$-weighted
-results. For example:
-\begin{code}
-  copy :: Bool ⊸ Bang Bool
-  copy True = Bang True
-  copy False = Bang False
-\end{code}
-We stress that the above is not the same as the linear identity
-function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
-|Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
-regardless of the weight of its argument.
-
-\unsure{JP: the following paragraph makes me cringe.}
-Here are a few examples of what is allowed or not:
+Too clarify the meaning of weights, here are a few examples of what is
+allowed or not:
 \begin{enumerate}
 \item A linear ($1$ quantity) value {\bf can} be passed to a linear
   function.
@@ -358,9 +258,106 @@ g k x y = k x y          -- Good
 g k x y = k y x          -- Bad
 \end{code}
 
+Using the new linear arrow, we can define a linear version of the list
+type, as follows:
+\begin{code}
+data List a where
+  [] :: List a
+  (:) :: a ⊸ List a ⊸ List a
+\end{code}
+That is, given \emph{one} instance of a list, one will obtain
+\emph{exactly one} instance of each of the items contained inside it.
+Thus the above list may contain (handles to) resources without
+compromising safety.
+
+Many list-based functions conserve the quantity of data, and thus can
+be given a more precise type. For example we can write |(++)|
+as follows:
+\begin{code}
+(++) :: List a ⊸ List a ⊸ List a
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+The type of |(++)| tells us that if we have quantity $1$ of
+a list |xs|, appending any other list to it will never duplicate any
+of the elements in |xs|, nor drop any element in |xs|.
+
+A major benefit of our design is that one can write linear code
+whenever it is possible, and use it in unrestricted contexts
+anyway. That is, in our system, giving a more precise type to |(++)|
+strengthens the contract that the implementation of |(++)| must
+satisfy, but it does not restrict its usage.
+
+In general, it is perfectly legal to provide an $ω$ quantity |xs| as
+an argument, or indeed to {\em promote} the result of the function, of
+quantity $1$, to quantity $ω$. The intuition is that, in a context
+that wants zero or more of a resource, providing exactly one of that
+resource will do.  Concretely if one has a quantity $ω$ for both
+inputs, one can call $ω$ times |(++)| to obtain $ω$ times the
+concatenation.
+
+Of course, not all programs are linear: a function may legitimately
+demand $ω$ times its input, even to construct a single output. For
+example the function repeating indefinitely its input will have the
+type:
+\begin{code}
+cycle :: List a → List a
+\end{code}
+In practice, libraries will never provide $ω$ times a scarce resource
+(e.g. a handle to a physical entity); such a resource will thus never
+end up in the argument to |cycle|.
+
+While reusing first-order code can be done simply by scaling from $1$
+to $ω$, reusing higher-order programs need polymorphism over
+weights. For example, the standard |map| function
+\begin{code}
+map f []      = []
+map f (x:xs)  = f x : map f xs
+\end{code}
+can be given the two incomparable following types: |(a ⊸ b) -> List a
+⊸ List b| and |(a -> b) -> List a -> List b|.
+
+We can generalise over linear and unrestricted arrows by using the
+syntax $A →_ρ B$ and quantifying over weights. Thus in this case, The
+type subsuming both versions is |∀ρ. (a -> _ ρ b) -> List a -> _ ρ
+List b|.
+%
+Likewise, function composition can be given the following type:
+\begin{code}
+(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(f ∘ g) x = f (g x)
+\end{code}
+What the above type says is that two functions of arbitrary linearities $ρ$
+and $π$ can be combined into a function of linearity $ρπ$.
+
+One might be tempted to mark all data constructors as linear, i.e.
+with only |⊸|-arrows in their types, in the style of the |List| type
+above. After all, linear constructors, like any linear function, are
+happy to be provided resources of any quantity. However, $ω$-weighted
+arrows in constructors are useful too, as the following data type
+illustrates\footnote{The type constructor |Bang| is in fact an
+  encoding of the so-called \emph{exponential} modality written ${!}$
+  in linear logic.}:
+\begin{code}
+  data Bang a where
+    Bang :: a → Bang a
+\end{code}
+It is used to indicate that a linear function returns $ω$-weighted
+results. For example:
+\begin{code}
+  copy :: Bool ⊸ Bang Bool
+  copy True = Bang True
+  copy False = Bang False
+\end{code}
+We stress that the above is not the same as the linear identity
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
+|Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
+regardless of the weight of its argument.
+
+
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
-With linear types, it's possible to write a {\em pure} and {\em
+With linear types, it is possible to write a {\em pure} and {\em
   memory-safe} API for managing foreign C data. Indeed, since linear
 data must be used \emph{exactly once}, it means that such data is
 statically guaranteed to eventually be consumed by the program (no
