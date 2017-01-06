@@ -1,5 +1,7 @@
 % -*- latex -*-
 \documentclass[acmlarge,dvipsnames,natbib]{acmart}
+\usepackage[mathletters]{ucs}
+\usepackage[utf8x]{inputenc}
 %include polycode.fmt
 %format .         = ". "
 %format forall a         = "∀" a
@@ -110,6 +112,8 @@
 
 % Document starts
 \begin{document}
+\DeclareUnicodeCharacter{8797}{\ensuremath{\stackrel{\scriptscriptstyle {def}}{=}}}
+
 % Title portion
 \title{Haskell-PoP}
 \author{Jean-Philippe Bernardy}
@@ -417,7 +421,7 @@ context, especially in the case of applications.
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t_q u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
-\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pqᵢ} Aᵢ, …,
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
       x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
       \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
     {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
@@ -432,14 +436,14 @@ context, especially in the case of applications.
 
     \apprule
 
-    \inferrule{Δᵢ ⊢ tᵢ : Aᵢ \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
+    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
         A_n →_{q_n} D$ constructor}}
-    {\sum_i qᵢΔᵢ ⊢ c_k  t₁ … t_n :  D}\text{con}
+    {\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n :  D}\text{con}
 
     \caserule
 
-    \inferrule{Γᵢ   ⊢  tᵢ  : Aᵢ  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
-    { Δ+\sum_i qᵢΓᵢ ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
+    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
+    { Δ+\sum_i q_iΓ_i ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
     {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
@@ -699,7 +703,7 @@ Bang B) ⊸ C| may allocate |A| on a linear heap if it forces the
       x_n}\text{constructor}
 
 
-    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[xᵢ/yᵢ] ⇓_ρ Θ : z}
+    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓_ρ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
 
   \end{mathpar}
@@ -778,7 +782,7 @@ only produce consistent heaps.
 
 \inferrule
   {Ξ,y:_{pqρ} A ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
-   Ξ ⊢ (Δ||u_k[xᵢ/yᵢ] ⇓ Θ||z) :_ρ C, Σ}
+    Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
 {\text{case}}
 

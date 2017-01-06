@@ -24,6 +24,7 @@ in stdenv.mkDerivation {
                       biblatex
                       logreq
                       scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math capt-of
+                      ucs
                       xstring ucharcat;
                   })
                 ];
