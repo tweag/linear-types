@@ -36,19 +36,6 @@
 \def\frefsecname{Section}
 \def\freffigname{Figure}
 
-% \setmonofont[Scale=0.8]{DejaVu Sans Mono}
-% \setmonofont{CMU TypeWriter Text}
-% \setmainfont[ExternalLocation=/Library/Fonts/,Ligatures={Common,Rare,Historic},Variant=1]{Zapfino.ttf}
-% \setmainfont{DejaVu Sans}
-% \setmainfont{TeX Gyre Pagella}
-% \setmathfont{TeX Gyre Pagella Math}
-% \setmainfont{Latin Modern Roman}
-\setmathfont[ExternalLocation=../../fonts/]{latinmodern-math}
-\setmainfont[ExternalLocation=../../fonts/,
-ItalicFont=lmroman10-italic,
-BoldFont=lmroman10-bold,
-]{lmroman10-regular}
-
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
 \newcommand{\where}{ \mathsf{where} }
@@ -84,7 +71,7 @@ BoldFont=lmroman10-bold,
 \newcommand\calc{{\ensuremath{λ^q}}}
 
 \author{Jean-Philippe Bernardy, Arnaud Spiwack}
-\title{Intuiting linear types}
+\title{Retrofitting linear types}
 \date{January 10, 2017}
 \hypersetup{pdflang={English}}
 
@@ -92,6 +79,136 @@ BoldFont=lmroman10-bold,
 
 \begin{frame}
   \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{SAGE}
+
+  \begin{itemize}
+  \item H2020 project led by Seagate
+  \item Storage for very large clusters (>1 exabyte)
+  \item Distributed computation as part of IO
+  \item Generalised caching: disk hierarchy
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The problem: linear logic is intrusive}
+
+  \begin{code}
+  dup :: Bang a ⊸ a⊗a
+  dup (Bang x) = (x,x)
+
+  id :: Bang a ⊸ a
+  id (Bang x) = x
+
+  v = dup (Bang (id (Bang 42)))
+\end{code}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The idea: two arrows}
+
+  \begin{itemize}
+  \item $A →_1 B$: linear arrow $A ⊸ B$
+  \item $A →_ω B$: usual intuitionistic arrow $A → B$
+  \end{itemize}
+
+  \hfill
+
+  Strongly inspired by:
+  \begin{itemize}
+  \item \textcite{ghica_bounded_2014}
+  \item \textcite{mcbride_rig_2016}
+  \end{itemize}
+\end{frame}
+
+\newcommand{\deemph}[1]{{\color<2->{lightgray}#1}}
+\newcommand{\andemph}[1]{{\color<2->{blue}#1}}
+
+\begin{frame}
+  \frametitle{Application \& implicit promotion}
+
+  \begin{mathpar}
+    \huge
+    \inferrule
+    {\deemph{Γ ⊢ t} :  A →_\andemph{q} B  \\   Δ ⊢ u : A}
+    {\deemph{Γ+}\andemph{q}Δ ⊢ \deemph{t} u  :  B}\text{app}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Linear $λ$-calculus}
+
+  \begin{mathpar}
+    \Large
+    \inferrule{ x:_1 A ⩽ Γ}{Γ ⊢ x : A}\text{var}
+
+    \inferrule
+    {Γ, x :_{q} A  ⊢   t : B}
+    {Γ ⊢ λ(x:_q A). t  :  A  →_q  B}\text{abs}
+
+    \inferrule
+    {Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}
+    {Γ+qΔ ⊢ t u  :  B}\text{app}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}
+  \frametitle{One semi-ring to bind them}
+
+  Semi-ring:
+  \begin{itemize}
+  \item  $0$, $+$, $1$, $.$
+  \item  $0,+$ commutative monoid
+  \item  $1,.$ monoid
+  \item  $*$ distributes over $0,+$
+  \end{itemize}
+
+  Ordered (intuition: inclusion of intervals):
+  \begin{itemize}
+  \item  $⩽$
+  \item $+$ increasing
+  \item $0⩽c ∧ a⩽b → ca⩽cb$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Contexts are modules}
+
+  Also point-wise order
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Weight polymorphism}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The case of constructors}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Datatype!}
+\end{frame}
+
+\begin{frame}
+  \frametitle{A word on linear closures}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Negative types}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Going dependent}
+
+\end{frame}
+
+\begin{frame}
+  \printbibliography
 \end{frame}
 
 \end{document}
