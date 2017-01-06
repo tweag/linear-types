@@ -65,7 +65,6 @@
 % \newtheorem{definition}{Definition}
 % \newtheorem{lemma}{Lemma}
 
-\newcommand\HaskeLL{HaskeLL}
 \newcommand\calc{{\ensuremath{λ^q}}}
 
 \usepackage{booktabs} % For formal tables
@@ -93,11 +92,11 @@
 
 
 % Copyright
-%\setcopyright{acmcopyright}
+\setcopyright{acmcopyright}
 %\setcopyright{acmlicensed}
 %\setcopyright{rightsretained}
 %\setcopyright{usgov}
-\setcopyright{usgovmixed}
+% \setcopyright{usgovmixed}
 %\setcopyright{cagov}
 %\setcopyright{cagovmixed}
 
@@ -114,16 +113,18 @@
 \begin{document}
 \DeclareUnicodeCharacter{8797}{\ensuremath{\stackrel{\scriptscriptstyle {def}}{=}}}
 
+\newcommand\HaskeLL{Hask-LL}
+
 % Title portion
-\title{Haskell-PoP}
+\title{\HaskeLL}
 \author{Jean-Philippe Bernardy}
 \affiliation{%
   \institution{Gothenburg University}
-  \department{???}
-  \streetaddress{???}
+  \department{Department of Philosophy, Linguistics and Theory of Science}
+  \streetaddress{Olof Wijksgatan 6}
   \city{Gothenburg}
   % \state{VA}
-  \postcode{???}
+  \postcode{41255}
   \country{Sweden}}
 \author{Mathieu Boespflug}
 \author{Arnaud Spiwack}
@@ -181,15 +182,7 @@
   programming}
 
 
-\thanks{This work is supported by the National Science Foundation,
-  under grant CNS-0435060, grant CCR-0325197 and grant EN-CS-0329609.
-
-  Author's addresses: G. Zhou, Computer Science Department, College of
-  William and Mary; Y. Wu {and} J. A. Stankovic, Computer Science
-  Department, University of Virginia; T. Yan, Eaton Innovation Center;
-  T. He, Computer Science Department, University of Minnesota; C.
-  Huang, Google; T. F. Abdelzaher, (Current address) NASA Ames
-  Research Center, Moffett Field, California 94035.}
+% \thanks{This work is supported by FIXME (for de-anonymised version only) }
 
 
 \maketitle
@@ -213,11 +206,382 @@ even with dependently-typed programs, by having no impact on the
 syntax of kinds.  Additionally, we provide a lazy semantics for the
 calculus which tracks linearity.
 
+\section{A taste of \HaskeLL}
+\label{sec:programming-intro}
+We propose a conservative extension of Haskell (every existing Haskell
+program remains valid, with the same semantics) for linearity
+annotations.
+Concretely, we propose to have two arrow types: one for usual
+intuitionistic functions, and one for linear functions. The latter are a
+subset of the former: they are functions which guarantee to consume
+exactly once their argument. To be precise, we propose a
+generalisation, where the arrow type is parametrized by the amount of
+its argument that it requires (exactly once or any number of times):
+\begin{itemize}
+\item $A →_1 B$ is the linear arrow $A ⊸ B$
+\item $A →_ω B$ is the usual intuitionistic arrow $A → B$
+\end{itemize}
 
-\subsection{Motivating examples}
+The first main benefit of this approach is that all the code already
+written, assuming an $ω$-sized supply of everything, can work out of
+the box.
+
+The second benefit is that one can write linear code whenever it is
+possible, and use it in unrestricted contexts anyway. The following
+example illustrates. (Note that all top-level bindings, including
+constructors and class methods are assumed to have weight $ω$, unless
+explicitly specified otherwise.)
+
+\begin{code}
+data List a where
+  [] :: List a
+  (:) :: a ⊸ List a ⊸ List a
+\end{code}
 
 
-\unsure{copy paste or new things?}
+The above data declaration defines a linear version of the list
+type.
+
+That is, given \emph{one} instance of a list, one will obtain
+\emph{exactly one} instance of each of the items contained inside it.
+Thus the above list may contain (handles to) resources without
+compromising safety.
+
+Many list-based functions conserve the quantity of data, and thus can
+be given a more precise type. For example we can write |(++)|
+as follows:
+
+\begin{code}
+(++) :: List a ⊸ List a ⊸ List a
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+
+The type of |(++)| tells us that if we have quantity $1$ of
+a list |xs|, appending any other list to it will never duplicate any
+of the elements in |xs|, nor drop any element in |xs|. Note that in
+our system, giving a more precise type to |(++)| strengthens the
+contract that the implementation of |(++)| must satisfy, but it
+does not restrict its usage. It is perfectly legal to provide an $ω$
+quantity |xs| as an argument, or indeed to {\em promote} the result of
+the function, of quantity $1$, to quantity $ω$. The intuition is that, in
+a context that wants zero or more of a resource, providing exactly one
+of that resource will do.
+Concretely if one has a quantity $ω$ for both inputs, one can
+call $ω$ times |(++)| to obtain $ω$ times the concatenation.
+
+Of course, not all programs are linear: a function may legitimately
+demand $ω$ times its input, even to construct a single output. For
+example the function repeating indefinitely its input will have the
+type:
+\begin{code}
+cycle :: List a → List a
+\end{code}
+Operationally, |cycle| requires its argument to be on the \textsc{gc} heap.  In
+practice, libraries will never provide $ω$ times a scarce resource
+(e.g. a handle to a physical entity); such a resource will thus never
+end up in the argument to |cycle|.
+
+While reusing first-order code can be done simply by scaling from $1$
+to $ω$, reusing higher-order programs need polymorphism over
+weights. For example, the standard |map| function
+\begin{code}
+map f []      = []
+map f (x:xs)  = f x : map f xs
+\end{code}
+can be given the two incomparable following types: |(a ⊸ b) -> List a
+⊸ List b| and |(a -> b) -> List a -> List b|. The type subsuming both versions is
+|∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b|. 
+%
+Likewise, function composition can be given the following type:
+\begin{code}
+(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(f ∘ g) x = f (g x)
+\end{code}
+What the above type says is that two functions of arbitrary linearities $ρ$
+and $π$ can be combined into a function of linearity $ρπ$.
+
+One might be tempted to mark all constructor types as linear, i.e.
+with only |⊸|-arrows in their types, in the style of the |List| type
+above. After all, linear constructors, like any linear function, are
+happy to be provided resources of any quantity. However, $ω$-weighted
+arrows in constructors are useful too, as the following data type
+illustrates\footnote{The type constructor |Bang| is in fact an
+  encoding of the so-called \emph{exponential} modality written ${!}$
+  in linear logic.}:
+\begin{code}
+  data Bang a where
+    Bang :: a → Bang a
+\end{code}
+It is used to indicate that a linear function returns $ω$-weighted
+results. For example:
+\begin{code}
+  copy :: Bool ⊸ Bang Bool
+  copy True = Bang True
+  copy False = Bang False
+\end{code}
+We stress that the above is not the same as the linear identity
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
+|Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
+regardless of the weight of its argument.
+
+\unsure{JP: the following paragraph makes me cringe.}
+Here are a few examples of what is allowed or not:
+\begin{enumerate}
+\item A linear ($1$ quantity) value {\bf can} be passed to a linear
+  function.
+\item A unrestricted ($ω$ quantity) value {\bf can} be passed to a linear
+  function.
+\item A linear value {\bf cannot} be passed to a unrestricted function.
+\item A unrestricted value {\bf can} be passed to a unrestricted function.
+\item A linear value {\bf can} be returned by a linear function.
+\item A unrestricted value {\bf can} be returned by a linear function.
+\item A linear value {\bf can} be returned by a linear function (and
+  the type-system guarantees that it can be promoted to a unrestricted
+  value when the function is called in an unrestricted context).
+\item A unrestricted value {\bf can} be returned by a unrestricted function.
+\end{enumerate}
+Indeed, remember that when we say that a function is linear, we are
+only referring to its domain, not its co-domain. Hence, linearity of a
+function does not influence what it can return, only what it can take
+as arguments.
+
+The same examples can be expressed in code: the function |g| below
+admits the following implementations, but not the last one:
+\begin{code}
+f :: a ⊸ a
+g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
+
+g k x y = k (f x) y      -- Good
+g k x y = k x (f y)      -- Good
+g k x y = k x y          -- Good
+g k x y = k y x          -- Bad
+\end{code}
+
+\subsection{A GC-less queue API}
+\label{sec:queue-api}
+With linear types, it's possible to write a {\em pure} and {\em
+  memory-safe} API for managing foreign C data. Indeed, since linear
+data must be used \emph{exactly once}, it means that such data is
+statically guaranteed to eventually be consumed by the program (no
+unfreed garbage) and that the data cannot be referred to after being
+consumed (freedom from use-after-free or free-after-free bugs).
+
+Concretely, such an API is defined in an ownership-passing
+fashion: operations that do not free the data structure return a new
+copy of the data structure (which may be the same as the original).
+For instance, pushing in a queue would have the following type:
+\begin{code}
+push :: Msg -> Queue ⊸ Queue
+\end{code}
+While functions to free the data structure would simply consume the
+argument as follows:
+\begin{code}
+free :: Queue ⊸ ()
+\end{code}
+
+This makes it possible to statically manage long-lived data without
+adding to GC pressure, since the data lives in a foreign heap.
+A complete API for queues with random access deletion could
+be typed as follows (|Msg| must be |Storable| to (un)marshall values
+to/from the unrestricted GC'ed heap):
+\begin{code}
+instance Storable Msg
+
+alloc   :: (Queue ⊸ Bang a) ⊸ a
+free    :: Queue ⊸ ()
+
+push    :: Msg -> Queue ⊸ Queue
+delete  :: Msg -> Queue ⊸ Queue
+evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
+\end{code}
+There are a few things going on in this API:
+\begin{itemize}
+\item |alloc| opens a new scope, delimited by the dynamic extent of
+  its argument function. This function is provided a fresh queue,
+  allocated in the foreign heap (for example using \verb|malloc()|).
+  This queue must be used exactly once. The return type of argument
+  function is |Bang a|, ensuring that no linear value can be returned:
+  in particular the |Queue| must be consumed.
+\item Messages of type |Msg| are copied into unrestricted Haskell values
+  (hence managed by the garbage collector) when they are returned by
+  |evict|. The hypothesis is that while there is a very large amount
+  of messages in the queue, there will at any given time be very few
+  messages managed by the garbage collector. Since these objects will
+  typically be short-lived, they will not normally survive a ``generation
+  0'' sweep.
+\item Because the queue allocated by |alloc| must be consumed before
+  reaching the end of the scope, |free| must be called. Indeed, there
+  is no other way to properly get rid of the queue. Calling any of the
+  other linear functions does ``consume'' the queue, but returns a new
+  one, along with the obligation of getting rid of that one!
+\end{itemize}
+
+\todo{Functional in-place update is not a goal, but it will work with
+  a bit of care in the RTS.}
+
+\subsection{Prompt deallocation of cons cells}
+
+Up until this point, we have only demonstrated how to achieve memory
+safety and prompt deallocation by combining both linear types and
+foreign heaps. Ideally, users should not have to buy-in to foreign
+heaps with explicit allocation and explicit object copies to and from
+each heap just to get prompt deallocation. So to go even further, the
+runtime system can be modified to allow unrestricted Haskell data (which we
+will refer as \emph{cons cells}), as opposed to just primitive data,
+to reside out of the GC heap as long as it has been allocated
+by a linear binding.
+
+With such a modification, we can arrange for the messages that are
+evicted from the queue API in \fref{sec:queue-api} to also reside
+outside of the GC heap. In this way, using the queue could
+entail zero GC allocation. Predictable latencies would be
+within reach.
+
+\unsure{keep going with the same example: the queue.}
+\begin{quote}
+  Here is how the code for queue may look like:
+\begin{code}
+type Queue = List Msg
+
+alloc   :: (Queue ⊸ Bang a) ⊸ a
+alloc k = case k [] of
+  Bang x -> x
+
+free    :: Queue ⊸ ()
+free (x:xs) = case storableFree x of
+  () -> free xs
+free [] = ()
+
+push    :: Msg -> Queue ⊸ Queue
+push msg msgs = copyToLinHeap msg:msgs
+
+delete  :: Msg -> Queue ⊸ Queue
+delete msg [] = []
+delete msg (x:xs) = if msg' == msg then xs else x':delete msg xs
+  where (x',msg') = dup x
+
+evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
+
+copyToLinHeap :: Storable a => a -> a
+-- 2 implementations of the above:
+-- when used in a linear context it copies to the linear heap
+-- when used in an unrestricted context it is the identity
+
+\end{code}
+\end{quote}
+
+To illustrate how it works, we will implement the Fibonacci
+function based on matrix multiplication. In standard Haskell, there
+would be allocation for the intermediate matrices on the GC heap --- but we
+will avoid those.
+\begin{code}
+fib :: Int ⊸ Int
+fib n =
+  case (free x21,x22) of
+    ((),()) -> x11+x12
+  where
+    (Matrix x11 x12 x21 x22) :: _ 1 Matrix = expMatrix (n-1) (Matrix 0 1 1 1)
+
+-- Like every data type, |Int| can be duplicated or dropped linearly
+dup :: Int ⊸ (Int,Int)
+free :: Int ⊸ ()
+
+data Matrix where
+  Matrix :: Int ⊸ Int ⊸ Int ⊸ Int ⊸ Matrix
+
+-- With a bit of care, matrix multiplication can be implemented
+-- linearly. This assumes a linear implementation of |(+)| and |(*)|
+-- for integers.
+multMatrix : Matrix ⊸ Matrix ⊸ Matrix
+mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
+    Matrix
+     (x11'*y11'+x12'*y21')
+     (x11''*y12'+x12''*y22')
+     (x21'*y11''+x22'*y21'')
+     (x21''*y12''+x22''*y22'')
+  where
+    (x11',x11'') :: _ 1 (Int,Int) = dup x11
+    (x12',x12'') :: _ 1 (Int,Int) = dup x12
+    …
+
+dupMatrix :: Matrix ⊸ (Matrix,Matrix)
+dupMatrix = …
+
+
+-- This function uses patterns which Haskell does not naturally
+-- understand as a short hand for a view data type.
+
+expMatrix :: Int ⊸ Matrix ⊸ Matrix
+expMatrix 0        _m  = Matrix (1 0 0 1)
+expMatrix (2*n)    m   = square m
+expMatrix (2*n+1)  m   =
+  let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+  mult (square m') m''
+where
+  square m =
+    let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
+    in multMatrix m' m''
+
+-- Alternative:
+data Binary = Zero | Times2 Binary | Times2PlusOne Binary
+natToBinary :: Int -> Binary
+
+\end{code}
+\improvement{Jean-Philippe remarks that, in practice, a better type
+  for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
+  that is arguments are unboxed and $ω$-weighted (the idea is that
+  unboxed typed are not allocated on the heap so they can be
+  $ω$-weighted for free). Doing so would avoid the difficulty of having to copy the elements of the matrix in the multiplication.
+  Arnaud designed this example with the
+  objective of illustrating how linear types worked, and wanted to
+  avoid making such distinction, but this is open for a debate.}
+
+Because all the allocation of matrices happen in linear let-bindings,
+it is possible to allocate all of them out of the GC heap,
+\emph{as long as the result is used linearly}. To understand where
+this limitation comes from, consider the following example:
+\begin{code}
+  forget :: Int -> ()
+  forget _i = ()
+
+  forget (fib 42)
+\end{code}
+Here |fib 42| is promoted to weight $ω$ because |42|, being a literal,
+has weight $ω$. But then |fib 42| is dropped without being forced so
+it needs to be garbage collected, as well as every value in the
+closure. A partial evaluation of |fib 42| may cause the intermediate
+matrices to be pointed to by the closure. Therefore, they need to be
+garbage collected and cannot be allocated out of the GC heap.
+A similar issue occurs when the return value of |fib 42| is used
+several times.
+
+To ensure that the linearly-bound matrices are allocated on the
+GC heap, one must ensure that the result of |fib| is copied
+to the GC heap at the end of the computation. This is done in
+two parts. First the result is wrapped in a |Bang| using the |copy|
+function (|Int|, like every data type, implements this method):
+\begin{code}
+  copy :: Int ⊸ Bang Int
+\end{code}
+Then, the |Bang| constructor is forced using a pattern-matching. This
+has the effect of producing an |Int| closure of weight $ω$, hence on
+the GC heap. The run-time system is allowed to assume that no
+linear value are still live at this point (a $ω$-weighted value is
+statically guaranteed to have no reference to linear bindings)
+therefore that they can all be allocated, and managed, out of the
+GC heap.
+
+Revisiting our |forget| example, we can write:
+\begin{code}
+  case copy (fib 42) of
+    Bang x -> forget x
+\end{code}
+In this expression, all the intermediate matrices can safely be
+allocated out of the GC heap and be deallocated by
+the run-time system at the point where they are consumed. The downside
+being that we will run |fib 42| to completion even if the result is
+not actually needed.
 
 \section{\calc{} statics}
 \label{sec:statics}
