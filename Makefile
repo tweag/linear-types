@@ -1,4 +1,4 @@
-all: HaskeLL.pdf intro.pdf why.pdf
+all: HaskeLL.pdf intro.pdf why.pdf Slides/2017-01-10-IRIF/spiwack.pdf
 
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules:"
@@ -12,9 +12,9 @@ clean:
 	lhs2TeX -o $@ $<
 
 %.pdf: %.tex PaperTools/bibtex/jp.bib local.bib
-	xelatex $*
-	biber $*
-	xelatex $*
+	cd $(dir $<) && xelatex $(notdir $*)
+	cd $(dir $<) && biber $(notdir $*)
+	cd $(dir $<) && xelatex $(notdir $*)
 
 %.tex: %.org
 	bin/org-to-tex.sh $*.org
