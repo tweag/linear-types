@@ -111,7 +111,8 @@
 
 % Document starts
 \begin{document}
-\DeclareUnicodeCharacter{8797}{\ensuremath{\stackrel{\scriptscriptstyle {def}}{=}}}
+\DeclareUnicodeCharacter{8797}{\ensuremath{\stackrel{\scriptscriptstyle {\mathrm{def}}}{=}}}
+\DeclareUnicodeCharacter{183}{\ensuremath{\cdot}} % ·
 
 \newcommand\HaskeLL{Hask-LL}
 
@@ -219,7 +220,7 @@ there is exactly one copy of the parameter available.
 
 \begin{code}
 f :: A ⊸ B
-f x =  -- x : _1 A
+f x = {- |x| has weight $1$ here -}
 \end{code}
 
 We say that the \emph{weight} of |x| is $1$. On the contrary, we say
@@ -414,171 +415,6 @@ There are a few things going on in this API:
   one, along with the obligation of getting rid of that one!
 \end{itemize}
 
-\todo{Functional in-place update is not a goal, but it will work with
-  a bit of care in the RTS.}
-
-\subsection{Prompt deallocation of cons cells}
-
-Up until this point, we have only demonstrated how to achieve memory
-safety and prompt deallocation by combining both linear types and
-foreign heaps. Ideally, users should not have to buy-in to foreign
-heaps with explicit allocation and explicit object copies to and from
-each heap just to get prompt deallocation. So to go even further, the
-runtime system can be modified to allow unrestricted Haskell data (which we
-will refer as \emph{cons cells}), as opposed to just primitive data,
-to reside out of the GC heap as long as it has been allocated
-by a linear binding.
-
-With such a modification, we can arrange for the messages that are
-evicted from the queue API in \fref{sec:queue-api} to also reside
-outside of the GC heap. In this way, using the queue could
-entail zero GC allocation. Predictable latencies would be
-within reach.
-
-\unsure{keep going with the same example: the queue.}
-\begin{quote}
-  Here is how the code for queue may look like:
-\begin{code}
-type Queue = List Msg
-
-alloc   :: (Queue ⊸ Bang a) ⊸ a
-alloc k = case k [] of
-  Bang x -> x
-
-free    :: Queue ⊸ ()
-free (x:xs) = case storableFree x of
-  () -> free xs
-free [] = ()
-
-push    :: Msg -> Queue ⊸ Queue
-push msg msgs = copyToLinHeap msg:msgs
-
-delete  :: Msg -> Queue ⊸ Queue
-delete msg [] = []
-delete msg (x:xs) = if msg' == msg then xs else x':delete msg xs
-  where (x',msg') = dup x
-
-evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
-
-copyToLinHeap :: Storable a => a -> a
--- 2 implementations of the above:
--- when used in a linear context it copies to the linear heap
--- when used in an unrestricted context it is the identity
-
-\end{code}
-\end{quote}
-
-To illustrate how it works, we will implement the Fibonacci
-function based on matrix multiplication. In standard Haskell, there
-would be allocation for the intermediate matrices on the GC heap --- but we
-will avoid those.
-\begin{code}
-fib :: Int ⊸ Int
-fib n =
-  case (free x21,x22) of
-    ((),()) -> x11+x12
-  where
-    (Matrix x11 x12 x21 x22) :: _ 1 Matrix = expMatrix (n-1) (Matrix 0 1 1 1)
-
--- Like every data type, |Int| can be duplicated or dropped linearly
-dup :: Int ⊸ (Int,Int)
-free :: Int ⊸ ()
-
-data Matrix where
-  Matrix :: Int ⊸ Int ⊸ Int ⊸ Int ⊸ Matrix
-
--- With a bit of care, matrix multiplication can be implemented
--- linearly. This assumes a linear implementation of |(+)| and |(*)|
--- for integers.
-multMatrix : Matrix ⊸ Matrix ⊸ Matrix
-mult (Matrix x11 x12 x21 x22) (Matrix y11 y12 y21 y22) =
-    Matrix
-     (x11'*y11'+x12'*y21')
-     (x11''*y12'+x12''*y22')
-     (x21'*y11''+x22'*y21'')
-     (x21''*y12''+x22''*y22'')
-  where
-    (x11',x11'') :: _ 1 (Int,Int) = dup x11
-    (x12',x12'') :: _ 1 (Int,Int) = dup x12
-    …
-
-dupMatrix :: Matrix ⊸ (Matrix,Matrix)
-dupMatrix = …
-
-
--- This function uses patterns which Haskell does not naturally
--- understand as a short hand for a view data type.
-
-expMatrix :: Int ⊸ Matrix ⊸ Matrix
-expMatrix 0        _m  = Matrix (1 0 0 1)
-expMatrix (2*n)    m   = square m
-expMatrix (2*n+1)  m   =
-  let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
-  mult (square m') m''
-where
-  square m =
-    let (m',m'') :: _ 1 (Matrix,Matrix) = dupMatrix m
-    in multMatrix m' m''
-
--- Alternative:
-data Binary = Zero | Times2 Binary | Times2PlusOne Binary
-natToBinary :: Int -> Binary
-
-\end{code}
-\improvement{Jean-Philippe remarks that, in practice, a better type
-  for the |Matrix| constructor is |Int#->Int#->Int#->Int#->Matrix|,
-  that is arguments are unboxed and $ω$-weighted (the idea is that
-  unboxed typed are not allocated on the heap so they can be
-  $ω$-weighted for free). Doing so would avoid the difficulty of having to copy the elements of the matrix in the multiplication.
-  Arnaud designed this example with the
-  objective of illustrating how linear types worked, and wanted to
-  avoid making such distinction, but this is open for a debate.}
-
-Because all the allocation of matrices happen in linear let-bindings,
-it is possible to allocate all of them out of the GC heap,
-\emph{as long as the result is used linearly}. To understand where
-this limitation comes from, consider the following example:
-\begin{code}
-  forget :: Int -> ()
-  forget _i = ()
-
-  forget (fib 42)
-\end{code}
-Here |fib 42| is promoted to weight $ω$ because |42|, being a literal,
-has weight $ω$. But then |fib 42| is dropped without being forced so
-it needs to be garbage collected, as well as every value in the
-closure. A partial evaluation of |fib 42| may cause the intermediate
-matrices to be pointed to by the closure. Therefore, they need to be
-garbage collected and cannot be allocated out of the GC heap.
-A similar issue occurs when the return value of |fib 42| is used
-several times.
-
-To ensure that the linearly-bound matrices are allocated on the
-GC heap, one must ensure that the result of |fib| is copied
-to the GC heap at the end of the computation. This is done in
-two parts. First the result is wrapped in a |Bang| using the |copy|
-function (|Int|, like every data type, implements this method):
-\begin{code}
-  copy :: Int ⊸ Bang Int
-\end{code}
-Then, the |Bang| constructor is forced using a pattern-matching. This
-has the effect of producing an |Int| closure of weight $ω$, hence on
-the GC heap. The run-time system is allowed to assume that no
-linear value are still live at this point (a $ω$-weighted value is
-statically guaranteed to have no reference to linear bindings)
-therefore that they can all be allocated, and managed, out of the
-GC heap.
-
-Revisiting our |forget| example, we can write:
-\begin{code}
-  case copy (fib 42) of
-    Bang x -> forget x
-\end{code}
-In this expression, all the intermediate matrices can safely be
-allocated out of the GC heap and be deallocated by
-the run-time system at the point where they are consumed. The downside
-being that we will run |fib 42| to completion even if the result is
-not actually needed.
 
 \section{\calc{} statics}
 \label{sec:statics}
@@ -697,7 +533,7 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
 The types of \calc{} (see \fref{fig:syntax}) are simple
 types with arrows (albeit weighted ones), data types, and weight
 polymorphism.  The weighted function type is a generalization of the
-intuitionistic arrow and the linear arrow. We will use the following
+intuitionistic arrow and the linear arrow. We will the following
 notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
