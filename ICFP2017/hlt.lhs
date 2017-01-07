@@ -69,9 +69,8 @@
 
 \usepackage{booktabs} % For formal tables
 
-
-\usepackage[ruled]{algorithm2e} % For algorithms
-\renewcommand{\algorithmcfname}{ALGORITHM}
+% \usepackage[ruled]{algorithm2e} % For algorithms
+% \renewcommand{\algorithmcfname}{ALGORITHM}
 \SetAlFnt{\small}
 \SetAlCapFnt{\small}
 \SetAlCapNameFnt{\small}
@@ -79,7 +78,7 @@
 \IncMargin{-\parindent}
 
 % Metadata Information
-\acmJournal{JOCCH}
+\acmJournal{PACMPL}
 \acmVolume{9}
 \acmNumber{4}
 \acmArticle{39}
@@ -533,7 +532,7 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
 The types of \calc{} (see \fref{fig:syntax}) are simple
 types with arrows (albeit weighted ones), data types, and weight
 polymorphism.  The weighted function type is a generalization of the
-intuitionistic arrow and the linear arrow. We will the following
+intuitionistic arrow and the linear arrow. We use the following
 notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
@@ -543,7 +542,7 @@ The intuition behind the weighted arrow \(A →_q B\) is that you can
 get a \(B\) if you can provide a quantity \(q\) of \(A\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
 $f x$ is well-typed. Therefore, the constraints imposed by weights on
-arrow types is dual to those they impose on variables in the context:
+arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of weight $1$ or $ω$.
@@ -732,17 +731,17 @@ must be~---~non-linear)
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-Supporting the examples of~\fref{sec:app} would require only surface changes to
-an Haskell implementation: only the type system for \fref{sec:ffi} and
-\fref{sec:primops}, while \fref{sec:fusion} only requires additional
-annotations in the optimization phase.
+While one can give a trivial semantics to \calc{} by translation to a
+usual lambda-calculus, namely by erasing weights, such a semantics is
+deeply insatisfactory. Indeed one may wonder if the language is at all
+suitable for tracking resources. One may worry, for example, that
+linear variables may be systematically subject to garbage collection,
+essentially defeating our purposes.
 
-If one is willing to dive deeper and modify the runtime system, a
-further benefit can be reaped: prompt deallocation of thunks. While
-this extension of the runtime system is necessary only to enjoy prompt deallocation of thunks,
-the dynamic semantics presented in this section can also
-help give confidence in the correctness of the extensions
-of~\fref{sec:app}.
+In this section we show exactly when linear variables can be
+represented by linear objects at runtime. In turn, we show why the
+queue API presented earlier may indeed be implemented with a single
+linear queue.
 
 Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
@@ -946,11 +945,6 @@ only produce consistent heaps.
   the following rules:
 
 \begin{mathpar}
-\inferrule
-  { }
-  {Ξ ⊢ (Γ || λx.t  ⇓ Γ || λx.t) :_ρ A, Σ}
-{\text{shared variable}}
-
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λy.u):_ρ A →_q B, x:_{qρ} A, Σ \\
      Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
