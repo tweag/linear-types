@@ -354,7 +354,6 @@ function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
 |Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
 regardless of the weight of its argument.
 
-
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
 With linear types, it is possible to write a {\em pure} and {\em
@@ -413,6 +412,8 @@ There are a few things going on in this API:
   other linear functions does ``consume'' the queue, but returns a new
   one, along with the obligation of getting rid of that one!
 \end{itemize}
+
+\improvement{Give a (pure \HaskeLL) implementation of the queue}
 
 
 \section{\calc{} statics}
@@ -570,10 +571,10 @@ argument of weight $1$ or $ω$.
 
   For most purposes, $c_k$ behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  \fref{fig:typing} make clear, this means in particular
-  that to have a quantity $ω$ of data of type $D$, all its sub-data
-  including the arguments declared with weight $1$ must have weight
-  $ω$. Conversely, given $ω$ times all the arguments of $c_k$, one can
+  \fref{fig:typing} make clear, this means in particular that from a
+  quantity $ω$ of data of type $D$ one can extract a quantity $ω$ of
+  all its sub-data, including the arguments declared with weight
+  $1$. Conversely, given $ω$ times all the arguments of $c_k$, one can
   construct a quantity $ω$ of $D$.
 
   Note that constructors with arguments of weight $1$ are not more
@@ -731,12 +732,14 @@ must be~---~non-linear)
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-While one can give a trivial semantics to \calc{} by translation to a
+While one can easily give a semantics to \calc{} by translation to a
 usual lambda-calculus, namely by erasing weights, such a semantics is
-deeply insatisfactory. Indeed one may wonder if the language is at all
-suitable for tracking resources. One may worry, for example, that
+deeply insatisfactory. Indeed, one may wonder if the language is at
+all suitable for tracking resources. One may worry, for example, that
 linear variables may be systematically subject to garbage collection,
-essentially defeating our purposes.
+say if we somehow end up pointing to linear values from unrestricted
+closures or thunks. If that were so our system would not give any
+runtime benefit.
 
 In this section we show exactly when linear variables can be
 represented by linear objects at runtime. In turn, we show why the
@@ -803,6 +806,8 @@ semantics exhibits the following salient differences:
   the linear heap.
 \item We add a weight parameter to the reduction relation,
   corresponding to the (dynamic) quantity of values to produce.
+  Indeed, while the static syntax always produce exactly one value,
+  recall that programs are automatically scaled to $ω$ if possible.
 \item The rules for \emph{variable}, \emph{let}, and
   \emph{application} are changed to account for weights (let-bindings
   and application are annotated by a weight for this reason).
@@ -922,12 +927,14 @@ sub-data.
   acting as roots).
 \end{lemma}
 \begin{proof}
-To prove the above we need a typed version of the reduction
-relation. (See \fref{fig:typed-semop}) The judgement $Γ:t ⇓_ρ Δ:z$ is extended to the form
-$Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, where
+  To prove the above we need a more precise version of the reduction
+  relation, which additionally tracks the contents of the stack, and
+  is fully typed. (See \fref{fig:typed-semop}) Technically, the judgement
+  $Γ:t ⇓_ρ Δ:z$ is extended to the form $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$,
+  where
 \begin{itemize}
 \item $Ξ$ is a context of free variables
-\item $Σ$ is a stack of typed terms which are yet to reduce
+\item $Σ$ is a stack of typed terms which are yet to be reduced
 \item $t,z$ are typed terms
 \item $Γ,Δ$ are heap states, that is associations of variables to
   typed and weighted terms.
@@ -1010,5 +1017,4 @@ only produce consistent heaps.
   By induction.
 \end{proof}
 
-\section{}
 \end{document}
