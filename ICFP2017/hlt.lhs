@@ -332,7 +332,7 @@ and $π$ can be combined into a function of linearity $ρπ$.
 One might be tempted to mark all data constructors as linear, i.e.
 with only |⊸|-arrows in their types, in the style of the |List| type
 above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any multiplicity. However, $ω$-multiplicityed
+happy to be provided resources of any multiplicity. However, $ω$-multiplicated
 arrows in constructors are useful too, as the following data type
 illustrates\footnote{The type constructor |Bang| is in fact an
   encoding of the so-called \emph{exponential} modality written ${!}$
@@ -341,7 +341,7 @@ illustrates\footnote{The type constructor |Bang| is in fact an
   data Bang a where
     Bang :: a → Bang a
 \end{code}
-It is used to indicate that a linear function returns $ω$-multiplicityed
+It is used to indicate that a linear function returns $ω$-multiplicated
 results. For example:
 \begin{code}
   copy :: Bool ⊸ Bang Bool
@@ -350,7 +350,7 @@ results. For example:
 \end{code}
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity of
-|Bool|, whereas |copy| \emph{always} returns an $ω$-multiplicityed value,
+|Bool|, whereas |copy| \emph{always} returns an $ω$-multiplicated value,
 regardless of the multiplicity of its argument.
 
 \subsection{A GC-less queue API}
@@ -530,15 +530,15 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
 \end{figure}
 
 The types of \calc{} (see \fref{fig:syntax}) are simple
-types with arrows (albeit multiplicityed ones), data types, and multiplicity
-polymorphism.  The multiplicityed function type is a generalization of the
+types with arrows (albeit multiplicated ones), data types, and multiplicity
+polymorphism.  The multiplicated function type is a generalization of the
 intuitionistic arrow and the linear arrow. We use the following
 notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
 \item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-The intuition behind the multiplicityed arrow \(A →_q B\) is that you can
+The intuition behind the multiplicated arrow \(A →_q B\) is that you can
 get a \(B\) if you can provide a multiplicity \(q\) of \(A\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
 $f x$ is well-typed. Therefore, the constraints imposed by multiplicities on
@@ -667,7 +667,7 @@ $$\apprule$$
 Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a multiplicity of $1$, and therefore the application needs $qΔ$
 to have a multiplicity $q$ of $u$ at its disposal. This rule is the flip side
-of the multiplicityed arrows which allow to have the $λ$-calculus
+of the multiplicated arrows which allow to have the $λ$-calculus
 as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
   example}
 $$
@@ -695,7 +695,7 @@ The variable rule, used in the above example, may require some
 clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
-$ω$-multiplicityed variables: that is, it allows ignoring variables of multiplicity
+$ω$-multiplicated variables: that is, it allows ignoring variables of multiplicity
 $ω$. \footnote{Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
@@ -936,7 +936,7 @@ sub-data.
 \item $Σ$ is a stack of typed terms which are yet to be reduced
 \item $t,z$ are typed terms
 \item $Γ,Δ$ are heap states, that is associations of variables to
-  typed and multiplicityed terms.
+  typed and multiplicated terms.
 \end{itemize}
 We then show that this new relation preserves types. A well-typed
 reduction state implies that the heap is consistent as per this lemma.
@@ -998,12 +998,12 @@ only produce consistent heaps.
   We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
   \[
     Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
-    (ρA⊗\mathnormal{multiplicityedTypes}(Σ))‌
+    (ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌
   \]
   In the above expression $\flet Γ$ stands in turn for a nested
   $\mathsf{let}$ expression where all variables in $Γ$ are bound to
   the corresponding term in $Γ$, with the given type and multiplicity. We
-  write $(ρA⊗\mathnormal{multiplicityedTypes}(Σ))‌$ for the multiplicityed tensor
+  write $(ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌$ for the multiplicated tensor
   type comprised of $A$ with multiplicity $ρ$, the types in $Σ$ and the
   corresponding multiplicities. The term $(t,\mathnormal{terms}(Σ))$ in the
   inhabitant of that type which pairs $t$ with a tuple of the terms in
