@@ -71,11 +71,11 @@
 
 % \usepackage[ruled]{algorithm2e} % For algorithms
 % \renewcommand{\algorithmcfname}{ALGORITHM}
-\SetAlFnt{\small}
-\SetAlCapFnt{\small}
-\SetAlCapNameFnt{\small}
-\SetAlCapHSkip{0pt}
-\IncMargin{-\parindent}
+% \SetAlFnt{\small}
+% \SetAlCapFnt{\small}
+% \SetAlCapNameFnt{\small}
+% \SetAlCapHSkip{0pt}
+% \IncMargin{-\parindent}
 
 % Metadata Information
 \acmJournal{PACMPL}
@@ -1006,7 +1006,9 @@ only produce consistent heaps.
   the corresponding term in $Γ$, with the given type and weight. We
   write $(ρA⊗\mathnormal{weightedTypes}(Σ))‌$ for the weighted tensor
   type comprised of $A$ with weight $ρ$, the types in $Σ$ and the
-  corresponding weights.
+  corresponding weights. The term $(t,\mathnormal{terms}(Σ))$ in the
+  inhabitant of that type which pairs $t$ with a tuple of the terms in
+  $Σ$.
 \end{definition}
 
 \begin{lemma}[The typed reduction relation preserves typing.]~\\
