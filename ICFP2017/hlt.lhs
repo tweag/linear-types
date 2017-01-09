@@ -1052,7 +1052,7 @@ management'' that we aim to tackle. As we have seen, the ability to
 use an intermediate linear heap rests on the ability to turn a linear
 value into an unrestricted one. When linearity is captured in types,
 we must have two versions of every type that we intend to move between
-the heaps. Even though \textcite{morris_best_2016} manages to largely
+the heaps. Even though \citet{morris_best_2016} manages to largely
 address the issue by means of polymorphism and constraints over types,
 it comes as the cost of a type-system vastly more complex than the one
 we present here.
@@ -1060,7 +1060,7 @@ we present here.
 
 \subsection{Session types vs. linear types}
 
-\Textcite{wadler_propositions_2012} provides a good explanation of the
+\Citet{wadler_propositions_2012} provides a good explanation of the
 relation between session types vs. linear types (even though the paper
 contains some subtle traps --- notably the intuitive explanation of
 par and tensor in LL does not match the semantics given in the
@@ -1081,7 +1081,7 @@ are perfectly sufficient to represent protocols, as as we show in
 
 \subsection{Related type systems}
 
-\Textcite{mcbride_rig_2016} presents a similar type-theory, but with
+\Citet{mcbride_rig_2016} presents a similar type-theory, but with
 weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
 weight is multiplied by the weight of the function in the argument. At
 the point of variable usage one checks that the appropriate quantity
@@ -1097,20 +1097,19 @@ value.
 
 Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
 abstractions while retaining the linearity property. In that respect,
-our system is closer to that of \textcite{ghica_bounded_2014}, which
+our system is closer to that of \citet{ghica_bounded_2014}, which
 does not exhibit the issue. The differences between our type system
-and that of \textcite{ghica_bounded_2014} is that 1. we work with a
+and that of \citet{ghica_bounded_2014} is that 1. we work with a
 concrete set of weights 2. we support a special case-analysis
 construction which works only for non-zero weights.
 
-\section{Other related work}
 \subsection{Operational aspects of linear languages}
 
 Recent literature is surprising silent on the operational aspect of
 linear types, and concentrates rather on uniqueness types
 \cite{pottier_programming_2013,matsakis_rust_2014}.
 
-Looking further back, \textcite{wakeling_linearity_1991} produced a
+Looking further back, \citet{wakeling_linearity_1991} produced a
 complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
 linear heap (as we do in \fref{sec:dynamics}). They did not manage to
