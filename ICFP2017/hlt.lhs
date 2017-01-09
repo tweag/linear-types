@@ -219,18 +219,18 @@ there is exactly one copy of the parameter available.
 
 \begin{code}
 f :: A ⊸ B
-f x = {- |x| has weight $1$ here -}
+f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 
-We say that the \emph{weight} of |x| is $1$. On the contrary, we say
-that unrestricted (non-linear) parameters have weight $ω$.
+We say that the \emph{multiplicity} of |x| is $1$. On the contrary, we say
+that unrestricted (non-linear) parameters have multiplicity $ω$.
 
-Too clarify the meaning of weights, here are a few examples of what is
+Too clarify the meaning of multiplicities, here are a few examples of what is
 allowed or not:
 \begin{enumerate}
-\item A linear ($1$ quantity) value {\bf can} be passed to a linear
+\item A linear ($1$ multiplicity) value {\bf can} be passed to a linear
   function.
-\item A unrestricted ($ω$ quantity) value {\bf can} be passed to a linear
+\item A unrestricted ($ω$ multiplicity) value {\bf can} be passed to a linear
   function.
 \item A linear value {\bf cannot} be passed to a unrestricted function.
 \item A unrestricted value {\bf can} be passed to a unrestricted function.
@@ -270,7 +270,7 @@ That is, given \emph{one} instance of a list, one will obtain
 Thus the above list may contain (handles to) resources without
 compromising safety.
 
-Many list-based functions conserve the quantity of data, and thus can
+Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
 as follows:
 \begin{code}
@@ -278,7 +278,7 @@ as follows:
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
-The type of |(++)| tells us that if we have quantity $1$ of
+The type of |(++)| tells us that if we have multiplicity $1$ of
 a list |xs|, appending any other list to it will never duplicate any
 of the elements in |xs|, nor drop any element in |xs|.
 
@@ -288,11 +288,11 @@ anyway. That is, in our system, giving a more precise type to |(++)|
 strengthens the contract that the implementation of |(++)| must
 satisfy, but it does not restrict its usage.
 
-In general, it is perfectly legal to provide an $ω$ quantity |xs| as
+In general, it is perfectly legal to provide an $ω$ multiplicity |xs| as
 an argument, or indeed to {\em promote} the result of the function, of
-quantity $1$, to quantity $ω$. The intuition is that, in a context
+multiplicity $1$, to multiplicity $ω$. The intuition is that, in a context
 that wants zero or more of a resource, providing exactly one of that
-resource will do.  Concretely if one has a quantity $ω$ for both
+resource will do.  Concretely if one has a multiplicity $ω$ for both
 inputs, one can call $ω$ times |(++)| to obtain $ω$ times the
 concatenation.
 
@@ -309,7 +309,7 @@ end up in the argument to |cycle|.
 
 While reusing first-order code can be done simply by scaling from $1$
 to $ω$, reusing higher-order programs need polymorphism over
-weights. For example, the standard |map| function
+multiplicities. For example, the standard |map| function
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
@@ -318,7 +318,7 @@ can be given the two incomparable following types: |(a ⊸ b) -> List a
 ⊸ List b| and |(a -> b) -> List a -> List b|.
 
 We can generalise over linear and unrestricted arrows by using the
-syntax $A →_ρ B$ and quantifying over weights. Thus in this case, The
+syntax $A →_ρ B$ and quantifying over multiplicities. Thus in this case, The
 type subsuming both versions is |∀ρ. (a -> _ ρ b) -> List a -> _ ρ
 List b|.
 %
@@ -333,7 +333,7 @@ and $π$ can be combined into a function of linearity $ρπ$.
 One might be tempted to mark all data constructors as linear, i.e.
 with only |⊸|-arrows in their types, in the style of the |List| type
 above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any quantity. However, $ω$-weighted
+happy to be provided resources of any multiplicity. However, $ω$-multiplicityed
 arrows in constructors are useful too, as the following data type
 illustrates\footnote{The type constructor |Bang| is in fact an
   encoding of the so-called \emph{exponential} modality written ${!}$
@@ -342,7 +342,7 @@ illustrates\footnote{The type constructor |Bang| is in fact an
   data Bang a where
     Bang :: a → Bang a
 \end{code}
-It is used to indicate that a linear function returns $ω$-weighted
+It is used to indicate that a linear function returns $ω$-multiplicityed
 results. For example:
 \begin{code}
   copy :: Bool ⊸ Bang Bool
@@ -350,9 +350,9 @@ results. For example:
   copy False = Bang False
 \end{code}
 We stress that the above is not the same as the linear identity
-function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the weight of
-|Bool|, whereas |copy| \emph{always} returns an $ω$-weighted value,
-regardless of the weight of its argument.
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity of
+|Bool|, whereas |copy| \emph{always} returns an $ω$-multiplicityed value,
+regardless of the multiplicity of its argument.
 
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
@@ -426,18 +426,18 @@ syntax and typing rules.
 
 In \calc{}, each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
-number of times the \emph{weight} of the variable.
+number of times the \emph{multiplicity} of the variable.
 
-Concrete weights are either $1$ or $ω$: when the weight is $1$, the program
-\emph{must} consume the variable exactly once; when the weight is $ω$,
+Concrete multiplicities are either $1$ or $ω$: when the multiplicity is $1$, the program
+\emph{must} consume the variable exactly once; when the multiplicity is $ω$,
 it \emph{may} consume it any number of times (possibly zero). For the
-sake of polymorphism, weights are extended with weight
+sake of polymorphism, multiplicities are extended with multiplicity
 \emph{expressions}, which contain variables (ranged over by the
 metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
-complete syntax of weights and contexts can be found in
+complete syntax of multiplicities and contexts can be found in
 \fref{fig:contexts}.
 
-In addition, weights are equipped with an equivalence relation $(=)$
+In addition, multiplicities are equipped with an equivalence relation $(=)$
 which obeys the following laws:
 
 \begin{itemize}
@@ -449,7 +449,7 @@ which obeys the following laws:
 \item $1 + 1 = ω$
 \item $ω + ω = ω$
 \end{itemize}
-Thus, weights form a semi-ring (without a zero), which extends to a
+Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts as follows.
 
 \begin{definition}[Context addition]~
@@ -482,20 +482,20 @@ module structure on typing contexts as follows.
 The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
 judgement, however, may be less familiar. Indeed, remember that $Γ$ is
-weight-annotated, the weight of a variable denoting the quantity of
+multiplicity-annotated, the multiplicity of a variable denoting the multiplicity of
 that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
 be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
   one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
 
 \begin{figure}
-  \figuresection{Weights}
+  \figuresection{Multiplicities}
   \begin{align*}
     p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
   \end{align*}
   \figuresection{Contexts}
   \begin{align*}
     Γ,Δ & ::=\\
-        & ||  x :_q A, Γ & \text{weight-annotated binder} \\
+        & ||  x :_q A, Γ & \text{multiplicity-annotated binder} \\
         & ||     & \text {empty context}
   \end{align*}
 
@@ -508,7 +508,7 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
   \begin{align*}
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
-      & ||  ∀ρ. A &\text{weight-dependent type}\\
+      & ||  ∀ρ. A &\text{multiplicity-dependent type}\\
       & ||  D &\text{data type}
   \end{align*}
 
@@ -518,8 +518,8 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
             & ||  x & \text{variable} \\
             & ||  λ(x:_qA). t & \text{abstraction} \\
             & ||  t_q s & \text{application} \\
-            & ||  λπ. t & \text{weight abstraction} \\
-            & ||  t p & \text{weight application} \\
+            & ||  λπ. t & \text{multiplicity abstraction} \\
+            & ||  t p & \text{multiplicity application} \\
             & ||  c t₁ … t_n & \text{data construction} \\
             & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
             & ||  \flet x_1 :_{q₁}A₁ = t₁ … x_n :_{q_n}A_n = t_n \fin u & \text{let}
@@ -531,22 +531,22 @@ be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
 \end{figure}
 
 The types of \calc{} (see \fref{fig:syntax}) are simple
-types with arrows (albeit weighted ones), data types, and weight
-polymorphism.  The weighted function type is a generalization of the
+types with arrows (albeit multiplicityed ones), data types, and multiplicity
+polymorphism.  The multiplicityed function type is a generalization of the
 intuitionistic arrow and the linear arrow. We use the following
 notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
 \item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-The intuition behind the weighted arrow \(A →_q B\) is that you can
-get a \(B\) if you can provide a quantity \(q\) of \(A\). Note in
+The intuition behind the multiplicityed arrow \(A →_q B\) is that you can
+get a \(B\) if you can provide a multiplicity \(q\) of \(A\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
-$f x$ is well-typed. Therefore, the constraints imposed by weights on
+$f x$ is well-typed. Therefore, the constraints imposed by multiplicities on
 arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
-weight $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
-argument of weight $1$ or $ω$.
+multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
+argument of multiplicity $1$ or $ω$.
   Thus one may expect the type $A⊸B$ to be a subtype of $A→B$, however
   we chose not to provide subtyping, for the sake of simplicity.
 
@@ -557,36 +557,36 @@ argument of weight $1$ or $ω$.
   \end{align*}
   The above declaration means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
   each with \(n_k\) arguments. Arguments of constructors have a
-  weight, just like arguments of function: an argument of weight $ω$
+  multiplicity, just like arguments of function: an argument of multiplicity $ω$
   means that the data type can store, at that position, data which
-  \emph{must} have weight $ω$; while a weight of $1$ means that data
-  at that position \emph{can} have weight $1$ (or $ω$). A further
-  requirement is that the weights $q_i$ will either be $1$ or
-  $ω$.\info{The requirement that weights are constant in constructor
+  \emph{must} have multiplicity $ω$; while a multiplicity of $1$ means that data
+  at that position \emph{can} have multiplicity $1$ (or $ω$). A further
+  requirement is that the multiplicities $q_i$ will either be $1$ or
+  $ω$.\info{The requirement that multiplicities are constant in constructor
     makes sense in the dynamic semantics, it is not only to simplify
     the presentation with consideration about type polymorphism. There
-    may be a meaning to weight-polymorphic data type, but I [aspiwack]
+    may be a meaning to multiplicity-polymorphic data type, but I [aspiwack]
     ca not see it.}\unsure{Should we explain some of the above in the
     text?}
 
   For most purposes, $c_k$ behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
   \fref{fig:typing} make clear, this means in particular that from a
-  quantity $ω$ of data of type $D$ one can extract a quantity $ω$ of
-  all its sub-data, including the arguments declared with weight
+  multiplicity $ω$ of data of type $D$ one can extract a multiplicity $ω$ of
+  all its sub-data, including the arguments declared with multiplicity
   $1$. Conversely, given $ω$ times all the arguments of $c_k$, one can
-  construct a quantity $ω$ of $D$.
+  construct a multiplicity $ω$ of $D$.
 
-  Note that constructors with arguments of weight $1$ are not more
-  general than constructors with arguments of weight $ω$, because if,
-  when constructing $c u$, with the argument of $c$ of weight $1$, $u$
-  \emph{may} be either of weight $1$ or of weight $ω$, dually, when
-  pattern-matching on $c x$, $x$ \emph{must} be of weight $1$ (if the
-  argument of $c$ had been of weight $ω$, on the other hand, then $x$
-  could be used either as having weight $ω$ or $1$).
+  Note that constructors with arguments of multiplicity $1$ are not more
+  general than constructors with arguments of multiplicity $ω$, because if,
+  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+  \emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
+  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
+  argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
+  could be used either as having multiplicity $ω$ or $1$).
 
 The following example of data-type declarations illustrate the role of
-weights in constructor arguments:
+multiplicities in constructor arguments:
 \begin{itemize}
 \item The type
   $\data \varid{Pair} A B \where \varid{Pair} : A →_ω B →_ω
@@ -604,15 +604,15 @@ weights in constructor arguments:
 The term syntax (\fref{fig:syntax}) is that of a
 type-annotated (\textit{à la} Church) simply typed $λ$-calculus
 with let-definitions. Binders in $λ$-abstractions and type definitions
-are annotated with both their type and their weight (echoing the
-typing context from Section~\ref{sec:typing-contexts}). Weight
+are annotated with both their type and their multiplicity (echoing the
+typing context from Section~\ref{sec:typing-contexts}). Multiplicity
 abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
-annotated by a weight. This information is usually redundant, but we
+annotated by a multiplicity. This information is usually redundant, but we
 use it in Section~\ref{sec:dynamics} to define a compositional
 dynamic semantics with prompt deallocation of data. We sometimes omit
-the weights or type annotations when they are obvious from the
+the multiplicities or type annotations when they are obvious from the
 context, especially in the case of applications.
 
 %%% typing rule macros %%%
@@ -659,16 +659,16 @@ context, especially in the case of applications.
 Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term $t$ consumes $Γ$ and
 builds \emph{exactly one} $A$.
 This is the only kind of judgement in \calc{}: we provide
-no judgement to mean ``the term $t$ consumes $Γ$ and builds a quantity $p$ of $ A$-s''. Instead, we
+no judgement to mean ``the term $t$ consumes $Γ$ and builds a multiplicity $p$ of $ A$-s''. Instead, we
 make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
-one builds a quantity $p$ of $A$, using the same term $t$. This idea is at play in the
+one builds a multiplicity $p$ of $A$, using the same term $t$. This idea is at play in the
 application rule (the complete set of rules can be found in
 \fref{fig:typing}):
 $$\apprule$$
-Here, $t$ requires its argument $u$ to have weight $q$. Thus $Δ ⊢ u : A$
-give us $u$ with a weight of $1$, and therefore the application needs $qΔ$
-to have a quantity $q$ of $u$ at its disposal. This rule is the flip side
-of the weighted arrows which allow to have the $λ$-calculus
+Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus $Δ ⊢ u : A$
+give us $u$ with a multiplicity of $1$, and therefore the application needs $qΔ$
+to have a multiplicity $q$ of $u$ at its disposal. This rule is the flip side
+of the multiplicityed arrows which allow to have the $λ$-calculus
 as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
   example}
 $$
@@ -686,17 +686,17 @@ language. The whole idea is a bit subtle, and it may be worth it to
 ponder for a moment why it works as advertised.  \info{There is a
   presentation of the application which is closer to the usual
   promotion rule: requiring $\Delta$ to be divisible by $q$ (and not
-  scale $\Delta$ in the conclusion). This works fine when weights are
+  scale $\Delta$ in the conclusion). This works fine when multiplicities are
   $1$ and $\omega$, but will fail with $0$ (used for uniform
   quantification in a dependently typed presentation) or more exotic
-  weights (such as $2$).}  \unsure{Should we make a comment explaining
+  multiplicities (such as $2$).}  \unsure{Should we make a comment explaining
   the above?}
 
 The variable rule, used in the above example, may require some
 clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
-$ω$-weighted variables: that is, it allows ignoring variables of weight
+$ω$-multiplicityed variables: that is, it allows ignoring variables of multiplicity
 $ω$. \footnote{Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
@@ -707,14 +707,14 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
-Like the application rule it is parametrized by a weight $p$. But,
+Like the application rule it is parametrized by a multiplicity $p$. But,
 while in the application rule only the argument is affected by $p$, in
 the case rule, not only the scrutinee but also the variable bindings
 in the branches are affected by $p$. What it means, concretely, is
-that the weight of data is \emph{inherited} by its sub-data: if we
-have a quantity $1$ of $A⊗B$ we have a quantity $1$ of $A$ and a
-quantity $1$ of $B$, and if we have a quantity $ω$ of $A⊗B$ we have a
-quantity $ω$ of $A$ and a quantity $ω$ of $B$. Therefore, the
+that the multiplicity of data is \emph{inherited} by its sub-data: if we
+have a multiplicity $1$ of $A⊗B$ we have a multiplicity $1$ of $A$ and a
+multiplicity $1$ of $B$, and if we have a multiplicity $ω$ of $A⊗B$ we have a
+multiplicity $ω$ of $A$ and a multiplicity $ω$ of $B$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~non-linear)
@@ -733,7 +733,7 @@ must be~---~non-linear)
 \label{sec:dynamics}
 
 While one can easily give a semantics to \calc{} by translation to a
-usual lambda-calculus, namely by erasing weights, such a semantics is
+usual lambda-calculus, namely by erasing multiplicities, such a semantics is
 deeply insatisfactory. Indeed, one may wonder if the language is at
 all suitable for tracking resources. One may worry, for example, that
 linear variables may be systematically subject to garbage collection,
@@ -793,30 +793,30 @@ A Launchbury-style semantics is a big-step semantics expressed in a
 language suitable to represent sharing. The detail of this language
 and the translation from \calc{} can be found in
 \fref{fig:launchbury:syntax}. The main differences between \calc{} and
-the runtime language are that the latter is untyped, has fewer weight
+the runtime language are that the latter is untyped, has fewer multiplicity
 annotations, and applications always have variable arguments.
 
 The complete semantics is given in \fref{fig:dynamics}.
 Compared to \citeauthor{launchbury_natural_1993}'s original, our
 semantics exhibits the following salient differences:
 \begin{itemize}
-\item The heap is annotated with weights. The variables with weight
+\item The heap is annotated with multiplicities. The variables with multiplicity
   $ω$ represent the garbage-collected heap, while the variables with
-  weight $1$ represent the non-garbage-collected heap, which we call
+  multiplicity $1$ represent the non-garbage-collected heap, which we call
   the linear heap.
-\item We add a weight parameter to the reduction relation,
-  corresponding to the (dynamic) quantity of values to produce.
+\item We add a multiplicity parameter to the reduction relation,
+  corresponding to the (dynamic) multiplicity of values to produce.
   Indeed, while the static syntax always produce exactly one value,
   recall that programs are automatically scaled to $ω$ if possible.
 \item The rules for \emph{variable}, \emph{let}, and
-  \emph{application} are changed to account for weights (let-bindings
-  and application are annotated by a weight for this reason).
+  \emph{application} are changed to account for multiplicities (let-bindings
+  and application are annotated by a multiplicity for this reason).
 \end{itemize}
 
-The dynamics assume that weight expressions are reduced
-to a constant using weight-equality laws. If that is not possible the
-reduction will block on the weight parameter.
-The weight parameter of the reduction relation is used to interpret
+The dynamics assume that multiplicity expressions are reduced
+to a constant using multiplicity-equality laws. If that is not possible the
+reduction will block on the multiplicity parameter.
+The multiplicity parameter of the reduction relation is used to interpret
 $\flet x =_1 …$ bindings into allocations on the appropriate
 heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
 allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
@@ -834,16 +834,16 @@ linear value, while if the context requires an unrestricted value, the
 thunk must be allocated on the garbage-collected heap. However, the
 thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
 allocate on the garbage-collected heap despite being annotated with
-weight $1$. This behavior is not a consequence of implicit promotion
+multiplicity $1$. This behavior is not a consequence of implicit promotion
 from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
 pure linear logic features an explicit promotion, which also permits
 linear functions to produce linear values which can be promoted to
 produce unrestricted values.
 
-In all evaluation rules, this dynamic weight is propagated to the
-evaluation of subterms, sometimes multiplied by another weight
+In all evaluation rules, this dynamic multiplicity is propagated to the
+evaluation of subterms, sometimes multiplied by another multiplicity
 originating from the term. This means that, essentially, once one
-starts evaluating unrestricted results (weight = $ω$), one will remain
+starts evaluating unrestricted results (multiplicity = $ω$), one will remain
 in this dynamic evaluation mode, and thus all further allocations will
 be on the \textsc{gc} heap. However, it is possible to provide a special-purpose
 evaluation rule to escape dynamic evaluation to linear evaluation.
@@ -855,7 +855,7 @@ This rule concerns case analysis of |Bang x|:
 The observations justifying this rule is that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
 of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
-$x$ has weight $ω$, the type-system ensures that all the
+$x$ has multiplicity $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
 have been completely eliminated before being able to return $x$.
 
@@ -913,7 +913,7 @@ Bang B) ⊸ C| may allocate |A| on a linear heap if it forces the
   \label{fig:dynamics}
 \end{figure}
 
-The \emph{shared variable} rule also triggers when the weight
+The \emph{shared variable} rule also triggers when the multiplicity
 parameter is $1$, thus effectively allowing linear variables to look
 on the garbage-collected heap, and in turn linear data to have unrestricted
 sub-data.
@@ -937,7 +937,7 @@ sub-data.
 \item $Σ$ is a stack of typed terms which are yet to be reduced
 \item $t,z$ are typed terms
 \item $Γ,Δ$ are heap states, that is associations of variables to
-  typed and weighted terms.
+  typed and multiplicityed terms.
 \end{itemize}
 We then show that this new relation preserves types. A well-typed
 reduction state implies that the heap is consistent as per this lemma.
@@ -999,24 +999,132 @@ only produce consistent heaps.
   We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
   \[
     Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
-    (ρA⊗\mathnormal{weightedTypes}(Σ))‌
+    (ρA⊗\mathnormal{multiplicityedTypes}(Σ))‌
   \]
   In the above expression $\flet Γ$ stands in turn for a nested
   $\mathsf{let}$ expression where all variables in $Γ$ are bound to
-  the corresponding term in $Γ$, with the given type and weight. We
-  write $(ρA⊗\mathnormal{weightedTypes}(Σ))‌$ for the weighted tensor
-  type comprised of $A$ with weight $ρ$, the types in $Σ$ and the
-  corresponding weights. The term $(t,\mathnormal{terms}(Σ))$ in the
+  the corresponding term in $Γ$, with the given type and multiplicity. We
+  write $(ρA⊗\mathnormal{multiplicityedTypes}(Σ))‌$ for the multiplicityed tensor
+  type comprised of $A$ with multiplicity $ρ$, the types in $Σ$ and the
+  corresponding multiplicities. The term $(t,\mathnormal{terms}(Σ))$ in the
   inhabitant of that type which pairs $t$ with a tuple of the terms in
   $Σ$.
 \end{definition}
 
 \begin{lemma}[The typed reduction relation preserves typing.]~\\
   if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
-  \[Ξ ⊢ (Γ||t :ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :ρ A),Σ.\]
+  \[Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.\]
 \end{lemma}
 \begin{proof}
   By induction.
 \end{proof}
+
+\section{Related work}
+
+\subsection{Linearity as a property of types vs. a property of bindings}
+
+In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
+programming languages incorporate
+linearity by dividing types into two kinds. A type is either linear
+or unrestricted. Unrestricted types typically includes primitive types
+(such as \varid{Int}), and all (strictly positive) data types. Linear types
+typically include resources, effects, etc.
+
+A characteristic of this presentation is that linearity ``infects''
+every type containing a linear type. Consequently, if we want to make
+a pair of (say) an integer and an effect, the resulting type must be
+linear. This property means that polymorphic data structures can no
+longer be used \emph{as is} to store linear values. Technically, one
+cannot unify a type variable of unrestricted kind to a linear
+type. One can escape the issue by having polymorphism over kinds;
+unfortunately to get principal types one must then have subtyping between
+kinds and bounded polymorphism.
+
+In contrast, in \calc{} we have automatic scaling of linear types to unrestricted
+ones in unrestricted contexts. This feature already partially
+addresses the problem of explosion of types. In order to give suitably general
+types we need quantification over weights, and extension of the
+language of weights to products and sums.
+
+Another issue with the ``linearity in types'' presentation is that it
+is awkward at addressing the problem of ``simplified memory
+management'' that we aim to tackle. As we have seen, the ability to
+use an intermediate linear heap rests on the ability to turn a linear
+value into an unrestricted one. When linearity is captured in types,
+we must have two versions of every type that we intend to move between
+the heaps. Even though \textcite{morris_best_2016} manages to largely
+address the issue by means of polymorphism and constraints over types,
+it comes as the cost of a type-system vastly more complex than the one
+we present here.
+
+
+\subsection{Session types vs. linear types}
+
+\Textcite{wadler_propositions_2012} provides a good explanation of the
+relation between session types vs. linear types (even though the paper
+contains some subtle traps --- notably the intuitive explanation of
+par and tensor in LL does not match the semantics given in the
+paper.). In sum, session types classify `live' sessions with
+long-lived channels, whose type ``evolves'' over time. In contrast,
+linear types are well suited to giving types to a given bit of
+information. One can see thus that linear types are better suited for
+a language based on a lambda calculus, while session types are better
+suited for languages based on a pi-calculus and/or languages with
+effects. Or put another way, it is a matter of use cases: session
+types are particularly aimed at describing communication protocols,
+while linear types are well suited for describing data. One is
+communication centric, the other is data centric, yet there is a
+simple encoding from session types to linear types (as Wadler
+demonstrates in detail). In practice, we find that plain linear types
+are perfectly sufficient to represent protocols, as as we show in
+\fref{sec:protocols}.
+
+\subsection{Related type systems}
+
+\Textcite{mcbride_rig_2016} presents a similar type-theory, but with
+weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
+weight is multiplied by the weight of the function in the argument. At
+the point of variable usage one checks that the appropriate quantity
+of the variable is available. A problem with this approach\todo{Thanks Ryan}{} is that
+whenever one enters an $ω$-weighted judgement, one effectively
+abandons tracking any linearity whatsoever. Thus, the following
+program would be type-correct, while |dup| is duplicating a linear
+value.
+
+\[
+(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
+\]
+
+Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
+abstractions while retaining the linearity property. In that respect,
+our system is closer to that of \textcite{ghica_bounded_2014}, which
+does not exhibit the issue. The differences between our type system
+and that of \textcite{ghica_bounded_2014} is that 1. we work with a
+concrete set of weights 2. we support a special case-analysis
+construction which works only for non-zero weights.
+
+\section{Other related work}
+\subsection{Operational aspects of linear languages}
+
+Recent literature is surprising silent on the operational aspect of
+linear types, and concentrates rather on uniqueness types
+\cite{pottier_programming_2013,matsakis_rust_2014}.
+
+Looking further back, \textcite{wakeling_linearity_1991} produced a
+complete implementation of a language with linear types, with the goal
+of improving the performance. Their implementation features a separate
+linear heap (as we do in \fref{sec:dynamics}). They did not manage to
+obtain consistent performance gains. However, they still manage to
+reduce \textsc{gc} usage, which may be critical in distributed and
+real-time environments, as we explained in the introduction.
+Thus the trade-off is beneficial is certain situations.
+
+Regarding absolute performance increase,
+\citeauthor{wakeling_linearity_1991} propose not attempt prompt free
+of thunks, and instead take advantage of linear arrays. \todo{Run concrete examples and see what we get.}
+
+% \item Linear Lisp. \cite{baker_lively_1992}: unclear results
+
+% \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
 
 \end{document}
