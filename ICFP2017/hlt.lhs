@@ -237,16 +237,16 @@ allowed or not:
 \begin{enumerate}
 \item A linear ($1$ multiplicity) value {\bf can} be passed to a linear
   function.
-\item A unrestricted ($ω$ multiplicity) value {\bf can} be passed to a linear
+\item An unrestricted ($ω$ multiplicity) value {\bf can} be passed to a linear
   function.
 \item A linear value {\bf cannot} be passed to a unrestricted function.
-\item A unrestricted value {\bf can} be passed to a unrestricted function.
+\item An unrestricted value {\bf can} be passed to a unrestricted function.
 \item A linear value {\bf can} be returned by a linear function.
-\item A unrestricted value {\bf can} be returned by a linear function.
+\item An unrestricted value {\bf can} be returned by a linear function.
 \item A linear value {\bf can} be returned by a linear function (and
   the type-system guarantees that it can be promoted to a unrestricted
   value when the function is called in an unrestricted context).
-\item A unrestricted value {\bf can} be returned by a unrestricted function.
+\item An unrestricted value {\bf can} be returned by a unrestricted function.
 \end{enumerate}
 Indeed, remember that when we say that a function is linear, we are
 only referring to its domain, not its co-domain. Hence, linearity of a
