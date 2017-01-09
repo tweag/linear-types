@@ -1036,18 +1036,17 @@ The type system presented here is heavily inspired from the work of
 \citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
 present a type system where arrows are annotated with the multiplicty
 of the the argument that they require, and where the multiplicities
-form a ring.  The novel technical aspects of the present system are
-multiplicity polymorphism and an operational (lazy) semantics.
+form a semi-ring.  The novel technical aspects of the present system are
+multiplicity polymorphism and an lazy operational semantics.
 
 Contrary to us \citeauthor{mcbride_rig_2016} has a weighted type
 judgement $Γ ⊢_ρ t : A$. In the application rule, the weight is
 multiplied by the weight of the function in the argument. At the point
-of variable usage one checks that the appropriate quantity of the
-variable is available. A problem with this approach\todo{Thanks
-  Ryan}{} is that whenever one enters an $ω$-weighted judgement, one
-effectively abandons tracking any linearity whatsoever. Thus, the
-following program would be type-correct, while |dup| is duplicating a
-linear value.
+of variable usage one checks that the appropriate multiplicity of the
+variable is available. A problem with this approach is that whenever
+one enters an $ω$-weighted judgement, one effectively abandons
+tracking any linearity whatsoever. Thus, the following program would
+be type-correct, while |dup| is duplicating a linear value.
 
 \[
 (λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
@@ -1059,9 +1058,9 @@ abstractions while retaining the linearity property.
 In that respect, our system is closer to that of
 \citet{ghica_bounded_2014}, which does not exhibit the issue. The
 differences between our type system and that of
-\citet{ghica_bounded_2014} are that 1. we work with a concrete set of
-weights and that 2. we support a special case-analysis construction which works
-only for non-zero weights.
+\citet{ghica_bounded_2014} are that we work with a concrete set of
+weights and that we support a special case-analysis construction which
+works only for non-zero weights.
 
 
 \subsection{Linearity as a property of types vs. a property of bindings}
