@@ -12,7 +12,7 @@ clean:
 	lhs2TeX -o $@ $<
 
 %.pdf: %.tex ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls
-	pdflatex $*
+	latexmk -pdf $*
 
 %.cls: %.ins
 	latex $<

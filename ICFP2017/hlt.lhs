@@ -11,7 +11,6 @@
 %format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
-\bibliography{../PaperTools/bibtex/jp.bib,../local.bib}
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{longtable}
@@ -1125,5 +1124,8 @@ of thunks, and instead take advantage of linear arrays. \todo{Run concrete examp
 % \item Linear Lisp. \cite{baker_lively_1992}: unclear results
 
 % \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
+
+\bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
+\bibliographystyle{plain}
 
 \end{document}

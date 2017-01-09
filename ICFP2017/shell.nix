@@ -9,6 +9,7 @@ in stdenv.mkDerivation {
                     inherit (texlive)
                       # collection-fontutils
                       # tex-gyre tex-gyre-math
+                      latexmk
                       lm
                       comment
                       algorithm2e
