@@ -587,9 +587,9 @@ argument of multiplicity $1$ or $ω$.
 
   Note that constructors with arguments of multiplicity $1$ are not more
   general than constructors with arguments of multiplicity $ω$, because if,
-  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
   \emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
-  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
+  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
   argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
   could be used either as having multiplicity $ω$ or $1$).
 
@@ -675,7 +675,8 @@ application rule (the complete set of rules can be found in
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus $Δ ⊢ u : A$
 give us $u$ with a multiplicity of $1$, and therefore the application needs $qΔ$
-to have a multiplicity $q$ of $u$ at its disposal. This rule is the flip side
+to have a multiplicity $q$ of $u$ at its disposal. Thus all variables in the scope of the applications
+are accounted for, with appropriate multiplicities. This rule is the flip side
 of the multiplicated arrows which allow to have the $λ$-calculus
 as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
   example}
@@ -825,12 +826,13 @@ semantics exhibits the following salient differences:
 \end{itemize}
 
 The dynamics assume that multiplicity expressions are reduced
-to a constant using multiplicity-equality laws. If that is not possible the
-reduction will block on the multiplicity parameter.
+to a constant using equality laws for multiplicities. If that is not possible the
+reduction will block on the multiplicity parameter. This behavior is not problematic because all
+\HaskeLL{} programs will have no free multiplicity variables.
 The multiplicity parameter of the reduction relation is used to interpret
 $\flet x =_1 …$ bindings into allocations on the appropriate
 heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
-allocate into the linear heap: in $ω$ contexts, $\flet x =_1 …$ must
+allocate into the linear heap: on the contrary, in $ω$ contexts, $\flet x =_1 …$ must
 allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
 the following example:
 %
@@ -851,19 +853,21 @@ pure linear logic features an explicit promotion, which also permits
 linear functions to produce linear values which can be promoted to
 produce unrestricted values.
 
-In all evaluation rules, this dynamic multiplicity is propagated to the
-evaluation of subterms, sometimes multiplied by another multiplicity
-originating from the term. This means that, essentially, once one
-starts evaluating unrestricted results (multiplicity = $ω$), one will remain
-in this dynamic evaluation mode, and thus all further allocations will
-be on the \textsc{gc} heap. However, it is possible to provide a special-purpose
-evaluation rule to escape dynamic evaluation to linear evaluation.
-This rule concerns case analysis of |Bang x|:
+In all evaluation rules, this dynamic multiplicity is propagated to
+the evaluation of subterms, sometimes multiplied by another
+multiplicity originating from the term. This means that, essentially,
+once one starts evaluating unrestricted results (multiplicity = $ω$),
+one will remain in this dynamic evaluation mode, and thus all further
+allocations will be on the \textsc{gc} heap. However, it is possible
+to provide a special-purpose evaluation rule to escape dynamic
+evaluation to linear evaluation.  This rule concerns case analysis of
+|Bang x|, where the weight of the scrutninee is not multiplied by the
+dynamic multiplicity:
 \[
     \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
     {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
 \]
-The observations justifying this rule is that 1. when forcing a |Bang|
+The observations justifying this rule are that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
 of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
 $x$ has multiplicity $ω$, the type-system ensures that all the
@@ -871,7 +875,7 @@ intermediate linear values potentially allocated to produce $x$ must
 have been completely eliminated before being able to return $x$.
 
 The following function is a convenient wrapper around the case-bang
-rule:
+rule:\improvement{Use the Queue example here}
 \begin{code}
 withLinearHeap :: a ⊸ (a ⊸ Bang b) ⊸ b
 withLinearHeap x k = case k x of
