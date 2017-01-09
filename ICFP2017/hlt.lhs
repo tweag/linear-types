@@ -11,6 +11,7 @@
 %format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
+\usepackage{natbib}
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{longtable}
@@ -46,7 +47,7 @@
 \newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
 
-\newcommand{\figuresection}[1]{\textbf{#1}}
+\newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \usepackage{xargs}
@@ -402,14 +403,15 @@ There are a few things going on in this API:
 \item |alloc| opens a new scope, delimited by the dynamic extent of
   its argument function. This function is provided a fresh queue,
   allocated in the foreign heap (for example using \verb|malloc()|).
-  This queue must be used exactly once. The return type of argument
+  As enforced by the type-system, this queue must be used exactly once.
+  The return type of argument
   function is |Bang a|, ensuring that no linear value can be returned:
   in particular the |Queue| must be consumed.
 \item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
   of messages in the queue, there will at any given time be very few
-  messages managed by the garbage collector. Since these objects will
+  messages outside of it, managed by the garbage collector. Because these objects will
   typically be short-lived, they will not normally survive a ``generation
   0'' sweep.
 \item Because the queue allocated by |alloc| must be consumed before
@@ -781,7 +783,6 @@ pause occur.
   \end{align*}
 
   \figuresection{Translation of typed terms}
-
   \begin{align*}
     (λ(x:_qA). t)^* &= λx. (t)^* \\
     x^*             &= x \\
@@ -1021,7 +1022,7 @@ only produce consistent heaps.
   $Σ$.
 \end{definition}
 
-\begin{lemma}[The typed reduction relation preserves typing.]~\\
+\begin{lemma}[The typed reduction relation preserves typing]~\\
   if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
   \[Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.\]
 \end{lemma}
@@ -1214,7 +1215,7 @@ applications.
 
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
-\bibliographystyle{plain}
+\bibliographystyle{ACM-Reference-Format.bst}
 
 \end{document}
 
