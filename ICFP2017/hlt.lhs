@@ -193,17 +193,24 @@
 
 \todo{the usual blabla}
 
-Contribution. We propose a conservative extension of the polymorphic
-lambda calculus (or System F) supporting linear function types, called
-\calc. This extension extension carefully crafted to integrate well
-with existing programming languages based on System F. Indeed:
-1. existing programs continue to work in the same way 2. first-order
-linear functons are automatically converted to unrestricted functions
-3. higher-order functions can be given polymorphic type so that they
-work both on linear and higher-order functions. 4. it is compatible
-even with dependently-typed programs, by having no impact on the
-syntax of kinds.  Additionally, we provide a lazy semantics for the
-calculus which tracks linearity.
+\paragraph{Contributions}
+
+In this article we propose a linearly-typed extension of the
+$λ$-calculus with the following characteristics:
+
+\begin{itemize}
+\item Implicit conversions to and from the linear world and
+  the unrestricted world, together with linearity polymorphism for
+  higher order functions.
+\item A lazy dynamic semantics which include explicit deallocation of
+  linear data.
+\item Is designed to be implementable in an existing rich programming
+  language.\todo{Do we speak of the prototype at this point? I
+    [aspiwack] would rather leave it at that and prove this assertion
+    in the body of the article by citing the prototype (and maybe some
+    GHC things with which we are compatible: \emph{e.g.} the kind
+    system (which is not affected) and dependent types).}
+\end{itemize}
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
