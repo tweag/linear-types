@@ -432,7 +432,7 @@ Concrete multiplicities are either $1$ or $ω$: when the multiplicity is $1$, th
 it \emph{may} consume it any number of times (possibly zero). For the
 sake of polymorphism, multiplicities are extended with multiplicity
 \emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum, and product. The
+metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we remove this?}, and product. The
 complete syntax of multiplicities and contexts can be found in
 \fref{fig:contexts}.
 
@@ -728,6 +728,10 @@ must be~---~non-linear)
   snd (a,b)  = b
 \end{code}
 
+\unsure{Shall we state that our type-system is decidable? It may not
+  be completely obvious that the problem of equality in a ring is
+  decidable.}
+
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
@@ -1019,6 +1023,39 @@ only produce consistent heaps.
 \end{proof}
 
 \section{Related work}
+\subsection{Related type systems}
+
+The type system presented here is heavily inspired from the work of
+\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
+present a type system where arrows are annotated with the multiplicty
+of the the argument that they require, and where the multiplicities
+form a ring.  The novel technical aspects of the present system are
+multiplicity polymorphism and an operational (lazy) semantics.
+
+Contrary to us \citeauthor{mcbride_rig_2016} has a weighted type
+judgement $Γ ⊢_ρ t : A$. In the application rule, the weight is
+multiplied by the weight of the function in the argument. At the point
+of variable usage one checks that the appropriate quantity of the
+variable is available. A problem with this approach\todo{Thanks
+  Ryan}{} is that whenever one enters an $ω$-weighted judgement, one
+effectively abandons tracking any linearity whatsoever. Thus, the
+following program would be type-correct, while |dup| is duplicating a
+linear value.
+
+\[
+(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
+\]
+
+Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
+abstractions while retaining the linearity property.
+
+In that respect, our system is closer to that of
+\citet{ghica_bounded_2014}, which does not exhibit the issue. The
+differences between our type system and that of
+\citet{ghica_bounded_2014} are that 1. we work with a concrete set of
+weights and that 2. we support a special case-analysis construction which works
+only for non-zero weights.
+
 
 \subsection{Linearity as a property of types vs. a property of bindings}
 
@@ -1029,21 +1066,25 @@ or unrestricted. Unrestricted types typically includes primitive types
 (such as \varid{Int}), and all (strictly positive) data types. Linear types
 typically include resources, effects, etc.
 
-A characteristic of this presentation is that linearity ``infects''
+A characteristic of such a presentation is that linearity ``infects''
 every type containing a linear type. Consequently, if we want to make
 a pair of (say) an integer and an effect, the resulting type must be
-linear. This property means that polymorphic data structures can no
-longer be used \emph{as is} to store linear values. Technically, one
-cannot unify a type variable of unrestricted kind to a linear
-type. One can escape the issue by having polymorphism over kinds;
-unfortunately to get principal types one must then have subtyping between
-kinds and bounded polymorphism.
+linear.  This property means that polymorphic data structures can no
+longer be used \emph{as is} to store linear values. Technically, one cannot unify a
+type variable of unrestricted kind to a linear type. One can escape
+the issue by having polymorphism over kinds; unfortunately to get
+principal types one must then have subtyping between kinds and bounded
+polymorphism, as \citet{morris_best_2016}.
 
-In contrast, in \calc{} we have automatic scaling of linear types to unrestricted
-ones in unrestricted contexts. This feature already partially
-addresses the problem of explosion of types. In order to give suitably general
-types we need quantification over weights, and extension of the
-language of weights to products and sums.
+In contrast, in \calc{} we have automatic scaling of linear types to
+unrestricted ones in unrestricted contexts. This feature already
+partially addresses the problem of explosion of types.  First, most
+data structures should have linear constructors and thus readily store
+linear values. Second, first order functions can be given a linear
+type and be scaled automatically. Finally, even in the most general
+case, when multiplicity polymorphism is needed, we get away without
+using bounded quantification: products in weight expressions is all we
+need.
 
 Another issue with the ``linearity in types'' presentation is that it
 is awkward at addressing the problem of ``simplified memory
@@ -1060,61 +1101,34 @@ we present here.
 \subsection{Session types vs. linear types}
 
 \Citet{wadler_propositions_2012} provides a good explanation of the
-relation between session types vs. linear types (even though the paper
-contains some subtle traps --- notably the intuitive explanation of
-par and tensor in LL does not match the semantics given in the
-paper.). In sum, session types classify `live' sessions with
-long-lived channels, whose type ``evolves'' over time. In contrast,
-linear types are well suited to giving types to a given bit of
-information. One can see thus that linear types are better suited for
-a language based on a lambda calculus, while session types are better
-suited for languages based on a pi-calculus and/or languages with
-effects. Or put another way, it is a matter of use cases: session
-types are particularly aimed at describing communication protocols,
-while linear types are well suited for describing data. One is
-communication centric, the other is data centric, yet there is a
-simple encoding from session types to linear types (as Wadler
-demonstrates in detail). In practice, we find that plain linear types
-are perfectly sufficient to represent protocols, as as we show in
-\fref{sec:protocols}.
-
-\subsection{Related type systems}
-
-\Citet{mcbride_rig_2016} presents a similar type-theory, but with
-weighted type judgement $Γ ⊢_ρ t : A$. In the application rule, the
-weight is multiplied by the weight of the function in the argument. At
-the point of variable usage one checks that the appropriate quantity
-of the variable is available. A problem with this approach\todo{Thanks Ryan}{} is that
-whenever one enters an $ω$-weighted judgement, one effectively
-abandons tracking any linearity whatsoever. Thus, the following
-program would be type-correct, while |dup| is duplicating a linear
-value.
-
-\[
-(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
-\]
-
-Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
-abstractions while retaining the linearity property. In that respect,
-our system is closer to that of \citet{ghica_bounded_2014}, which
-does not exhibit the issue. The differences between our type system
-and that of \citet{ghica_bounded_2014} is that 1. we work with a
-concrete set of weights 2. we support a special case-analysis
-construction which works only for non-zero weights.
+relation between session types vs. linear types. In sum, session types
+classify `live' sessions with long-lived channels, whose type
+``evolves'' over time. In contrast, linear types are well suited to
+giving types to a given bit of information. One can see thus that linear types are
+better suited for a language based on a lambda calculus, while session
+types are better suited for languages based on a pi-calculus and/or
+languages with effects. Or put another way, it is a matter of use
+cases: session types are particularly aimed at describing
+communication protocols, while linear types are well suited for
+describing data. One is communication centric, the other is data
+centric, yet there is a simple encoding from session types to linear
+types (as Wadler demonstrates in detail). In practice, we find that
+plain linear types are perfectly sufficient to represent protocols, as
+as we show in \fref{sec:protocols}.\unsure{shall we put back a protocol example?}
 
 \subsection{Operational aspects of linear languages}
 
-Recent literature is surprising silent on the operational aspect of
+Recent literature is surprisingly quiet on the operational aspect of
 linear types, and concentrates rather on uniqueness types
 \cite{pottier_programming_2013,matsakis_rust_2014}.
 
 Looking further back, \citet{wakeling_linearity_1991} produced a
 complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
-linear heap (as we do in \fref{sec:dynamics}). They did not manage to
+linear heap (as we do in \fref{sec:dynamics}). However, they did not manage to
 obtain consistent performance gains. However, they still manage to
 reduce \textsc{gc} usage, which may be critical in distributed and
-real-time environments, as we explained in the introduction.
+real-time environments, as we explained in the introduction\unsure{did we?}.
 Thus the trade-off is beneficial is certain situations.
 
 Regarding absolute performance increase,
@@ -1125,7 +1139,96 @@ of thunks, and instead take advantage of linear arrays. \todo{Run concrete examp
 
 % \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
 
+\section{Conclusion}
+
+This paper demonstrates how an existing lazy language, such
+as Haskell, can be extended with linear types, without compromising
+the language, in the following sense:
+\begin{itemize}
+\item Existing programs are valid in the extended language
+  \emph{without modification}.
+\item Such programs retain the same semantics.
+\item Furthermore, the performance of existing programs is not affected.
+\end{itemize}
+In other words: regular Haskell comes first. Additionally, first-order linearly
+typed functions and data structures are usable directly from regular
+Haskell code. In such a situation their semantics is that of the same
+code with linearity erased.
+
+Our proposal is in stark contrast with languages such as Rust, which are
+specifically optimized for writing programs that are structured using
+the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens.
+
+In \HaskeLL{}, when the programmer is ready to pay the
+cost of finely dealing with usage through linearity, they get the
+additional benefits of linear type: new abstractions
+(\fref{sec:protocols}, \fref{sec:resources}, and \fref{sec:ffi}),
+lower \textsc{gc} pressure (\fref{sec:primops}).
+All these benefits come to with no penalty to unmodified Haskell.
+
+The benefits can be classified in three stages depending on how much
+modification to an existing language they require:
+\begin{enumerate}
+\item Adapting the \textbf{type system} enables
+  \begin{itemize}
+  \item new abstractions such as protocols (\fref{sec:protocols}) and
+    safe resource management (\fref{sec:resources}), enabling {\em
+      safe} API to resources exposed as foreign resources allocated in
+    a foreign heap
+  \item pure abstractions to C libraries (\fref{sec:ffi})
+  \item primitive operations to keep data out of the garbage collector
+    (\fref{sec:primops})
+  \end{itemize}
+\item Propagating type annotation to the \textbf{intermediate
+    language} makes it possible to exploit linear types for further
+  optimization (\fref{sec:fusion})
+\item Modifying the \textbf{run-time system} further enables prompt
+  deallocation of it possible to
+  have type-directed allocation of objects,  which can be leveraged to prevent \textsc{gc} pauses
+  in critical computations (\fref{sec:dynamics}). An API for explicit
+  allocation and freeing of resources is no longer needed.
+\end{enumerate}
+
+Each of these stages imply increasingly invasive changes to a
+compiler, but also increasingly large benefits. In practice it makes
+it possible to roll out stages one at a time, quickly reaping the low
+hanging fruits.  Of these three stages, modifying the type system is
+the cheapest, but also the most immediately beneficial, enabling a lot
+of new uses for the programming language. Propagating the information
+down to the run-time system is still worth pursuing as we are
+expecting significant benefits, due to reduced and controlled latency,
+for systems programming, and in particular for distributed
+applications.
+
+
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{plain}
 
 \end{document}
+
+%  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
+%  LocalWords:  forkIO initialContext runtime doneWithContext Primops
+%  LocalWords:  deallocation Launchbury launchbury GC scrutinee dup
+%  LocalWords:  centric polymorphism modality intuitionistic typable
+%  LocalWords:  compositional Andreoli's openfile myfile ReadMore ys
+%  LocalWords:  hClose xs GC'ed deallocated linearities mcbride snd
+%  LocalWords:  unboxed Haskellian APIs newByteArray MutableByteArray
+%  LocalWords:  updateByteArray freeByteArray indexMutByteArray et ss
+%  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
+%  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
+%  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation WHNF
+%  LocalWords:  duplications bernardy deallocate morris latencies gc
+%  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile ap
+%  LocalWords:  forall aspiwack dually involutive runComputation lmb
+%  LocalWords:  withNewByteArray expensiveFunction affine booleans zs
+%  LocalWords:  Kleisli ghica wakeling TODOs Haskell subtype IOClient
+%  LocalWords:  OpenFile IOServer shareable openFile monads withAHeap
+%  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
+%  LocalWords:  optimizations denotational withNewArray updateArray
+%  LocalWords:  splitArray arraySize Storable byteArraySize natively
