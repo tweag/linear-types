@@ -729,6 +729,7 @@ There are a few things going on in this API:
   one, along with the obligation of getting rid of that one!
 \end{itemize}
 
+\paragraph{Reference implementation}
 Even if an ideal implementation for the above API would be implemented
 very efficiently in a machine language, we can already provide a
 reference implementation for it in \HaskeLL{}. For simplicity we
@@ -756,11 +757,11 @@ alloc k = case k [] of
 
 free    :: Queue ⊸ ()
 free (x:xs) = case storableFree x of
-  () -> free xs
+  () -> free' xs
 free [] = ()
 \end{code}
 
-The queue-manipulation function look like regular Haskell code, with
+The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
 push    :: Msg -> Queue ⊸ Queue
@@ -773,9 +774,9 @@ delete msg (x:xs) = case load x of
                            else x':delete msg xs
 
 evict :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
-evict 0  q      = (q, Bang [])
-evict n  []     = ([], Bang [])
-evict n  (x:xs) = case (load x, evict (n-1) xs) of
+evict 0  q       = (q, Bang [])
+evict n  []      = ([], Bang [])
+evict n  (x:xs)  = case (load x, evict (n-1) xs) of
   (Bang x', (xs',Bang v')) -> (xs',Bang (x':v'))
 \end{code}
 
@@ -785,33 +786,33 @@ In this section we turn the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{} data is classified into two categories: \emph{linear} data,
+In \calc{}, every object is classified into two categories: \emph{linear} ones,
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted} data which can be used an arbitrary number of
+\emph{unrestricted} ones which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of linear data is to see it as data that may not
+The best way to think of a linear object is to see it as an object that may not
 be controlled by the garbage collector: \emph{e.g.} because they are
 scarce resources, because they are controlled by foreign code, or
-because this data will not actually exist at run time because it will
+because this object will not actually exist at run time because it will
 be fused away. The word \emph{may} matters here: because of
-polymorphism, it is possible that linear data is actually controlled
-by the garbage collector, but linear data is allowed not to be, and
-so, for most purposes, it must be treated as it is not.
+polymorphism, it is possible for any given linear object to actually be controlled
+by the garbage collector (but may not be), and
+so, for most purposes, it must be treated as if it it were not.
 
-This analogy drives the details of \calc{}. In particular unrestricted
-data cannot contain linear data since the garbage collector needs to
-control transitively the deallocation of sub-data: otherwise we may
+This way of thinking drives the details of \calc{}. In particular unrestricted
+objects cannot contain linear objects, because the garbage collector needs to
+control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
-perfectly fine for linear data to refer to unrestricted data. So any
-data containing linear data must also be linear. Crucially this
+perfectly fine for linear objects to refer to unrestricted objects. So any
+object containing a linear object must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
 thunks): \emph{e.g.} a partial application of a function to a linear
-piece of data is linear. More generally, the application of a function
-to a linear piece of data is linear, since it is, in general, a lazy
-thunk pointing to that linear data. In fact, even in a strict
+object is linear. More generally, the application of a function
+to a linear object is linear, since it is, in general, a lazy
+thunk pointing to that linear object. (In fact, even in a strict
 language, the result may contain the linear argument and so must be
-linear.
+linear.)
 
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
@@ -833,7 +834,8 @@ variables (ranged over by the metasyntactic variables \(π\) and
 syntax of multiplicities and contexts can be found in
 \fref{fig:contexts}.
 
-In addition, multiplicities are equipped with an equivalence relation, written $(=)$.
+In addition, multiplicities are equipped with an equivalence relation,
+written $(=)$, and defined as follows:
 \begin{definition}[equivalence of multiplicities]
   \label{def:equiv-mutiplicity}
   The equivalence of multiplicities is the smallest transitive and
@@ -954,8 +956,8 @@ multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
   One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
   we chose to provide polymorphism, which does not mesh well with
-  subtyping, because it integrates better into an existing
-  Hindley-Milner-based type-checker.
+  subtyping. Indeed, we aim to integrate with a Hindley-Milner-based type-checker,
+  and such a checker accomodates polymorphism more easily than subtyping.
 
   Data type declarations, also presented in \fref{fig:syntax},
   deserve some additional explanation.
@@ -1090,8 +1092,8 @@ $$
   {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
 {()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
 $$
-This latter fact is, in turn, why \HaskeLL is an extension of Haskell
-and not a new language (provided unannotated variables are understood
+This latter fact is, in turn, why \HaskeLL{} is a conservative extension of Haskell
+(provided unannotated variables are understood
 to have multiplicity $ω$).
 
 The variable rule, used in the above example, may require some
@@ -1269,13 +1271,12 @@ have been completely eliminated before being able to return $x$.
 
 As an illustration, recall the |alloc| function from our queue reference
 implementation:
-
-Using the case-bang rule it behaves as expected:
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 alloc k = case k [] of
   Bang x -> x
 \end{code}
+Using the case-bang rule it behaves as expected.
 Indeed, even when |alloc k| is demanded $ω$ times, |k| will be
 demanded $1$ time, and in turn the queue will reside on the linear
 heap, and it guaranteed to be de-allocated by the time the |Bang|
@@ -1433,19 +1434,49 @@ only produce consistent heaps.
 \end{proof}
 
 \begin{corollary}[Eventual de-allocation of linear values]
-  Let $t$ be a closed term and $Data () = ()$ the data declaration
+  Let $t$ be a closed term and $\data () = ()$, the data declaration
   with a single constructor. If $⊢ (||t ⇓ Δ||()) :_ρ (), ⋅ $ and
   $⊢ (||t :_ρ ()), ⋅ $, then $Δ$ only contains $ω$-bindings.
 \end{corollary}
 \begin{proof}
   By Lemma \ref{lem:type-safety}, % TODO fref?
   we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
-  $()$ conclude: in order fo $()$ to be typed, the environment
+  $()$ conclude: in order for $()$ to be well typed, the environment
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
 \section{Related work}
+\subsection{Alms}
 \todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
+Alms is a general-purpose programming language that supports
+practical affine types. To offer the expressiveness of Girard’s linear
+logic while keeping the type system light and convenient, Alms
+uses expressive kinds that minimize notation while maximizing
+polymorphism between affine and unlimited types.
+
+We have the same aim (but with plain linear types) but use a different
+technique which cuts down the number of inference rules from 51 to 8.
+
+A key feature of Alms is the ability to introduce abstract affine
+types via ML-style signature ascription. In Alms, an interface can
+impose stiffer resource usage restrictions than the principal usage
+restrictions of its implementation. This form of sealing allows the
+type system to naturally and directly express a variety of resource
+management protocols from special-purpose type systems.
+
+We can do similar examples as the demos of Alms. Example, R-W Lock:
+\begin{code}
+withLock : (Lock ⊸ Bang a) ⊸ Bang a
+acquireRead : Lock ⊸ Lock ⊗ Access Shared
+acquireWrite : Lock ⊸ Lock ⊗ Access Excl
+releaseAccess : Access a ⊗ Lock ⊸ Lock
+
+set : Lock ⊸ Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl ⊗ Lock)
+get : Lock ⊸ Key ⊸ Access a ⊸ (Value ⊗ Access a ⊗ Lock)
+\end{code}
+
+We extend Haskell, they do not claim to be an extension of ML.
+
 \todo{Compare with uniqueness types}
 \subsection{Related type systems}
 
