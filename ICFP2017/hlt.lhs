@@ -643,7 +643,7 @@ context, especially in the case of applications.
 
     \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
         A_n →_{q_n} D$ constructor}}
-    {\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n :  D}\text{con}
+    {ωΓ+\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n : D}\text{con}
 
     \caserule
 
@@ -663,6 +663,8 @@ context, especially in the case of applications.
 
 \improvement{It may be useful to have a better transition between
   syntax and typing judgement}
+\improvement{explain that the $ωΓ$ in the
+  constructor rule is there for constant constructors.}
 
 Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term $t$ consumes $Γ$ and
 builds \emph{exactly one} $A$.
