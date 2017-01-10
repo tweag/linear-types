@@ -309,7 +309,8 @@ demand $ω$ times its input, even to construct a single output. For
 example the function repeating indefinitely its input will have the
 type:
 \begin{code}
-cycle :: List a → List a
+  cycle :: List a → List a
+  cycle l = l ++ cycle l
 \end{code}
 In practice, libraries will never provide $ω$ times a scarce resource
 (e.g. a handle to a physical entity); such a resource will thus never
@@ -338,6 +339,9 @@ Likewise, function composition can be given the following type:
 What the above type says is that two functions of arbitrary linearities $ρ$
 and $π$ can be combined into a function of linearity $ρπ$.
 
+\improvement{Let's change the segue into this idea, and just introduce
+bang with something like ``constructors can also require unrestricted
+arguments''.}
 One might be tempted to mark all data constructors as linear, i.e.
 with only |⊸|-arrows in their types, in the style of the |List| type
 above. After all, linear constructors, like any linear function, are
@@ -350,6 +354,7 @@ illustrates\footnote{The type constructor |Bang| is in fact an
   data Bang a where
     Bang :: a → Bang a
 \end{code}
+\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|}
 It is used to indicate that a linear function returns $ω$-multiplicated
 results. For example:
 \begin{code}
