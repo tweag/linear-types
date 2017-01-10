@@ -37,6 +37,11 @@
 % TODO: \newcommand*{\fancyreflemlabelprefix}{lem}
 \def\frefsecname{Section}
 \def\freffigname{Figure}
+\def\frefdefname{Definition}
+\def\Frefdefname{Definition}
+\def\fancyrefdeflabelprefix{def}
+\frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1#2}
+\Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1#2}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -521,13 +526,13 @@ f :: A ⊸ B
 f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 
-We say that the \emph{multiplicity} of |x| is $1$. On the contrary, we say
+We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. On the contrary, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (which
-is to be understood as \emph{any finite multiplicity}). We also call
+is to be understood as \emph{any finite number}). We also call
 functions linear if they have type $A ⊸ B$ and unrestricted if they
 have $A → B$.
 
-Too clarify the meaning of multiplicities, here are a few examples of what is
+To clarify the meaning of multiplicities, here are a few examples of what is
 allowed or not:
 \begin{enumerate}
 \item A linear (multiplicity $1$) value {\bf can} be passed to a linear
@@ -553,10 +558,10 @@ admits the following implementations, but not the last one:
 f :: a ⊸ a
 g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 
-g k x y = k (f x) y      -- Good
-g k x y = k x (f y)      -- Good
-g k x y = k x y          -- Good
-g k x y = k y x          -- Bad
+g k x y = k (f x) y      -- Valid
+g k x y = k x (f y)      -- Valid
+g k x y = k x y          -- Valid
+g k x y = k y x          -- Invalid
 \end{code}
 
 Using the new linear arrow, we can define a linear version of the list
@@ -566,7 +571,7 @@ data List a where
   [] :: List a
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
-That is, given list |xs| with multiplicity $1$, pattern-matching will
+That is, given a list |xs| with multiplicity $1$, pattern-matching will
 yield the sub-data of |xs| will multiplicity $1$. Thus the above list
 may contain resources without compromising safety.
 
@@ -589,8 +594,8 @@ strengthens the contract that the implementation of |(++)| must
 satisfy, but it does not restrict its usage. That is, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
-$ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. The
-intuition here is that neither |xs| nor |ys| can contain resource, so
+$ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. In terms of resources,
+neither |xs| nor |ys| can contain resources, so
 neither can |xs++ys|: it is thus safe to share |xs++ys|.
 
 Of course, not all programs are linear: a function may legitimately
@@ -635,7 +640,7 @@ Likewise, function composition can be given the following type:
 That is: two functions of accepting arguments of arbitrary
 multiplicities respectively $ρ$ and $π$ can be composed into a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
-product of $ρ$ and $π$, where $1π=π$ and $ωω=ω$).
+product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 
 \improvement{Let's change the segue into this idea, and just introduce
 bang with something like ``constructors can also require unrestricted
@@ -674,8 +679,7 @@ statically guaranteed to eventually be consumed by the program (no
 unfreed garbage) and that the data cannot be referred to after being
 consumed (freedom from use-after-free or free-after-free bugs).
 
-Concretely, such an API is defined in an ownership-passing
-fashion: operations that do not free the data structure return a new
+Concretely, operations that do not free the data structure return a new
 copy of the data structure (which may be the same as the original).
 For instance, pushing in a queue would have the following type:
 \begin{code}
@@ -687,8 +691,8 @@ argument as follows:
 free :: Queue ⊸ ()
 \end{code}
 
-This makes it possible to statically manage long-lived data without
-adding to GC pressure, since the data lives in a foreign heap.
+Thus, linearity makes it possible to statically manage long-lived data without
+adding to GC pressure, because the data lives in a foreign heap.
 A complete API for queues with random access deletion could
 be typed as follows (|Msg| must be |Storable| to (un)marshall values
 to/from the unrestricted GC'ed heap):
@@ -725,8 +729,55 @@ There are a few things going on in this API:
   one, along with the obligation of getting rid of that one!
 \end{itemize}
 
-\improvement{Give a (pure \HaskeLL) implementation of the queue}
+Even if an ideal implementation for the above API would be implemented
+very efficiently in a machine language, we can already provide a
+reference implementation for it in \HaskeLL{}. For simplicity we
+represent |Queue|s and |Vector|s as list:
+\begin{code}
+type Queue = List Msg
+type Vector x = List Msg
+\end{code}
 
+The |Storable| class demands that a linear value can be made
+non-linear (eg. by making a deep copy of it), and that it can be
+freed.
+\begin{code}
+class Storable a where
+  load :: a ⊸ Bang a
+  free' :: a ⊸ ()
+\end{code}
+
+Allocation can be implemented simply by calling the continuation. Free
+needs to free all messages.
+\begin{code}
+alloc   :: (Queue ⊸ Bang a) ⊸ a
+alloc k = case k [] of
+  Bang x -> x
+
+free    :: Queue ⊸ ()
+free (x:xs) = case storableFree x of
+  () -> free xs
+free [] = ()
+\end{code}
+
+The queue-manipulation function look like regular Haskell code, with
+the added constraint that linearity of queue objects is type-checked.
+\begin{code}
+push    :: Msg -> Queue ⊸ Queue
+push msg msgs = msg:msgs
+
+delete :: Msg -> Queue ⊸ Queue
+delete msg [] = []
+delete msg (x:xs) = case load x of
+  Bang x' -> if x' == msg  then xs
+                           else x':delete msg xs
+
+evict :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
+evict 0  q      = (q, Bang [])
+evict n  []     = ([], Bang [])
+evict n  (x:xs) = case (load x, evict (n-1) xs) of
+  (Bang x', (xs',Bang v')) -> (xs',Bang (x':v'))
+\end{code}
 
 \section{\calc{} statics}
 \label{sec:statics}
@@ -782,9 +833,11 @@ variables (ranged over by the metasyntactic variables \(π\) and
 syntax of multiplicities and contexts can be found in
 \fref{fig:contexts}.
 
-In addition, multiplicities are equipped with an equivalence relation $(=)$
-which obeys the following laws:
-
+In addition, multiplicities are equipped with an equivalence relation, written $(=)$.
+\begin{definition}[equivalence of multiplicities]
+  \label{def:equiv-mutiplicity}
+  The equivalence of multiplicities is the smallest transitive and
+  reflexive relation, which obeys the following laws:
 \begin{itemize}
 \item $+$ and $·$ are associative and commutative
 \item $1$ is the unit of $·$
@@ -794,6 +847,7 @@ which obeys the following laws:
 \item $1 + 1 = ω$
 \item $ω + ω = ω$
 \end{itemize}
+\end{definition}
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts as follows.
 
