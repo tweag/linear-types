@@ -507,9 +507,9 @@ types, with the following characteristics:
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
-Before diving into the technical details, we give an overview of the
-language that we propose, by means of a number of examples. These
-examples also serve to justify certain design choices.
+Before diving into the technical details, let us give an overview of
+\HaskeLL, the proposed design for extending Haskell with linear types,
+by means of a number of examples.
 
 Firstly, along with the usual arrow type for intuitionistic functions,
 we propose an additional arrow type for linear arrows, written
@@ -522,14 +522,17 @@ f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 
 We say that the \emph{multiplicity} of |x| is $1$. On the contrary, we say
-that unrestricted (non-linear) parameters have multiplicity $ω$.
+that unrestricted (non-linear) parameters have multiplicity $ω$ (which
+is to be understood as \emph{any finite multiplicity}). We also call
+functions linear if they have type $A ⊸ B$ and unrestricted if they
+have $A → B$.
 
 Too clarify the meaning of multiplicities, here are a few examples of what is
 allowed or not:
 \begin{enumerate}
-\item A linear ($1$ multiplicity) value {\bf can} be passed to a linear
+\item A linear (multiplicity $1$) value {\bf can} be passed to a linear
   function.
-\item An unrestricted ($ω$ multiplicity) value {\bf can} be passed to a linear
+\item An unrestricted (multiplicity $ω$) value {\bf can} be passed to a linear
   function.
 \item A linear value {\bf cannot} be passed to a unrestricted function.
 \item An unrestricted value {\bf can} be passed to a unrestricted function.
@@ -540,10 +543,9 @@ allowed or not:
   value when the function is called in an unrestricted context).
 \item An unrestricted value {\bf can} be returned by a unrestricted function.
 \end{enumerate}
-Indeed, remember that when we say that a function is linear, we are
-only referring to its domain, not its co-domain. Hence, linearity of a
-function does not influence what it can return, only what it can take
-as arguments.
+Indeed, when we say that a function is linear, we refer to its domain,
+not its co-domain. Hence, linearity of a function does not influence
+what it can return, only what it can take as arguments.
 
 The same examples can be expressed in code: the function |g| below
 admits the following implementations, but not the last one:
@@ -564,10 +566,9 @@ data List a where
   [] :: List a
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
-That is, given \emph{one} instance of a list, one will obtain
-\emph{exactly one} instance of each of the items contained inside it.
-Thus the above list may contain (handles to) resources without
-compromising safety.
+That is, given list |xs| with multiplicity $1$, pattern-matching will
+yield the sub-data of |xs| will multiplicity $1$. Thus the above list
+may contain resources without compromising safety.
 
 Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
@@ -577,58 +578,64 @@ as follows:
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
-The type of |(++)| tells us that if we have multiplicity $1$ of
-a list |xs|, appending any other list to it will never duplicate any
-of the elements in |xs|, nor drop any element in |xs|.
+The type of |(++)| tells us that if we have a list |xs| with
+multiplicity $1$, appending any other list to it will never duplicate
+any of the elements in |xs|, nor drop any element in |xs|.
 
-A major benefit of our design is that one can write linear code
+A major benefit of \HaskeLL{} is that one can write linear code
 whenever it is possible, and use it in unrestricted contexts
-anyway. That is, in our system, giving a more precise type to |(++)|
+anyway. That is, in \HaskeLL{}, giving a more precise type to |(++)|
 strengthens the contract that the implementation of |(++)| must
-satisfy, but it does not restrict its usage.
-
-In general, it is perfectly legal to provide an $ω$ multiplicity |xs| as
-an argument, or indeed to {\em promote} the result of the function, of
-multiplicity $1$, to multiplicity $ω$. The intuition is that, in a context
-that wants zero or more of a resource, providing exactly one of that
-resource will do.  Concretely if one has a multiplicity $ω$ for both
-inputs, one can call $ω$ times |(++)| to obtain $ω$ times the
-concatenation.
+satisfy, but it does not restrict its usage. That is, it is perfectly
+legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
+all, a finite multiplicity). If both |xs| and |ys| have multiplicity
+$ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. The
+intuition here is that neither |xs| nor |ys| can contain resource, so
+neither can |xs++ys|: it is thus safe to share |xs++ys|.
 
 Of course, not all programs are linear: a function may legitimately
-demand $ω$ times its input, even to construct a single output. For
-example the function repeating indefinitely its input will have the
-type:
+demand unrestricted input, even to construct an output with
+multiplicity $1$. For example the function repeating its input
+indefinitely need to be unrestricted:
 \begin{code}
   cycle :: List a → List a
   cycle l = l ++ cycle l
 \end{code}
-In practice, libraries will never provide $ω$ times a scarce resource
-(e.g. a handle to a physical entity); such a resource will thus never
-end up in the argument to |cycle|.
 
-While reusing first-order code can be done simply by scaling from $1$
-to $ω$, reusing higher-order programs need polymorphism over
-multiplicities. For example, the standard |map| function
+The implicit conversions between multiplicities make it so that for
+first-order code linear functions are more general. Higher-order code
+is more complex, so we introduce multiplicity polymorphism as a way to
+preserve effective code sharing of higher-order functions. For
+example, the standard |map| function over (linear) lists:
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
 \end{code}
-can be given the two incomparable following types: |(a ⊸ b) -> List a
-⊸ List b| and |(a -> b) -> List a -> List b|.
+can be given the two following incomparable types:
+\begin{code}
+  (a ⊸ b) -> List a ⊸ List b
+\end{code}
+and
+\begin{code}
+  (a -> b) -> List a -> List b
+\end{code}
 
-We can generalise over linear and unrestricted arrows by using the
-syntax $A →_ρ B$ and quantifying over multiplicities. Thus in this case, The
-type subsuming both versions is |∀ρ. (a -> _ ρ b) -> List a -> _ ρ
-List b|.
+\HaskeLL{} generalises over linear and unrestricted arrows with the
+syntax $A →_ρ B$. Therefore, |map| can be given the following
+most general type: subsuming both versions is
+\begin{code}
+  ∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b
+\end{code}
 %
 Likewise, function composition can be given the following type:
 \begin{code}
 (∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
 (f ∘ g) x = f (g x)
 \end{code}
-What the above type says is that two functions of arbitrary linearities $ρ$
-and $π$ can be combined into a function of linearity $ρπ$.
+That is: two functions of accepting arguments of arbitrary
+multiplicities respectively $ρ$ and $π$ can be composed into a
+function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
+product of $ρ$ and $π$, where $1π=π$ and $ωω=ω$).
 
 \improvement{Let's change the segue into this idea, and just introduce
 bang with something like ``constructors can also require unrestricted
@@ -723,9 +730,38 @@ There are a few things going on in this API:
 
 \section{\calc{} statics}
 \label{sec:statics}
-In this section we concentrate on the calculus at the core of
-\HaskeLL{}, namely \calc{}, and give a step by step account of its
-syntax and typing rules.
+In this section we turn the calculus at the core of \HaskeLL{}, namely
+\calc{}, and give a step by step account of its syntax and typing
+rules.
+
+In \calc{} data is classified into two categories: \emph{linear} data,
+which must be used \emph{exactly once} on each code path, and
+\emph{unrestricted} data which can be used an arbitrary number of
+times (including zero).
+
+The best way to think of linear data is to see it as data that may not
+be controlled by the garbage collector: \emph{e.g.} because they are
+scarce resources, because they are controlled by foreign code, or
+because this data will not actually exist at run time because it will
+be fused away. The word \emph{may} matters here: because of
+polymorphism, it is possible that linear data is actually controlled
+by the garbage collector, but linear data is allowed not to be, and
+so, for most purposes, it must be treated as it is not.
+
+This analogy drives the details of \calc{}. In particular unrestricted
+data cannot contain linear data since the garbage collector needs to
+control transitively the deallocation of sub-data: otherwise we may
+have dangling pointers or memory leaks. On the other hand it is
+perfectly fine for linear data to refer to unrestricted data. So any
+data containing linear data must also be linear. Crucially this
+applies to closures as well (both partial applications and lazy
+thunks): \emph{e.g.} a partial application of a function to a linear
+piece of data is linear. More generally, the application of a function
+to a linear piece of data is linear, since it is, in general, a lazy
+thunk pointing to that linear data. In fact, even in a strict
+language, the result may contain the linear argument and so must be
+linear.
+
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
@@ -733,13 +769,17 @@ In \calc{}, each variable in typing contexts is annotated with the number of tim
 that the program must use the variable in question. We call this
 number of times the \emph{multiplicity} of the variable.
 
-Concrete multiplicities are either $1$ or $ω$: when the multiplicity is $1$, the program
-\emph{must} consume the variable exactly once; when the multiplicity is $ω$,
-it \emph{may} consume it any number of times (possibly zero). For the
-sake of polymorphism, multiplicities are extended with multiplicity
-\emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we remove this?}, and product. The
-complete syntax of multiplicities and contexts can be found in
+Concrete multiplicities are either $1$ or $ω$: when the multiplicity
+is $1$, the program \emph{must} consume the variable exactly once;
+when the multiplicity is $ω$, it \emph{may} consume it any number of
+times (possibly zero). For the sake of polymorphism, multiplicities
+are extended with multiplicity \emph{expressions}, which contain
+variables (ranged over by the metasyntactic variables \(π\) and
+\(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we
+  remove this? -- [Aspiwack] in the case of $1$/$ω$ multiplicity $π+ρ$
+  is always (implicitly) $ω$, so there may indeed be no benefit to
+  formal sums in the scope of this paper}, and product. The complete
+syntax of multiplicities and contexts can be found in
 \fref{fig:contexts}.
 
 In addition, multiplicities are equipped with an equivalence relation $(=)$
@@ -850,35 +890,33 @@ notations:
 \item \(A → B ≝  A →_ω B\)
 \item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-The intuition behind the multiplicated arrow \(A →_q B\) is that you can
-get a \(B\) if you can provide a multiplicity \(q\) of \(A\). Note in
+The intuition behind the multiplicity-bearing arrow \(A →_q B\) is that you can
+get a \(B\) if you can provide an \(A\) with multiplicity \(q\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
 $f x$ is well-typed. Therefore, the constraints imposed by multiplicities on
 arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
-  Thus one may expect the type $A⊸B$ to be a subtype of $A→B$, however
-  we chose not to provide subtyping, for the sake of simplicity.
+  One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
+  we chose to provide polymorphism, which does not mesh well with
+  subtyping, because it integrates better into an existing
+  Hindley-Milner-based type-checker.
 
   Data type declarations, also presented in \fref{fig:syntax},
   deserve some additional explanation.
   \begin{align*}
     \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
   \end{align*}
-  The above declaration means that \(D\) has \(m\) constructors \(c_k\), for \(k ∈ 1…m\),
-  each with \(n_k\) arguments. Arguments of constructors have a
-  multiplicity, just like arguments of function: an argument of multiplicity $ω$
-  means that the data type can store, at that position, data which
-  \emph{must} have multiplicity $ω$; while a multiplicity of $1$ means that data
-  at that position \emph{can} have multiplicity $1$ (or $ω$). A further
-  requirement is that the multiplicities $q_i$ will either be $1$ or
-  $ω$.\info{The requirement that multiplicities are constant in constructor
-    makes sense in the dynamic semantics, it is not only to simplify
-    the presentation with consideration about type polymorphism. There
-    may be a meaning to multiplicity-polymorphic data type, but I [aspiwack]
-    ca not see it.}\unsure{Should we explain some of the above in the
-    text?}
+  The above declaration means that \(D\) has \(m\) constructors
+  \(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
+  constructors have a multiplicity, just like arguments of function:
+  an argument of multiplicity $ω$ means that the data type can store,
+  at that position, data which \emph{must} have multiplicity $ω$;
+  while a multiplicity of $1$ means that data at that position
+  \emph{can} have multiplicity $1$ (or $ω$). A further requirement is
+  that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
+  $1$ or $ω$).
 
   For most purposes, $c_k$ behaves like a constant with the type
   $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
@@ -969,22 +1007,26 @@ context, especially in the case of applications.
 \improvement{explain that the $ωΓ$ in the
   constructor rule is there for constant constructors.}
 
-Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term $t$ consumes $Γ$ and
-builds \emph{exactly one} $A$.
-This is the only kind of judgement in \calc{}: we provide
-no judgement to mean ``the term $t$ consumes $Γ$ and builds a multiplicity $p$ of $ A$-s''. Instead, we
-make use of context scaling: if \(Γ ⊢ t : A\) holds, then from \(pΓ\)
-one builds a multiplicity $p$ of $A$, using the same term $t$. This idea is at play in the
-application rule (the complete set of rules can be found in
-\fref{fig:typing}):
+Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term
+$t$ consumes $Γ$ and builds an $A$ with multiplicity $1$.  This is the
+only kind of judgement in \calc{}: we provide no judgement to mean
+``the term $t$ consumes $Γ$ and builds an $A$ with multiplicity
+$p$''. Instead, we make use of context scaling: if \(Γ ⊢ t : A\)
+holds, then from consuming \(pΓ\) with the same term $t$, one builds
+an $A$ with multiplicity $p$. This idea is at play in the application
+rule (the complete set of rules can be found in \fref{fig:typing}):
 $$\apprule$$
-Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus $Δ ⊢ u : A$
-give us $u$ with a multiplicity of $1$, and therefore the application needs $qΔ$
-to have a multiplicity $q$ of $u$ at its disposal. Thus all variables in the scope of the applications
-are accounted for, with appropriate multiplicities. This rule is the flip side
-of the multiplicated arrows which allow to have the $λ$-calculus
-as a subset of \calc{}:\improvement{maybe work a little on the presentation of this
-  example}
+Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus
+$Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
+application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
+disposal. Thus all variables in the scope of the applications are
+accounted for, with appropriate multiplicities.
+
+Scaling the context in the application rule is the
+technical device which makes the promotion of linear data to
+unrestricted data implicit hence that intuitionistic $λ$-calculus is a
+subset of \calc{}. Specifically the subset where all variables are
+annotated with the multiplicity $ω$:
 $$
 \inferrule
 {\inferrule
@@ -994,17 +1036,9 @@ $$
   {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
 {()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
 $$
-This implicit use of the promotion rule is what makes it possible to
-seamlessly mix linear types and intuitionistic types inside the same
-language. The whole idea is a bit subtle, and it may be worth it to
-ponder for a moment why it works as advertised.  \info{There is a
-  presentation of the application which is closer to the usual
-  promotion rule: requiring $\Delta$ to be divisible by $q$ (and not
-  scale $\Delta$ in the conclusion). This works fine when multiplicities are
-  $1$ and $\omega$, but will fail with $0$ (used for uniform
-  quantification in a dependently typed presentation) or more exotic
-  multiplicities (such as $2$).}  \unsure{Should we make a comment explaining
-  the above?}
+This latter fact is, in turn, why \HaskeLL is an extension of Haskell
+and not a new language (provided unannotated variables are understood
+to have multiplicity $ω$).
 
 The variable rule, used in the above example, may require some
 clarification.
@@ -1031,7 +1065,7 @@ multiplicity $1$ of $B$, and if we have a multiplicity $ω$ of $A⊗B$ we have a
 multiplicity $ω$ of $A$ and a multiplicity $ω$ of $B$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
-must be~---~non-linear)
+must be~---~unrestricted)
 \begin{code}
   data (⊗) a b where
     (,) : a ⊸ b ⊸ a⊗b
@@ -1051,7 +1085,7 @@ must be~---~non-linear)
 \label{sec:dynamics}
 
 While one can easily give a semantics to \calc{} by translation to a
-usual lambda-calculus, namely by erasing multiplicities, such a semantics is
+usual $λ$-calculus, namely by erasing multiplicities, such a semantics is
 deeply insatisfactory. Indeed, one may wonder if the language is at
 all suitable for tracking resources. One may worry, for example, that
 linear variables may be systematically subject to garbage collection,
@@ -1472,7 +1506,7 @@ of thunks, and instead take advantage of linear arrays. \todo{Run concrete examp
 
 % \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
 
-\section{Conclusion}
+\section{Conclusion}\todo{Fix section references}
 
 This paper demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
@@ -1565,3 +1599,4 @@ applications.
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
+%  LocalWords:  unannotated
