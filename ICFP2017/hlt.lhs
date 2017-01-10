@@ -34,6 +34,7 @@
 % \usepackage{fontspec}
 % \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
+% TODO: \newcommand*{\fancyreflemlabelprefix}{lem}
 \def\frefsecname{Section}
 \def\freffigname{Figure}
 
@@ -1028,12 +1029,27 @@ only produce consistent heaps.
   $Σ$.
 \end{definition}
 
-\begin{lemma}[The typed reduction relation preserves typing]~\\
+\improvement{Make a definition of the typed reduction before the two
+  lemmas, remark explicitly that it extracts to the untyped
+  reduction.}
+\begin{lemma}[The typed reduction relation preserves typing]\label{lem:type-safety}~\\
   if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
   \[Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.\]
 \end{lemma}
 \begin{proof}
   By induction.
+\end{proof}
+
+\begin{corollary}[Eventual de-allocation of linear values]
+  Let $t$ be a closed term and $Data () = ()$ the data declaration
+  with a single constructor. If $⊢ (||t ⇓ Δ||()) :_ρ (), ⋅ $ and
+  $⊢ (||t :_ρ ()), ⋅ $, then $Δ$ only contains $ω$-bindings.
+\end{corollary}
+\begin{proof}
+  By Lemma \ref{lem:type-safety}, % TODO fref?
+  we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
+  $()$ conclude: in order fo $()$ to be typed, the environment
+  introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
 \section{Related work}
