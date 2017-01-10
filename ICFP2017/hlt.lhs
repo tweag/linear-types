@@ -1267,20 +1267,22 @@ $x$ has multiplicity $ω$, the type-system ensures that all the
 intermediate linear values potentially allocated to produce $x$ must
 have been completely eliminated before being able to return $x$.
 
-The following function is a convenient wrapper around the case-bang
-rule:\improvement{Use the Queue example here}
+As an illustration, recall the |alloc| function from our queue reference
+implementation:
+
+Using the case-bang rule it behaves as expected:
 \begin{code}
-withLinearHeap :: a ⊸ (a ⊸ Bang b) ⊸ b
-withLinearHeap x k = case k x of
-  Bang y -> y
+alloc   :: (Queue ⊸ Bang a) ⊸ a
+alloc k = case k [] of
+  Bang x -> x
 \end{code}
-Indeed, even when |withLinearHeap| is called $ω$ times, its argument
-will be called $1$ time. In an implementation, one may prefer to
-provide |withLinearHeap| as a primitive operation instead of having a
-special-purpose implementation of |case|. In particular, when
-implementing bindings to imperative APIs, any function of type |(A ⊸
-Bang B) ⊸ C| may allocate |A| on a linear heap if it forces the
-|Bang| constructor before returning the result (|C|).
+Indeed, even when |alloc k| is demanded $ω$ times, |k| will be
+demanded $1$ time, and in turn the queue will reside on the linear
+heap, and it guaranteed to be de-allocated by the time the |Bang|
+constructor is forced. The existence of the reference implementation,
+together with the above semantics, is what justifies storing the queue
+in a foreign heap if when the queue is implemented as foreign
+functions.
 
 \begin{figure}
   \begin{mathpar}
