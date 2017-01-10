@@ -1037,6 +1037,8 @@ only produce consistent heaps.
 \end{proof}
 
 \section{Related work}
+\todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
+\todo{Compare with uniqueness types}
 \subsection{Related type systems}
 
 The type system presented here is heavily inspired from the work of
