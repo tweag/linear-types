@@ -468,6 +468,9 @@ module structure on typing contexts as follows.
     () + Δ &= Δ
   \end{align*}
 \end{definition}
+Context addition is total: if a variable occurs in both operands the
+first rule applies (with possible re-ordering of bindings in $Δ$), if
+not the second or third rule applies.
 
 \begin{definition}[Context scaling]
   \begin{displaymath}
@@ -486,6 +489,9 @@ module structure on typing contexts as follows.
   \end{align*}
 \end{lemma}
 
+The equivalence relation is lifted to contexts in the obvious way. In
+the typing rules contexts can always be substituted for other
+equivalent contexts.
 \subsection{Typing}
 
 The static semantics of \calc{} is expressed in terms of the
