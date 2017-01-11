@@ -502,8 +502,9 @@ types, with the following characteristics:
   higher order functions.
 \item A lazy dynamic semantics which include explicit deallocation of
   linear data.
-\item Is designed to be implementable in an existing rich programming
-  language.\todo{Do we speak of the prototype at this point? I
+\item Is designed to be compatible with in an existing rich programming
+  language. 
+  todo{Do we speak of the prototype at this point? I
     [aspiwack] would rather leave it at that and prove this assertion
     in the body of the article by citing the prototype (and maybe some
     GHC things with which we are compatible: \emph{e.g.} the kind
@@ -1213,7 +1214,7 @@ semantics exhibits the following salient differences:
   the linear heap.
 \item We add a multiplicity parameter to the reduction relation,
   corresponding to the (dynamic) multiplicity of values to produce.
-  Indeed, while the static syntax always produce exactly one value,
+  Indeed, while the static syntax always produces exactly one value,
   recall that programs are automatically scaled to $ω$ if possible.
 \item The rules for \emph{variable}, \emph{let}, and
   \emph{application} are changed to account for multiplicities (let-bindings
@@ -1254,7 +1255,7 @@ multiplicity originating from the term. This means that, essentially,
 once one starts evaluating unrestricted results (multiplicity = $ω$),
 one will remain in this dynamic evaluation mode, and thus all further
 allocations will be on the \textsc{gc} heap. However, it is possible
-to provide a special-purpose evaluation rule to escape dynamic
+to provide a special-purpose evaluation rule to escape unrestricted
 evaluation to linear evaluation.  This rule concerns case analysis of
 |Bang x|, where the weight of the scrutninee is not multiplied by the
 dynamic multiplicity:
@@ -1279,10 +1280,9 @@ alloc k = case k [] of
 Using the case-bang rule it behaves as expected.
 Indeed, even when |alloc k| is demanded $ω$ times, |k| will be
 demanded $1$ time, and in turn the queue will reside on the linear
-heap, and it guaranteed to be de-allocated by the time the |Bang|
-constructor is forced. The existence of the reference implementation,
-together with the above semantics, is what justifies storing the queue
-in a foreign heap if when the queue is implemented as foreign
+heap, and it is guaranteed to be de-allocated by the time the |Bang|
+constructor is forced. This linear dynamic semantics of the reference implementation
+is what justifies storing the queue in a foreign heap when the queue is implemented by foreign
 functions.
 
 \begin{figure}
@@ -1329,28 +1329,31 @@ parameter is $1$, thus effectively allowing linear variables to look
 on the garbage-collected heap, and in turn linear data to have unrestricted
 sub-data.
 
-\begin{lemma}[The \textsc{gc} heap does not point to the linear heap]
-  It is an essential property that the garbage collected heap does not
-  contain any reference to the linear heap. Otherwise, garbage collection
-  would have to also free the linear heap, making the linear heap
-  garbage-collected as well (the converse does not hold: there can be
-  references to the garbage-collected heap from the linear heap,
-  acting as roots).
+It is an essential property that the garbage collected heap does not
+contain any reference to the linear heap. Otherwise, garbage
+collection would have to also free the linear heap, making the linear
+heap garbage-collected as well (the converse does not hold: there can
+be references to the garbage-collected heap from the linear heap,
+acting as roots).
+\begin{lemma}[The \textsc{gc} heap never points to the linear heap]
+  \improvement{Formal statement? It is not easy to write because we
+    have a big-step semantics and we want the property for every small
+    step.}
 \end{lemma}
 \begin{proof}
   To prove the above we need a more precise version of the reduction
   relation, which additionally tracks the contents of the stack, and
-  is fully typed. (See \fref{fig:typed-semop}) Technically, the judgement
+  is fully typed. (See \fref{fig:typed-semop}.) Technically, the judgement
   $Γ:t ⇓_ρ Δ:z$ is extended to the form $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$,
   where
 \begin{itemize}
 \item $Ξ$ is a context of free variables
-\item $Σ$ is a stack of typed terms which are yet to be reduced
+\item $Σ$ is a stack of typed terms which are yet to be reduced, together with their respective multiplicities
 \item $t,z$ are typed terms
 \item $Γ,Δ$ are heap states, that is associations of variables to
-  typed and multiplicated terms.
+  a multiplicity and a typed term.
 \end{itemize}
-We then show that this new relation preserves types. A well-typed
+We can then see that this new relation preserves types. A well-typed
 reduction state implies that the heap is consistent as per this lemma.
 Hence, starting from a well-typed state, the reduction relation will
 only produce consistent heaps.
@@ -1364,9 +1367,9 @@ only produce consistent heaps.
 
 \begin{mathpar}
 \inferrule
-    {Ξ  ⊢  (Γ||e      ⇓ Δ||λy.u):_ρ A →_q B, x:_{qρ} A, Σ \\
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
      Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
-    {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
+    {Ξ  ⊢  (Γ||e_q x ⇓ Θ||z) :_ρ B ,Σ}
 {\text{app}}
 
 \inferrule
@@ -1609,6 +1612,17 @@ typed functions and data structures are usable directly from regular
 Haskell code. In such a situation their semantics is that of the same
 code with linearity erased.
 
+Furthermore \calc{} has a particularly non-invasive design, and thus
+it is possible to integrate with an existing complex system.  In
+particular 1. it has no system of ``kinds'' of its own, so it it is
+compatible with any system of ``kinds'' (including dependently-typed
+ones) and 2. \calc{} does not use subtyping. Consequently one can
+confidently extend existing Haskell implementations linear types by
+following the design presented in this paper. Indeed, we have a
+constructed a prototype of GHC whose type-checker is extended with
+linear types.
+
+
 Our proposal is in stark contrast with languages such as Rust, which are
 specifically optimized for writing programs that are structured using
 the RAII
@@ -1659,7 +1673,6 @@ down to the run-time system is still worth pursuing as we are
 expecting significant benefits, due to reduced and controlled latency,
 for systems programming, and in particular for distributed
 applications.
-
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{ACM-Reference-Format.bst}
