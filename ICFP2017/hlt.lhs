@@ -1471,10 +1471,10 @@ We can do similar examples as the demos of Alms. Example, R-W Lock:
 \begin{code}
 acquireRead : Lock -> (Access Shared ⊸ Bang a) ⊸ a
 acquireWrite : Lock -> (Access Excl ⊸ Bang a) ⊸ a
-releaseAccess : Lock -> Access a ⊸ ()
+releaseAccess : Access a ⊸ ()
 
-set : Lock -> Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl)
-get : Lock -> Key ⊸ Access a ⊸ (Value ⊗ Access a)
+set : Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl)
+get : Key ⊸ Access a ⊸ (Value ⊗ Access a)
 \end{code}
 
 We extend Haskell, they do not claim to be an extension of ML.
