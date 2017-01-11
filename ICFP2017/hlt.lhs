@@ -1480,7 +1480,14 @@ get : Lock ⊸ Key ⊸ Access a ⊸ (Value ⊗ Access a ⊗ Lock)
 
 We extend Haskell, they do not claim to be an extension of ML.
 
-\todo{Compare with uniqueness types}
+This is what Morris says about Alms:
+Despite the (not insignificant) complexity of their system, it is
+still not clear that it fully supports the expressiveness of
+traditional functional programming languages. For example, their
+system has distinct composition operators with distinct types. These
+types are not related by the subtyping relation, as subtyping is
+contravariant in function arguments.
+
 \subsection{Related type systems}
 
 The type system presented here is heavily inspired from the work of
@@ -1554,6 +1561,9 @@ address the issue by means of polymorphism and constraints over types,
 it comes as the cost of a type-system vastly more complex than the one
 we present here.
 
+\subsection{Uniqueness types}
+
+\todo{Compare with uniqueness types}
 
 \subsection{Session types vs. linear types}
 
