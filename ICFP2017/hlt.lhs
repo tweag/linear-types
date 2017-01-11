@@ -1469,13 +1469,12 @@ management protocols from special-purpose type systems.
 
 We can do similar examples as the demos of Alms. Example, R-W Lock:
 \begin{code}
-withLock : (Lock ⊸ Bang a) ⊸ Bang a
-acquireRead : Lock ⊸ Lock ⊗ Access Shared
-acquireWrite : Lock ⊸ Lock ⊗ Access Excl
-releaseAccess : Access a ⊗ Lock ⊸ Lock
+acquireRead : Lock -> (Access Shared ⊸ Bang a) ⊸ a
+acquireWrite : Lock -> (Access Excl ⊸ Bang a) ⊸ a
+releaseAccess : Lock -> Access a ⊸ ()
 
-set : Lock ⊸ Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl ⊗ Lock)
-get : Lock ⊸ Key ⊸ Access a ⊸ (Value ⊗ Access a ⊗ Lock)
+set : Lock -> Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl)
+get : Lock -> Key ⊸ Access a ⊸ (Value ⊗ Access a)
 \end{code}
 
 We extend Haskell, they do not claim to be an extension of ML.
