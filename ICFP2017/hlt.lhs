@@ -1448,6 +1448,24 @@ only produce consistent heaps.
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
+\subsection{Erasing the dynamic weight}
+\todo{make more precise}
+We can, at any point, forget that the dynamic multiplicity is 1 and
+use $ω$ instead. The argument goes like this.  Informally, this is
+because linear values can be stored on the gc heap anyway.
+
+Formally, one can see in the semantics that even linear variables can
+be looked up in the gc heap. Additionally, allocating on the gc heap
+cannot prevent firing of the variable rule later on (being linear or
+otherwise). Finally, the other rules are not sensitive to the dynamic
+multiplicity.
+
+This possibility of using only $ω$ allows to implement our Queue
+example with no change whatsoever to the runtime system of the
+language. (The only point where the 1 multiplicity is used is in the
+alloc rule.)
+
+
 \section{Related work}
 \subsection{Alms}
 \todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
