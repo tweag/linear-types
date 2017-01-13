@@ -1262,7 +1262,8 @@ dynamic multiplicity:
 \[
     \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
     {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
-\]
+  \]
+  \improvement{replace q by 1 and ρ by ω}
 The observations justifying this rule are that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
 of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
@@ -1399,10 +1400,10 @@ only produce consistent heaps.
 {\text{case}}
 
 \inferrule
-   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 D, u:_ω C, Σ \\
+   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 \varid{Bang} A, u:_ω C, Σ \\
     Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
-   {Ξ ⊢ (Γ||\case[1] e {\varid{Bang}  y ↦ u} ⇓ Θ||z) :_ω C, Σ}
-{\text{case-Bang}}
+   {Ξ ⊢ (Γ||\mathsf{case}_{1} e \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
+{\text{case-bang}}
   \end{mathpar}
 \end{definition}
   \caption{Typed operational semantics. (Omitting the obvious w.abs and w.app for concision)}
