@@ -1451,21 +1451,28 @@ only produce consistent heaps.
 
 \subsection{Erasing the dynamic weight}
 \todo{make more precise}
-We can, at any point, forget that the dynamic multiplicity is 1 and
-use $ω$ instead. The argument goes like this.  Informally, this is
-because linear values can be stored on the gc heap anyway.
 
-Formally, one can see in the semantics that even linear variables can
-be looked up in the gc heap. Additionally, allocating on the gc heap
-cannot prevent firing of the variable rule later on (being linear or
-otherwise). Finally, the other rules are not sensitive to the dynamic
-multiplicity.
+Implementing the above semantics would force us to represent the
+dynamic multiplicity at runtime. Doing so could have an impact on the
+performance. What we can do though is to run all code with $ω$ weight
+(in this case all allocations go onto the GC heap) and have only an
+even more specialized rule that does case-bang and a let binding with
+weight 1 in one go. This the target of the let binding can end up on
+the linear heap, but we continue evaluation in $ω$ mode.
 
-This possibility of using only $ω$ allows to implement our Queue
-example with no change whatsoever to the runtime system of the
-language. (The only point where the 1 multiplicity is used is in the
-alloc rule.)
+\begin{mathpar}
+\inferrule
+   {Ξ ⊢ (Γ,x=_1 t || k x ⇓ Δ||\varid{Bang} w) :_ω \varid{Bang} B, u:_ω C, Σ \\
+    Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
+   {Ξ ⊢ (Γ||\mathsf{case}_{1} (\flet x:_1A = t \fin e t) \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
+{\text{alloc}}
+\end{mathpar}
 
+If the term $t$, allocated on the linear heap, is in normal form or
+accessed only from foreign functions, this possibility of using only
+$ω$ allows to implement our Queue example with no change whatsoever to
+the runtime system of the language. (The only point where the 1
+multiplicity is used is in the alloc rule.)
 
 \section{Related work}
 \subsection{Alms}
