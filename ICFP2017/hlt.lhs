@@ -697,6 +697,11 @@ adding to GC pressure, because the data lives in a foreign heap.
 A complete API for queues with random access deletion could
 be typed as follows (|Msg| must be |Storable| to (un)marshall values
 to/from the unrestricted GC'ed heap):
+\improvement{I suggest to remove the |Storable| instance here: it is
+  not part of the API but a requirement for the implementation. That
+  way we will not need to name this particular variant, and just
+  require for the reference implementation that |Msg| is equipped with
+ |loadMsg| and |freeMsg|. }
 \begin{code}
 instance Storable Msg
 
@@ -731,15 +736,17 @@ There are a few things going on in this API:
 \end{itemize}
 
 \paragraph{Reference implementation}
-Even if an ideal implementation for the above API would be implemented
-very efficiently in a machine language, we can already provide a
-reference implementation for it in \HaskeLL{}. For simplicity we
-represent |Queue|s and |Vector|s as list:
+The intention behind this queue API is to bind a C implementation of
+a queue data structure which manages memory explicitly. However, we
+can give an implementation directly in \HaskeLL{}. For simplicity
+|Queue|s and |Vector|s are represented simply as lists. Therefore this
+implementation is by no mean efficient: it may, however serve as an
+executable specification for explicit memory management as we will see
+in \fref{sec:dynamics}.
 \begin{code}
 type Queue = List Msg
 type Vector x = List Msg
 \end{code}
-
 The |Storable| class demands that a linear value can be made
 non-linear (eg. by making a deep copy of it), and that it can be
 freed.
@@ -748,7 +755,6 @@ class Storable a where
   load :: a ⊸ Bang a
   free' :: a ⊸ ()
 \end{code}
-
 Allocation can be implemented simply by calling the continuation. Free
 needs to free all messages.
 \begin{code}
@@ -761,7 +767,6 @@ free (x:xs) = case storableFree x of
   () -> free' xs
 free [] = ()
 \end{code}
-
 The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
@@ -1476,7 +1481,7 @@ multiplicity is used is in the alloc rule.)
 
 \section{Related work}
 \subsection{Alms}
-\todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
+\improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
 Alms is a general-purpose programming language that supports
 practical affine types. To offer the expressiveness of Girard’s linear
 logic while keeping the type system light and convenient, Alms
