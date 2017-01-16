@@ -1,4 +1,4 @@
-module Queues where
+module Queue where
 
 import Data.IORef
 
@@ -7,21 +7,22 @@ data Queue = Queue {
     end   :: IORef (Maybe Node)
 }
 
+instance Show Queue where
+    show _ = "queue"
+
 data Node = Node {
     index :: Int,
     next  :: IORef (Maybe Node)
 }
 
-main :: IO ()
-main = do
-    queue <- createQueue
-    _ <- pop queue -- check that popping an empty queue doesn't fail
-    push queue 1
-    push queue 2
-    push queue 3
-    push queue 4
-    push queue 5
-    delete queue 1 >>= printNode -- expect 1
+--main' :: IO ()
+--main' = do
+--    queue <- createQueue
+--    _ <- pop queue -- check that popping an empty queue doesn't fail
+--    push queue 1
+--    push queue 2
+--    push queue 3
+--    delete queue 1 >>= printNode -- expect 1
 
 printNode :: Maybe Node -> IO()
 printNode (Just node) = do print (index node)
@@ -70,8 +71,8 @@ pop Queue { start = s} = do
             return n
 
 -- | Rather verbose but there are a few edge cases to consider such as
--- |  - Index higher than the number of nodes.
--- |  - Last node empty
+-- |  * Index higher than the number of nodes.
+-- |  * Last node empty
 delete :: Queue -> Int -> IO (Maybe Node)
 delete Queue { start = s } i = go s 0
     where go ref acc = do
