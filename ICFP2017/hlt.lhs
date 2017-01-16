@@ -56,6 +56,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\setlength{\marginparwidth}{2.5cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
@@ -64,6 +65,9 @@
 \newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
+
+% Peanut gallery comments by Ryan:
+\newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -198,10 +202,14 @@
 
 \section{Introduction}
 
+\rn{I think this intro can be focused and tightened up significantly.  SPJ may
+  be interested in doing one in his widely-loved intro style.  Or I'm happy to
+  take a stab at it.}
+
 Several recent advances in typed functional programming applied
 research have focused on extending type systems to make it easier to
 encode strong invariants key to the {\em correctness} of programs.
-Extensions from GADT's \cite{xi_guarded_2003}, to type-level functions
+Extensions from GADTs \cite{xi_guarded_2003}, to type-level functions
 such as type families \cite{chakravarty_associated_2005-1}, to
 increasingly automatic and complete promotion of term-level data types
 to the type-level \cite{eisenberg_promoting_2014}. Yet in practice,
@@ -219,7 +227,7 @@ real hardware.
 \subsection{Resource tracking}
 
 Scarce system resources include memory mappings, locks, sockets and
-file handles, among others. With no primitive support from the
+file handles, among others.  For instance, with no primitive support from the
 programming language for managing these resources, acquiring a file
 handle for reading and then disposing of a file handle looks something
 like this:
@@ -266,7 +274,7 @@ system. In fact, a cornerstone of the Rust programming
 language~\cite{matsakis_rust_2014} is that it provides this resource
 safety out-of-the-box. Through its borrow checker, Rust captures a
 notion of affine types in its type system. The lifetime analysis is
-powerful enough to for example ensure that a file handle never escapes
+powerful enough to, for example, ensure that a file handle never escapes
 the current lexical scope:
 
 \improvement{code alignment}
@@ -297,10 +305,10 @@ Fully automatic memory management is certainly convenient, and an
 effective means of avoiding use-after-free and free-after-free bugs,
 since it is the language runtime that guarantees, via a global dynamic
 analysis, that resources are reclaimed only when it is entirely safe
-to do so. But this dynamic global analysis is expensive to run. For
+to do so. But this analysis is expensive to run. For
 this reason, resources are reclaimed in batches, to amortize its cost,
-only when resource pressure is deemed to warrant reclaiming those
-resources that can be. Worse, this global analysis, aka garbage
+only when resource pressure is deemed to warrant reclaiming 
+resources. Worse, this global analysis, aka garbage
 collection, often requires exclusive access to resources, hence
 stalling and potentially starving other threads of control.
 
@@ -344,7 +352,8 @@ upon being read by clients, or if the queue grows too long (so it is
 okay to lose messages). Any client can also request for any message in
 the queue to be removed. In short, the concurrent queue supports the
 following operations:
-
+\rn{This still bothers me.  I'd really like to change it to
+  include MsgId.  \verb|push :: Queue -> MsgId -> Msg -> IO ()|.}
 \begin{code}
 push :: Queue -> Msg -> IO ()
 delete :: Queue -> Msg -> IO ()
