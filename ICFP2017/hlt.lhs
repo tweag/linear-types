@@ -70,6 +70,7 @@
 
 % \newtheorem{definition}{Definition}
 % \newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
 
 \newcommand\calc{{\ensuremath{λ^q}}}
 
@@ -1164,10 +1165,11 @@ Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
 correspondingly deallocate them upon (lazy) evaluation. To do so we
 present an extension of the semantics of
-\citet{launchbury_natural_1993} to \calc{}. Prompt
-deallocation is not necessarily faster than garbage collection but it
-reduces latencies and allows more control on when garbage-collection
-pause occur.
+\citet{launchbury_natural_1993} to \calc{}. Such a semantics is
+actually \emph{more precise} than what we intend to implement: it
+serves as a technical device to justify the less intrusive semantics
+that we describe in \fref{sec:eras-dynam-weight}, and requires no
+modification to GHC (beyond type-checking, of course).
 
 \begin{figure}
 
@@ -1455,16 +1457,56 @@ only produce consistent heaps.
 \end{proof}
 
 \subsection{Erasing the dynamic weight}
-\todo{make more precise}
+\label{sec:eras-dynam-weight}
 
-Implementing the above semantics would force us to represent the
-dynamic multiplicity at runtime. Doing so could have an impact on the
-performance. What we can do though is to run all code with $ω$ weight
-(in this case all allocations go onto the GC heap) and have only an
-even more specialized rule that does case-bang and a let binding with
-weight 1 in one go. This the target of the let binding can end up on
-the linear heap, but we continue evaluation in $ω$ mode.
+From a compiler perspective, there is a cost to this semantics: we
+need to take the run-time multiplicity somehow. Maybe we want to pass
+the run-time multiplicity in a register, but that may have a speed
+penalty for the program, or we may want to specialise the emitted code
+to two versions (one for each possible run-time multiplicity), but
+that generates quite bigger executable, at a performance cost to the
+compiler itself. In either case, it requires non-trivial modification
+to the code-emitting infrastructure.
 
+It may be worth it, even though such eager prompt de-allocation
+behaviour may actually be slower than letting the garbage collector
+clean the data: it may result in leaner memory profile and more
+predictable latencies. Overall speed is, after all, not the only
+metric one may want to optimise. But, for the scope of this article,
+we want to focus on just modifying the type-checker and reaping the
+low-hanging fruits.
+
+The operational semantics of \calc{}, as it turns out, happens to be
+the right technical device to justify that the queue API from
+\fref{sec:queue-api} can allocate the queue on a foreign heap while
+staying memory-safe. This hinges on the following.
+
+\begin{remark}
+  In the semantics of \fref{fig:dynamics}, replacing any binding of
+  multiplicity $1$ in the heap by the same binding with multiplicity
+  $ω$ does not affect the execution. Except from extra garbage staying
+  around in the heap.
+\end{remark}
+
+Concretely it means that something that should be deallocated promptly
+can be allocated on the garbage-collected heap without affecting the
+semantics of the program. Of course, it ostensibly breaks our
+invariant that garbage-collected data cannot point to linear data. So,
+in a concrete implementation, one must take care that the garbage
+collector will not deallocate linear data prematurely. Concretely,
+pointers to the linear heap would be opaque to the garbage collector
+(like the |Ptr| type representing foreign object in GHC's foreign
+function interface). The semantics of \fref{fig:dynamics}, ensures
+that by the time the linear piece of data pointed by such a foreign
+pointer is collected, the object pointing to the data is itself
+unaccessible, and just waiting to be freed by the garbage collector.
+
+With this remark in mind, we can introduce a special allocation rule
+combining in a single step a linear $\flet$ and the special
+$\case$-of-$\varid{Bang}$ rule as follows:
+
+\unsure{proof-check this semantic rule, it should probably be phrased
+  in terms of the untyped semantics}
 \begin{mathpar}
 \inferrule
    {Ξ ⊢ (Γ,x=_1 t || k x ⇓ Δ||\varid{Bang} w) :_ω \varid{Bang} B, u:_ω C, Σ \\
@@ -1473,11 +1515,15 @@ the linear heap, but we continue evaluation in $ω$ mode.
 {\text{alloc}}
 \end{mathpar}
 
-If the term $t$, allocated on the linear heap, is in normal form or
-accessed only from foreign functions, this possibility of using only
-$ω$ allows to implement our Queue example with no change whatsoever to
-the runtime system of the language. (The only point where the 1
-multiplicity is used is in the alloc rule.)
+This rule allocates |x| on the linear heap, whatever the ambient
+run-time multiplicity is, as per \fref{fig:dynamics}. So we do not
+need to keep track of run-time multiplicity for this rule. We choose
+to allocate every other binding on the garbage-collected heap: that
+way we do not need to track multiplicity at all, and only special
+allocation primitives (whose type is an instance of the above) will
+allocate on the linear heap. Therefore, no modification need to occur
+in the compiler's code emission: we can delegate allocation to foreign
+functions.
 
 \section{Related work}
 \subsection{Alms}
