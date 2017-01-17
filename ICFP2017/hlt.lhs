@@ -1512,7 +1512,7 @@ unaccessible, and just waiting to be freed by the garbage collector.
 
 With this remark in mind, we can introduce a special allocation rule
 combining in a single step a linear $\flet$ and the special
-$\case$-of-$\varid{Bang}$ rule as follows:
+$\mathsf{case}$-of-$\varid{Bang}$ rule as follows:
 
 \unsure{proof-check this semantic rule, it should probably be phrased
   in terms of the untyped semantics}
