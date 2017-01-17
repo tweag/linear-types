@@ -1076,19 +1076,18 @@ context, especially in the case of applications.
   \label{fig:typing}
 \end{figure}
 
-\improvement{It may be useful to have a better transition between
-  syntax and typing judgement}
 \improvement{explain that the $ωΓ$ in the
   constructor rule is there for constant constructors.}
 
-Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term
-$t$ consumes $Γ$ and builds an $A$ with multiplicity $1$.  This is the
-only kind of judgement in \calc{}: we provide no judgement to mean
-``the term $t$ consumes $Γ$ and builds an $A$ with multiplicity
-$p$''. Instead, we make use of context scaling: if \(Γ ⊢ t : A\)
-holds, then from consuming \(pΓ\) with the same term $t$, one builds
-an $A$ with multiplicity $p$. This idea is at play in the application
-rule (the complete set of rules can be found in \fref{fig:typing}):
+We are now ready to understand the typing rules of
+\fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
+reads as: the term $t$ consumes $Γ$ and builds an $A$ with
+multiplicity $1$.  This is the only kind of judgement in \calc{}:
+there is no direct way to express ``the term $t$ consumes $Γ$ and
+builds an $A$ with multiplicity $p$''. Instead, we make use of context
+scaling: if \(Γ ⊢ t : A\) holds, then from consuming \(pΓ\) with the
+same term $t$, one builds an $A$ with multiplicity $p$. This idea is
+at play in the application rule:
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus
 $Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
@@ -1096,11 +1095,11 @@ application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
 disposal. Thus all variables in the scope of the applications are
 accounted for, with appropriate multiplicities.
 
-Scaling the context in the application rule is the
-technical device which makes the promotion of linear data to
-unrestricted data implicit hence that intuitionistic $λ$-calculus is a
-subset of \calc{}. Specifically the subset where all variables are
-annotated with the multiplicity $ω$:
+Scaling the context in the application rule is the technical device
+which makes the promotion of linear data to unrestricted data implicit
+hence makes it so that intuitionistic $λ$-calculus is a subset of
+\calc{}. Specifically the subset where all variables are annotated
+with the multiplicity $ω$:
 $$
 \inferrule
 {\inferrule
@@ -1129,14 +1128,15 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
-Like the application rule it is parametrized by a multiplicity $p$. But,
-while in the application rule only the argument is affected by $p$, in
-the case rule, not only the scrutinee but also the variable bindings
-in the branches are affected by $p$. What it means, concretely, is
-that the multiplicity of data is \emph{inherited} by its sub-data: if we
-have a multiplicity $1$ of $A⊗B$ we have a multiplicity $1$ of $A$ and a
-multiplicity $1$ of $B$, and if we have a multiplicity $ω$ of $A⊗B$ we have a
-multiplicity $ω$ of $A$ and a multiplicity $ω$ of $B$. Therefore, the
+Like the application rule it is parametrized by a multiplicity
+$p$. But, while in the application rule only the argument is affected
+by $p$, in the case rule, not only the scrutinee but also the variable
+bindings in the branches are affected by $p$. What it means,
+concretely, is that the multiplicity of data is \emph{inherited} by
+its sub-data: if we have an $A⊗B$ with multiplicity $1$, then we have
+an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
+we have an $A⊗B$ with multiplicity $ω$ then we have an $A$ with
+multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted)
@@ -1227,8 +1227,8 @@ Compared to \citeauthor{launchbury_natural_1993}'s original, our
 semantics exhibits the following salient differences:
 \begin{itemize}
 \item The heap is annotated with multiplicities. The variables with multiplicity
-  $ω$ represent the garbage-collected heap, while the variables with
-  multiplicity $1$ represent the non-garbage-collected heap, which we call
+  $ω$ represent the objects of the garbage-collected heap, while the variables with
+  multiplicity $1$ represent objects in a non-garbage-collected heap, which we call
   the linear heap.
 \item We add a multiplicity parameter to the reduction relation,
   corresponding to the (dynamic) multiplicity of values to produce.
@@ -1236,7 +1236,7 @@ semantics exhibits the following salient differences:
   recall that programs are automatically scaled to $ω$ if possible.
 \item The rules for \emph{variable}, \emph{let}, and
   \emph{application} are changed to account for multiplicities (let-bindings
-  and application are annotated by a multiplicity for this reason).
+  and applications are annotated with a multiplicity for this reason).
 \end{itemize}
 
 The dynamics assume that multiplicity expressions are reduced
@@ -1270,7 +1270,7 @@ produce unrestricted values.
 In all evaluation rules, this dynamic multiplicity is propagated to
 the evaluation of subterms, sometimes multiplied by another
 multiplicity originating from the term. This means that, essentially,
-once one starts evaluating unrestricted results (multiplicity = $ω$),
+once one starts evaluating unrestricted results (multiplicity $ω$),
 one will remain in this dynamic evaluation mode, and thus all further
 allocations will be on the \textsc{gc} heap. However, it is possible
 to provide a special-purpose evaluation rule to escape unrestricted
