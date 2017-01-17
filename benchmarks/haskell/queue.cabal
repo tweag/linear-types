@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Queue
   build-depends:       base >= 4.7 && < 5
+                     , deepseq
   default-language:    Haskell2010
 
 executable queue-exe
@@ -26,7 +27,6 @@ executable queue-exe
   build-depends:       base
                      , hyperion
                      , queue
-                     , vector >= 0.11
   default-language:    Haskell2010
 
 test-suite queue-test

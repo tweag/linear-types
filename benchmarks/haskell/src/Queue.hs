@@ -1,5 +1,6 @@
 module Queue where
 
+import Control.DeepSeq
 import Data.IORef
 
 data Queue = Queue {
@@ -10,19 +11,16 @@ data Queue = Queue {
 instance Show Queue where
     show _ = "queue"
 
+instance NFData Queue where
+    rnf Queue {} = ()
+
 data Node = Node {
     index :: Int,
     next  :: IORef (Maybe Node)
 }
 
---main' :: IO ()
---main' = do
---    queue <- createQueue
---    _ <- pop queue -- check that popping an empty queue doesn't fail
---    push queue 1
---    push queue 2
---    push queue 3
---    delete queue 1 >>= printNode -- expect 1
+instance NFData Node where
+    rnf Node {} = ()
 
 printNode :: Maybe Node -> IO()
 printNode (Just node) = do print (index node)
@@ -46,7 +44,7 @@ push :: Queue -> Int -> IO ()
 push Queue { start = s, end = e} x = do
     startNode <- readIORef s
     terminationNode <- newIORef Nothing
-    let node = Just (Node { index = x, next = terminationNode })
+    let node = x `seq` Just (Node { index = x, next = terminationNode })
     case startNode of
         Nothing -> do
             -- Empty queue
