@@ -802,21 +802,21 @@ In this section we turn the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{}, every object is classified into two categories: \emph{linear} ones,
+In \calc{}, objects are classified into two categories: \emph{linear} objects,
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted} ones which can be used an arbitrary number of
+\emph{unrestricted} objects which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear object is to see it as an object that may not
+The best way to think of a linear object is to see it as an object that need not
 be controlled by the garbage collector: \emph{e.g.} because they are
 scarce resources, because they are controlled by foreign code, or
 because this object will not actually exist at run time because it will
-be fused away. The word \emph{may} matters here: because of
+be fused away. The word \emph{need} matters here: because of
 polymorphism, it is possible for any given linear object to actually be controlled
 by the garbage collector (but may not be), and
 so, for most purposes, it must be treated as if it it were not.
 
-This way of thinking drives the details of \calc{}. In particular unrestricted
+This framing drives the details of \calc{}. In particular unrestricted
 objects cannot contain linear objects, because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
@@ -839,16 +839,16 @@ number of times the \emph{multiplicity} of the variable.
 
 Concrete multiplicities are either $1$ or $ω$: when the multiplicity
 is $1$, the program \emph{must} consume the variable exactly once;
-when the multiplicity is $ω$, it \emph{may} consume it any number of
-times (possibly zero). For the sake of polymorphism, multiplicities
-are extended with multiplicity \emph{expressions}, which contain
-variables (ranged over by the metasyntactic variables \(π\) and
-\(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we
-  remove this? -- [Aspiwack] in the case of $1$/$ω$ multiplicity $π+ρ$
-  is always (implicitly) $ω$, so there may indeed be no benefit to
-  formal sums in the scope of this paper}, and product. The complete
-syntax of multiplicities and contexts can be found in
-\fref{fig:contexts}.
+when the multiplicity is $ω$, the program \emph{may} consume the
+variable any number of times (possibly zero). For the sake of
+polymorphism, multiplicities are extended with multiplicity
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
+  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
+  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
+  there may indeed be no benefit to formal sums in the scope of this
+  paper}, and product. The complete syntax of multiplicities and
+contexts can be found in \fref{fig:contexts}.
 
 In addition, multiplicities are equipped with an equivalence relation,
 written $(=)$, and defined as follows:
@@ -904,11 +904,11 @@ equivalent contexts.
 
 The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
-judgement, however, may be less familiar. Indeed, remember that $Γ$ is
-multiplicity-annotated, the multiplicity of a variable denoting the multiplicity of
-that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
-be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
-  one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
+judgement, however, may be less familiar: remember that
+variable bindings in $Γ$ are annotated with a multiplicity. The
+judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$
+consumes $Γ$ and builds \emph{exactly one} $A$. This section defines
+the judgement \(Γ ⊢ t : A\).
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -970,43 +970,45 @@ arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
-  One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
-  we chose to provide polymorphism, which does not mesh well with
-  subtyping. Indeed, we aim to integrate with a Hindley-Milner-based type-checker,
-  and such a checker accomodates polymorphism more easily than subtyping.
+One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
+this does not hold, for the mere reason that there is no notion of
+subtyping in \calc{}. Indeed, our objective is to integrate with
+Haskell, which is based on Hindley-Milner-style
+polymorphism. Subtyping and polymorphism do not mesh well: this is the
+reason why \calc{} is based on polymorphism rather than subtyping.
 
-  Data type declarations, also presented in \fref{fig:syntax},
-  deserve some additional explanation.
-  \begin{align*}
-    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
-  \end{align*}
-  The above declaration means that \(D\) has \(m\) constructors
-  \(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
-  constructors have a multiplicity, just like arguments of function:
-  an argument of multiplicity $ω$ means that the data type can store,
-  at that position, data which \emph{must} have multiplicity $ω$;
-  while a multiplicity of $1$ means that data at that position
-  \emph{can} have multiplicity $1$ (or $ω$). A further requirement is
-  that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
-  $1$ or $ω$).
+Data type declarations, also presented in \fref{fig:syntax},
+deserve some additional explanation.
+\begin{align*}
+  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\end{align*}
+The above declaration means that \(D\) has \(m\) constructors
+\(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
+constructors have a multiplicity, just like arguments of functions:
+an argument of multiplicity $ω$ means that the data type can store,
+at that position, data which \emph{must} have multiplicity $ω$;
+while a multiplicity of $1$ means that data at that position
+\emph{can} have multiplicity $1$ (or $ω$). A further requirement is
+that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
+$1$ or $ω$).
 
-  For most purposes, $c_k$ behaves like a constant with the type
-  $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  \fref{fig:typing} make clear, this means in particular that from a
-  multiplicity $ω$ of data of type $D$ one can extract a multiplicity $ω$ of
-  all its sub-data, including the arguments declared with multiplicity
-  $1$. Conversely, given $ω$ times all the arguments of $c_k$, one can
-  construct a multiplicity $ω$ of $D$.
+For most purposes, $c_k$ behaves like a constant with the type
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+\fref{fig:typing} make clear, this means in particular that from a an
+object $d$ of type $D$ with multiplicity $ω$, pattern matching
+extracts the sub-data of $d$ with multiplicity $ω$. Conversely, if all
+the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
+with multiplicity $ω$.
 
-  Note that constructors with arguments of multiplicity $1$ are not more
-  general than constructors with arguments of multiplicity $ω$, because if,
-  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
-  \emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
-  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
-  argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
-  could be used either as having multiplicity $ω$ or $1$).
+Note that constructors with arguments of multiplicity $1$ are not more
+general than constructors with arguments of multiplicity $ω$, because if,
+when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
+pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
+argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
+could be used either as having multiplicity $ω$ or $1$).
 
-The following example of data-type declarations illustrate the role of
+The following examples of data-type declarations illustrate the role of
 multiplicities in constructor arguments:
 \begin{itemize}
 \item The type
