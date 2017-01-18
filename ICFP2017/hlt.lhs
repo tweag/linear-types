@@ -1096,8 +1096,8 @@ disposal. Thus all variables in the scope of the applications are
 accounted for, with appropriate multiplicities.
 
 Scaling the context in the application rule is the technical device
-which makes the promotion of linear data to unrestricted data implicit
-hence makes it so that intuitionistic $λ$-calculus is a subset of
+which makes the promotion of linear data to unrestricted data implicit,
+hence making the intuitionistic $λ$-calculus is a subset of
 \calc{}. Specifically the subset where all variables are annotated
 with the multiplicity $ω$:
 $$
