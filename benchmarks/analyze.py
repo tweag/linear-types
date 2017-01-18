@@ -35,7 +35,13 @@ def main():
     if is_pop(bench) and parse_n_op(bench) == 1 and parse_queue_size(bench) == 10:
       data = np.array([x['duration'] for x in d['measurements']])
 
-  print(np.percentile(data, [1, 5, 50, 90, 99]))
+  data = np.sort(data)
+  p = [100 - 10 ** x for x in np.arange(1, -2.5, -0.5)]
+  x_label = np.arange(1, 4.5, 0.5)
+  dat = np.percentile(data, p)
+  plt.plot(x_label, dat)
+  plt.yscale('log')
+  plt.show()
 
 if __name__ == '__main__':
   main()
