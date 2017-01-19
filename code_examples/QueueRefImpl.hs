@@ -1,5 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 
 -- | This first version of the linear queue API is what appeared in the first draft of the paper:
 
@@ -20,9 +22,29 @@ storabloidFree :: Storabloid a => a ⊸ ()
 storabloidFree x = case load x of
   Bang _ -> ()
 
+instance Storabloid Bool where
+  store True = True -- This thunk will go on the linear heap (if called from a linear context)
+  store False = False
+  load x = case x of -- deallocation happens here.
+             True -> Bang True -- in GC mode
+             False -> Bang False
+
 data List a where
   Nil :: List a
   Cons :: a -> List a -> List a -- mentally substitute ⊸ for -> as GHC disallows it.
+
+instance Storabloid a => Storabloid (List a) where
+  store Nil = Nil
+  store (Cons x xs) = let !x' = store x
+                          !xs' = store xs
+                      in Cons x' xs'
+  load = \case
+    Nil -> Bang Nil
+    Cons x xs -> case load x of
+      Bang x' -> case load xs of
+        Bang xs' -> Bang (Cons x' xs')
+
+
 
 filterLinear :: (a ⊸ Maybe a) -> List a ⊸ List a
 filterLinear f Nil = Nil
