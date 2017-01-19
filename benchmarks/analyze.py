@@ -14,6 +14,12 @@ def parse_n_op(d):
 def parse_queue_size(d):
   return int(QUEUE_SIZE_REGEX.search(d).group(0)[1:])
 
+def is_cpop(d):
+  return d[:4] == 'CPop'
+
+def is_cpush(d):
+  return d[:5] == 'CPush'
+
 def is_pop(d):
   return d[:3] == 'Pop'
 
@@ -29,17 +35,25 @@ def main():
     raw = f.readline().strip()
   json_raw = json.loads(raw)
 
-  data = None
+  data = []
+  c_data = []
   for d in json_raw['results']:
     bench = str(d['benchName'])
-    if is_pop(bench) and parse_n_op(bench) == 1 and parse_queue_size(bench) == 10:
-      data = np.array([x['duration'] for x in d['measurements']])
+    if parse_n_op(bench) == 1 and parse_queue_size(bench) == 100:
+      if is_pop(bench):
+        data = np.array([x['duration'] for x in d['measurements']])
+      elif is_cpop(bench):
+        c_data = np.array([x['duration'] for x in d['measurements']])
 
   data = np.sort(data)
-  p = [100 - 10 ** x for x in np.arange(1, -2.5, -0.5)]
-  x_label = np.arange(1, 4.5, 0.5)
-  dat = np.percentile(data, p)
-  plt.plot(x_label, dat)
+  c_data = np.sort(c_data)
+  #p = [100 - 10 ** x for x in np.arange(1, -2.5, -0.5)]
+  #x_label = np.arange(1, 4.5, 0.5)
+  #dat = np.percentile(data, p)
+  #c_dat = np.percentile(c_data, p)
+  plt.plot(range(0, len(data)), data, 'r', range(0, len(data)), c_data, 'b')
+  #plt.plot(x_label, dat, 'r', x_label, c_dat, 'b')
+  #plt.plot(x_label, dat, 'r')
   plt.yscale('log')
   plt.show()
 

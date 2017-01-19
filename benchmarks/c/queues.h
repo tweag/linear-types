@@ -11,10 +11,21 @@ typedef struct queue_t {
     node_t* end;
 } queue_t;
 
+
 /*
- * Creates a queue with no heap allocation.
+ * Prints a queue, this is used from the FFI, in order to access info from a C structure.
+ */ 
+void print_queue(queue_t* queue);
+
+/*
+ * Creates a queue and allocates it
  */
-queue_t create_queue(void);
+queue_t* create_queue(void);
+
+/*
+ * Frees a queue and all of its nodes.
+ */
+void clear_queue(queue_t* queue);
 
 /*
  * Creates and allocates a node_t holding the id field.
@@ -24,7 +35,7 @@ node_t* create_node(int id);
 /*
  *  Creates, allocates and appends a node_t to the given queues.
  */
-push(queue_t* queue, int id);
+void push(queue_t* queue, int id);
 
 /* Pops a node_t from the queue.
  *   - The node has to be deallocated by the caller.

@@ -3,6 +3,8 @@ module Queue where
 import Control.DeepSeq
 import Data.IORef
 
+import CQueue
+
 data Queue = Queue {
     start :: IORef (Maybe Node),
     end   :: IORef (Maybe Node)
