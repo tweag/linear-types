@@ -56,6 +56,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\setlength{\marginparwidth}{2.5cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
@@ -65,11 +66,15 @@
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
 
+% Peanut gallery comments by Ryan:
+\newcommandx{\rn}[1]{\todo[]{RRN: #1}}
+
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
 
 % \newtheorem{definition}{Definition}
 % \newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
 
 \newcommand\calc{{\ensuremath{λ^q}}}
 
@@ -198,10 +203,14 @@
 
 \section{Introduction}
 
+\rn{I think this intro can be focused and tightened up significantly.  SPJ may
+  be interested in doing one in his widely-loved intro style.  Or I'm happy to
+  take a stab at it.}
+
 Several recent advances in typed functional programming applied
 research have focused on extending type systems to make it easier to
 encode strong invariants key to the {\em correctness} of programs.
-Extensions from GADT's \cite{xi_guarded_2003}, to type-level functions
+Extensions from GADTs \cite{xi_guarded_2003}, to type-level functions
 such as type families \cite{chakravarty_associated_2005-1}, to
 increasingly automatic and complete promotion of term-level data types
 to the type-level \cite{eisenberg_promoting_2014}. Yet in practice,
@@ -219,7 +228,7 @@ real hardware.
 \subsection{Resource tracking}
 
 Scarce system resources include memory mappings, locks, sockets and
-file handles, among others. With no primitive support from the
+file handles, among others.  For instance, with no primitive support from the
 programming language for managing these resources, acquiring a file
 handle for reading and then disposing of a file handle looks something
 like this:
@@ -266,7 +275,7 @@ system. In fact, a cornerstone of the Rust programming
 language~\cite{matsakis_rust_2014} is that it provides this resource
 safety out-of-the-box. Through its borrow checker, Rust captures a
 notion of affine types in its type system. The lifetime analysis is
-powerful enough to for example ensure that a file handle never escapes
+powerful enough to, for example, ensure that a file handle never escapes
 the current lexical scope:
 
 \improvement{code alignment}
@@ -297,10 +306,10 @@ Fully automatic memory management is certainly convenient, and an
 effective means of avoiding use-after-free and free-after-free bugs,
 since it is the language runtime that guarantees, via a global dynamic
 analysis, that resources are reclaimed only when it is entirely safe
-to do so. But this dynamic global analysis is expensive to run. For
+to do so. But this analysis is expensive to run. For
 this reason, resources are reclaimed in batches, to amortize its cost,
-only when resource pressure is deemed to warrant reclaiming those
-resources that can be. Worse, this global analysis, aka garbage
+only when resource pressure is deemed to warrant reclaiming 
+resources. Worse, this global analysis, aka garbage
 collection, often requires exclusive access to resources, hence
 stalling and potentially starving other threads of control.
 
@@ -344,7 +353,8 @@ upon being read by clients, or if the queue grows too long (so it is
 okay to lose messages). Any client can also request for any message in
 the queue to be removed. In short, the concurrent queue supports the
 following operations:
-
+\rn{This still bothers me.  I'd really like to change it to
+  include MsgId.  \verb|push :: Queue -> MsgId -> Msg -> IO ()|.}
 \begin{code}
 push :: Queue -> Msg -> IO ()
 delete :: Queue -> Msg -> IO ()
@@ -697,6 +707,11 @@ adding to GC pressure, because the data lives in a foreign heap.
 A complete API for queues with random access deletion could
 be typed as follows (|Msg| must be |Storable| to (un)marshall values
 to/from the unrestricted GC'ed heap):
+\improvement{I suggest to remove the |Storable| instance here: it is
+  not part of the API but a requirement for the implementation. That
+  way we will not need to name this particular variant, and just
+  require for the reference implementation that |Msg| is equipped with
+ |loadMsg| and |freeMsg|. }
 \begin{code}
 instance Storable Msg
 
@@ -731,15 +746,17 @@ There are a few things going on in this API:
 \end{itemize}
 
 \paragraph{Reference implementation}
-Even if an ideal implementation for the above API would be implemented
-very efficiently in a machine language, we can already provide a
-reference implementation for it in \HaskeLL{}. For simplicity we
-represent |Queue|s and |Vector|s as list:
+The intention behind this queue API is to bind a C implementation of
+a queue data structure which manages memory explicitly. However, we
+can give an implementation directly in \HaskeLL{}. For simplicity
+|Queue|s and |Vector|s are represented simply as lists. Therefore this
+implementation is by no mean efficient: it may, however serve as an
+executable specification for explicit memory management as we will see
+in \fref{sec:dynamics}.
 \begin{code}
 type Queue = List Msg
 type Vector x = List Msg
 \end{code}
-
 The |Storable| class demands that a linear value can be made
 non-linear (eg. by making a deep copy of it), and that it can be
 freed.
@@ -748,7 +765,6 @@ class Storable a where
   load :: a ⊸ Bang a
   free' :: a ⊸ ()
 \end{code}
-
 Allocation can be implemented simply by calling the continuation. Free
 needs to free all messages. As will be apparent when we define the
 operational semantics for our language, the queue will reside outside
@@ -764,7 +780,6 @@ free (x:xs) = case storableFree x of
   () -> free' xs
 free [] = ()
 \end{code}
-
 The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
@@ -791,21 +806,21 @@ In this section we turn the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{}, every object is classified into two categories: \emph{linear} ones,
+In \calc{}, objects are classified into two categories: \emph{linear} objects,
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted} ones which can be used an arbitrary number of
+\emph{unrestricted} objects which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear object is to see it as an object that may not
+The best way to think of a linear object is to see it as an object that need not
 be controlled by the garbage collector: \emph{e.g.} because they are
 scarce resources, because they are controlled by foreign code, or
 because this object will not actually exist at run time because it will
-be fused away. The word \emph{may} matters here: because of
+be fused away. The word \emph{need} matters here: because of
 polymorphism, it is possible for any given linear object to actually be controlled
 by the garbage collector (but may not be), and
 so, for most purposes, it must be treated as if it it were not.
 
-This way of thinking drives the details of \calc{}. In particular unrestricted
+This framing drives the details of \calc{}. In particular unrestricted
 objects cannot contain linear objects, because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
@@ -828,16 +843,16 @@ number of times the \emph{multiplicity} of the variable.
 
 Concrete multiplicities are either $1$ or $ω$: when the multiplicity
 is $1$, the program \emph{must} consume the variable exactly once;
-when the multiplicity is $ω$, it \emph{may} consume it any number of
-times (possibly zero). For the sake of polymorphism, multiplicities
-are extended with multiplicity \emph{expressions}, which contain
-variables (ranged over by the metasyntactic variables \(π\) and
-\(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we
-  remove this? -- [Aspiwack] in the case of $1$/$ω$ multiplicity $π+ρ$
-  is always (implicitly) $ω$, so there may indeed be no benefit to
-  formal sums in the scope of this paper}, and product. The complete
-syntax of multiplicities and contexts can be found in
-\fref{fig:contexts}.
+when the multiplicity is $ω$, the program \emph{may} consume the
+variable any number of times (possibly zero). For the sake of
+polymorphism, multiplicities are extended with multiplicity
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
+  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
+  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
+  there may indeed be no benefit to formal sums in the scope of this
+  paper}, and product. The complete syntax of multiplicities and
+contexts can be found in \fref{fig:contexts}.
 
 In addition, multiplicities are equipped with an equivalence relation,
 written $(=)$, and defined as follows:
@@ -893,11 +908,11 @@ equivalent contexts.
 
 The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
-judgement, however, may be less familiar. Indeed, remember that $Γ$ is
-multiplicity-annotated, the multiplicity of a variable denoting the multiplicity of
-that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
-be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
-  one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
+judgement, however, may be less familiar: remember that
+variable bindings in $Γ$ are annotated with a multiplicity. The
+judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$
+consumes $Γ$ and builds \emph{exactly one} $A$. This section defines
+the judgement \(Γ ⊢ t : A\).
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -959,43 +974,45 @@ arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
-  One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
-  we chose to provide polymorphism, which does not mesh well with
-  subtyping. Indeed, we aim to integrate with a Hindley-Milner-based type-checker,
-  and such a checker accomodates polymorphism more easily than subtyping.
+One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
+this does not hold, for the mere reason that there is no notion of
+subtyping in \calc{}. Indeed, our objective is to integrate with
+Haskell, which is based on Hindley-Milner-style
+polymorphism. Subtyping and polymorphism do not mesh well: this is the
+reason why \calc{} is based on polymorphism rather than subtyping.
 
-  Data type declarations, also presented in \fref{fig:syntax},
-  deserve some additional explanation.
-  \begin{align*}
-    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
-  \end{align*}
-  The above declaration means that \(D\) has \(m\) constructors
-  \(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
-  constructors have a multiplicity, just like arguments of function:
-  an argument of multiplicity $ω$ means that the data type can store,
-  at that position, data which \emph{must} have multiplicity $ω$;
-  while a multiplicity of $1$ means that data at that position
-  \emph{can} have multiplicity $1$ (or $ω$). A further requirement is
-  that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
-  $1$ or $ω$).
+Data type declarations, also presented in \fref{fig:syntax},
+deserve some additional explanation.
+\begin{align*}
+  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\end{align*}
+The above declaration means that \(D\) has \(m\) constructors
+\(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
+constructors have a multiplicity, just like arguments of functions:
+an argument of multiplicity $ω$ means that the data type can store,
+at that position, data which \emph{must} have multiplicity $ω$;
+while a multiplicity of $1$ means that data at that position
+\emph{can} have multiplicity $1$ (or $ω$). A further requirement is
+that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
+$1$ or $ω$).
 
-  For most purposes, $c_k$ behaves like a constant with the type
-  $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  \fref{fig:typing} make clear, this means in particular that from a
-  multiplicity $ω$ of data of type $D$ one can extract a multiplicity $ω$ of
-  all its sub-data, including the arguments declared with multiplicity
-  $1$. Conversely, given $ω$ times all the arguments of $c_k$, one can
-  construct a multiplicity $ω$ of $D$.
+For most purposes, $c_k$ behaves like a constant with the type
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+\fref{fig:typing} make clear, this means in particular that from a an
+object $d$ of type $D$ with multiplicity $ω$, pattern matching
+extracts the sub-data of $d$ with multiplicity $ω$. Conversely, if all
+the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
+with multiplicity $ω$.
 
-  Note that constructors with arguments of multiplicity $1$ are not more
-  general than constructors with arguments of multiplicity $ω$, because if,
-  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
-  \emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
-  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
-  argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
-  could be used either as having multiplicity $ω$ or $1$).
+Note that constructors with arguments of multiplicity $1$ are not more
+general than constructors with arguments of multiplicity $ω$, because if,
+when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
+pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
+argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
+could be used either as having multiplicity $ω$ or $1$).
 
-The following example of data-type declarations illustrate the role of
+The following examples of data-type declarations illustrate the role of
 multiplicities in constructor arguments:
 \begin{itemize}
 \item The type
@@ -1063,19 +1080,18 @@ context, especially in the case of applications.
   \label{fig:typing}
 \end{figure}
 
-\improvement{It may be useful to have a better transition between
-  syntax and typing judgement}
 \improvement{explain that the $ωΓ$ in the
   constructor rule is there for constant constructors.}
 
-Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term
-$t$ consumes $Γ$ and builds an $A$ with multiplicity $1$.  This is the
-only kind of judgement in \calc{}: we provide no judgement to mean
-``the term $t$ consumes $Γ$ and builds an $A$ with multiplicity
-$p$''. Instead, we make use of context scaling: if \(Γ ⊢ t : A\)
-holds, then from consuming \(pΓ\) with the same term $t$, one builds
-an $A$ with multiplicity $p$. This idea is at play in the application
-rule (the complete set of rules can be found in \fref{fig:typing}):
+We are now ready to understand the typing rules of
+\fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
+reads as: the term $t$ consumes $Γ$ and builds an $A$ with
+multiplicity $1$.  This is the only kind of judgement in \calc{}:
+there is no direct way to express ``the term $t$ consumes $Γ$ and
+builds an $A$ with multiplicity $p$''. Instead, we make use of context
+scaling: if \(Γ ⊢ t : A\) holds, then from consuming \(pΓ\) with the
+same term $t$, one builds an $A$ with multiplicity $p$. This idea is
+at play in the application rule:
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus
 $Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
@@ -1083,11 +1099,11 @@ application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
 disposal. Thus all variables in the scope of the applications are
 accounted for, with appropriate multiplicities.
 
-Scaling the context in the application rule is the
-technical device which makes the promotion of linear data to
-unrestricted data implicit hence that intuitionistic $λ$-calculus is a
-subset of \calc{}. Specifically the subset where all variables are
-annotated with the multiplicity $ω$:
+Scaling the context in the application rule is the technical device
+which makes the promotion of linear data to unrestricted data implicit,
+hence making the intuitionistic $λ$-calculus is a subset of
+\calc{}. Specifically the subset where all variables are annotated
+with the multiplicity $ω$:
 $$
 \inferrule
 {\inferrule
@@ -1116,14 +1132,15 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
-Like the application rule it is parametrized by a multiplicity $p$. But,
-while in the application rule only the argument is affected by $p$, in
-the case rule, not only the scrutinee but also the variable bindings
-in the branches are affected by $p$. What it means, concretely, is
-that the multiplicity of data is \emph{inherited} by its sub-data: if we
-have a multiplicity $1$ of $A⊗B$ we have a multiplicity $1$ of $A$ and a
-multiplicity $1$ of $B$, and if we have a multiplicity $ω$ of $A⊗B$ we have a
-multiplicity $ω$ of $A$ and a multiplicity $ω$ of $B$. Therefore, the
+Like the application rule it is parametrized by a multiplicity
+$p$. But, while in the application rule only the argument is affected
+by $p$, in the case rule, not only the scrutinee but also the variable
+bindings in the branches are affected by $p$. What it means,
+concretely, is that the multiplicity of data is \emph{inherited} by
+its sub-data: if we have an $A⊗B$ with multiplicity $1$, then we have
+an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
+we have an $A⊗B$ with multiplicity $ω$ then we have an $A$ with
+multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted)
@@ -1163,10 +1180,11 @@ Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
 correspondingly deallocate them upon (lazy) evaluation. To do so we
 present an extension of the semantics of
-\citet{launchbury_natural_1993} to \calc{}. Prompt
-deallocation is not necessarily faster than garbage collection but it
-reduces latencies and allows more control on when garbage-collection
-pause occur.
+\citet{launchbury_natural_1993} to \calc{}. Such a semantics is
+actually \emph{more precise} than what we intend to implement: it
+serves as a technical device to justify the less intrusive semantics
+that we describe in \fref{sec:eras-dynam-weight}, and requires no
+modification to GHC (beyond type-checking, of course).
 
 \begin{figure}
 
@@ -1213,8 +1231,8 @@ Compared to \citeauthor{launchbury_natural_1993}'s original, our
 semantics exhibits the following salient differences:
 \begin{itemize}
 \item The heap is annotated with multiplicities. The variables with multiplicity
-  $ω$ represent the garbage-collected heap, while the variables with
-  multiplicity $1$ represent the non-garbage-collected heap, which we call
+  $ω$ represent the objects of the garbage-collected heap, while the variables with
+  multiplicity $1$ represent objects in a non-garbage-collected heap, which we call
   the linear heap.
 \item We add a multiplicity parameter to the reduction relation,
   corresponding to the (dynamic) multiplicity of values to produce.
@@ -1222,7 +1240,7 @@ semantics exhibits the following salient differences:
   recall that programs are automatically scaled to $ω$ if possible.
 \item The rules for \emph{variable}, \emph{let}, and
   \emph{application} are changed to account for multiplicities (let-bindings
-  and application are annotated by a multiplicity for this reason).
+  and applications are annotated with a multiplicity for this reason).
 \end{itemize}
 
 The dynamics assume that multiplicity expressions are reduced
@@ -1256,7 +1274,7 @@ produce unrestricted values.
 In all evaluation rules, this dynamic multiplicity is propagated to
 the evaluation of subterms, sometimes multiplied by another
 multiplicity originating from the term. This means that, essentially,
-once one starts evaluating unrestricted results (multiplicity = $ω$),
+once one starts evaluating unrestricted results (multiplicity $ω$),
 one will remain in this dynamic evaluation mode, and thus all further
 allocations will be on the \textsc{gc} heap. However, it is possible
 to provide a special-purpose evaluation rule to escape unrestricted
@@ -1454,16 +1472,56 @@ only produce consistent heaps.
 \end{proof}
 
 \subsection{Erasing the dynamic weight}
-\todo{make more precise}
+\label{sec:eras-dynam-weight}
 
-Implementing the above semantics would force us to represent the
-dynamic multiplicity at runtime. Doing so could have an impact on the
-performance. What we can do though is to run all code with $ω$ weight
-(in this case all allocations go onto the GC heap) and have only an
-even more specialized rule that does case-bang and a let binding with
-weight 1 in one go. This the target of the let binding can end up on
-the linear heap, but we continue evaluation in $ω$ mode.
+From a compiler perspective, there is a cost to this semantics: we
+need to take the run-time multiplicity somehow. Maybe we want to pass
+the run-time multiplicity in a register, but that may have a speed
+penalty for the program, or we may want to specialise the emitted code
+to two versions (one for each possible run-time multiplicity), but
+that generates quite bigger executable, at a performance cost to the
+compiler itself. In either case, it requires non-trivial modification
+to the code-emitting infrastructure.
 
+It may be worth it, even though such eager prompt de-allocation
+behaviour may actually be slower than letting the garbage collector
+clean the data: it may result in leaner memory profile and more
+predictable latencies. Overall speed is, after all, not the only
+metric one may want to optimise. But, for the scope of this article,
+we want to focus on just modifying the type-checker and reaping the
+low-hanging fruits.
+
+The operational semantics of \calc{}, as it turns out, happens to be
+the right technical device to justify that the queue API from
+\fref{sec:queue-api} can allocate the queue on a foreign heap while
+staying memory-safe. This hinges on the following.
+
+\begin{remark}
+  In the semantics of \fref{fig:dynamics}, replacing any binding of
+  multiplicity $1$ in the heap by the same binding with multiplicity
+  $ω$ does not affect the execution. Except from extra garbage staying
+  around in the heap.
+\end{remark}
+
+Concretely it means that something that should be deallocated promptly
+can be allocated on the garbage-collected heap without affecting the
+semantics of the program. Of course, it ostensibly breaks our
+invariant that garbage-collected data cannot point to linear data. So,
+in a concrete implementation, one must take care that the garbage
+collector will not deallocate linear data prematurely. Concretely,
+pointers to the linear heap would be opaque to the garbage collector
+(like the |Ptr| type representing foreign object in GHC's foreign
+function interface). The semantics of \fref{fig:dynamics}, ensures
+that by the time the linear piece of data pointed by such a foreign
+pointer is collected, the object pointing to the data is itself
+unaccessible, and just waiting to be freed by the garbage collector.
+
+With this remark in mind, we can introduce a special allocation rule
+combining in a single step a linear $\flet$ and the special
+$\mathsf{case}$-of-$\varid{Bang}$ rule as follows:
+
+\unsure{proof-check this semantic rule, it should probably be phrased
+  in terms of the untyped semantics}
 \begin{mathpar}
 \inferrule
    {Ξ ⊢ (Γ,x=_1 t || k x ⇓ Δ||\varid{Bang} w) :_ω \varid{Bang} B, u:_ω C, Σ \\
@@ -1472,15 +1530,19 @@ the linear heap, but we continue evaluation in $ω$ mode.
 {\text{alloc}}
 \end{mathpar}
 
-If the term $t$, allocated on the linear heap, is in normal form or
-accessed only from foreign functions, this possibility of using only
-$ω$ allows to implement our Queue example with no change whatsoever to
-the runtime system of the language. (The only point where the 1
-multiplicity is used is in the alloc rule.)
+This rule allocates |x| on the linear heap, whatever the ambient
+run-time multiplicity is, as per \fref{fig:dynamics}. So we do not
+need to keep track of run-time multiplicity for this rule. We choose
+to allocate every other binding on the garbage-collected heap: that
+way we do not need to track multiplicity at all, and only special
+allocation primitives (whose type is an instance of the above) will
+allocate on the linear heap. Therefore, no modification need to occur
+in the compiler's code emission: we can delegate allocation to foreign
+functions.
 
 \section{Related work}
 \subsection{Alms}
-\todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
+\improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
 Alms is a general-purpose programming language that supports
 practical affine types. To offer the expressiveness of Girard’s linear
 logic while keeping the type system light and convenient, Alms
