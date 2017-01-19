@@ -20,7 +20,7 @@ class Storabloid a where
 
 storabloidFree :: Storabloid a => a ⊸ ()
 storabloidFree x = case load x of
-  Bang _ -> ()
+  Bang _ -> () -- via GC allocation; obviously there is a more direct path
 
 instance Storabloid Bool where
   store True = True -- This thunk will go on the linear heap (if called from a linear context)
