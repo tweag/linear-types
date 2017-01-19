@@ -514,7 +514,7 @@ types, with the following characteristics:
   linear data.
 \item Is designed to be compatible with in an existing rich programming
   language. 
-  todo{Do we speak of the prototype at this point? I
+  \todo{Do we speak of the prototype at this point? I
     [aspiwack] would rather leave it at that and prove this assertion
     in the body of the article by citing the prototype (and maybe some
     GHC things with which we are compatible: \emph{e.g.} the kind
