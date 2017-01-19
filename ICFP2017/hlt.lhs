@@ -763,6 +763,7 @@ freed.
 \begin{code}
 class Storable a where
   load :: a ⊸ Bang a
+  store :: a ⊸ a -- TODO: subtle
   free' :: a ⊸ ()
 \end{code}
 Allocation can be implemented simply by calling the continuation. Free
@@ -784,7 +785,7 @@ The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
 push    :: Msg -> Queue ⊸ Queue
-push msg msgs = msg:msgs
+push msg msgs = store msg:msgs
 
 delete :: Msg -> Queue ⊸ Queue
 delete msg [] = []
@@ -1542,7 +1543,7 @@ functions.
 
 \section{Related work}
 \subsection{Alms}
-\improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
+\improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And rewrite this paragraph which contains a copy-paste of the paper's abstract.)}
 Alms is a general-purpose programming language that supports
 practical affine types. To offer the expressiveness of Girard’s linear
 logic while keeping the type system light and convenient, Alms
