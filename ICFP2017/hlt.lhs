@@ -750,7 +750,10 @@ class Storable a where
 \end{code}
 
 Allocation can be implemented simply by calling the continuation. Free
-needs to free all messages.
+needs to free all messages. As will be apparent when we define the
+operational semantics for our language, the queue will reside outside
+of GC heap. While |alloc| itself only allocates an empty list, all
+functions which manipulate the queue will do so on the non-GC heap.
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 alloc k = case k [] of
@@ -780,6 +783,7 @@ evict n  []      = ([], Bang [])
 evict n  (x:xs)  = case (load x, evict (n-1) xs) of
   (Bang x', (xs',Bang v')) -> (xs',Bang (x':v'))
 \end{code}
+
 
 \section{\calc{} statics}
 \label{sec:statics}
