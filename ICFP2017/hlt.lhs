@@ -1282,10 +1282,9 @@ to provide a special-purpose evaluation rule to escape unrestricted
 evaluation to linear evaluation.  This rule concerns case analysis of
 |Bang x|, where the weight of the scrutninee is not multiplied by the
 dynamic multiplicity:
-\[
-    \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
-    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
-  \]
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
+    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}}
+\[ \casebangrule{} \]
   \unsure{In case-bang rule, replace q by 1 and ρ by ω?}
 The observations justifying this rule are that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
@@ -1308,6 +1307,7 @@ heap, and it is guaranteed to be de-allocated by the time the |Bang|
 constructor is forced. This linear dynamic semantics of the reference implementation
 is what justifies storing the queue in a foreign heap when the queue is implemented by foreign
 functions.
+
 
 \begin{figure}
   \begin{mathpar}
@@ -1341,6 +1341,8 @@ functions.
 
     \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓_ρ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+
+    \casebangrule
 
   \end{mathpar}
 
@@ -1472,9 +1474,19 @@ only produce consistent heaps.
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
+\improvement{We're missing a 'progress' theorem}
+
+\improvement{SPJ remarks the following: in $ω$ mode, we cannot lookup
+  variables in the linear heap. That is worth mentioning
+  explicitly. Furthermore, because it is valid to never use case-bang,
+  and because well-typed programs won't go wrong, it is not possible
+  to have references to the linear heap when in omega mode, so it must
+  be empty. This may also be an argument for the eventual
+  de-allocation. }
+
+
 \subsection{Erasing the dynamic weight}
 \label{sec:eras-dynam-weight}
-
 From a compiler perspective, there is a cost to this semantics: we
 need to take the run-time multiplicity somehow. Maybe we want to pass
 the run-time multiplicity in a register, but that may have a speed
@@ -1540,6 +1552,9 @@ allocation primitives (whose type is an instance of the above) will
 allocate on the linear heap. Therefore, no modification need to occur
 in the compiler's code emission: we can delegate allocation to foreign
 functions.
+
+
+
 
 \section{Related work}
 \subsection{Alms}
