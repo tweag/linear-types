@@ -1474,7 +1474,19 @@ only produce consistent heaps.
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
-\improvement{We're missing a 'progress' theorem}
+\improvement{Improve this.}
+\begin{lemma}[Progress]
+  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $t$ is not in normal form, then there
+  exists a heap $Δ$ and value $z$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$.
+\end{lemma}
+\begin{proof}
+  Consider the application case. If $t$ is not in normal form, then by
+  definition it must have the form $x u$ and $x$ must reduce to a
+  lambda term. We conclude by noting that there is a reduction rule
+  for this situation. The |case| case works similarly.
+\end{proof}
+
 
 \improvement{SPJ remarks the following: in $ω$ mode, we cannot lookup
   variables in the linear heap. That is worth mentioning
