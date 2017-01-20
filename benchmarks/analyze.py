@@ -39,22 +39,26 @@ def main():
   c_data = []
   for d in json_raw['results']:
     bench = str(d['benchName'])
-    if parse_n_op(bench) == 1 and parse_queue_size(bench) == 100:
-      if is_pop(bench):
+    if parse_n_op(bench) == 1:
+      if is_push(bench):
         data = np.array([x['duration'] for x in d['measurements']])
-      elif is_cpop(bench):
+        print(bench)
+      elif is_cpush(bench):
         c_data = np.array([x['duration'] for x in d['measurements']])
+        print(bench)
 
-  data = np.sort(data)
-  c_data = np.sort(c_data)
-  #p = [100 - 10 ** x for x in np.arange(1, -2.5, -0.5)]
-  #x_label = np.arange(1, 4.5, 0.5)
-  #dat = np.percentile(data, p)
-  #c_dat = np.percentile(c_data, p)
-  plt.plot(range(0, len(data)), data, 'r', range(0, len(data)), c_data, 'b')
-  #plt.plot(x_label, dat, 'r', x_label, c_dat, 'b')
-  #plt.plot(x_label, dat, 'r')
+  p = [100 - 10 ** x for x in np.arange(1, -4.5, -0.5)]
+  dat = np.percentile(data, p)
+  c_dat = np.percentile(c_data, p)
+
+  x_label = np.arange(1, 6.5, 0.5)
+  plt.plot(x_label, dat, 'r', x_label, c_dat, 'b')
   plt.yscale('log')
+
+  plt.title('Latency quantiles for C FFI (blue) versus Haskell (red)')
+  plt.ylabel('Operation time (ns)')
+  plt.xlabel('Nines')
+
   plt.show()
 
 if __name__ == '__main__':

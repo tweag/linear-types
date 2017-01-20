@@ -17,10 +17,10 @@ data COperation = CPush | CPop
 benchmarks :: [Benchmark]
 benchmarks = concat
   [
-    generate_benchmarks Pop [0, 10..100] [1..10]
-    , generate_benchmarks Push [0, 10..100] [1..10]
-    , c_generate_benchmarks CPop [0, 10..100] [1..10]
-    , c_generate_benchmarks CPush [0, 10..100] [1..10]
+    generate_benchmarks Pop [10000] [1]
+    , generate_benchmarks Push [10000] [1]
+    , c_generate_benchmarks CPop [10000] [1]
+    , c_generate_benchmarks CPush [10000] [1]
   ]
 
 main = defaultMain benchmarks
