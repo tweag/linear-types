@@ -8,6 +8,7 @@
 %format ω = "\omega"
 %format π = "\pi"
 %format ρ = "\rho"
+%format ⅋ = "\xi"
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{../../PaperTools/bibtex/jp.bib,../../local.bib}
@@ -95,13 +96,17 @@
 \begin{frame}
   \frametitle{The problem: linear logic is intrusive}
 
-  \begin{code}
+\begin{code}
   dup :: Bang a ⊸ a⊗a
   dup (Bang x) = (x,x)
+\end{code}
 
+\begin{code}
   id :: Bang a ⊸ a
   id (Bang x) = x
+\end{code}
 
+\begin{code}
   v = dup (Bang (id (Bang 42)))
 \end{code}
 \end{frame}
@@ -174,6 +179,26 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{The linearity semi-ring}
+
+  $\{0,1,ω\}$
+  \begin{itemize}
+  \item $1+1=ω$
+  \item $1+ω=ω$
+  \item $ω+ω=ω$
+  \end{itemize}
+  \begin{itemize}
+  \item $ωω=ω$
+  \end{itemize}
+  \begin{itemize}
+  \item $0⩽ω$
+  \item $1⩽ω$
+  \item $0\not\leqslant 1$
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
   \frametitle{Contexts are modules}
 
   Also point-wise order
@@ -182,6 +207,15 @@
 
 \begin{frame}
   \frametitle{Weight polymorphism}
+
+  Free:
+  \begin{itemize}
+  \item Symbolic multiplicity expressions
+    \begin{itemize}
+    \item $A →_{pq} B$
+    \end{itemize}
+
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -191,15 +225,116 @@
 
 \begin{frame}
   \frametitle{Datatype!}
+
+  \begin{block}{Exponential ($!$) modality as a data type:}
+    \begin{code}
+      data Bang a = Bang :: a → Bang a
+    \end{code}
+  \end{block}
+
+  \hfill
+
+  \begin{block}{Exercise}
+    \begin{onlyenv}<1>
+      \begin{code}
+        f ::  Bool   ⊸ Bang Bool
+        f     True   = Bang True
+        f     False  = Bang False
+      \end{code}
+    \end{onlyenv}
+    \begin{onlyenv}<2>
+      \begin{code}
+        move ::  Bool   ⊸ Bang Bool
+        move     True   = Bang True
+        move     False  = Bang False
+      \end{code}
+    \end{onlyenv}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Case?}
+
+  \begin{block}{Duplication for Bang}
+    \begin{code}
+      dup ::  Bang a    ⊸ (Bang a,Bang a)
+      dup     (Bang x)  = (Bang x,Bang x)
+    \end{code}
+  \end{block}
 \end{frame}
 
 \begin{frame}
   \frametitle{A word on linear closures}
+
+  \begin{alertblock}{Incorrect}
+    \begin{code}
+      let x :: _ 1 Bool = ...
+      in Bang (move x)
+    \end{code}
+  \end{alertblock}
+
+  \begin{exampleblock}<2->{Correct}
+    \begin{code}
+      let x :: _ 1 Bool = ...
+      in case (move x) of
+           Bang x' -> Bang (Bang x')
+    \end{code}
+  \end{exampleblock}
+
 \end{frame}
 
 \begin{frame}
   \frametitle{Negative types}
 
+  \begin{itemize}
+  \item |a & b| $≜$ |(a⊕b⊸⊥)⊸⊥|
+  \item |a |||| b| $≜$ |(a⊗b⊸⊥)⊸⊥|
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{What's in a $⊥$?}
+
+  $⊥$ is for effects
+  \begin{itemize}
+  \item \emph{e.g.} |IO ()|
+  \end{itemize}
+
+  \hfill
+
+  Usually $⊥$ a monoid:
+  \begin{itemize}
+  \item |nop :: ⊥|
+  \item |(;) :: ⊥ ⊸ ⊥ ⊸ ⊥|
+  \end{itemize}
+
+  \hfill
+
+  Mix rules:
+  $$
+  \inferrule{\phantom{⊢Γ} \\ \phantom{⊢Δ}}{⊢}
+  $$
+  $$
+  \inferrule{⊢Γ \\ ⊢Δ}{⊢ Γ,Δ}
+  $$
+\end{frame}
+
+\begin{frame}
+  \frametitle{Thoughts about implementation}
+
+  Built-in bidirectionality:
+  \begin{itemize}
+  \item Typing context come in
+  \item Multiplicity goes out
+  \end{itemize}
+
+  \hfill
+
+  Integrates well in GHC
+  \begin{itemize}
+  \item Already somehow bidirectional
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
