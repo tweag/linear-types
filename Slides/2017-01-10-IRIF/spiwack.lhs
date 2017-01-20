@@ -286,10 +286,20 @@
 \begin{frame}
   \frametitle{Negative types}
 
+  Encoded:
   \begin{itemize}
-  \item |a & b| $≜$ |(a⊕b⊸⊥)⊸⊥|
-  \item |a |||| b| $≜$ |(a⊗b⊸⊥)⊸⊥|
+  \item |a & b| $≜$ |((a⊸⊥)⊕(b⊸⊥))⊸⊥|
+  \item |a |||| b| $≜$ |((a⊸⊥)⊗(b⊸⊥))⊸⊥|
   \end{itemize}
+
+  \hfill
+
+  \begin{exampleblock}{Functions}
+    \begin{code}
+      funToPar :: (a⊸b) ⊸ (a ⊗ (b⊸⊥)) ⊸ ⊥
+      funToPar f (a,kb) = kb (f a)
+    \end{code}
+  \end{exampleblock}
 
 \end{frame}
 
