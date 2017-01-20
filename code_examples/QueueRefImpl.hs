@@ -3,8 +3,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 
--- | This first version of the linear queue API is what appeared in the first draft of the paper:
-
 module QueueRefImpl where
 
 -- The two character token "-o" is not valid, so just use this to mark

@@ -1286,7 +1286,7 @@ dynamic multiplicity:
     \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
     {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
   \]
-  \improvement{replace q by 1 and ρ by ω}
+  \unsure{In case-bang rule, replace q by 1 and ρ by ω?}
 The observations justifying this rule are that 1. when forcing a |Bang|
 constructor, one will obtain $ω$ times the contents. 2. the contents
 of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
