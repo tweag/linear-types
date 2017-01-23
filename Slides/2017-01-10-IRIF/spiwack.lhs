@@ -8,7 +8,7 @@
 %format ω = "\omega"
 %format π = "\pi"
 %format ρ = "\rho"
-%format ⅋ = "\xi"
+%format ⅋ = "\parr"
 %subst keyword a = "\mathsf{" a "}"
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \bibliography{../../PaperTools/bibtex/jp.bib,../../local.bib}
@@ -32,6 +32,7 @@
   }
 \usepackage{mathpartir}
 \usepackage{fontspec}
+\usepackage{cmll}
 \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
 \def\frefsecname{Section}
@@ -319,15 +320,15 @@
   Encoded:
   \begin{itemize}
   \item |a & b| $≜$ |((a⊸⊥)⊕(b⊸⊥))⊸⊥|
-  \item |a |||| b| $≜$ |((a⊸⊥)⊗(b⊸⊥))⊸⊥|
+  \item |a ⅋ b| $≜$ |((a⊸⊥)⊗(b⊸⊥))⊸⊥|
   \end{itemize}
 
   \hfill
 
   \begin{exampleblock}{Functions}
     \begin{code}
-      funToPar :: (a⊸b) ⊸ (a ⊗ (b⊸⊥)) ⊸ ⊥
-      funToPar f (a,kb) = kb (f a)
+      fun2Par :: (a⊸b) ⊸ (a ⊗ (b⊸⊥)) ⊸ ⊥
+      fun2Par f (a,k) = k (f a)
     \end{code}
   \end{exampleblock}
 
