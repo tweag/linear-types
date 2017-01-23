@@ -90,6 +90,7 @@
   \item Storage for very large clusters (>1 exabyte)
   \item Distributed computation as part of IO
   \item Generalised caching: disk hierarchy
+  \item …
   \end{itemize}
 \end{frame}
 
@@ -199,28 +200,57 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Contexts are modules}
+  \frametitle{Contexts as a module}
+  \begin{block}{Module of contexts}
+    \begin{itemize}
+    \item $x:_pA,Γ + x:_qA,Δ ≜ x:_{p+q}A,Γ+Δ$
+    \item $q(x:_pA,Γ) ≜ x:_{qp}A, qΓ$
+    \end{itemize}
+  \end{block}
 
-  Also point-wise order
+  \hfill
+
+  \begin{block}{Ordering of contexts}
+    $x:_pA,Γ ⩽ x:_qA,Δ ⟺ p⩽q ∧ Γ⩽Δ$
+  \end{block}
 
 \end{frame}
 
 \begin{frame}
-  \frametitle{Weight polymorphism}
+  \frametitle{Multiplicity polymorphism}
 
-  Free:
-  \begin{itemize}
-  \item Symbolic multiplicity expressions
+  \begin{block}{Extend the semi-ring}
+  Symbolic multiplicity expressions
     \begin{itemize}
-    \item $A →_{pq} B$
+    \item $A →_{qπ} B$
     \end{itemize}
-
-  \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}
   \frametitle{The case of constructors}
 
+  \begin{block}{Constructors}
+    $$
+      \data D \where \left(C_k :: a_1 ⊸_{p_1} … a_n ⊸ _{p_n} b\right)^m_{k=1}
+    $$
+  \end{block}
+
+  \hfill
+
+  \begin{block}{Matching}
+    $$
+    \case[q]{d}{C_k x_1 … x_h → u_k}
+    $$
+    \begin{itemize}
+    \item With $x_i$ of multiplicity $qp_i$
+      \begin{itemize}
+      \item Unlike linear logic
+      \item Let's talk about why
+      \end{itemize}
+    \end{itemize}
+
+  \end{block}
 \end{frame}
 
 \begin{frame}
@@ -350,6 +380,23 @@
 \begin{frame}
   \frametitle{Going dependent}
 
+  \begin{itemize}
+  \item Multiplicity $0$: static values.
+  \end{itemize}
+
+  \hfill
+
+  \begin{exampleblock}{Equality}
+    $$
+    \inferrule{Δ⊢a:A \\ Ξ⊢b:A}{ωΓ+0Δ+0Ξ ⊢ a =_A b : ⋆}
+    $$
+  \end{exampleblock}
+
+\end{frame}
+
+\begin{frame}
+  \Huge\center
+  The end
 \end{frame}
 
 \begin{frame}
