@@ -81,6 +81,17 @@
 
 \begin{frame}
   \titlepage
+
+  \newcommand{\logoheight}{1cm}
+  \newcommand{\logospacing}{\quad}
+  \logo{
+    \raisebox{-5mm}{\includegraphics[height=1.3\logoheight]{tweag-logo.png}}
+    \logospacing
+    \raisebox{-3mm}{\includegraphics[height=1.2\logoheight]{seagate-logo.png}}
+    \logospacing
+    \includegraphics[height=\logoheight]{SAGE-logo.png}
+  }
+  \center\insertlogo
 \end{frame}
 
 \begin{frame}
