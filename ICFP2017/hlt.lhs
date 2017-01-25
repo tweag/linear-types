@@ -1432,7 +1432,7 @@ only produce consistent heaps.
 {\text{case-bang}}
   \end{mathpar}
 \end{definition}
-  \caption{Typed operational semantics. (Omitting the obvious w.abs and w.app for concision)}
+  \caption{Typed operational semantics. (Omitting the obvious abs, w.abs and w.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
