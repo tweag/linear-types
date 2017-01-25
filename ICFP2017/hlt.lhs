@@ -1480,8 +1480,12 @@ only produce consistent heaps.
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
-\begin{lemma}[Progress]
-  \todo{I wrote a sketch, but there is no good way, as it stands, to
+\begin{lemma}[Progress of non-recursive programs.]
+  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $t$ is not in normal form and does not
+  use recursion, then there exists a heap $Δ$ and value $z$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$.
+
+\todo{I wrote a sketch, but there is no good way, as it stands, to
     state a progress theorem for two reasons: the semantics does not
     distinguish blocking and non-termination, and black-holing creates
     states which ostensibly block. Potential fix idea for both issues:
@@ -1490,11 +1494,20 @@ only produce consistent heaps.
     than removing it from the heap.}
 \end{lemma}
 \begin{proof}
+  First remark that the free variables in $Ξ$ are used only in $Σ$ in
+  the non-recursive case. Indeed, the only rules which extend $Ξ$ are
+  $\mathsf{case}$, where it is clear that the introduced variables are
+  used only in $Σ$; and the shared variable rules, where $e$ can use
+  $x$ only in presence of recursion.
+
+  We now proceed to prove the main claim.
   The important rule is the linear variable rule: if a variable is in
   the linear heap, trying to dereference heap with a target
   multiplicity $ω$ would block. However, for such a state to be
   reachable we would need $Ξ ⊢ (Γ,x:_1A || x :_ω A), Σ$ to be
-  typed. Unfolding the typing rules this implies $x:_1A = ωΔ$ which
+  typed, which in light of non-recursion implies also
+  $⊢ (Γ,x:_1A || x :_ω A), Σ$.
+  Unfolding the typing rules in turn implies that there exist a context $Δ$ such as $x:_1A = ωΔ$, which
   cannot hold.
 
   The other cases are routine.
