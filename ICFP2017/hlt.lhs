@@ -1475,27 +1475,25 @@ only produce consistent heaps.
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
-\improvement{Improve this.}
 \begin{lemma}[Progress]
-  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $t$ is not in normal form, then there
-  exists a heap $Δ$ and value $z$ such that
-  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$.
+  \todo{I wrote a sketch, but there is no good way, as it stands, to
+    state a progress theorem for two reasons: the semantics does not
+    distinguish blocking and non-termination, and black-holing creates
+    states which ostensibly block. Potential fix idea for both issues:
+    add a distinguished value representing non-termination (like
+    |undefined|), and set |x| to undefined when black-holing rather
+    than removing it from the heap.}
 \end{lemma}
 \begin{proof}
-  Consider the application case. If $t$ is not in normal form, then by
-  definition it must have the form $x u$ and $x$ must reduce to a
-  lambda term. We conclude by noting that there is a reduction rule
-  for this situation. The |case| case works similarly.
+  The important rule is the linear variable rule: if a variable is in
+  the linear heap, trying to dereference heap with a target
+  multiplicity $ω$ would block. However, for such a state to be
+  reachable we would need $Ξ ⊢ (Γ,x:_1A || x :_ω A), Σ$ to be
+  typed. Unfolding the typing rules this implies $x:_1A = ωΔ$ which
+  cannot hold.
+
+  The other cases are routine.
 \end{proof}
-
-
-\improvement{SPJ remarks the following: in $ω$ mode, we cannot lookup
-  variables in the linear heap. That is worth mentioning
-  explicitly. Furthermore, because it is valid to never use case-bang,
-  and because well-typed programs won't go wrong, it is not possible
-  to have references to the linear heap when in omega mode, so it must
-  be empty. This may also be an argument for the eventual
-  de-allocation. }
 
 
 \subsection{Erasing the dynamic weight}
