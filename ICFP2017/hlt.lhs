@@ -1385,6 +1385,7 @@ Hence, starting from a well-typed state, the reduction relation will
 only produce consistent heaps.
 \end{proof}
 
+\todo{missing abs rule in well-typed reduction}
 \begin{figure}
   \centering
 \begin{definition}[Well-typed reduction relation]
@@ -1409,7 +1410,7 @@ only produce consistent heaps.
 {\text{linear variable}}
 
 \inferrule
-  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{q_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{pq_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
   {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
 {\text{let}}
 
