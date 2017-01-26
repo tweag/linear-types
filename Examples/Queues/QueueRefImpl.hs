@@ -5,6 +5,7 @@
 
 module QueueRefImpl where
 
+import MapRefImpl
 -- The two character token "-o" is not valid, so just use this to mark
 -- linear arrows for now:
 type (⊸) = (->)
@@ -58,9 +59,9 @@ type Vector a = List a
     
 newtype Bang a = Bang a
 
-alloc   :: (Queue a ⊸ Bang a) ⊸ a
+alloc   :: (Queue msg ⊸ Bang a) ⊸ Bang a
 alloc k = case k Nil of
-  Bang x -> x
+  Bang x -> Bang x -- forcing
 
 free    :: Storabloid a => Queue a ⊸ ()
 free Nil = ()
@@ -86,3 +87,14 @@ evict _ Nil = (Nil,Bang Nil)
 evict n (Cons x xs) = case load x of
   Bang y -> case evict (n-1) xs of
     (xs', Bang ys) -> (xs', Bang (Cons y ys))
+
+exampleQueueInMap =
+  allocMap $ \m ->
+  {- do some with m -}
+  alloc $ \q ->
+    let m' :: Map Int (Queue Bool)
+        m' = insert 1 q m
+        f :: Map k (Queue Bool) ⊸ Bang Char
+        f = undefined
+    in f m'
+
