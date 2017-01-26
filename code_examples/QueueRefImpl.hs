@@ -50,9 +50,12 @@ filterLinear f (Cons x xs) = case f x of
   Nothing -> filterLinear f xs
   Just x' -> Cons x' (filterLinear f xs)
 
+
+
+type MsgId = Int             
 type Queue a = List a
 type Vector a = List a
-
+    
 newtype Bang a = Bang a
 
 alloc   :: (Queue a ⊸ Bang a) ⊸ a
@@ -67,7 +70,8 @@ free (Cons x xs) = case storabloidFree x of
 push    :: Storabloid a => a ⊸ Queue a ⊸ Queue a
 push x xs = let x' = store x in seq x' (Cons x' xs)
 
-delete  :: Storabloid a => Int -> (a ⊸ (a ⊗ Int)) ⊸ Queue a ⊸ Queue a
+-- | Delete all message from the queue that have a given identifier.
+delete  :: Storabloid a => MsgId -> (a ⊸ (a ⊗ MsgId)) ⊸ Queue a ⊸ Queue a
 delete del extractId = filterLinear $
                        \x -> let (x',ident) = extractId x
                              in if del == ident
@@ -77,9 +81,8 @@ delete del extractId = filterLinear $
 
 -- | Take up to N elements off the head of the queue.
 --   (Warning: these are the N newest, not oldest elements.)
-evict   :: Storabloid a => Int -> Queue a ⊸ (Queue a, Bang (Vector a))
+evict   :: Storabloid a => MsgId -> Queue a ⊸ (Queue a, Bang (Vector a))
 evict _ Nil = (Nil,Bang Nil)
 evict n (Cons x xs) = case load x of
   Bang y -> case evict (n-1) xs of
     (xs', Bang ys) -> (xs', Bang (Cons y ys))
-

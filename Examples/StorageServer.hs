@@ -80,7 +80,7 @@ tieredStorageServer s1 s2 client = case client of
       (Indeed v,s2) -> respond (Indeed v,tieredStorageServer s1 s2)
       (No,s2) -> respond (No,tieredStorageServer s1 s2)
   Store k v respond -> let (v1,v2) = copy v in
-    s1 $ Stoke k v1 $ \s1 ->
+    s1 $ Store k v1 $ \s1 ->
     s2 $ Store k v2 $ \s2 ->
     respond (tieredStorageServer s1 s2)
 
