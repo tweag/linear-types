@@ -1469,9 +1469,9 @@ only produce consistent heaps.
   By induction on the typed-reduction.
 
   The important case is the case-bang rule. By induction we have that
-  $Ξ,y:_ω⊢(Δ|Bang x) :_1 Bang A,…$. Unfolding the typing rule for
+  $Ξ,y:_ω⊢(Δ||Bang x) :_1 Bang A,…$. Unfolding the typing rule for
   $Bang$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
-  prove that $Ξ⊢(Δ|u[x/y]) :_ω C , Σ$.
+  prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
 \end{proof}
 
 \begin{corollary}[Eventual de-allocation of linear values]
