@@ -75,6 +75,8 @@ delete del extractId = filterLinear $
                                           () -> Nothing
                                   else Just x
 
+-- | Take up to N elements off the head of the queue.
+--   (Warning: these are the N newest, not oldest elements.)
 evict   :: Storabloid a => Int -> Queue a ⊸ (Queue a, Bang (Vector a))
 evict _ Nil = (Nil,Bang Nil)
 evict n (Cons x xs) = case load x of

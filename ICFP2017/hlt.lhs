@@ -545,6 +545,8 @@ have $A → B$.
 
 To clarify the meaning of multiplicities, here are a few examples of what is
 allowed or not:
+\rn{This grows a bit tedious.  Maybe listing the one ``cannot'' and then
+  describing the remaining cases collectively?}
 \begin{enumerate}
 \item A linear (multiplicity $1$) value {\bf can} be passed to a linear
   function.
@@ -559,6 +561,7 @@ allowed or not:
   value when the function is called in an unrestricted context).
 \item An unrestricted value {\bf can} be returned by a unrestricted function.
 \end{enumerate}
+
 Indeed, when we say that a function is linear, we refer to its domain,
 not its co-domain. Hence, linearity of a function does not influence
 what it can return, only what it can take as arguments.
@@ -572,7 +575,7 @@ g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 g k x y = k (f x) y      -- Valid
 g k x y = k x (f y)      -- Valid
 g k x y = k x y          -- Valid
-g k x y = k y x          -- Invalid
+g k x y = k y x          -- Invalid, x has multiplicity 1
 \end{code}
 
 Using the new linear arrow, we can define a linear version of the list
@@ -609,10 +612,13 @@ $ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. In terms of resource
 neither |xs| nor |ys| can contain resources, so
 neither can |xs++ys|: it is thus safe to share |xs++ys|.
 
-Of course, not all programs are linear: a function may legitimately
+For an existing language, being able to strengthen |(++)| in a {\em
+  backwards-compatible} way is a major boon.
+%
+Of course, not all functions are linear: a function may legitimately
 demand unrestricted input, even to construct an output with
 multiplicity $1$. For example the function repeating its input
-indefinitely need to be unrestricted:
+indefinitely needs to be unrestricted:
 \begin{code}
   cycle :: List a → List a
   cycle l = l ++ cycle l
