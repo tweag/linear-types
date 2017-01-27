@@ -1169,19 +1169,27 @@ must be~---~unrestricted)
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-While one can easily give a semantics to \calc{} by translation to a
-usual $λ$-calculus, namely by erasing multiplicities, such a semantics is
-deeply insatisfactory. Indeed, one may wonder if the language is at
-all suitable for tracking resources. One may worry, for example, that
-linear variables may be systematically subject to garbage collection,
-say if we somehow end up pointing to linear values from unrestricted
-closures or thunks. If that were so our system would not give any
-runtime benefit.
+We wish to give a dynamic semantics for \calc{} which accounts for the
+explicit allocations and de-allocations as seen in the queue
+example. To that effect we follow \citet{launchbury_natural_1993} who
+defines a semantics for lazy computation.
 
-In this section we show exactly when linear variables can be
-represented by linear objects at runtime. In turn, we show why the
-queue API presented earlier may indeed be implemented with a single
-linear queue.
+\citeauthor{launchbury_natural_1993}'s semantics is a big-step
+semantics where variables play the role of pointers to the heap (hence
+represent sharing, which is the cornerstone of a lazy semantics). We
+augment that semantics with a foreign heap and queue
+primitives. Concretely, bindings in the heap are of the form $x↦_p e$
+where $p∈\{1,ω\}$ a multiplicity: bindings with multiplicity $ω$
+represent objects on the regular, garbage-collected, heap, while
+bindings with multiplicity $1$ represent objects on a foreign heap,
+which we call the \emph{linear heap}. Queues and messages are
+represented as literals\footnote{As such, queues will seem to be
+  copied on the stack, but it is just an artifact of the particular
+  presentation: it does not have a syntax for returning ``pointers''.}
+manipulated by the primitives. For the sake of simplicity of
+presentation, we will only show one primitive (\emph{push}) beyond
+allocation and de-allocation.
+
 
 Concretely, we show that it is possible to allocate linear objects on
 a heap which is not managed by the garbage collector, and
@@ -1192,6 +1200,26 @@ actually \emph{more precise} than what we intend to implement: it
 serves as a technical device to justify the less intrusive semantics
 that we describe in \fref{sec:eras-dynam-weight}, and requires no
 modification to GHC (beyond type-checking, of course).
+
+\citet{launchbury_natural_1993}'s semantics relies on a constrained
+$λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
+extend \citet{launchbury_natural_1993}'s original syntax with
+\begin{description}
+\item[Message literals] We assume a collection of message literals
+  written $m_i$. We assume that the programmer can type such literals
+  in the program. They are not given more semantics than their
+  interaction with lists.
+\item[Queue literals] Queues are a kind of primitive data
+  manipulated by primitive operations. As such the structure of queue
+  is invisible to the constructs of \calc{}, therefore queues are
+  represented a literals. Contrary to message literals, we assume that
+  the programmer \emph{cannot} type such literals: they are created by
+  primitive operations. Therefore queue literals will only be found in
+  the heap (specifically: on the linear heap).\improvement{describe
+    notation for queue literals}
+\item[Primitives] $alloc$, $free$ and $push$ responsible respectively for allocating a
+  queue, freeing a queue, and pushing a message to a queue.
+\end{description}
 
 \begin{figure}
 
@@ -1205,7 +1233,11 @@ modification to GHC (beyond type-checking, of course).
       &||  r p\\
       &||  c x₁ … x_n\\
       &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
-      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r
+      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r\\
+      &||  m_i\\
+      &||  alloc k\\
+      &||  push y z\\
+      &||  free x
   \end{align*}
 
   \figuresection{Translation of typed terms}
@@ -1225,130 +1257,77 @@ modification to GHC (beyond type-checking, of course).
   \caption{Syntax for the Launchbury-style semantics}
   \label{fig:launchbury:syntax}
 \end{figure}
-
-A Launchbury-style semantics is a big-step semantics expressed in a
-language suitable to represent sharing. The detail of this language
-and the translation from \calc{} can be found in
-\fref{fig:launchbury:syntax}. The main differences between \calc{} and
-the runtime language are that the latter is untyped, has fewer multiplicity
-annotations, and applications always have variable arguments.
-
-The complete semantics is given in \fref{fig:dynamics}.
-Compared to \citeauthor{launchbury_natural_1993}'s original, our
-semantics exhibits the following salient differences:
-\begin{itemize}
-\item The heap is annotated with multiplicities. The variables with multiplicity
-  $ω$ represent the objects of the garbage-collected heap, while the variables with
-  multiplicity $1$ represent objects in a non-garbage-collected heap, which we call
-  the linear heap.
-\item We add a multiplicity parameter to the reduction relation,
-  corresponding to the (dynamic) multiplicity of values to produce.
-  Indeed, while the static syntax always produces exactly one value,
-  recall that programs are automatically scaled to $ω$ if possible.
-\item The rules for \emph{variable}, \emph{let}, and
-  \emph{application} are changed to account for multiplicities (let-bindings
-  and applications are annotated with a multiplicity for this reason).
-\end{itemize}
-
-The dynamics assume that multiplicity expressions are reduced
-to a constant using equality laws for multiplicities. If that is not possible the
-reduction will block on the multiplicity parameter. This behavior is not problematic because all
-\HaskeLL{} programs will have no free multiplicity variables.
-The multiplicity parameter of the reduction relation is used to interpret
-$\flet x =_1 …$ bindings into allocations on the appropriate
-heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
-allocate into the linear heap: on the contrary, in $ω$ contexts, $\flet x =_1 …$ must
-allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
-the following example:
-%
-\begin{code}
-let f = _ ω (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
-let a = _ ρ f ()
-\end{code}
-%
-The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
-thunk must be allocated in the linear heap if the context requires a
-linear value, while if the context requires an unrestricted value, the
-thunk must be allocated on the garbage-collected heap. However, the
-thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
-allocate on the garbage-collected heap despite being annotated with
-multiplicity $1$. This behavior is not a consequence of implicit promotion
-from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
-pure linear logic features an explicit promotion, which also permits
-linear functions to produce linear values which can be promoted to
-produce unrestricted values.
-
-In all evaluation rules, this dynamic multiplicity is propagated to
-the evaluation of subterms, sometimes multiplied by another
-multiplicity originating from the term. This means that, essentially,
-once one starts evaluating unrestricted results (multiplicity $ω$),
-one will remain in this dynamic evaluation mode, and thus all further
-allocations will be on the \textsc{gc} heap. However, it is possible
-to provide a special-purpose evaluation rule to escape unrestricted
-evaluation to linear evaluation.  This rule concerns case analysis of
-|Bang x|, where the weight of the scrutninee is not multiplied by the
-dynamic multiplicity:
-\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
-    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}}
-\[ \casebangrule{} \]
-  \unsure{In case-bang rule, replace q by 1 and ρ by ω?}
-The observations justifying this rule are that 1. when forcing a |Bang|
-constructor, one will obtain $ω$ times the contents. 2. the contents
-of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
-$x$ has multiplicity $ω$, the type-system ensures that all the
-intermediate linear values potentially allocated to produce $x$ must
-have been completely eliminated before being able to return $x$.
-
-As an illustration, recall the |alloc| function from our queue reference
-implementation:
-\begin{code}
-alloc   :: (Queue ⊸ Bang a) ⊸ a
-alloc k = case k [] of
-  Bang x -> x
-\end{code}
-Using the case-bang rule it behaves as expected.
-Indeed, even when |alloc k| is demanded $ω$ times, |k| will be
-demanded $1$ time, and in turn the queue will reside on the linear
-heap, and it is guaranteed to be de-allocated by the time the |Bang|
-constructor is forced. This linear dynamic semantics of the reference implementation
-is what justifies storing the queue in a foreign heap when the queue is implemented by foreign
-functions.
-
+\improvement{[aspiwack] The multiplicity rules are here only for
+  compatibility with the strong typed semantics. They are a bit in the
+  way, really: for the standard dynamics we might as well erase all
+  the multiplicity, but I think this would end up making the presentation
+  heavier. Either we should say a word about multiplicity rules in
+  this paragraph, or we could simply note that all the weight can be
+  resolved statically (I believe that to be true, we should check) and
+  omit the rules.}
+The dynamic semantics is given in \ref{fig:dynamics}. Let us review
+the new rules
+\begin{description}
+\item[Linear variable] In the linear variable rule, the binding in the
+  linear heap is removed. While this can be exploited to signify
+  explicit de-allocation of objects on the linear heap. However, the
+  linear variable rule is best seen as a technical device to represent
+  the strictness of the queue primitives: the queue literal will then
+  be passed to a primitive, either \emph{free} to actually free the
+  queue, or \emph{push} to augment the queue with a message.
+\item[Alloc] The alloc rule creates a new (empty) queue and pass it to
+  its continuation. It is not the only rule which allocate in the
+  sense of using a |malloc|-like primitive: pushing a message to a
+  queue may require allocation to accommodate for the extra
+  element. However its role is to allocate a root that will own a
+  queue.
+\item[Free] In combination with the linear variable rule, deallocates
+  a queue.
+\item[Push] The push rule adds a message to a queue. Notice that the
+  message itself is incorporated into the queue literal: there is no
+  mention of a variable pointing to the message. This is because the
+  message is copied from the garbage-collected heap to the linear
+  heap.
+\end{description}
 
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
+    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{w.abs}
 
 
-    \inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\ Δ : e'[q/π] ⇓_{ρ} Θ : z} {Γ :
+    \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
       e q ⇓_ρ Θ : z} \text{w.app}
 
-    \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
+    \inferrule{ }{Γ : λx. e ⇓ Γ : λx. e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{ρ} Θ : z} {Γ :
-      e x ⇓_ρ Θ : z} \text{application}
+    \inferrule{Γ : e ⇓ Δ : λy.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+      e x ⇓ Θ : z} \text{application}
 
-    \inferrule{Γ : e ⇓_ω Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) :
+    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x ↦_ω e) : x ⇓ (Δ;x ↦_ω z) :
       z}\text{shared variable}
 
 
-    \inferrule{Γ : e ⇓_1 Δ : z} {(Γ,x ↦_1 e) : x ⇓_1 Δ :
+    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x ↦_1 e) : x ⇓ Δ :
       z}\text{linear variable}
 
 
-    \inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
-    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ :
+    \inferrule{(Γ,x_1 ↦_ω e_1,…,x_n ↦_ω e_n) : e ⇓ Δ : z}
+    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓ Δ :
       z}\text{let}
 
-    \inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ …
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
       x_n}\text{constructor}
 
 
-    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓_ρ Θ : z}
-    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+    \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \casebangrule
+    \inferrule{Γ,x ↦_1 ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+
+    \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
+
+    \inferrule{Γ:x ⇓ Δ:⟨…⟩ }{Γ : free x ⇓ Δ : () }\text{free}
 
   \end{mathpar}
 
@@ -1356,48 +1335,97 @@ functions.
   \label{fig:dynamics}
 \end{figure}
 
-The \emph{shared variable} rule also triggers when the multiplicity
-parameter is $1$, thus effectively allowing linear variables to look
-on the garbage-collected heap, and in turn linear data to have unrestricted
-sub-data.
+While the semantics of \fref{fig:dynamics} describes quite closely
+what is implemented in the \textsc{ghc} extension prototype, it is not
+convenient for proving properties. There are two reasons to that fact:
+first the semantics is rather disjoint from the type system and, also,
+there are pointers from the garbage-collected heap to the linear
+heap. The latter property will happen, for instance, if the programmer
+needs a pair of queue: the pair will be allocated on the
+garbage-collected heap while the queues will live in the linear heap.
 
-It is an essential property that the garbage collected heap does not
-contain any reference to the linear heap. Otherwise, garbage
-collection would have to also free the linear heap, making the linear
-heap garbage-collected as well (the converse does not hold: there can
-be references to the garbage-collected heap from the linear heap,
-acting as roots).
-\begin{lemma}[The \textsc{gc} heap never points to the linear heap]
-  \improvement{Formal statement? It is not easy to write because we
-    have a big-step semantics and we want the property for every small
-    step.}
-\end{lemma}
-\begin{proof}
-  To prove the above we need a more precise version of the reduction
-  relation, which additionally tracks the contents of the stack, and
-  is fully typed. (See \fref{fig:typed-semop}.) Technically, the judgement
-  $Γ:t ⇓_ρ Δ:z$ is extended to the form $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$,
-  where
-\begin{itemize}
-\item $Ξ$ is a context of free variables
-\item $Σ$ is a stack of typed terms which are yet to be reduced, together with their respective multiplicities
-\item $t,z$ are typed terms
-\item $Γ,Δ$ are heap states, that is associations of variables to
-  a multiplicity and a typed term.
-\end{itemize}
-We can then see that this new relation preserves types. A well-typed
-reduction state implies that the heap is consistent as per this lemma.
-Hence, starting from a well-typed state, the reduction relation will
-only produce consistent heaps.
-\end{proof}
+This is not a problem in and on itself: pointers to queue may be seen
+as opaque by the garbage collector which will not collect them, so
+that their lifetime is still managed explicitly by the
+programmer. However, in order to prevent use-after-free bug, we must
+be sure that by the time a queue is freed, every object in the
+garbage-collected heap which points to that queue must be dead, even
+if they are still extant in the heap.
 
+In order to prove such a property, let us introduce a stronger
+semantics with the lifetime of objects more closely tracked. The
+strengthened semantics differs from \fref{fig:dynamics} in two
+aspects: the evaluation states are typed, and values with statically
+tracked lifetimes (linear values) are put on the linear
+heap.\improvement{Remark: the annotation on the untyped semantics is
+  useless. We have two choices: either we decide to remove annotations
+  from the untyped semantics altogether, or we keep all the type
+  annotations (not just multiplicity) and ignore them in the untyped
+  semantics, but we can unify the typed and untyped semantics}
+
+In order to define the typed semantics, we shall introduce a few
+notations. First we will need a notion of product annotated with the
+multiplicity of its first component.
+\begin{definition}[Weighted tensors]
+
+  We use $A {}_ρ⊗ B$ ($ρ∈\{1,ω\}$) to denote one of the two following
+  types:
+  \begin{itemize}
+  \item $\data A~{}_1\!⊗ B = ({}_1\!,) : A ⊸ B ⊸ A~{}_1\!⊗ B$
+  \item $\data A~{}_ω\!⊗ B = ({}_ω\!,) : A → B ⊸ A~{}_1\!⊗ B$
+  \end{itemize}
+
+\end{definition}
+Weighted tensors are used to internalise a notion of stack that keeps
+tracks of multiplicity for the sake of the following definition, which
+introduces the states of the strengthened evaluation relation.
+
+\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
+
+\begin{definition}[Annotated state \& well-typed state]
+  An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
+  \begin{itemize}
+  \item $Ξ$ is a typing context
+  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+    bindings of the form $x :_ρ A = e$
+  \item $t$ is a term
+  \item $ρ∈\{0,1\}$ is a multiplicity
+  \item $A$ is a type
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+    a term, a multiplicity and an annotation.
+  \end{itemize}
+
+  We say that such an annotated state is well-typed if the following
+  typing judgement holds:
+  $$
+  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A{}_ρ\!⊗\multiplicatedTypes{Σ})‌
+  $$
+  Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
+  bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  for $(e_1 {}_{ρ_1}\!, (…, (e_n{}_{ρ_n},())))$, and
+  $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
+  $A_1{}_{ρ_1}\!⊗(…(A_n{}_{ρ_n}\!⊗()))$.
+\end{definition}
+
+\begin{definition}[Strengthened reduction relation]
+  We define the strengthened reduction relation, also written $⇓$, as a
+  relation on annotated state. Because $Ξ$, $ρ$, $A$ and $Σ$ will
+  always be the same for related states, we abbreviate
+  $$
+  (Ξ ⊢ Γ||t :_ρ A,Σ) ⇓ (Ξ ⊢ Δ||z :_ρ A,Σ)
+  $$
+  as
+  $$
+  Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ
+  $$
+
+  The strengthened reduction relation is defined inductively by the
+  rules of \fref{fig:typed-semop}.
+\end{definition}
 \todo{missing abs rule in well-typed reduction}
+\todo{replace case-bang with alloc/free/push}
 \begin{figure}
-  \centering
-\begin{definition}[Well-typed reduction relation]
-  The judgement \[Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ\] is defined inductively by
-  the following rules:
-
 \begin{mathpar}
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
@@ -1437,159 +1465,153 @@ only produce consistent heaps.
    {Ξ ⊢ (Γ||\mathsf{case}_{1} e \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
 {\text{case-bang}}
   \end{mathpar}
-\end{definition}
   \caption{Typed operational semantics. (Omitting the obvious abs, w.abs and w.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
-\begin{definition}[Well-typed state]
-  We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
-  \[
-    Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
-    (ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌
-  \]
-  In the above expression $\flet Γ$ stands in turn for a nested
-  $\mathsf{let}$ expression where all variables in $Γ$ are bound to
-  the corresponding term in $Γ$, with the given type and multiplicity. We
-  write $(ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌$ for the multiplicated tensor
-  type comprised of $A$ with multiplicity $ρ$, the types in $Σ$ and the
-  corresponding multiplicities. The term $(t,\mathnormal{terms}(Σ))$ in the
-  inhabitant of that type which pairs $t$ with a tuple of the terms in
-  $Σ$.
-\end{definition}
+There are a few things of notice about the semantics of
+\fref{fig:typed-semop}. First, the let rule doesn't necessarily
+allocate in the garbage collected heap anymore — this was the goal of
+the strengthened semantics to begin with — but nor does it
+systematically allocate bindings of the form $x :_1 A = e$ in the
+linear heap either: the heap depends on the multiplicity $ρ$. The
+reason for this behaviour is promotion: an ostensibly linear value can
+be used in an unrestricted context. In this case the ownership of $x$
+must be given to the garbage collector: there is no static knowledge
+of $x$'s lifetime. For the same reason, the linear variable case
+requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} will prove
+this restriction to be safe).
 
-\improvement{Make a definition of the typed reduction before the two
-  lemmas, remark explicitly that it extracts to the untyped
-  reduction.}
-\begin{lemma}[The typed reduction relation preserves typing]\label{lem:type-safety}~\\
-  if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
-  \[Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.\]
+The other important rule is the alloc rule: it requires a result of
+the form $Bang x$ of multiplicity $1$ while returning a
+result of multiplicity $ω$. It is crucial as the alloc rule is the
+only rule which make possible the use of a linear value to produce a
+garbage collected value, this will justify the fact that in the ordinary
+semantics, queues can be allocated in the linear heap. The reason why
+it is possible is that, by definition, in $Bang x$, $x$ \emph{must} be
+in the garbage-collected heap. In other words, when an expression $e :
+Bang A$ is forced to the form $Bang x$, it will have consumed all the
+pointers to the linear heap (the correctness of this argument is
+proved in Lemma~\ref{lem:type-safety} below).\todo{Mention the
+  case-bang rule in the conclusion (the case-bang rule can be found in
+  the source below this todo-box)}
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
+    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}}
+
+The crucial safety property of the strengthened relation is that it
+preserves well-typing of states.
+
+\begin{lemma}[Strengthened reduction preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  $$
+  Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
+  $$
 \end{lemma}
 \begin{proof}
   By induction on the typed-reduction.
 
-  The important case is the case-bang rule. By induction we have that
-  $Ξ,y:_ω⊢(Δ||Bang x) :_1 Bang A,…$. Unfolding the typing rule for
-  $Bang$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
-  prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
+  \todo{There used to be the case of the case-bang in more details,
+    probably do alloc instead}
+  % The important case is the case-bang rule. By induction we have that
+  % $Ξ,y:_ω⊢(Δ||Bang x) :_1 Bang A,…$. Unfolding the typing rule for
+  % $Bang$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
+  % prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
 \end{proof}
 
-\begin{corollary}[Eventual de-allocation of linear values]
-  Let $t$ be a closed term and $\data () = ()$, the data declaration
-  with a single constructor. If $⊢ (||t ⇓ Δ||()) :_ρ (), ⋅ $ and
-  $⊢ (||t :_ρ ()), ⋅ $, then $Δ$ only contains $ω$-bindings.
+Because of this property we can freely consider the restriction of the
+strengthened relation to well-typed states. For this reason, from now
+on, we only consider well-typed states.
+
+\begin{corollary}[Never stuck on the linear variable rule]\label{cor:linear-variable}
+  $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not reachable.
 \end{corollary}
 \begin{proof}
-  By Lemma \ref{lem:type-safety}, % TODO fref?
+  Remember that we consider only well-typed states because of
+  Lemma~\ref{lem:type-safety}. Unfolding the typing rules it is easy
+  to see that $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not well-typed: it
+  would require $x:_1 A = ωΔ$ for some $Δ$, which cannot be.
+\end{proof}
+
+We are now ready to prove properties of the ordinary semantics by
+transfer of properties of the strengthened semantics. Let us start by
+defining a notion of type assignment for states of the ordinary
+semantics.
+
+\newcommand{\ta}[2]{γ(#1)(#2)}
+
+\begin{definition}[Type assignment]
+  A well-typed state is said to be a type assignment for an ordinary
+  state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
+  $e=e' ∧ Γ' \leqslant Γ$.
+
+  That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
+  linear, and to drop unnecessary $ω$ bindings.
+\end{definition}
+
+Notice that for a closed term, type assigment reduces to the fact that
+$e$ has a type. So we can see type assignment to state as a
+generalisation of type assignment to terms which is preserved during
+the reduction. Let us turn to prove that fact, noticing that type
+assignment defines a relation between ordinary states and well-typed
+states.
+
+\begin{lemma}[Type safety]\label{lem:actual_type_safety}
+  The refinement relation defines a simulation of the ordinary
+  reduction by the strengthened reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  This is proved by a straightforward induction over the ordinary
+  reduction. The case of let may be worth considering for the curious
+  reader.
+\end{proof}
+
+From type-safety follows the fact that a completely evaluated program
+has necessarily de-allocated all the linear heap. This is a form of
+safety from resource leaks (of course, resource leaks can always be
+programmed in, but the language itself does not leak resources).
+
+\begin{corollary}[Eventual de-allocation of linear values]
+  Let $⊢ t : ()$ be a closed term, where $\data () = ()$ is the data
+  declaration with a single constructor. If $:t ⇓ Δ:()$, then $Δ$ only
+  contains $ω$-bindings.
+\end{corollary}
+\begin{proof}
+  By Lemma \ref{lem:actual_type_safety}, % TODO fref?
   we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
   $()$ conclude: in order for $()$ to be well typed, the environment
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
-\begin{lemma}[Progress of non-recursive programs.]
-  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $t$ is not in normal form and does not
-  use recursion, then there exists a heap $Δ$ and value $z$ such that
-  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$.
+For the absence of use-after-free errors, let us invoke a liveness
+property: that the type assignment is also a simulation of the
+strengthened semantics by the ordinary semantics (making type
+assignment a bisimulation). There is not a complete notion of progress
+which follows from this as big step semantics such as ours do not
+distinguish blocking from looping: we favoured clarity of exposition
+over a completely formal argument for progress.
 
-\todo{I wrote a sketch, but there is no good way, as it stands, to
-    state a progress theorem for two reasons: the semantics does not
-    distinguish blocking and non-termination, and black-holing creates
-    states which ostensibly block. Potential fix idea for both issues:
-    add a distinguished value representing non-termination (like
-    |undefined|), and set |x| to undefined when black-holing rather
-    than removing it from the heap.}
+\begin{lemma}[Liveness]\label{lem:liveness}
+  The refinement relation defines a simulation of the strengthened
+  reduction by the ordinary reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+  $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$, there exists a state $Δ:z$ such
+  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
 \end{lemma}
 \begin{proof}
-  First remark that the free variables in $Ξ$ are used only in $Σ$ in
-  the non-recursive case. Indeed, the only rules which extend $Ξ$ are
-  $\mathsf{case}$, where it is clear that the introduced variables are
-  used only in $Σ$; and the shared variable rules, where $e$ can use
-  $x$ only in presence of recursion.
-
-  We now proceed to prove the main claim.
-  The important rule is the linear variable rule: if a variable is in
-  the linear heap, trying to dereference heap with a target
-  multiplicity $ω$ would block. However, for such a state to be
-  reachable we would need $Ξ ⊢ (Γ,x:_1A || x :_ω A), Σ$ to be
-  typed, which in light of non-recursion implies also
-  $⊢ (Γ,x:_1A || x :_ω A), Σ$.
-  Unfolding the typing rules in turn implies that there exist a context $Δ$ such as $x:_1A = ωΔ$, which
-  cannot hold.
-
-  The other cases are routine.
+  This is proved by a straightforward induction over the ordinary
+  reduction.
 \end{proof}
 
-
-\subsection{Erasing the dynamic weight}
-\label{sec:eras-dynam-weight}
-From a compiler perspective, there is a cost to this semantics: we
-need to take the run-time multiplicity somehow. Maybe we want to pass
-the run-time multiplicity in a register, but that may have a speed
-penalty for the program, or we may want to specialise the emitted code
-to two versions (one for each possible run-time multiplicity), but
-that generates quite bigger executable, at a performance cost to the
-compiler itself. In either case, it requires non-trivial modification
-to the code-emitting infrastructure.
-
-It may be worth it, even though such eager prompt de-allocation
-behaviour may actually be slower than letting the garbage collector
-clean the data: it may result in leaner memory profile and more
-predictable latencies. Overall speed is, after all, not the only
-metric one may want to optimise. But, for the scope of this article,
-we want to focus on just modifying the type-checker and reaping the
-low-hanging fruits.
-
-The operational semantics of \calc{}, as it turns out, happens to be
-the right technical device to justify that the queue API from
-\fref{sec:queue-api} can allocate the queue on a foreign heap while
-staying memory-safe. This hinges on the following.
-
-\begin{remark}
-  In the semantics of \fref{fig:dynamics}, replacing any binding of
-  multiplicity $1$ in the heap by the same binding with multiplicity
-  $ω$ does not affect the execution. Except from extra garbage staying
-  around in the heap.
-\end{remark}
-
-Concretely it means that something that should be deallocated promptly
-can be allocated on the garbage-collected heap without affecting the
-semantics of the program. Of course, it ostensibly breaks our
-invariant that garbage-collected data cannot point to linear data. So,
-in a concrete implementation, one must take care that the garbage
-collector will not deallocate linear data prematurely. Concretely,
-pointers to the linear heap would be opaque to the garbage collector
-(like the |Ptr| type representing foreign object in GHC's foreign
-function interface). The semantics of \fref{fig:dynamics}, ensures
-that by the time the linear piece of data pointed by such a foreign
-pointer is collected, the object pointing to the data is itself
-unaccessible, and just waiting to be freed by the garbage collector.
-
-With this remark in mind, we can introduce a special allocation rule
-combining in a single step a linear $\flet$ and the special
-$\mathsf{case}$-of-$\varid{Bang}$ rule as follows:
-
-\unsure{proof-check this semantic rule, it should probably be phrased
-  in terms of the untyped semantics}
-\begin{mathpar}
-\inferrule
-   {Ξ ⊢ (Γ,x=_1 t || k x ⇓ Δ||\varid{Bang} w) :_ω \varid{Bang} B, u:_ω C, Σ \\
-    Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
-   {Ξ ⊢ (Γ||\mathsf{case}_{1} (\flet x:_1A = t \fin e t) \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
-{\text{alloc}}
-\end{mathpar}
-
-This rule allocates |x| on the linear heap, whatever the ambient
-run-time multiplicity is, as per \fref{fig:dynamics}. So we do not
-need to keep track of run-time multiplicity for this rule. We choose
-to allocate every other binding on the garbage-collected heap: that
-way we do not need to track multiplicity at all, and only special
-allocation primitives (whose type is an instance of the above) will
-allocate on the linear heap. Therefore, no modification need to occur
-in the compiler's code emission: we can delegate allocation to foreign
-functions.
-
-
-
+In conjunction with Corollary~\ref{cor:linear-variable},
+Lemma~\ref{lem:liveness} shows that well-typed program don't get
+blocked, in particular that garbage-collected objects which point to the
+linear objects are not dereferenced after the linear object has been
+freed: \calc{} is safe from use-after-free errors.
 
 \section{Related work}
 \subsection{Alms}
@@ -1851,4 +1873,4 @@ applications.
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
-%  LocalWords:  unannotated
+%  LocalWords:  unannotated tuple
