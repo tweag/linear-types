@@ -1,4 +1,9 @@
+# Non-reproducible "current" version:
 with (import <nixpkgs> {});
+# This works for RRN:
+# with import (fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/nixos-16.09.tar.gz) {};
+
+
 let orgEmacs = emacsWithPackages (with emacsPackagesNg; [org]);
 in stdenv.mkDerivation {
   name = "docsEnv";
