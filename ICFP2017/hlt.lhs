@@ -127,7 +127,14 @@
 \newcommand\HaskeLL{Hask-LL}
 
 % Title portion
-\title{\HaskeLL}
+
+% Put working title proposals here:
+% \title{\HaskeLL}
+% \title{\HaskeLL: Linear types with backwards compatibility in an established language}
+% \title{\HaskeLL: Linear types with Backwards Compatibility}
+\title{\HaskeLL: Systems Programming with \\ Backwards-Compatible Linear Types}
+
+
 \author{Jean-Philippe Bernardy}
 \affiliation{%
   \institution{Gothenburg University}
