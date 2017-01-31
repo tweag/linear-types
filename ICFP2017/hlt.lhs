@@ -555,18 +555,27 @@ allowed or not:
 \rn{This grows a bit tedious.  Maybe listing the one ``cannot'' and then
   describing the remaining cases collectively?}
 \begin{enumerate}
-\item A linear (multiplicity $1$) value {\bf can} be passed to a linear
-  function.
-\item An unrestricted (multiplicity $ω$) value {\bf can} be passed to a linear
-  function.
-\item A linear value {\bf cannot} be passed to a unrestricted function.
-\item An unrestricted value {\bf can} be passed to a unrestricted function.
-\item A linear value {\bf can} be returned by a linear function.
-\item An unrestricted value {\bf can} be returned by a linear function.
-\item A linear value {\bf can} be returned by a linear function (and
-  the type-system guarantees that it can be promoted to a unrestricted
-  value when the function is called in an unrestricted context).
-\item An unrestricted value {\bf can} be returned by a unrestricted function.
+
+\item An unrestricted (multiplicity $ω$) value 
+  \begin{enumerate}
+  \item {\bf can} be passed to a linear function.
+  \item {\bf can} be passed to a unrestricted function.  
+  \item {\bf can} be returned by a linear function.
+  \item {\bf can} be returned by a unrestricted function.    
+  \end{enumerate}  
+
+\item A linear (multiplicity $1$) value
+  \begin{enumerate}
+  \item  {\bf can} be passed to a linear function.
+  \item  {\bf cannot} be passed to a unrestricted function.
+  \item  {\bf can} be returned by a linear function (and
+     the type-system guarantees that it can be promoted to a unrestricted
+     value when the function is called in an unrestricted context).
+  \end{enumerate}
+
+% RRN: This looks like a duplicate:
+% \item A linear value {\bf can} be returned by a linear function.
+
 \end{enumerate}
 
 Indeed, when we say that a function is linear, we refer to its domain,
