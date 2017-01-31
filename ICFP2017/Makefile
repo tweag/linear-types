@@ -8,10 +8,10 @@ PaperTools/bibtex/jp.bib:
 clean:
 	rm -f *.tex *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
 
-%.tex: %.lhs
+%.tex: %.lhs 
 	lhs2TeX -o $@ $<
 
-%.pdf: %.tex ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls
+hlt.pdf: hlt.tex ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls old-intro.lhs
 	latexmk -pdf $*
 
 %.cls: %.ins
