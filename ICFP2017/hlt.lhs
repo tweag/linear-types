@@ -1683,40 +1683,33 @@ clearer path to implementation in \textsc{ghc}.
 In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
-or unrestricted. Unrestricted types typically includes primitive types
-(such as \varid{Int}), and all (strictly positive) data types. Linear types
-typically include resources, effects, etc.
+or unrestricted.
 
-A characteristic of such a presentation is that linearity ``infects''
-every type containing a linear type. Consequently, if we want to make
-a pair of (say) an integer and an effect, the resulting type must be
-linear.  This property means that polymorphic data structures can no
-longer be used \emph{as is} to store linear values. Technically, one cannot unify a
-type variable of unrestricted kind to a linear type. One can escape
-the issue by having polymorphism over kinds; unfortunately to get
-principal types one must then have subtyping between kinds and bounded
-polymorphism, as \citet{morris_best_2016}.
+In effect, this imposes a clean separation between the linear world
+and the unrestricted world. An advantage of this approach is that it
+instantiate both to linear types and to uniqueness types depending on
+how they the two worlds relate, and even have characteristics of
+both\footnote{See Edsko de Vries's recent exposition at
+  \url{http://edsko.net/2017/01/08/linearity-in-haskell/}}.
 
-In contrast, in \calc{} we have automatic scaling of linear types to
-unrestricted ones in unrestricted contexts. This feature already
-partially addresses the problem of explosion of types.  First, most
-data structures should have linear constructors and thus readily store
-linear values. Second, first order functions can be given a linear
-type and be scaled automatically. Finally, even in the most general
-case, when multiplicity polymorphism is needed, we get away without
-using bounded quantification: products in weight expressions is all we
-need.
+Such approaches have been very successful for theory: see for instance
+the line of work on so-called \emph{mixed linear and non-linear logic}
+(usually abbreviated \textsc{lnl}) started by
+\citet{benton_mixed_1995}. However, for practical language design,
+code duplication between the linear an unrestricted worlds quickly
+becomes costly. So language designer try to create languages with some
+kind of kind polymorphism to overcome this limitation. This usually
+involves a subkinding relation and bounded polymorphism. This kind
+polymorphic designs are rather complex. See \citet{morris_best_2016}
+for a recent example. By contrast, the type system of \calc{} is quite
+straightforward.
 
-Another issue with the ``linearity in types'' presentation is that it
-is awkward at addressing the problem of ``simplified memory
-management'' that we aim to tackle. As we have seen, the ability to
-use an intermediate linear heap rests on the ability to turn a linear
-value into an unrestricted one. When linearity is captured in types,
-we must have two versions of every type that we intend to move between
-the heaps. Even though \citet{morris_best_2016} manages to largely
-address the issue by means of polymorphism and constraints over types,
-it comes as the cost of a type-system vastly more complex than the one
-we present here.
+Another point, rather specific to \textsc{ghc}, is that the kind
+system of \textsc{ghc} is quite rich, with support for impredicative
+dependent types, and a wealth of unboxed or otherwise primitive types
+which can't be substituted for polymorphic type arguments. It is not
+clear how to extend \textsc{ghc}'s kind system to support linear
+types.
 
 \subsection{Alms}
 \improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And rewrite this paragraph which contains a copy-paste of the paper's abstract.)}
@@ -1916,4 +1909,4 @@ applications.
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
-%  LocalWords:  unannotated tuple
+%  LocalWords:  unannotated tuple subkinding
