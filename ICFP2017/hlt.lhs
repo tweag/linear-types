@@ -1751,24 +1751,6 @@ we present here.
 
 \todo{Compare with uniqueness types}
 
-\subsection{Session types vs. linear types}
-
-\Citet{wadler_propositions_2012} provides a good explanation of the
-relation between session types vs. linear types. In sum, session types
-classify `live' sessions with long-lived channels, whose type
-``evolves'' over time. In contrast, linear types are well suited to
-giving types to a given bit of information. One can see thus that linear types are
-better suited for a language based on a lambda calculus, while session
-types are better suited for languages based on a pi-calculus and/or
-languages with effects. Or put another way, it is a matter of use
-cases: session types are particularly aimed at describing
-communication protocols, while linear types are well suited for
-describing data. One is communication centric, the other is data
-centric, yet there is a simple encoding from session types to linear
-types (as Wadler demonstrates in detail). In practice, we find that
-plain linear types are perfectly sufficient to represent protocols, as
-as we show in \fref{sec:protocols}.\unsure{shall we put back a protocol example?}
-
 \subsection{Operational aspects of linear languages}
 
 Recent literature is surprisingly quiet on the operational aspect of
