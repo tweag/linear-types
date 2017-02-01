@@ -1714,42 +1714,28 @@ clear how to extend \textsc{ghc}'s kind system to support linear
 types.
 
 \subsection{Alms}
-\improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And rewrite this paragraph which contains a copy-paste of the paper's abstract.)}
-Alms is a general-purpose programming language that supports
-practical affine types. To offer the expressiveness of Girard’s linear
-logic while keeping the type system light and convenient, Alms
-uses expressive kinds that minimize notation while maximizing
-polymorphism between affine and unlimited types.
+\improvement{Citation pointing to \emph{e.g.}
+  \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And
+  rewrite this paragraph which contains a copy-paste of the paper's
+  abstract.)}
+Alms is an \textsc{ml}-like language based on affine types (a variant
+of linear types where values can be used \emph{at most} once). It is
+uses the kinds to separate affine from unrestricted arguments.
 
-We have the same aim (but with plain linear types) but use a different
-technique which cuts down the number of inference rules from 51 to 8.
-
-A key feature of Alms is the ability to introduce abstract affine
-types via ML-style signature ascription. In Alms, an interface can
-impose stiffer resource usage restrictions than the principal usage
-restrictions of its implementation. This form of sealing allows the
-type system to naturally and directly express a variety of resource
-management protocols from special-purpose type systems.
-
-We can do similar examples as the demos of Alms. Example, R-W Lock:
-\begin{code}
-acquireRead : Lock -> (Access Shared ⊸ Bang a) ⊸ a
-acquireWrite : Lock -> (Access Excl ⊸ Bang a) ⊸ a
-releaseAccess : Access a ⊸ ()
-
-set : Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl)
-get : Key ⊸ Access a ⊸ (Value ⊗ Access a)
-\end{code}
-
-We extend Haskell, they do not claim to be an extension of ML.
-
-This is what Morris says about Alms:
-Despite the (not insignificant) complexity of their system, it is
-still not clear that it fully supports the expressiveness of
-traditional functional programming languages. For example, their
-system has distinct composition operators with distinct types. These
-types are not related by the subtyping relation, as subtyping is
-contravariant in function arguments.
+It is a case in point for kind-based systems being more complex: for
+the sake of polymorphism, Alms deploys an elaborate dependent kind
+system. Even if such a kind system could be added to an existing
+language implementation, Alms does not attempt to be backwards
+compatible with an \textsc{ml} dialect. In fact
+\citeauthor{morris_best_2016} notes:
+\begin{quote}
+  Despite the (not insignificant) complexity of [Alms], it is still
+  not clear that it fully supports the expressiveness of traditional
+  functional programming languages. For example, [Alms] has distinct
+  composition operators with distinct types. These types are not
+  related by the subtyping relation, as subtyping is contravariant in
+  function arguments.
+\end{quote}
 
 \subsection{Related type systems}
 
