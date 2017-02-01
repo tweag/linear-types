@@ -1636,6 +1636,51 @@ freed: \calc{} is safe from use-after-free errors.
     z}\text{case-bang}}
 
 \section{Related work}
+
+\subsection{Uniqueness types}
+
+\todo{Compare with uniqueness types}
+
+\subsection{Linearity as a property of types vs. a property of bindings}
+
+In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
+programming languages incorporate
+linearity by dividing types into two kinds. A type is either linear
+or unrestricted. Unrestricted types typically includes primitive types
+(such as \varid{Int}), and all (strictly positive) data types. Linear types
+typically include resources, effects, etc.
+
+A characteristic of such a presentation is that linearity ``infects''
+every type containing a linear type. Consequently, if we want to make
+a pair of (say) an integer and an effect, the resulting type must be
+linear.  This property means that polymorphic data structures can no
+longer be used \emph{as is} to store linear values. Technically, one cannot unify a
+type variable of unrestricted kind to a linear type. One can escape
+the issue by having polymorphism over kinds; unfortunately to get
+principal types one must then have subtyping between kinds and bounded
+polymorphism, as \citet{morris_best_2016}.
+
+In contrast, in \calc{} we have automatic scaling of linear types to
+unrestricted ones in unrestricted contexts. This feature already
+partially addresses the problem of explosion of types.  First, most
+data structures should have linear constructors and thus readily store
+linear values. Second, first order functions can be given a linear
+type and be scaled automatically. Finally, even in the most general
+case, when multiplicity polymorphism is needed, we get away without
+using bounded quantification: products in weight expressions is all we
+need.
+
+Another issue with the ``linearity in types'' presentation is that it
+is awkward at addressing the problem of ``simplified memory
+management'' that we aim to tackle. As we have seen, the ability to
+use an intermediate linear heap rests on the ability to turn a linear
+value into an unrestricted one. When linearity is captured in types,
+we must have two versions of every type that we intend to move between
+the heaps. Even though \citet{morris_best_2016} manages to largely
+address the issue by means of polymorphism and constraints over types,
+it comes as the cost of a type-system vastly more complex than the one
+we present here.
+
 \subsection{Alms}
 \improvement{Citation pointing to \emph{e.g.} \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And rewrite this paragraph which contains a copy-paste of the paper's abstract.)}
 Alms is a general-purpose programming language that supports
@@ -1707,49 +1752,6 @@ weights and that we support a special case-analysis construction which
 works only for non-zero weights.
 
 
-\subsection{Linearity as a property of types vs. a property of bindings}
-
-In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
-programming languages incorporate
-linearity by dividing types into two kinds. A type is either linear
-or unrestricted. Unrestricted types typically includes primitive types
-(such as \varid{Int}), and all (strictly positive) data types. Linear types
-typically include resources, effects, etc.
-
-A characteristic of such a presentation is that linearity ``infects''
-every type containing a linear type. Consequently, if we want to make
-a pair of (say) an integer and an effect, the resulting type must be
-linear.  This property means that polymorphic data structures can no
-longer be used \emph{as is} to store linear values. Technically, one cannot unify a
-type variable of unrestricted kind to a linear type. One can escape
-the issue by having polymorphism over kinds; unfortunately to get
-principal types one must then have subtyping between kinds and bounded
-polymorphism, as \citet{morris_best_2016}.
-
-In contrast, in \calc{} we have automatic scaling of linear types to
-unrestricted ones in unrestricted contexts. This feature already
-partially addresses the problem of explosion of types.  First, most
-data structures should have linear constructors and thus readily store
-linear values. Second, first order functions can be given a linear
-type and be scaled automatically. Finally, even in the most general
-case, when multiplicity polymorphism is needed, we get away without
-using bounded quantification: products in weight expressions is all we
-need.
-
-Another issue with the ``linearity in types'' presentation is that it
-is awkward at addressing the problem of ``simplified memory
-management'' that we aim to tackle. As we have seen, the ability to
-use an intermediate linear heap rests on the ability to turn a linear
-value into an unrestricted one. When linearity is captured in types,
-we must have two versions of every type that we intend to move between
-the heaps. Even though \citet{morris_best_2016} manages to largely
-address the issue by means of polymorphism and constraints over types,
-it comes as the cost of a type-system vastly more complex than the one
-we present here.
-
-\subsection{Uniqueness types}
-
-\todo{Compare with uniqueness types}
 
 \subsection{Operational aspects of linear languages}
 
