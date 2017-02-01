@@ -1206,17 +1206,6 @@ manipulated by the primitives. For the sake of simplicity of
 presentation, we will only show one primitive (\emph{push}) beyond
 allocation and de-allocation.
 
-
-Concretely, we show that it is possible to allocate linear objects on
-a heap which is not managed by the garbage collector, and
-correspondingly deallocate them upon (lazy) evaluation. To do so we
-present an extension of the semantics of
-\citet{launchbury_natural_1993} to \calc{}. Such a semantics is
-actually \emph{more precise} than what we intend to implement: it
-serves as a technical device to justify the less intrusive semantics
-that we describe in \fref{sec:eras-dynam-weight}, and requires no
-modification to GHC (beyond type-checking, of course).
-
 \citet{launchbury_natural_1993}'s semantics relies on a constrained
 $λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
 extend \citet{launchbury_natural_1993}'s original syntax with
