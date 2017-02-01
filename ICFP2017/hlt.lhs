@@ -1508,11 +1508,7 @@ it is possible is that, by definition, in $Bang x$, $x$ \emph{must} be
 in the garbage-collected heap. In other words, when an expression $e :
 Bang A$ is forced to the form $Bang x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
-proved in Lemma~\ref{lem:type-safety} below).\todo{Mention the
-  case-bang rule in the conclusion (the case-bang rule can be found in
-  the source below this todo-box)}
-\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
-    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}}
+proved in Lemma~\ref{lem:type-safety} below).
 
 The crucial safety property of the strengthened relation is that it
 preserves well-typing of states.
@@ -1628,6 +1624,16 @@ Lemma~\ref{lem:liveness} shows that well-typed program don't get
 blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
+
+\section{Perspectives}
+\todo{Speak about fusion}
+\hfill
+\todo{Mention the case-bang rule (the case-bang rule can be found in
+  the source below this todo-box)}
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x
+    \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
+    \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ :
+    z}\text{case-bang}}
 
 \section{Related work}
 \subsection{Alms}
