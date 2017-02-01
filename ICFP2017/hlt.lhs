@@ -1754,37 +1754,43 @@ can, at the cost of extra effort, be mindful about memory and latency.
 
 \subsection{Related type systems}
 
-The type system presented here is heavily inspired from the work of
+The \calc{} type system is heavily inspired from the work of
 \citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
 present a type system where arrows are annotated with the multiplicty
 of the the argument that they require, and where the multiplicities
-form a semi-ring.  The novel technical aspects of the present system are
-multiplicity polymorphism and an lazy operational semantics.
+form a semi-ring.
 
-Contrary to us \citeauthor{mcbride_rig_2016} has a weighted type
-judgement $Γ ⊢_ρ t : A$. In the application rule, the weight is
-multiplied by the weight of the function in the argument. At the point
-of variable usage one checks that the appropriate multiplicity of the
-variable is available. A problem with this approach is that whenever
-one enters an $ω$-weighted judgement, one effectively abandons
-tracking any linearity whatsoever. Thus, the following program would
-be type-correct, while |dup| is duplicating a linear value.
+In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
+multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
+represents the multiplicity of $t$. So, in
+\citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
+required, instead of computer $ωΓ$, it is enough to check that
+$ρ=ω$. The problem is that this check is arguably too coarse, and
+result into the following being derivable:
+$$
+⊢_ω λx. (x,x) : A ⊸ (A⊗A)
+$$
+Which we do not consider desirable: it means that there cannot be
+reusable definitions of linear functions. In terms of linear logic,
+\citeauthor{mcbride_rig_2016} makes the natural arrow $!(A⊸B) ⟹ !A⊸!B$
+invertible.
 
-\[
-(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
-\]
+In that respect, our system is closer to
+\citeauthor{ghica_bounded_2014}'s. What we keep from
+\citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+\ref{sec:statics}), which can be phrased in terms of linear logic as
+making the natural arrow $!A⊗!B ⟹ !(A⊗B)$ invertible. This choice is
+unusual from a linear logic perspective, but it is the key to be able
+to use types both linearly an unrestrictedly without intrusive
+multiplicity polymorphic annotation on all the relevant types.
 
-Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
-abstractions while retaining the linearity property.
-
-In that respect, our system is closer to that of
-\citet{ghica_bounded_2014}, which does not exhibit the issue. The
-differences between our type system and that of
-\citet{ghica_bounded_2014} are that we work with a concrete set of
-weights and that we support a special case-analysis construction which
-works only for non-zero weights.
-
-
+The literature on so-called coeffects uses type systems similar to
+\citeauthor{ghica_bounded_2014}, except with a linear arrow and
+multiplicities carried by the exponential modality
+instead. \Citet{brunel_coeffect_core_2014}, in particular, develops a
+Krivine realisability model for such a calculus. We are not aware of
+an account of Krivine realisability for lazy languages, hence it is
+not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
@@ -1912,4 +1918,5 @@ applications.
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
-%  LocalWords:  unannotated tuple subkinding
+%  LocalWords:  unannotated tuple subkinding invertible coeffects
+%  LocalWords:  unrestrictedly
