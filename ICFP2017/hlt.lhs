@@ -1627,13 +1627,15 @@ freed: \calc{} is safe from use-after-free errors.
 
 \section{Perspectives}
 \todo{Speak about fusion}
-\hfill
+\hfill\\
 \todo{Mention the case-bang rule (the case-bang rule can be found in
   the source below this todo-box)}
 \providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x
     \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
     \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ :
     z}\text{case-bang}}
+\hfill\\
+\todo{More multiplicities}
 
 \section{Related work}
 
