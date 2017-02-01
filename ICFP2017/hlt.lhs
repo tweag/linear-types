@@ -1794,26 +1794,24 @@ not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
-Recent literature is surprisingly quiet on the operational aspect of
-linear types, and concentrates rather on uniqueness types
+Recent literature is surprisingly quiet on the operational aspects of
+linear types, and rather concentrates on uniqueness types
 \cite{pottier_programming_2013,matsakis_rust_2014}.
 
 Looking further back, \citet{wakeling_linearity_1991} produced a
 complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
-linear heap (as we do in \fref{sec:dynamics}). However, they did not manage to
-obtain consistent performance gains. However, they still manage to
-reduce \textsc{gc} usage, which may be critical in distributed and
-real-time environments, as we explained in the introduction\unsure{did we?}.
-Thus the trade-off is beneficial is certain situations.
+linear heap, as \fref{sec:dynamics} where they allocate as much as
+possible in the linear heap, as modelled by the strengthened
+semantics. However, \citeauthor{wakeling_linearity_1991} did not
+manage to obtain consistent performance gains. On the other hand, they
+still manage to reduce \textsc{gc} usage, which may be critical in
+distributed and real-time environments. Thus the trade-off is
+beneficial is certain situations.
 
 Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
-of thunks, and instead take advantage of linear arrays. \todo{Run concrete examples and see what we get.}
-
-% \item Linear Lisp. \cite{baker_lively_1992}: unclear results
-
-% \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
+of thunks, and instead take advantage of linear arrays
 
 \section{Conclusion}\todo{Fix section references}
 
