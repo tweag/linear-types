@@ -1726,6 +1726,32 @@ compatible with an \textsc{ml} dialect. In fact
   function arguments.
 \end{quote}
 
+\subsection{Rust}
+
+Already mentioned above is the language
+Rust~\cite{matsakis_rust_2014}, based on ownership types. This
+distinction notwithstanding, Rust's type system resembles the original
+presentation of linear logic where every type $A$ represent linear
+values, unrestricted values at type $A$ have a special type $!A$, and
+duplication is explicit.
+
+In a sense, Rust quite beautifully solves the problem of being mindful
+about memory, resources, and latency. But this comes at a heavy price:
+Rust, as a programming language, is specifically optimized for writing
+programs that are structured using the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens. For instance, tail recursions, so dear to the functional
+programmer's heart, can usually not be eliminated, as resource
+liberation must be triggered when the tail call returns.
+
+\HaskeLL{} aims to hit a different point in the design space where
+regular Haskell programs are the norm, hence are optimised for, and we
+can, at the cost of extra effort, be mindful about memory and latency.
+
 \subsection{Related type systems}
 
 The type system presented here is heavily inspired from the work of
