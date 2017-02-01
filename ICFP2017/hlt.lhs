@@ -1384,7 +1384,7 @@ notations. First we will need a notion of product annotated with the
 multiplicity of its first component.
 \begin{definition}[Weighted tensors]
 
-  We use $A {}_ρ⊗ B$ ($ρ∈\{1,ω\}$) to denote one of the two following
+  We use $A~{}_ρ\!⊗ B$ ($ρ∈\{1,ω\}$) to denote one of the two following
   types:
   \begin{itemize}
   \item $\data A~{}_1\!⊗ B = ({}_1\!,) : A ⊸ B ⊸ A~{}_1\!⊗ B$
