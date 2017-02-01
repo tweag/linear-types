@@ -1639,7 +1639,44 @@ freed: \calc{} is safe from use-after-free errors.
 
 \subsection{Uniqueness types}
 
-\todo{Compare with uniqueness types}
+When speaking about linear types, it is frequent to think of them as
+uniqueness (or ownership) types. The most prominent representative of
+languages with such uniqueness types are Clean\todo{Cite Clean} and
+Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
+designed around linear types based on linear
+logic~\cite{girard_linear_1987}.
+
+There is a kind of duality between the two: linear type ensures
+that the argument of a linear function are used once by functions
+while the context can use it as many times as it needs; uniqueness
+types ensures that the argument of a function is not used anywhere
+else in the context, but the function can use it as it pleases (with
+some caveat).
+
+From a compiler's perspective, uniqueness type provide a non-aliasing
+analysis while linear types provides a cardinality analysis. The
+former aims at in-place updates and related optimisation, the latter
+at inlining and fusion. Rust and Clean largely explore the
+consequences of uniqueness on in-place update; an in-depth exploration
+of linear types in relation with fusion can be found
+in~\citet{bernardy_composable_2015}.\todo{call-back to fusion in the
+  perspectives}.
+
+Several points guided our choice of designing \HaskeLL{} around linear
+logic rather than uniqueness type: functional languages have more use
+for fusion than in-place update (\textsc{ghc} has a cardinality
+analysis, but it doesn't perform a non-aliasing analysis), there is a
+wealth of literature detailing the applications of linear
+logic — explicit memory
+management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
+array
+computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
+protocol specification~\cite{honda_session_1993}, privacy
+guarantees\cite{gaboardi_linear_2013}, graphical
+interfaces\cite{krishnaswami_gui_2011}, … But the factor which was
+decisive was probably the fact that linear type systems are
+conceptually simpler than uniqueness type systems, which gave a
+clearer path to implementation in \textsc{ghc}.
 
 \subsection{Linearity as a property of types vs. a property of bindings}
 
