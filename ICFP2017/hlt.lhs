@@ -1813,7 +1813,7 @@ Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
 of thunks, and instead take advantage of linear arrays
 
-\section{Conclusion}\todo{Fix section references}
+\section{Conclusion}
 
 This paper demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
@@ -1824,72 +1824,26 @@ the language, in the following sense:
 \item Such programs retain the same semantics.
 \item Furthermore, the performance of existing programs is not affected.
 \end{itemize}
-In other words: regular Haskell comes first. Additionally, first-order linearly
-typed functions and data structures are usable directly from regular
-Haskell code. In such a situation their semantics is that of the same
-code with linearity erased.
+In other words: regular Haskell comes first. Additionally, first-order
+linearly typed functions and data structures are usable directly from
+regular Haskell code. In such a situation their semantics is that of
+the same code with linearity erased.
 
 Furthermore \calc{} has a particularly non-invasive design, and thus
-it is possible to integrate with an existing complex system.  In
-particular 1. it has no system of ``kinds'' of its own, so it it is
-compatible with any system of ``kinds'' (including dependently-typed
-ones) and 2. \calc{} does not use subtyping. Consequently one can
-confidently extend existing Haskell implementations linear types by
-following the design presented in this paper. Indeed, we have a
-constructed a prototype of GHC whose type-checker is extended with
-linear types.
+it is possible to integrate with an existing mature compiler. We are
+developing a prototype implementation extending \textsc{ghc} with
+multiplicities. The main difference between the implementation and
+\calc, is that the implementation adopts some level of
+bidirectionality: typing contexts go in, actual multiplicities come
+out (and are compared to their expected values). As we hoped, this
+design integrates very well in \textsc{ghc}.
 
-
-Our proposal is in stark contrast with languages such as Rust, which are
-specifically optimized for writing programs that are structured using
-the RAII
-pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-(where resource lifetimes are tied directly or indirectly to stack
-allocated objects that are freed when the control flow exits the
-current lexical scope). Ordinary functional programs seldom fit this
-particular resource acquisition pattern so end up being second class
-citizens.
-
-In \HaskeLL{}, when the programmer is ready to pay the
-cost of finely dealing with usage through linearity, they get the
-additional benefits of linear type: new abstractions
-(\fref{sec:protocols}, \fref{sec:resources}, and \fref{sec:ffi}),
-lower \textsc{gc} pressure (\fref{sec:primops}).
-All these benefits come to with no penalty to unmodified Haskell.
-
-The benefits can be classified in three stages depending on how much
-modification to an existing language they require:
-\begin{enumerate}
-\item Adapting the \textbf{type system} enables
-  \begin{itemize}
-  \item new abstractions such as protocols (\fref{sec:protocols}) and
-    safe resource management (\fref{sec:resources}), enabling {\em
-      safe} API to resources exposed as foreign resources allocated in
-    a foreign heap
-  \item pure abstractions to C libraries (\fref{sec:ffi})
-  \item primitive operations to keep data out of the garbage collector
-    (\fref{sec:primops})
-  \end{itemize}
-\item Propagating type annotation to the \textbf{intermediate
-    language} makes it possible to exploit linear types for further
-  optimization (\fref{sec:fusion})
-\item Modifying the \textbf{run-time system} further enables prompt
-  deallocation of it possible to
-  have type-directed allocation of objects,  which can be leveraged to prevent \textsc{gc} pauses
-  in critical computations (\fref{sec:dynamics}). An API for explicit
-  allocation and freeing of resources is no longer needed.
-\end{enumerate}
-
-Each of these stages imply increasingly invasive changes to a
-compiler, but also increasingly large benefits. In practice it makes
-it possible to roll out stages one at a time, quickly reaping the low
-hanging fruits.  Of these three stages, modifying the type system is
-the cheapest, but also the most immediately beneficial, enabling a lot
-of new uses for the programming language. Propagating the information
-down to the run-time system is still worth pursuing as we are
-expecting significant benefits, due to reduced and controlled latency,
-for systems programming, and in particular for distributed
-applications.
+It is worth stressing that, in order to implement foreign data
+structures like we have advocated, in this article, as a means to
+reduce \textsc{gc} pressure and latency, we only need to modify the
+type system: primitives to manipulate foreign data can be implemented
+in libraries using the foreign function interface. This helps make the
+prototype quite lean.
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{ACM-Reference-Format.bst}
@@ -1917,4 +1871,4 @@ applications.
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
-%  LocalWords:  unrestrictedly
+%  LocalWords:  unrestrictedly bidirectionality
