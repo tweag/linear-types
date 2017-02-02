@@ -1487,7 +1487,7 @@ only produce consistent heaps.
 \end{proof}
 
 \begin{lemma}[Progress of non-recursive programs.]
-  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $t$ is not in normal form and does not
+  If $Ξ ⊢ (Γ||t :_ρ A),Σ$, and $\flet Γ \in t$ is not in normal form and does not
   use recursion, then there exists a heap $Δ$ and value $z$ such that
   $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$.
 
