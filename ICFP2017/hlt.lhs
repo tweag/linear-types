@@ -56,6 +56,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\setlength{\marginparwidth}{2.5cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
@@ -65,11 +66,15 @@
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
 
+% Peanut gallery comments by Ryan:
+\newcommandx{\rn}[1]{\todo[]{RRN: #1}}
+
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
 
 % \newtheorem{definition}{Definition}
 % \newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
 
 \newcommand\calc{{\ensuremath{λ^q}}}
 
@@ -122,7 +127,14 @@
 \newcommand\HaskeLL{Hask-LL}
 
 % Title portion
-\title{\HaskeLL}
+
+% Put working title proposals here:
+% \title{\HaskeLL}
+% \title{\HaskeLL: Linear types with backwards compatibility in an established language}
+% \title{\HaskeLL: Linear types with Backwards Compatibility}
+\title{\HaskeLL: Systems Programming with \\ Backwards-Compatible Linear Types}
+
+
 \author{Jean-Philippe Bernardy}
 \affiliation{%
   \institution{Gothenburg University}
@@ -198,10 +210,14 @@
 
 \section{Introduction}
 
+\rn{I think this intro can be focused and tightened up significantly.  SPJ may
+  be interested in doing one in his widely-loved intro style.  Or I'm happy to
+  take a stab at it.}
+
 Several recent advances in typed functional programming applied
 research have focused on extending type systems to make it easier to
 encode strong invariants key to the {\em correctness} of programs.
-Extensions from GADT's \cite{xi_guarded_2003}, to type-level functions
+Extensions from GADTs \cite{xi_guarded_2003}, to type-level functions
 such as type families \cite{chakravarty_associated_2005-1}, to
 increasingly automatic and complete promotion of term-level data types
 to the type-level \cite{eisenberg_promoting_2014}. Yet in practice,
@@ -219,7 +235,7 @@ real hardware.
 \subsection{Resource tracking}
 
 Scarce system resources include memory mappings, locks, sockets and
-file handles, among others. With no primitive support from the
+file handles, among others.  For instance, with no primitive support from the
 programming language for managing these resources, acquiring a file
 handle for reading and then disposing of a file handle looks something
 like this:
@@ -266,7 +282,7 @@ system. In fact, a cornerstone of the Rust programming
 language~\cite{matsakis_rust_2014} is that it provides this resource
 safety out-of-the-box. Through its borrow checker, Rust captures a
 notion of affine types in its type system. The lifetime analysis is
-powerful enough to for example ensure that a file handle never escapes
+powerful enough to, for example, ensure that a file handle never escapes
 the current lexical scope:
 
 \improvement{code alignment}
@@ -297,10 +313,10 @@ Fully automatic memory management is certainly convenient, and an
 effective means of avoiding use-after-free and free-after-free bugs,
 since it is the language runtime that guarantees, via a global dynamic
 analysis, that resources are reclaimed only when it is entirely safe
-to do so. But this dynamic global analysis is expensive to run. For
+to do so. But this analysis is expensive to run. For
 this reason, resources are reclaimed in batches, to amortize its cost,
-only when resource pressure is deemed to warrant reclaiming those
-resources that can be. Worse, this global analysis, aka garbage
+only when resource pressure is deemed to warrant reclaiming 
+resources. Worse, this global analysis, aka garbage
 collection, often requires exclusive access to resources, hence
 stalling and potentially starving other threads of control.
 
@@ -344,7 +360,8 @@ upon being read by clients, or if the queue grows too long (so it is
 okay to lose messages). Any client can also request for any message in
 the queue to be removed. In short, the concurrent queue supports the
 following operations:
-
+\rn{This still bothers me.  I'd really like to change it to
+  include MsgId.  \verb|push :: Queue -> MsgId -> Msg -> IO ()|.}
 \begin{code}
 push :: Queue -> Msg -> IO ()
 delete :: Queue -> Msg -> IO ()
@@ -504,7 +521,7 @@ types, with the following characteristics:
   linear data.
 \item Is designed to be compatible with in an existing rich programming
   language. 
-  todo{Do we speak of the prototype at this point? I
+  \todo{Do we speak of the prototype at this point? I
     [aspiwack] would rather leave it at that and prove this assertion
     in the body of the article by citing the prototype (and maybe some
     GHC things with which we are compatible: \emph{e.g.} the kind
@@ -535,20 +552,32 @@ have $A → B$.
 
 To clarify the meaning of multiplicities, here are a few examples of what is
 allowed or not:
+\rn{This grows a bit tedious.  Maybe listing the one ``cannot'' and then
+  describing the remaining cases collectively?}
 \begin{enumerate}
-\item A linear (multiplicity $1$) value {\bf can} be passed to a linear
-  function.
-\item An unrestricted (multiplicity $ω$) value {\bf can} be passed to a linear
-  function.
-\item A linear value {\bf cannot} be passed to a unrestricted function.
-\item An unrestricted value {\bf can} be passed to a unrestricted function.
-\item A linear value {\bf can} be returned by a linear function.
-\item An unrestricted value {\bf can} be returned by a linear function.
-\item A linear value {\bf can} be returned by a linear function (and
-  the type-system guarantees that it can be promoted to a unrestricted
-  value when the function is called in an unrestricted context).
-\item An unrestricted value {\bf can} be returned by a unrestricted function.
+
+\item An unrestricted (multiplicity $ω$) value 
+  \begin{enumerate}
+  \item {\bf can} be passed to a linear function.
+  \item {\bf can} be passed to a unrestricted function.  
+  \item {\bf can} be returned by a linear function.
+  \item {\bf can} be returned by a unrestricted function.    
+  \end{enumerate}  
+
+\item A linear (multiplicity $1$) value
+  \begin{enumerate}
+  \item  {\bf can} be passed to a linear function.
+  \item  {\bf cannot} be passed to a unrestricted function.
+  \item  {\bf can} be returned by a linear function (and
+     the type-system guarantees that it can be promoted to a unrestricted
+     value when the function is called in an unrestricted context).
+  \end{enumerate}
+
+% RRN: This looks like a duplicate:
+% \item A linear value {\bf can} be returned by a linear function.
+
 \end{enumerate}
+
 Indeed, when we say that a function is linear, we refer to its domain,
 not its co-domain. Hence, linearity of a function does not influence
 what it can return, only what it can take as arguments.
@@ -562,8 +591,14 @@ g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 g k x y = k (f x) y      -- Valid
 g k x y = k x (f y)      -- Valid
 g k x y = k x y          -- Valid
-g k x y = k y x          -- Invalid
+g k x y = k y x          -- Invalid, x has multiplicity 1
 \end{code}
+\rn{Would be nice to introduce let here and do this in terms of let.}
+
+%% \begin{code}
+%% let x : _ 1 A = ... in blah
+%% \end{code}
+
 
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
@@ -573,7 +608,9 @@ data List a where
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
 That is, given a list |xs| with multiplicity $1$, pattern-matching will
-yield the sub-data of |xs| will multiplicity $1$. Thus the above list
+yield the sub-data of |xs| will multiplicity $1$.
+\rn{And {\em deallocate}, mention that too...}
+Thus the above list
 may contain resources without compromising safety.
 
 Many list-based functions conserve the multiplicity of data, and thus can
@@ -598,15 +635,23 @@ all, a finite multiplicity). If both |xs| and |ys| have multiplicity
 $ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. In terms of resources,
 neither |xs| nor |ys| can contain resources, so
 neither can |xs++ys|: it is thus safe to share |xs++ys|.
+%
+\rn{Here's where I really wanted to know what happens if only one of them is linear...}
 
-Of course, not all programs are linear: a function may legitimately
+For an existing language, being able to strengthen |(++)| in a {\em
+  backwards-compatible} way is a major boon.
+%
+Of course, not all functions are linear: a function may legitimately
 demand unrestricted input, even to construct an output with
 multiplicity $1$. For example the function repeating its input
-indefinitely need to be unrestricted:
+indefinitely needs to be unrestricted:
 \begin{code}
   cycle :: List a → List a
   cycle l = l ++ cycle l
 \end{code}
+
+
+\subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
 The implicit conversions between multiplicities make it so that for
 first-order code linear functions are more general. Higher-order code
@@ -697,6 +742,11 @@ adding to GC pressure, because the data lives in a foreign heap.
 A complete API for queues with random access deletion could
 be typed as follows (|Msg| must be |Storable| to (un)marshall values
 to/from the unrestricted GC'ed heap):
+\improvement{I suggest to remove the |Storable| instance here: it is
+  not part of the API but a requirement for the implementation. That
+  way we will not need to name this particular variant, and just
+  require for the reference implementation that |Msg| is equipped with
+ |loadMsg| and |freeMsg|. }
 \begin{code}
 instance Storable Msg
 
@@ -707,6 +757,8 @@ push    :: Msg -> Queue ⊸ Queue
 delete  :: Msg -> Queue ⊸ Queue
 evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
 \end{code}
+\rn{Evict seems like overkill for a cartoon motivating example.}
+
 There are a few things going on in this API:
 \begin{itemize}
 \item |alloc| opens a new scope, delimited by the dynamic extent of
@@ -716,6 +768,8 @@ There are a few things going on in this API:
   The return type of argument
   function is |Bang a|, ensuring that no linear value can be returned:
   in particular the |Queue| must be consumed.
+  \rn{Note: explain reachability invariants here or earlier.}
+  
 \item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
@@ -731,26 +785,35 @@ There are a few things going on in this API:
 \end{itemize}
 
 \paragraph{Reference implementation}
-Even if an ideal implementation for the above API would be implemented
-very efficiently in a machine language, we can already provide a
-reference implementation for it in \HaskeLL{}. For simplicity we
-represent |Queue|s and |Vector|s as list:
+The intention behind this queue API is to bind a C implementation of
+a queue data structure which manages memory explicitly.
+\rn{How exactly?  Lollipops directly in FFI import signatures?}
+However, we
+can give an implementation directly in \HaskeLL{}. For simplicity
+|Queue|s and |Vector|s are represented simply as lists. Therefore this
+implementation is by no mean efficient: it may, however serve as an
+executable specification for explicit memory management as we will see
+in \fref{sec:dynamics}.
 \begin{code}
 type Queue = List Msg
 type Vector x = List Msg
 \end{code}
-
 The |Storable| class demands that a linear value can be made
 non-linear (eg. by making a deep copy of it), and that it can be
 freed.
 \begin{code}
 class Storable a where
   load :: a ⊸ Bang a
+  store :: a ⊸ a -- TODO: subtle
   free' :: a ⊸ ()
 \end{code}
-
+\rn{As discussed before, needs a new name.  How about ``Linear''?}
+%
 Allocation can be implemented simply by calling the continuation. Free
-needs to free all messages.
+needs to free all messages. As will be apparent when we define the
+operational semantics for our language, the queue will reside outside
+of GC heap.  The Queue |alloc| function below only allocates an empty list, but
+all subsequent functions which manipulate the queue will do so on the non-GC heap.
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 alloc k = case k [] of
@@ -761,12 +824,12 @@ free (x:xs) = case storableFree x of
   () -> free' xs
 free [] = ()
 \end{code}
-
+\rn{WARNING: storableFree still unbound.}
 The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
 push    :: Msg -> Queue ⊸ Queue
-push msg msgs = msg:msgs
+push msg msgs = store msg:msgs
 
 delete :: Msg -> Queue ⊸ Queue
 delete msg [] = []
@@ -781,35 +844,46 @@ evict n  (x:xs)  = case (load x, evict (n-1) xs) of
   (Bang x', (xs',Bang v')) -> (xs',Bang (x':v'))
 \end{code}
 
+
 \section{\calc{} statics}
 \label{sec:statics}
 In this section we turn the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{}, every object is classified into two categories: \emph{linear} ones,
+In \calc{}, objects
+\rn{Why ``objects''?  Why not ``values''?}
+are classified into two categories: \emph{linear} objects,
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted} ones which can be used an arbitrary number of
+\emph{unrestricted} objects which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear object is to see it as an object that may not
+The best way to think of a linear object is to see it as an object that need not
 be controlled by the garbage collector: \emph{e.g.} because they are
 scarce resources, because they are controlled by foreign code, or
 because this object will not actually exist at run time because it will
-be fused away. The word \emph{may} matters here: because of
+be fused away. The word \emph{need} matters here: because of
 polymorphism, it is possible for any given linear object to actually be controlled
 by the garbage collector (but may not be), and
 so, for most purposes, it must be treated as if it it were not.
 
-This way of thinking drives the details of \calc{}. In particular unrestricted
-objects cannot contain linear objects, because the garbage collector needs to
+This framing drives the details of \calc{}. In particular unrestricted
+objects cannot contain linear objects,
+\rn{Here's the invariant that needs to be showcased earlier...}
+because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
-perfectly fine for linear objects to refer to unrestricted objects. So any
+perfectly fine for linear objects to refer to unrestricted objects.
+\rn{Well, ``perfectly fine'' means ``expensive pinning'' in this case, to amke
+  them GC roots.}
+So any
 object containing a linear object must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
 thunks): \emph{e.g.} a partial application of a function to a linear
-object is linear. More generally, the application of a function
+object is linear.
+\rn{Yes but this doesn't really explain how the subscript on a function binding
+  constrains the user -- i.e. they can only {\em apply} the function once.}
+More generally, the application of a function
 to a linear object is linear, since it is, in general, a lazy
 thunk pointing to that linear object. (In fact, even in a strict
 language, the result may contain the linear argument and so must be
@@ -818,22 +892,27 @@ linear.)
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
+\rn{I would like to switch this with 3.2.  Jumping right into typing contexts
+is... well, lacking context.  It would be better to first understand why/where
+we need to add and scale contexts.}
+
 In \calc{}, each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
 number of times the \emph{multiplicity} of the variable.
+\rn{TODO: fix redundancy here.  Not the 1st use of multiplicity.}
 
 Concrete multiplicities are either $1$ or $ω$: when the multiplicity
 is $1$, the program \emph{must} consume the variable exactly once;
-when the multiplicity is $ω$, it \emph{may} consume it any number of
-times (possibly zero). For the sake of polymorphism, multiplicities
-are extended with multiplicity \emph{expressions}, which contain
-variables (ranged over by the metasyntactic variables \(π\) and
-\(ρ\)), sum\improvement{We use sums nowhere in the examples; shall we
-  remove this? -- [Aspiwack] in the case of $1$/$ω$ multiplicity $π+ρ$
-  is always (implicitly) $ω$, so there may indeed be no benefit to
-  formal sums in the scope of this paper}, and product. The complete
-syntax of multiplicities and contexts can be found in
-\fref{fig:contexts}.
+when the multiplicity is $ω$, the program \emph{may} consume the
+variable any number of times (possibly zero). For the sake of
+polymorphism, multiplicities are extended with multiplicity
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
+  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
+  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
+  there may indeed be no benefit to formal sums in the scope of this
+  paper}, and product. The complete syntax of multiplicities and
+contexts can be found in \fref{fig:contexts}.
 
 In addition, multiplicities are equipped with an equivalence relation,
 written $(=)$, and defined as follows:
@@ -889,11 +968,11 @@ equivalent contexts.
 
 The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
-judgement, however, may be less familiar. Indeed, remember that $Γ$ is
-multiplicity-annotated, the multiplicity of a variable denoting the multiplicity of
-that variable available in $Γ$. The judgement \(Γ ⊢ t : A\) ought to
-be read as follows: the term $t$ consumes $Γ$ and builds \emph{exactly
-  one} $A$. This section defines the judgement \(Γ ⊢ t : A\).
+judgement, however, may be less familiar: remember that
+variable bindings in $Γ$ are annotated with a multiplicity. The
+judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$
+consumes $Γ$ and builds \emph{exactly one} $A$. This section defines
+the judgement \(Γ ⊢ t : A\).
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -955,43 +1034,45 @@ arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
-  One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
-  we chose to provide polymorphism, which does not mesh well with
-  subtyping. Indeed, we aim to integrate with a Hindley-Milner-based type-checker,
-  and such a checker accomodates polymorphism more easily than subtyping.
+One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
+this does not hold, for the mere reason that there is no notion of
+subtyping in \calc{}. Indeed, our objective is to integrate with
+Haskell, which is based on Hindley-Milner-style
+polymorphism. Subtyping and polymorphism do not mesh well: this is the
+reason why \calc{} is based on polymorphism rather than subtyping.
 
-  Data type declarations, also presented in \fref{fig:syntax},
-  deserve some additional explanation.
-  \begin{align*}
-    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
-  \end{align*}
-  The above declaration means that \(D\) has \(m\) constructors
-  \(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
-  constructors have a multiplicity, just like arguments of function:
-  an argument of multiplicity $ω$ means that the data type can store,
-  at that position, data which \emph{must} have multiplicity $ω$;
-  while a multiplicity of $1$ means that data at that position
-  \emph{can} have multiplicity $1$ (or $ω$). A further requirement is
-  that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
-  $1$ or $ω$).
+Data type declarations, also presented in \fref{fig:syntax},
+deserve some additional explanation.
+\begin{align*}
+  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\end{align*}
+The above declaration means that \(D\) has \(m\) constructors
+\(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
+constructors have a multiplicity, just like arguments of functions:
+an argument of multiplicity $ω$ means that the data type can store,
+at that position, data which \emph{must} have multiplicity $ω$;
+while a multiplicity of $1$ means that data at that position
+\emph{can} have multiplicity $1$ (or $ω$). A further requirement is
+that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
+$1$ or $ω$).
 
-  For most purposes, $c_k$ behaves like a constant with the type
-  $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-  \fref{fig:typing} make clear, this means in particular that from a
-  multiplicity $ω$ of data of type $D$ one can extract a multiplicity $ω$ of
-  all its sub-data, including the arguments declared with multiplicity
-  $1$. Conversely, given $ω$ times all the arguments of $c_k$, one can
-  construct a multiplicity $ω$ of $D$.
+For most purposes, $c_k$ behaves like a constant with the type
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+\fref{fig:typing} make clear, this means in particular that from a an
+object $d$ of type $D$ with multiplicity $ω$, pattern matching
+extracts the sub-data of $d$ with multiplicity $ω$. Conversely, if all
+the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
+with multiplicity $ω$.
 
-  Note that constructors with arguments of multiplicity $1$ are not more
-  general than constructors with arguments of multiplicity $ω$, because if,
-  when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
-  \emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
-  pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
-  argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
-  could be used either as having multiplicity $ω$ or $1$).
+Note that constructors with arguments of multiplicity $1$ are not more
+general than constructors with arguments of multiplicity $ω$, because if,
+when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
+pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
+argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
+could be used either as having multiplicity $ω$ or $1$).
 
-The following example of data-type declarations illustrate the role of
+The following examples of data-type declarations illustrate the role of
 multiplicities in constructor arguments:
 \begin{itemize}
 \item The type
@@ -1059,31 +1140,31 @@ context, especially in the case of applications.
   \label{fig:typing}
 \end{figure}
 
-\improvement{It may be useful to have a better transition between
-  syntax and typing judgement}
 \improvement{explain that the $ωΓ$ in the
   constructor rule is there for constant constructors.}
 
-Remember that the typing judgement \(Γ ⊢ t : A\) reads as: the term
-$t$ consumes $Γ$ and builds an $A$ with multiplicity $1$.  This is the
-only kind of judgement in \calc{}: we provide no judgement to mean
-``the term $t$ consumes $Γ$ and builds an $A$ with multiplicity
-$p$''. Instead, we make use of context scaling: if \(Γ ⊢ t : A\)
-holds, then from consuming \(pΓ\) with the same term $t$, one builds
-an $A$ with multiplicity $p$. This idea is at play in the application
-rule (the complete set of rules can be found in \fref{fig:typing}):
+We are now ready to understand the typing rules of
+\fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
+reads as: the term $t$ consumes $Γ$ and builds an $A$ with
+multiplicity $1$.  This is the only kind of judgement in \calc{}:
+there is no direct way to express ``the term $t$ consumes $Γ$ and
+builds an $A$ with multiplicity $p$''. Instead, we make use of context
+scaling: if \(Γ ⊢ t : A\) holds, then from consuming \(pΓ\) with the
+same term $t$, one builds an $A$ with multiplicity $p$. This idea is
+at play in the application rule:
 $$\apprule$$
 Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus
 $Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
 application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
 disposal. Thus all variables in the scope of the applications are
 accounted for, with appropriate multiplicities.
+\rn{Last jump needs a bit more unpacking...}
 
-Scaling the context in the application rule is the
-technical device which makes the promotion of linear data to
-unrestricted data implicit hence that intuitionistic $λ$-calculus is a
-subset of \calc{}. Specifically the subset where all variables are
-annotated with the multiplicity $ω$:
+Scaling the context in the application rule is the technical device
+which makes the promotion of linear data to unrestricted data implicit,
+hence making the intuitionistic $λ$-calculus is a subset of
+\calc{}. Specifically the subset where all variables are annotated
+with the multiplicity $ω$:
 $$
 \inferrule
 {\inferrule
@@ -1112,14 +1193,15 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
-Like the application rule it is parametrized by a multiplicity $p$. But,
-while in the application rule only the argument is affected by $p$, in
-the case rule, not only the scrutinee but also the variable bindings
-in the branches are affected by $p$. What it means, concretely, is
-that the multiplicity of data is \emph{inherited} by its sub-data: if we
-have a multiplicity $1$ of $A⊗B$ we have a multiplicity $1$ of $A$ and a
-multiplicity $1$ of $B$, and if we have a multiplicity $ω$ of $A⊗B$ we have a
-multiplicity $ω$ of $A$ and a multiplicity $ω$ of $B$. Therefore, the
+Like the application rule it is parametrized by a multiplicity
+$p$. But, while in the application rule only the argument is affected
+by $p$, in the case rule, not only the scrutinee but also the variable
+bindings in the branches are affected by $p$. What it means,
+concretely, is that the multiplicity of data is \emph{inherited} by
+its sub-data: if we have an $A⊗B$ with multiplicity $1$, then we have
+an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
+we have an $A⊗B$ with multiplicity $ω$ then we have an $A$ with
+multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted)
@@ -1133,6 +1215,9 @@ must be~---~unrestricted)
   snd  :: a⊗b → b
   snd (a,b)  = b
 \end{code}
+\rn{Need operational intuition here.. if we create the pair as a linear
+  object, and then we implicitly convert to unrestricted, and then we
+  project... where would the linear->GCd-heap copy happen?}
 
 \unsure{Shall we state that our type-system is decidable? It may not
   be completely obvious that the problem of equality in a ring is
@@ -1141,28 +1226,46 @@ must be~---~unrestricted)
 \section{\calc{} dynamics}
 \label{sec:dynamics}
 
-While one can easily give a semantics to \calc{} by translation to a
-usual $λ$-calculus, namely by erasing multiplicities, such a semantics is
-deeply insatisfactory. Indeed, one may wonder if the language is at
-all suitable for tracking resources. One may worry, for example, that
-linear variables may be systematically subject to garbage collection,
-say if we somehow end up pointing to linear values from unrestricted
-closures or thunks. If that were so our system would not give any
-runtime benefit.
+We wish to give a dynamic semantics for \calc{} which accounts for the
+explicit allocations and de-allocations as seen in the queue
+example. To that effect we follow \citet{launchbury_natural_1993} who
+defines a semantics for lazy computation.
 
-In this section we show exactly when linear variables can be
-represented by linear objects at runtime. In turn, we show why the
-queue API presented earlier may indeed be implemented with a single
-linear queue.
+\citeauthor{launchbury_natural_1993}'s semantics is a big-step
+semantics where variables play the role of pointers to the heap (hence
+represent sharing, which is the cornerstone of a lazy semantics). We
+augment that semantics with a foreign heap and queue
+primitives. Concretely, bindings in the heap are of the form $x↦_p e$
+where $p∈\{1,ω\}$ a multiplicity: bindings with multiplicity $ω$
+represent objects on the regular, garbage-collected, heap, while
+bindings with multiplicity $1$ represent objects on a foreign heap,
+which we call the \emph{linear heap}. Queues and messages are
+represented as literals\footnote{As such, queues will seem to be
+  copied on the stack, but it is just an artifact of the particular
+  presentation: it does not have a syntax for returning ``pointers''.}
+manipulated by the primitives. For the sake of simplicity of
+presentation, we will only show one primitive (\emph{push}) beyond
+allocation and de-allocation.
 
-Concretely, we show that it is possible to allocate linear objects on
-a heap which is not managed by the garbage collector, and
-correspondingly deallocate them upon (lazy) evaluation. To do so we
-present an extension of the semantics of
-\citet{launchbury_natural_1993} to \calc{}. Prompt
-deallocation is not necessarily faster than garbage collection but it
-reduces latencies and allows more control on when garbage-collection
-pause occur.
+\citet{launchbury_natural_1993}'s semantics relies on a constrained
+$λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
+extend \citet{launchbury_natural_1993}'s original syntax with
+\begin{description}
+\item[Message literals] We assume a collection of message literals
+  written $m_i$. We assume that the programmer can type such literals
+  in the program. They are not given more semantics than their
+  interaction with lists.
+\item[Queue literals] Queues are a kind of primitive data
+  manipulated by primitive operations. As such the structure of queue
+  is invisible to the constructs of \calc{}, therefore queues are
+  represented a literals. Contrary to message literals, we assume that
+  the programmer \emph{cannot} type such literals: they are created by
+  primitive operations. Therefore queue literals will only be found in
+  the heap (specifically: on the linear heap).\improvement{describe
+    notation for queue literals}
+\item[Primitives] $alloc$, $free$ and $push$ responsible respectively for allocating a
+  queue, freeing a queue, and pushing a message to a queue.
+\end{description}
 
 \begin{figure}
 
@@ -1176,7 +1279,11 @@ pause occur.
       &||  r p\\
       &||  c x₁ … x_n\\
       &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
-      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r
+      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r\\
+      &||  m_i\\
+      &||  alloc k\\
+      &||  push y z\\
+      &||  free x
   \end{align*}
 
   \figuresection{Translation of typed terms}
@@ -1196,127 +1303,77 @@ pause occur.
   \caption{Syntax for the Launchbury-style semantics}
   \label{fig:launchbury:syntax}
 \end{figure}
-
-A Launchbury-style semantics is a big-step semantics expressed in a
-language suitable to represent sharing. The detail of this language
-and the translation from \calc{} can be found in
-\fref{fig:launchbury:syntax}. The main differences between \calc{} and
-the runtime language are that the latter is untyped, has fewer multiplicity
-annotations, and applications always have variable arguments.
-
-The complete semantics is given in \fref{fig:dynamics}.
-Compared to \citeauthor{launchbury_natural_1993}'s original, our
-semantics exhibits the following salient differences:
-\begin{itemize}
-\item The heap is annotated with multiplicities. The variables with multiplicity
-  $ω$ represent the garbage-collected heap, while the variables with
-  multiplicity $1$ represent the non-garbage-collected heap, which we call
-  the linear heap.
-\item We add a multiplicity parameter to the reduction relation,
-  corresponding to the (dynamic) multiplicity of values to produce.
-  Indeed, while the static syntax always produces exactly one value,
-  recall that programs are automatically scaled to $ω$ if possible.
-\item The rules for \emph{variable}, \emph{let}, and
-  \emph{application} are changed to account for multiplicities (let-bindings
-  and application are annotated by a multiplicity for this reason).
-\end{itemize}
-
-The dynamics assume that multiplicity expressions are reduced
-to a constant using equality laws for multiplicities. If that is not possible the
-reduction will block on the multiplicity parameter. This behavior is not problematic because all
-\HaskeLL{} programs will have no free multiplicity variables.
-The multiplicity parameter of the reduction relation is used to interpret
-$\flet x =_1 …$ bindings into allocations on the appropriate
-heap. Indeed, it is not the case that $\flet x =_1 …$ bindings always
-allocate into the linear heap: on the contrary, in $ω$ contexts, $\flet x =_1 …$ must
-allocate on the \textsc{gc} heap, not on the linear one. To see why, consider
-the following example:
-%
-\begin{code}
-let f = _ ω (\y : _ 1 () -> case y of () -> let z = _ 1 True in z) in
-let a = _ ρ f ()
-\end{code}
-%
-The function $\varid{f} : () ⊸ Bool$ creates some boolean thunk, and this
-thunk must be allocated in the linear heap if the context requires a
-linear value, while if the context requires an unrestricted value, the
-thunk must be allocated on the garbage-collected heap. However, the
-thunk is allocated by $\flet z =_1 …$, so this let-binding may have to
-allocate on the garbage-collected heap despite being annotated with
-multiplicity $1$. This behavior is not a consequence of implicit promotion
-from $ω$ to $1$, but is intrinsic to using linear types. Indeed, even
-pure linear logic features an explicit promotion, which also permits
-linear functions to produce linear values which can be promoted to
-produce unrestricted values.
-
-In all evaluation rules, this dynamic multiplicity is propagated to
-the evaluation of subterms, sometimes multiplied by another
-multiplicity originating from the term. This means that, essentially,
-once one starts evaluating unrestricted results (multiplicity = $ω$),
-one will remain in this dynamic evaluation mode, and thus all further
-allocations will be on the \textsc{gc} heap. However, it is possible
-to provide a special-purpose evaluation rule to escape unrestricted
-evaluation to linear evaluation.  This rule concerns case analysis of
-|Bang x|, where the weight of the scrutninee is not multiplied by the
-dynamic multiplicity:
-\[
-    \inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x \\ Δ : u[x/y] ⇓_ρ Θ : z}
-    {Γ : \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ : z}\text{case-bang}
-\]
-The observations justifying this rule are that 1. when forcing a |Bang|
-constructor, one will obtain $ω$ times the contents. 2. the contents
-of |Bang| (namely $x$) always reside on the \textsc{gc} heap, and transitively so. Indeed, because this
-$x$ has multiplicity $ω$, the type-system ensures that all the
-intermediate linear values potentially allocated to produce $x$ must
-have been completely eliminated before being able to return $x$.
-
-As an illustration, recall the |alloc| function from our queue reference
-implementation:
-\begin{code}
-alloc   :: (Queue ⊸ Bang a) ⊸ a
-alloc k = case k [] of
-  Bang x -> x
-\end{code}
-Using the case-bang rule it behaves as expected.
-Indeed, even when |alloc k| is demanded $ω$ times, |k| will be
-demanded $1$ time, and in turn the queue will reside on the linear
-heap, and it is guaranteed to be de-allocated by the time the |Bang|
-constructor is forced. This linear dynamic semantics of the reference implementation
-is what justifies storing the queue in a foreign heap when the queue is implemented by foreign
-functions.
+\improvement{[aspiwack] The multiplicity rules are here only for
+  compatibility with the strong typed semantics. They are a bit in the
+  way, really: for the standard dynamics we might as well erase all
+  the multiplicity, but I think this would end up making the presentation
+  heavier. Either we should say a word about multiplicity rules in
+  this paragraph, or we could simply note that all the weight can be
+  resolved statically (I believe that to be true, we should check) and
+  omit the rules.}
+The dynamic semantics is given in \ref{fig:dynamics}. Let us review
+the new rules
+\begin{description}
+\item[Linear variable] In the linear variable rule, the binding in the
+  linear heap is removed. While this can be exploited to signify
+  explicit de-allocation of objects on the linear heap. However, the
+  linear variable rule is best seen as a technical device to represent
+  the strictness of the queue primitives: the queue literal will then
+  be passed to a primitive, either \emph{free} to actually free the
+  queue, or \emph{push} to augment the queue with a message.
+\item[Alloc] The alloc rule creates a new (empty) queue and pass it to
+  its continuation. It is not the only rule which allocate in the
+  sense of using a |malloc|-like primitive: pushing a message to a
+  queue may require allocation to accommodate for the extra
+  element. However its role is to allocate a root that will own a
+  queue.
+\item[Free] In combination with the linear variable rule, deallocates
+  a queue.
+\item[Push] The push rule adds a message to a queue. Notice that the
+  message itself is incorporated into the queue literal: there is no
+  mention of a variable pointing to the message. This is because the
+  message is copied from the garbage-collected heap to the linear
+  heap.
+\end{description}
 
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λπ. t ⇓_ρ Γ : λπ. t}\text{w.abs}
+    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{w.abs}
 
 
-    \inferrule{Γ : e ⇓_ρ Δ : λπ.e' \\ Δ : e'[q/π] ⇓_{ρ} Θ : z} {Γ :
+    \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
       e q ⇓_ρ Θ : z} \text{w.app}
 
-    \inferrule{ }{Γ : λx. e ⇓_ρ Γ : λx. e}\text{abs}
+    \inferrule{ }{Γ : λx. e ⇓ Γ : λx. e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓_ρ Δ : λy.e' \\ Δ : e'[x/y] ⇓_{ρ} Θ : z} {Γ :
-      e x ⇓_ρ Θ : z} \text{application}
+    \inferrule{Γ : e ⇓ Δ : λy.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+      e x ⇓ Θ : z} \text{application}
 
-    \inferrule{Γ : e ⇓_ω Δ : z}{(Γ,x ↦_ω e) : x ⇓_ρ (Δ;x ↦_ω z) :
+    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x ↦_ω e) : x ⇓ (Δ;x ↦_ω z) :
       z}\text{shared variable}
 
 
-    \inferrule{Γ : e ⇓_1 Δ : z} {(Γ,x ↦_1 e) : x ⇓_1 Δ :
+    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x ↦_1 e) : x ⇓ Δ :
       z}\text{linear variable}
 
 
-    \inferrule{(Γ,x_1 ↦_{q_1ρ} e_1,…,x_n ↦_{q_nρ} e_n) : e ⇓_ρ Δ : z}
-    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓_ρ Δ :
+    \inferrule{(Γ,x_1 ↦_ω e_1,…,x_n ↦_ω e_n) : e ⇓ Δ : z}
+    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓ Δ :
       z}\text{let}
 
-    \inferrule{ }{Γ : c  x₁ … x_n ⇓_ρ Γ : c  x₁ …
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
       x_n}\text{constructor}
 
 
-    \inferrule{Γ: e ⇓_{qρ} Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓_ρ Θ : z}
-    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓_ρ Θ : z}\text{case}
+    \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
+
+    \inferrule{Γ,x ↦_1 ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+
+    \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
+
+    \inferrule{Γ:x ⇓ Δ:⟨…⟩ }{Γ : free x ⇓ Δ : () }\text{free}
 
   \end{mathpar}
 
@@ -1324,47 +1381,97 @@ functions.
   \label{fig:dynamics}
 \end{figure}
 
-The \emph{shared variable} rule also triggers when the multiplicity
-parameter is $1$, thus effectively allowing linear variables to look
-on the garbage-collected heap, and in turn linear data to have unrestricted
-sub-data.
+While the semantics of \fref{fig:dynamics} describes quite closely
+what is implemented in the \textsc{ghc} extension prototype, it is not
+convenient for proving properties. There are two reasons to that fact:
+first the semantics is rather disjoint from the type system and, also,
+there are pointers from the garbage-collected heap to the linear
+heap. The latter property will happen, for instance, if the programmer
+needs a pair of queue: the pair will be allocated on the
+garbage-collected heap while the queues will live in the linear heap.
 
-It is an essential property that the garbage collected heap does not
-contain any reference to the linear heap. Otherwise, garbage
-collection would have to also free the linear heap, making the linear
-heap garbage-collected as well (the converse does not hold: there can
-be references to the garbage-collected heap from the linear heap,
-acting as roots).
-\begin{lemma}[The \textsc{gc} heap never points to the linear heap]
-  \improvement{Formal statement? It is not easy to write because we
-    have a big-step semantics and we want the property for every small
-    step.}
-\end{lemma}
-\begin{proof}
-  To prove the above we need a more precise version of the reduction
-  relation, which additionally tracks the contents of the stack, and
-  is fully typed. (See \fref{fig:typed-semop}.) Technically, the judgement
-  $Γ:t ⇓_ρ Δ:z$ is extended to the form $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$,
-  where
-\begin{itemize}
-\item $Ξ$ is a context of free variables
-\item $Σ$ is a stack of typed terms which are yet to be reduced, together with their respective multiplicities
-\item $t,z$ are typed terms
-\item $Γ,Δ$ are heap states, that is associations of variables to
-  a multiplicity and a typed term.
-\end{itemize}
-We can then see that this new relation preserves types. A well-typed
-reduction state implies that the heap is consistent as per this lemma.
-Hence, starting from a well-typed state, the reduction relation will
-only produce consistent heaps.
-\end{proof}
+This is not a problem in and on itself: pointers to queue may be seen
+as opaque by the garbage collector which will not collect them, so
+that their lifetime is still managed explicitly by the
+programmer. However, in order to prevent use-after-free bug, we must
+be sure that by the time a queue is freed, every object in the
+garbage-collected heap which points to that queue must be dead, even
+if they are still extant in the heap.
 
+In order to prove such a property, let us introduce a stronger
+semantics with the lifetime of objects more closely tracked. The
+strengthened semantics differs from \fref{fig:dynamics} in two
+aspects: the evaluation states are typed, and values with statically
+tracked lifetimes (linear values) are put on the linear
+heap.\improvement{Remark: the annotation on the untyped semantics is
+  useless. We have two choices: either we decide to remove annotations
+  from the untyped semantics altogether, or we keep all the type
+  annotations (not just multiplicity) and ignore them in the untyped
+  semantics, but we can unify the typed and untyped semantics}
+
+In order to define the typed semantics, we shall introduce a few
+notations. First we will need a notion of product annotated with the
+multiplicity of its first component.
+\begin{definition}[Weighted tensors]
+
+  We use $A~{}_ρ\!⊗ B$ ($ρ∈\{1,ω\}$) to denote one of the two following
+  types:
+  \begin{itemize}
+  \item $\data A~{}_1\!⊗ B = ({}_1\!,) : A ⊸ B ⊸ A~{}_1\!⊗ B$
+  \item $\data A~{}_ω\!⊗ B = ({}_ω\!,) : A → B ⊸ A~{}_1\!⊗ B$
+  \end{itemize}
+
+\end{definition}
+Weighted tensors are used to internalise a notion of stack that keeps
+tracks of multiplicity for the sake of the following definition, which
+introduces the states of the strengthened evaluation relation.
+
+\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
+
+\begin{definition}[Annotated state \& well-typed state]
+  An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
+  \begin{itemize}
+  \item $Ξ$ is a typing context
+  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+    bindings of the form $x :_ρ A = e$
+  \item $t$ is a term
+  \item $ρ∈\{0,1\}$ is a multiplicity
+  \item $A$ is a type
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+    a term, a multiplicity and an annotation.
+  \end{itemize}
+
+  We say that such an annotated state is well-typed if the following
+  typing judgement holds:
+  $$
+  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A{}_ρ\!⊗\multiplicatedTypes{Σ})‌
+  $$
+  Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
+  bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  for $(e_1 {}_{ρ_1}\!, (…, (e_n{}_{ρ_n},())))$, and
+  $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
+  $A_1{}_{ρ_1}\!⊗(…(A_n{}_{ρ_n}\!⊗()))$.
+\end{definition}
+
+\begin{definition}[Strengthened reduction relation]
+  We define the strengthened reduction relation, also written $⇓$, as a
+  relation on annotated state. Because $Ξ$, $ρ$, $A$ and $Σ$ will
+  always be the same for related states, we abbreviate
+  $$
+  (Ξ ⊢ Γ||t :_ρ A,Σ) ⇓ (Ξ ⊢ Δ||z :_ρ A,Σ)
+  $$
+  as
+  $$
+  Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ
+  $$
+
+  The strengthened reduction relation is defined inductively by the
+  rules of \fref{fig:typed-semop}.
+\end{definition}
+\todo{missing abs rule in well-typed reduction}
+\todo{replace case-bang with alloc/free/push}
 \begin{figure}
-  \centering
-\begin{definition}[Well-typed reduction relation]
-  The judgement \[Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ\] is defined inductively by
-  the following rules:
-
 \begin{mathpar}
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
@@ -1383,7 +1490,7 @@ only produce consistent heaps.
 {\text{linear variable}}
 
 \inferrule
-  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{q_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{pq_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
   {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
 {\text{let}}
 
@@ -1393,237 +1500,361 @@ only produce consistent heaps.
 {\text{constructor}}
 
 \inferrule
-  {Ξ,y:_{pqρ} A ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+  {Ξ,y_1:_{p_1qρ} A_1 … ,y_n:_{p_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
     Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
 {\text{case}}
 
 \inferrule
-   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 D, u:_ω C, Σ \\
+   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 \varid{Bang} A, u:_ω C, Σ \\
     Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
-   {Ξ ⊢ (Γ||\case[1] e {\varid{Bang}  y ↦ u} ⇓ Θ||z) :_ω C, Σ}
-{\text{case-Bang}}
+   {Ξ ⊢ (Γ||\mathsf{case}_{1} e \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
+{\text{case-bang}}
   \end{mathpar}
-\end{definition}
-  \caption{Typed operational semantics. (Omitting the obvious w.abs and w.app for concision)}
+  \caption{Typed operational semantics. (Omitting the obvious abs, w.abs and w.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
-\begin{definition}[Well-typed state]
-  We write $Ξ ⊢ (Γ||t :_ρ A),Σ$ as a shorthand for
-  \[
-    Ξ ⊢ \flet Γ \fin (t,\mathnormal{terms}(Σ)) :
-    (ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌
-  \]
-  In the above expression $\flet Γ$ stands in turn for a nested
-  $\mathsf{let}$ expression where all variables in $Γ$ are bound to
-  the corresponding term in $Γ$, with the given type and multiplicity. We
-  write $(ρA⊗\mathnormal{multiplicatedTypes}(Σ))‌$ for the multiplicated tensor
-  type comprised of $A$ with multiplicity $ρ$, the types in $Σ$ and the
-  corresponding multiplicities. The term $(t,\mathnormal{terms}(Σ))$ in the
-  inhabitant of that type which pairs $t$ with a tuple of the terms in
-  $Σ$.
-\end{definition}
+There are a few things of notice about the semantics of
+\fref{fig:typed-semop}. First, the let rule doesn't necessarily
+allocate in the garbage collected heap anymore — this was the goal of
+the strengthened semantics to begin with — but nor does it
+systematically allocate bindings of the form $x :_1 A = e$ in the
+linear heap either: the heap depends on the multiplicity $ρ$. The
+reason for this behaviour is promotion: an ostensibly linear value can
+be used in an unrestricted context. In this case the ownership of $x$
+must be given to the garbage collector: there is no static knowledge
+of $x$'s lifetime. For the same reason, the linear variable case
+requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} will prove
+this restriction to be safe).
 
-\improvement{Make a definition of the typed reduction before the two
-  lemmas, remark explicitly that it extracts to the untyped
-  reduction.}
-\begin{lemma}[The typed reduction relation preserves typing]\label{lem:type-safety}~\\
-  if  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
-  \[Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.\]
+The other important rule is the alloc rule: it requires a result of
+the form $Bang x$ of multiplicity $1$ while returning a
+result of multiplicity $ω$. It is crucial as the alloc rule is the
+only rule which make possible the use of a linear value to produce a
+garbage collected value, this will justify the fact that in the ordinary
+semantics, queues can be allocated in the linear heap. The reason why
+it is possible is that, by definition, in $Bang x$, $x$ \emph{must} be
+in the garbage-collected heap. In other words, when an expression $e :
+Bang A$ is forced to the form $Bang x$, it will have consumed all the
+pointers to the linear heap (the correctness of this argument is
+proved in Lemma~\ref{lem:type-safety} below).
+
+The crucial safety property of the strengthened relation is that it
+preserves well-typing of states.
+
+\begin{lemma}[Strengthened reduction preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  $$
+  Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
+  $$
 \end{lemma}
 \begin{proof}
-  By induction.
+  By induction on the typed-reduction.
+
+  \todo{There used to be the case of the case-bang in more details,
+    probably do alloc instead}
+  % The important case is the case-bang rule. By induction we have that
+  % $Ξ,y:_ω⊢(Δ||Bang x) :_1 Bang A,…$. Unfolding the typing rule for
+  % $Bang$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
+  % prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
 \end{proof}
 
-\begin{corollary}[Eventual de-allocation of linear values]
-  Let $t$ be a closed term and $\data () = ()$, the data declaration
-  with a single constructor. If $⊢ (||t ⇓ Δ||()) :_ρ (), ⋅ $ and
-  $⊢ (||t :_ρ ()), ⋅ $, then $Δ$ only contains $ω$-bindings.
+Because of this property we can freely consider the restriction of the
+strengthened relation to well-typed states. For this reason, from now
+on, we only consider well-typed states.
+
+\begin{corollary}[Never stuck on the linear variable rule]\label{cor:linear-variable}
+  $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not reachable.
 \end{corollary}
 \begin{proof}
-  By Lemma \ref{lem:type-safety}, % TODO fref?
+  Remember that we consider only well-typed states because of
+  Lemma~\ref{lem:type-safety}. Unfolding the typing rules it is easy
+  to see that $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not well-typed: it
+  would require $x:_1 A = ωΔ$ for some $Δ$, which cannot be.
+\end{proof}
+
+We are now ready to prove properties of the ordinary semantics by
+transfer of properties of the strengthened semantics. Let us start by
+defining a notion of type assignment for states of the ordinary
+semantics.
+
+\newcommand{\ta}[2]{γ(#1)(#2)}
+
+\begin{definition}[Type assignment]
+  A well-typed state is said to be a type assignment for an ordinary
+  state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
+  $e=e' ∧ Γ' \leqslant Γ$.
+
+  That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
+  linear, and to drop unnecessary $ω$ bindings.
+\end{definition}
+
+Notice that for a closed term, type assigment reduces to the fact that
+$e$ has a type. So we can see type assignment to state as a
+generalisation of type assignment to terms which is preserved during
+the reduction. Let us turn to prove that fact, noticing that type
+assignment defines a relation between ordinary states and well-typed
+states.
+
+\begin{lemma}[Type safety]\label{lem:actual_type_safety}
+  The refinement relation defines a simulation of the ordinary
+  reduction by the strengthened reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  This is proved by a straightforward induction over the ordinary
+  reduction. The case of let may be worth considering for the curious
+  reader.
+\end{proof}
+
+From type-safety follows the fact that a completely evaluated program
+has necessarily de-allocated all the linear heap. This is a form of
+safety from resource leaks (of course, resource leaks can always be
+programmed in, but the language itself does not leak resources).
+
+\begin{corollary}[Eventual de-allocation of linear values]
+  Let $⊢ t : ()$ be a closed term, where $\data () = ()$ is the data
+  declaration with a single constructor. If $:t ⇓ Δ:()$, then $Δ$ only
+  contains $ω$-bindings.
+\end{corollary}
+\begin{proof}
+  By Lemma \ref{lem:actual_type_safety}, % TODO fref?
   we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
   $()$ conclude: in order for $()$ to be well typed, the environment
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
-\subsection{Erasing the dynamic weight}
-\todo{make more precise}
-We can, at any point, forget that the dynamic multiplicity is 1 and
-use $ω$ instead. The argument goes like this.  Informally, this is
-because linear values can be stored on the gc heap anyway.
+For the absence of use-after-free errors, let us invoke a liveness
+property: that the type assignment is also a simulation of the
+strengthened semantics by the ordinary semantics (making type
+assignment a bisimulation). There is not a complete notion of progress
+which follows from this as big step semantics such as ours do not
+distinguish blocking from looping: we favoured clarity of exposition
+over a completely formal argument for progress.
 
-Formally, one can see in the semantics that even linear variables can
-be looked up in the gc heap. Additionally, allocating on the gc heap
-cannot prevent firing of the variable rule later on (being linear or
-otherwise). Finally, the other rules are not sensitive to the dynamic
-multiplicity.
+\begin{lemma}[Liveness]\label{lem:liveness}
+  The refinement relation defines a simulation of the strengthened
+  reduction by the ordinary reduction.
 
-This possibility of using only $ω$ allows to implement our Queue
-example with no change whatsoever to the runtime system of the
-language. (The only point where the 1 multiplicity is used is in the
-alloc rule.)
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+  $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$, there exists a state $Δ:z$ such
+  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  This is proved by a straightforward induction over the ordinary
+  reduction.
+\end{proof}
 
+In conjunction with Corollary~\ref{cor:linear-variable},
+Lemma~\ref{lem:liveness} shows that well-typed program don't get
+blocked, in particular that garbage-collected objects which point to the
+linear objects are not dereferenced after the linear object has been
+freed: \calc{} is safe from use-after-free errors.
+
+\section{Perspectives}
+\todo{Speak about fusion}
+\hfill\\
+\todo{Mention the case-bang rule (the case-bang rule can be found in
+  the source below this todo-box)}
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x
+    \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
+    \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ :
+    z}\text{case-bang}}
+\hfill\\
+\todo{More multiplicities}
 
 \section{Related work}
-\subsection{Alms}
-\todo{Compare with Alms \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
-Alms is a general-purpose programming language that supports
-practical affine types. To offer the expressiveness of Girard’s linear
-logic while keeping the type system light and convenient, Alms
-uses expressive kinds that minimize notation while maximizing
-polymorphism between affine and unlimited types.
 
-We have the same aim (but with plain linear types) but use a different
-technique which cuts down the number of inference rules from 51 to 8.
+\subsection{Uniqueness types}
 
-A key feature of Alms is the ability to introduce abstract affine
-types via ML-style signature ascription. In Alms, an interface can
-impose stiffer resource usage restrictions than the principal usage
-restrictions of its implementation. This form of sealing allows the
-type system to naturally and directly express a variety of resource
-management protocols from special-purpose type systems.
+When speaking about linear types, it is frequent to think of them as
+uniqueness (or ownership) types. The most prominent representative of
+languages with such uniqueness types are Clean\todo{Cite Clean} and
+Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
+designed around linear types based on linear
+logic~\cite{girard_linear_1987}.
 
-We can do similar examples as the demos of Alms. Example, R-W Lock:
-\begin{code}
-acquireRead : Lock -> (Access Shared ⊸ Bang a) ⊸ a
-acquireWrite : Lock -> (Access Excl ⊸ Bang a) ⊸ a
-releaseAccess : Access a ⊸ ()
+There is a kind of duality between the two: linear type ensures
+that the argument of a linear function are used once by functions
+while the context can use it as many times as it needs; uniqueness
+types ensures that the argument of a function is not used anywhere
+else in the context, but the function can use it as it pleases (with
+some caveat).
 
-set : Key ⊸ Value ⊸ Access Excl ⊸ (Access Excl)
-get : Key ⊸ Access a ⊸ (Value ⊗ Access a)
-\end{code}
+From a compiler's perspective, uniqueness type provide a non-aliasing
+analysis while linear types provides a cardinality analysis. The
+former aims at in-place updates and related optimisation, the latter
+at inlining and fusion. Rust and Clean largely explore the
+consequences of uniqueness on in-place update; an in-depth exploration
+of linear types in relation with fusion can be found
+in~\citet{bernardy_composable_2015}.\todo{call-back to fusion in the
+  perspectives}.
 
-We extend Haskell, they do not claim to be an extension of ML.
-
-This is what Morris says about Alms:
-Despite the (not insignificant) complexity of their system, it is
-still not clear that it fully supports the expressiveness of
-traditional functional programming languages. For example, their
-system has distinct composition operators with distinct types. These
-types are not related by the subtyping relation, as subtyping is
-contravariant in function arguments.
-
-\subsection{Related type systems}
-
-The type system presented here is heavily inspired from the work of
-\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
-present a type system where arrows are annotated with the multiplicty
-of the the argument that they require, and where the multiplicities
-form a semi-ring.  The novel technical aspects of the present system are
-multiplicity polymorphism and an lazy operational semantics.
-
-Contrary to us \citeauthor{mcbride_rig_2016} has a weighted type
-judgement $Γ ⊢_ρ t : A$. In the application rule, the weight is
-multiplied by the weight of the function in the argument. At the point
-of variable usage one checks that the appropriate multiplicity of the
-variable is available. A problem with this approach is that whenever
-one enters an $ω$-weighted judgement, one effectively abandons
-tracking any linearity whatsoever. Thus, the following program would
-be type-correct, while |dup| is duplicating a linear value.
-
-\[
-(λ (dup : _ ω a ⊸ (a ⊗ a) ) . dup) (λx. (x,x))
-\]
-
-Effectively, in \citeauthor{mcbride_rig_2016}'s system, one cannot use
-abstractions while retaining the linearity property.
-
-In that respect, our system is closer to that of
-\citet{ghica_bounded_2014}, which does not exhibit the issue. The
-differences between our type system and that of
-\citet{ghica_bounded_2014} are that we work with a concrete set of
-weights and that we support a special case-analysis construction which
-works only for non-zero weights.
-
+Several points guided our choice of designing \HaskeLL{} around linear
+logic rather than uniqueness type: functional languages have more use
+for fusion than in-place update (\textsc{ghc} has a cardinality
+analysis, but it doesn't perform a non-aliasing analysis), there is a
+wealth of literature detailing the applications of linear
+logic — explicit memory
+management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
+array
+computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
+protocol specification~\cite{honda_session_1993}, privacy
+guarantees\cite{gaboardi_linear_2013}, graphical
+interfaces\cite{krishnaswami_gui_2011}, … But the factor which was
+decisive was probably the fact that linear type systems are
+conceptually simpler than uniqueness type systems, which gave a
+clearer path to implementation in \textsc{ghc}.
 
 \subsection{Linearity as a property of types vs. a property of bindings}
 
 In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
 programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
-or unrestricted. Unrestricted types typically includes primitive types
-(such as \varid{Int}), and all (strictly positive) data types. Linear types
-typically include resources, effects, etc.
+or unrestricted.
 
-A characteristic of such a presentation is that linearity ``infects''
-every type containing a linear type. Consequently, if we want to make
-a pair of (say) an integer and an effect, the resulting type must be
-linear.  This property means that polymorphic data structures can no
-longer be used \emph{as is} to store linear values. Technically, one cannot unify a
-type variable of unrestricted kind to a linear type. One can escape
-the issue by having polymorphism over kinds; unfortunately to get
-principal types one must then have subtyping between kinds and bounded
-polymorphism, as \citet{morris_best_2016}.
+In effect, this imposes a clean separation between the linear world
+and the unrestricted world. An advantage of this approach is that it
+instantiate both to linear types and to uniqueness types depending on
+how they the two worlds relate, and even have characteristics of
+both\footnote{See Edsko de Vries's recent exposition at
+  \url{http://edsko.net/2017/01/08/linearity-in-haskell/}}.
 
-In contrast, in \calc{} we have automatic scaling of linear types to
-unrestricted ones in unrestricted contexts. This feature already
-partially addresses the problem of explosion of types.  First, most
-data structures should have linear constructors and thus readily store
-linear values. Second, first order functions can be given a linear
-type and be scaled automatically. Finally, even in the most general
-case, when multiplicity polymorphism is needed, we get away without
-using bounded quantification: products in weight expressions is all we
-need.
+Such approaches have been very successful for theory: see for instance
+the line of work on so-called \emph{mixed linear and non-linear logic}
+(usually abbreviated \textsc{lnl}) started by
+\citet{benton_mixed_1995}. However, for practical language design,
+code duplication between the linear an unrestricted worlds quickly
+becomes costly. So language designer try to create languages with some
+kind of kind polymorphism to overcome this limitation. This usually
+involves a subkinding relation and bounded polymorphism. This kind
+polymorphic designs are rather complex. See \citet{morris_best_2016}
+for a recent example. By contrast, the type system of \calc{} is quite
+straightforward.
 
-Another issue with the ``linearity in types'' presentation is that it
-is awkward at addressing the problem of ``simplified memory
-management'' that we aim to tackle. As we have seen, the ability to
-use an intermediate linear heap rests on the ability to turn a linear
-value into an unrestricted one. When linearity is captured in types,
-we must have two versions of every type that we intend to move between
-the heaps. Even though \citet{morris_best_2016} manages to largely
-address the issue by means of polymorphism and constraints over types,
-it comes as the cost of a type-system vastly more complex than the one
-we present here.
+Another point, rather specific to \textsc{ghc}, is that the kind
+system of \textsc{ghc} is quite rich, with support for impredicative
+dependent types, and a wealth of unboxed or otherwise primitive types
+which can't be substituted for polymorphic type arguments. It is not
+clear how to extend \textsc{ghc}'s kind system to support linear
+types.
 
-\subsection{Uniqueness types}
+\subsection{Alms}
+\improvement{Citation pointing to \emph{e.g.}
+  \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And
+  rewrite this paragraph which contains a copy-paste of the paper's
+  abstract.)}
+Alms is an \textsc{ml}-like language based on affine types (a variant
+of linear types where values can be used \emph{at most} once). It is
+uses the kinds to separate affine from unrestricted arguments.
 
-\todo{Compare with uniqueness types}
+It is a case in point for kind-based systems being more complex: for
+the sake of polymorphism, Alms deploys an elaborate dependent kind
+system. Even if such a kind system could be added to an existing
+language implementation, Alms does not attempt to be backwards
+compatible with an \textsc{ml} dialect. In fact
+\citeauthor{morris_best_2016} notes:
+\begin{quote}
+  Despite the (not insignificant) complexity of [Alms], it is still
+  not clear that it fully supports the expressiveness of traditional
+  functional programming languages. For example, [Alms] has distinct
+  composition operators with distinct types. These types are not
+  related by the subtyping relation, as subtyping is contravariant in
+  function arguments.
+\end{quote}
 
-\subsection{Session types vs. linear types}
+\subsection{Rust}
 
-\Citet{wadler_propositions_2012} provides a good explanation of the
-relation between session types vs. linear types. In sum, session types
-classify `live' sessions with long-lived channels, whose type
-``evolves'' over time. In contrast, linear types are well suited to
-giving types to a given bit of information. One can see thus that linear types are
-better suited for a language based on a lambda calculus, while session
-types are better suited for languages based on a pi-calculus and/or
-languages with effects. Or put another way, it is a matter of use
-cases: session types are particularly aimed at describing
-communication protocols, while linear types are well suited for
-describing data. One is communication centric, the other is data
-centric, yet there is a simple encoding from session types to linear
-types (as Wadler demonstrates in detail). In practice, we find that
-plain linear types are perfectly sufficient to represent protocols, as
-as we show in \fref{sec:protocols}.\unsure{shall we put back a protocol example?}
+Already mentioned above is the language
+Rust~\cite{matsakis_rust_2014}, based on ownership types. This
+distinction notwithstanding, Rust's type system resembles the original
+presentation of linear logic where every type $A$ represent linear
+values, unrestricted values at type $A$ have a special type $!A$, and
+duplication is explicit.
+
+In a sense, Rust quite beautifully solves the problem of being mindful
+about memory, resources, and latency. But this comes at a heavy price:
+Rust, as a programming language, is specifically optimized for writing
+programs that are structured using the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens. For instance, tail recursions, so dear to the functional
+programmer's heart, can usually not be eliminated, as resource
+liberation must be triggered when the tail call returns.
+
+\HaskeLL{} aims to hit a different point in the design space where
+regular Haskell programs are the norm, hence are optimised for, and we
+can, at the cost of extra effort, be mindful about memory and latency.
+
+\subsection{Related type systems}
+
+The \calc{} type system is heavily inspired from the work of
+\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
+present a type system where arrows are annotated with the multiplicty
+of the the argument that they require, and where the multiplicities
+form a semi-ring.
+
+In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
+multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
+represents the multiplicity of $t$. So, in
+\citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
+required, instead of computer $ωΓ$, it is enough to check that
+$ρ=ω$. The problem is that this check is arguably too coarse, and
+result into the following being derivable:
+$$
+⊢_ω λx. (x,x) : A ⊸ (A⊗A)
+$$
+Which we do not consider desirable: it means that there cannot be
+reusable definitions of linear functions. In terms of linear logic,
+\citeauthor{mcbride_rig_2016} makes the natural arrow $!(A⊸B) ⟹ !A⊸!B$
+invertible.
+
+In that respect, our system is closer to
+\citeauthor{ghica_bounded_2014}'s. What we keep from
+\citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+\ref{sec:statics}), which can be phrased in terms of linear logic as
+making the natural arrow $!A⊗!B ⟹ !(A⊗B)$ invertible. This choice is
+unusual from a linear logic perspective, but it is the key to be able
+to use types both linearly an unrestrictedly without intrusive
+multiplicity polymorphic annotation on all the relevant types.
+
+The literature on so-called coeffects uses type systems similar to
+\citeauthor{ghica_bounded_2014}, except with a linear arrow and
+multiplicities carried by the exponential modality
+instead. \Citet{brunel_coeffect_core_2014}, in particular, develops a
+Krivine realisability model for such a calculus. We are not aware of
+an account of Krivine realisability for lazy languages, hence it is
+not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
-Recent literature is surprisingly quiet on the operational aspect of
-linear types, and concentrates rather on uniqueness types
+Recent literature is surprisingly quiet on the operational aspects of
+linear types, and rather concentrates on uniqueness types
 \cite{pottier_programming_2013,matsakis_rust_2014}.
 
 Looking further back, \citet{wakeling_linearity_1991} produced a
 complete implementation of a language with linear types, with the goal
 of improving the performance. Their implementation features a separate
-linear heap (as we do in \fref{sec:dynamics}). However, they did not manage to
-obtain consistent performance gains. However, they still manage to
-reduce \textsc{gc} usage, which may be critical in distributed and
-real-time environments, as we explained in the introduction\unsure{did we?}.
-Thus the trade-off is beneficial is certain situations.
+linear heap, as \fref{sec:dynamics} where they allocate as much as
+possible in the linear heap, as modelled by the strengthened
+semantics. However, \citeauthor{wakeling_linearity_1991} did not
+manage to obtain consistent performance gains. On the other hand, they
+still manage to reduce \textsc{gc} usage, which may be critical in
+distributed and real-time environments. Thus the trade-off is
+beneficial is certain situations.
 
 Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
-of thunks, and instead take advantage of linear arrays. \todo{Run concrete examples and see what we get.}
+of thunks, and instead take advantage of linear arrays
 
-% \item Linear Lisp. \cite{baker_lively_1992}: unclear results
-
-% \item LineralML \url{https://github.com/pikatchu/LinearML/}: no pub?
-
-\section{Conclusion}\todo{Fix section references}
+\section{Conclusion}
 
 This paper demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
@@ -1634,72 +1865,26 @@ the language, in the following sense:
 \item Such programs retain the same semantics.
 \item Furthermore, the performance of existing programs is not affected.
 \end{itemize}
-In other words: regular Haskell comes first. Additionally, first-order linearly
-typed functions and data structures are usable directly from regular
-Haskell code. In such a situation their semantics is that of the same
-code with linearity erased.
+In other words: regular Haskell comes first. Additionally, first-order
+linearly typed functions and data structures are usable directly from
+regular Haskell code. In such a situation their semantics is that of
+the same code with linearity erased.
 
 Furthermore \calc{} has a particularly non-invasive design, and thus
-it is possible to integrate with an existing complex system.  In
-particular 1. it has no system of ``kinds'' of its own, so it it is
-compatible with any system of ``kinds'' (including dependently-typed
-ones) and 2. \calc{} does not use subtyping. Consequently one can
-confidently extend existing Haskell implementations linear types by
-following the design presented in this paper. Indeed, we have a
-constructed a prototype of GHC whose type-checker is extended with
-linear types.
+it is possible to integrate with an existing mature compiler. We are
+developing a prototype implementation extending \textsc{ghc} with
+multiplicities. The main difference between the implementation and
+\calc, is that the implementation adopts some level of
+bidirectionality: typing contexts go in, actual multiplicities come
+out (and are compared to their expected values). As we hoped, this
+design integrates very well in \textsc{ghc}.
 
-
-Our proposal is in stark contrast with languages such as Rust, which are
-specifically optimized for writing programs that are structured using
-the RAII
-pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-(where resource lifetimes are tied directly or indirectly to stack
-allocated objects that are freed when the control flow exits the
-current lexical scope). Ordinary functional programs seldom fit this
-particular resource acquisition pattern so end up being second class
-citizens.
-
-In \HaskeLL{}, when the programmer is ready to pay the
-cost of finely dealing with usage through linearity, they get the
-additional benefits of linear type: new abstractions
-(\fref{sec:protocols}, \fref{sec:resources}, and \fref{sec:ffi}),
-lower \textsc{gc} pressure (\fref{sec:primops}).
-All these benefits come to with no penalty to unmodified Haskell.
-
-The benefits can be classified in three stages depending on how much
-modification to an existing language they require:
-\begin{enumerate}
-\item Adapting the \textbf{type system} enables
-  \begin{itemize}
-  \item new abstractions such as protocols (\fref{sec:protocols}) and
-    safe resource management (\fref{sec:resources}), enabling {\em
-      safe} API to resources exposed as foreign resources allocated in
-    a foreign heap
-  \item pure abstractions to C libraries (\fref{sec:ffi})
-  \item primitive operations to keep data out of the garbage collector
-    (\fref{sec:primops})
-  \end{itemize}
-\item Propagating type annotation to the \textbf{intermediate
-    language} makes it possible to exploit linear types for further
-  optimization (\fref{sec:fusion})
-\item Modifying the \textbf{run-time system} further enables prompt
-  deallocation of it possible to
-  have type-directed allocation of objects,  which can be leveraged to prevent \textsc{gc} pauses
-  in critical computations (\fref{sec:dynamics}). An API for explicit
-  allocation and freeing of resources is no longer needed.
-\end{enumerate}
-
-Each of these stages imply increasingly invasive changes to a
-compiler, but also increasingly large benefits. In practice it makes
-it possible to roll out stages one at a time, quickly reaping the low
-hanging fruits.  Of these three stages, modifying the type system is
-the cheapest, but also the most immediately beneficial, enabling a lot
-of new uses for the programming language. Propagating the information
-down to the run-time system is still worth pursuing as we are
-expecting significant benefits, due to reduced and controlled latency,
-for systems programming, and in particular for distributed
-applications.
+It is worth stressing that, in order to implement foreign data
+structures like we have advocated, in this article, as a means to
+reduce \textsc{gc} pressure and latency, we only need to modify the
+type system: primitives to manipulate foreign data can be implemented
+in libraries using the foreign function interface. This helps make the
+prototype quite lean.
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{ACM-Reference-Format.bst}
@@ -1726,4 +1911,5 @@ applications.
 %  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
-%  LocalWords:  unannotated
+%  LocalWords:  unannotated tuple subkinding invertible coeffects
+%  LocalWords:  unrestrictedly bidirectionality
