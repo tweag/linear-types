@@ -593,6 +593,12 @@ g k x y = k x (f y)      -- Valid
 g k x y = k x y          -- Valid
 g k x y = k y x          -- Invalid, x has multiplicity 1
 \end{code}
+\rn{Would be nice to introduce let here and do this in terms of let.}
+
+%% \begin{code}
+%% let x : _ 1 A = ... in blah
+%% \end{code}
+
 
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
@@ -602,7 +608,9 @@ data List a where
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
 That is, given a list |xs| with multiplicity $1$, pattern-matching will
-yield the sub-data of |xs| will multiplicity $1$. Thus the above list
+yield the sub-data of |xs| will multiplicity $1$.
+\rn{And {\em deallocate}, mention that too...}
+Thus the above list
 may contain resources without compromising safety.
 
 Many list-based functions conserve the multiplicity of data, and thus can
@@ -627,6 +635,8 @@ all, a finite multiplicity). If both |xs| and |ys| have multiplicity
 $ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. In terms of resources,
 neither |xs| nor |ys| can contain resources, so
 neither can |xs++ys|: it is thus safe to share |xs++ys|.
+%
+\rn{Here's where I really wanted to know what happens if only one of them is linear...}
 
 For an existing language, being able to strengthen |(++)| in a {\em
   backwards-compatible} way is a major boon.
@@ -639,6 +649,9 @@ indefinitely needs to be unrestricted:
   cycle :: List a → List a
   cycle l = l ++ cycle l
 \end{code}
+
+
+\subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
 The implicit conversions between multiplicities make it so that for
 first-order code linear functions are more general. Higher-order code
@@ -744,6 +757,8 @@ push    :: Msg -> Queue ⊸ Queue
 delete  :: Msg -> Queue ⊸ Queue
 evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
 \end{code}
+\rn{Evict seems like overkill for a cartoon motivating example.}
+
 There are a few things going on in this API:
 \begin{itemize}
 \item |alloc| opens a new scope, delimited by the dynamic extent of
@@ -753,6 +768,8 @@ There are a few things going on in this API:
   The return type of argument
   function is |Bang a|, ensuring that no linear value can be returned:
   in particular the |Queue| must be consumed.
+  \rn{Note: explain reachability invariants here or earlier.}
+  
 \item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
@@ -769,7 +786,9 @@ There are a few things going on in this API:
 
 \paragraph{Reference implementation}
 The intention behind this queue API is to bind a C implementation of
-a queue data structure which manages memory explicitly. However, we
+a queue data structure which manages memory explicitly.
+\rn{How exactly?  Lollipops directly in FFI import signatures?}
+However, we
 can give an implementation directly in \HaskeLL{}. For simplicity
 |Queue|s and |Vector|s are represented simply as lists. Therefore this
 implementation is by no mean efficient: it may, however serve as an
@@ -788,11 +807,13 @@ class Storable a where
   store :: a ⊸ a -- TODO: subtle
   free' :: a ⊸ ()
 \end{code}
+\rn{As discussed before, needs a new name.  How about ``Linear''?}
+%
 Allocation can be implemented simply by calling the continuation. Free
 needs to free all messages. As will be apparent when we define the
 operational semantics for our language, the queue will reside outside
-of GC heap. While |alloc| itself only allocates an empty list, all
-functions which manipulate the queue will do so on the non-GC heap.
+of GC heap.  The Queue |alloc| function below only allocates an empty list, but
+all subsequent functions which manipulate the queue will do so on the non-GC heap.
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 alloc k = case k [] of
@@ -803,6 +824,7 @@ free (x:xs) = case storableFree x of
   () -> free' xs
 free [] = ()
 \end{code}
+\rn{WARNING: storableFree still unbound.}
 The queue-manipulation functions look like regular Haskell code, with
 the added constraint that linearity of queue objects is type-checked.
 \begin{code}
@@ -829,7 +851,9 @@ In this section we turn the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{}, objects are classified into two categories: \emph{linear} objects,
+In \calc{}, objects
+\rn{Why ``objects''?  Why not ``values''?}
+are classified into two categories: \emph{linear} objects,
 which must be used \emph{exactly once} on each code path, and
 \emph{unrestricted} objects which can be used an arbitrary number of
 times (including zero).
