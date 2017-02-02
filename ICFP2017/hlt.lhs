@@ -868,14 +868,22 @@ by the garbage collector (but may not be), and
 so, for most purposes, it must be treated as if it it were not.
 
 This framing drives the details of \calc{}. In particular unrestricted
-objects cannot contain linear objects, because the garbage collector needs to
+objects cannot contain linear objects,
+\rn{Here's the invariant that needs to be showcased earlier...}
+because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
-perfectly fine for linear objects to refer to unrestricted objects. So any
+perfectly fine for linear objects to refer to unrestricted objects.
+\rn{Well, ``perfectly fine'' means ``expensive pinning'' in this case, to amke
+  them GC roots.}
+So any
 object containing a linear object must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
 thunks): \emph{e.g.} a partial application of a function to a linear
-object is linear. More generally, the application of a function
+object is linear.
+\rn{Yes but this doesn't really explain how the subscript on a function binding
+  constrains the user -- i.e. they can only {\em apply} the function once.}
+More generally, the application of a function
 to a linear object is linear, since it is, in general, a lazy
 thunk pointing to that linear object. (In fact, even in a strict
 language, the result may contain the linear argument and so must be
@@ -884,9 +892,14 @@ linear.)
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
+\rn{I would like to switch this with 3.2.  Jumping right into typing contexts
+is... well, lacking context.  It would be better to first understand why/where
+we need to add and scale contexts.}
+
 In \calc{}, each variable in typing contexts is annotated with the number of times
 that the program must use the variable in question. We call this
 number of times the \emph{multiplicity} of the variable.
+\rn{TODO: fix redundancy here.  Not the 1st use of multiplicity.}
 
 Concrete multiplicities are either $1$ or $ω$: when the multiplicity
 is $1$, the program \emph{must} consume the variable exactly once;
@@ -1145,6 +1158,7 @@ $Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
 application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
 disposal. Thus all variables in the scope of the applications are
 accounted for, with appropriate multiplicities.
+\rn{Last jump needs a bit more unpacking...}
 
 Scaling the context in the application rule is the technical device
 which makes the promotion of linear data to unrestricted data implicit,
@@ -1201,6 +1215,9 @@ must be~---~unrestricted)
   snd  :: a⊗b → b
   snd (a,b)  = b
 \end{code}
+\rn{Need operational intuition here.. if we create the pair as a linear
+  object, and then we implicitly convert to unrestricted, and then we
+  project... where would the linear->GCd-heap copy happen?}
 
 \unsure{Shall we state that our type-system is decidable? It may not
   be completely obvious that the problem of equality in a ring is
