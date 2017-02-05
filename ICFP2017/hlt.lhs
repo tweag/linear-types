@@ -1436,7 +1436,7 @@ introduces the states of the strengthened evaluation relation.
   \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
     bindings of the form $x :_ρ A = e$
   \item $t$ is a term
-  \item $ρ∈\{0,1\}$ is a multiplicity
+  \item $ρ∈\{1,ω\}$ is a multiplicity
   \item $A$ is a type
   \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
     a term, a multiplicity and an annotation.
@@ -1445,7 +1445,7 @@ introduces the states of the strengthened evaluation relation.
   We say that such an annotated state is well-typed if the following
   typing judgement holds:
   $$
-  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A{}_ρ\!⊗\multiplicatedTypes{Σ})‌
+  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
   $$
   Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
   bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
@@ -1581,6 +1581,7 @@ semantics.
 
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
+\improvement{Explain what $Γ'$ ranges over.}
 \begin{definition}[Type assignment]
   A well-typed state is said to be a type assignment for an ordinary
   state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
