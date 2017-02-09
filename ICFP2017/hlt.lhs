@@ -230,11 +230,12 @@ in memory?  Today, the answer is a clear
 ``no''\footnote{\Red{{URL-of-reddit-discussion}}}.  The GC pauses are
 unacceptable (and would remain so even with incremental GC).
 %
-This application requires minimizing GC pauses by managing the
-largest heap data structures by other means.  Traditionally, programmers
-resort to pushing the data off-heap manually, accessing it through FFI
-calls.  Much better would be a type-safe solution that stays within the
-high-level language.
+This application requires minimizing GC pauses by managing the largest heap data
+structures outside of the regular heap.  Traditionally, programmers resort to
+pushing the data off-heap manually, accessing it through FFI calls.  But this
+common technique poses a safety risk to {\em clients} of the data structure, who may
+commit use-after-free errors.  Much better would be a type-safe solution.
+% that stays within the high-level language.
 
 Indeed, type systems can be useful for controlling resource usage, not just
 ensuring correctness.  Affine types~\cite{finishme}, linear
