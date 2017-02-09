@@ -442,6 +442,14 @@ indefinitely needs to be unrestricted:
   cycle l = l ++ cycle l
 \end{code}
 
+\subsection{Reachability invariant}
+A consequence of the above design is that unrestricted objects never
+point to (or contain) linear objects. (But the converse is possible.)
+One can make sense operationally of this rule by appealing to
+GC-semantics: when an unrestricted object is reclaimed by garbage
+collection, it would leave all resources that it points to unaccounted
+for. Conversely a pointer from a resource to the heap can simply act
+as a new GC root. We prove this invariant in \fref{sec:dynamics}.
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
@@ -558,15 +566,15 @@ evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
 
 There are a few things going on in this API:
 \begin{itemize}
-\item The |alloc| function opens a new scope, delimited by the dynamic extent of
-  its argument function. This function is provided a fresh queue,
-  allocated in the foreign heap (for example using \verb|malloc()|).
-  As enforced by the type-system, this queue must be used exactly once.
-  The return type of argument
-  function is |Bang a|, ensuring that no linear value can be returned:
-  in particular the |Queue| must be consumed.
-  \rn{Note: explain reachability invariants here or earlier. JP: please clarify what you'd like}
-  
+\item The |alloc| function opens a new scope, delimited by the dynamic
+  extent of its argument function. This function is provided a fresh
+  queue, allocated in the foreign heap (for example using
+  \verb|malloc()|).  As enforced by the type-system, this queue must
+  be used exactly once.  The return type of argument function is |Bang
+  a|, ensuring that no linear value can be returned: in particular the
+  |Queue| must be consumed. (Recall the reachability invariant: |Bang|
+  cannot contain a linear object.)
+
 \item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
   |evict|. The hypothesis is that while there is a very large amount
