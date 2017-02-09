@@ -258,8 +258,8 @@ unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) to add incompatible linear versions.
 But this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
-combinators---constraints and complications which the newcomer to the language
-could not easily ignore, were basic library functions augmented in this way.a
+combinators~---~constraints and complications which the newcomer to the language
+could not easily ignore, were basic library functions augmented in this way.
 
 We propose a design that leaves most types, such as |Int|, unmodified, and
 instead associates linearity with {\em binders}, such as ``$\flet x =_{1}
