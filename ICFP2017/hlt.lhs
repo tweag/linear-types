@@ -292,10 +292,11 @@ We make the following contributions:
   highlighting how it is compatible with all existing Haskell features,
   including Haskell's \Red{kind system, constraints, GADTs, and even dependent types}.
 
-\item We provide a dynamic semantics for \calc{}, which is unusual, combining
-  laziness with explicit deallocation of data.  In \fref{sec:dynamics} prove
-  type safety, and, further, that every linear value is eventually deallocated,
-  and never referenced after it is deallocated.
+\item We provide a dynamic semantics for \calc{}, which is unusual,
+  combining laziness with explicit deallocation of linear data.  In
+  \fref{sec:dynamics} we prove type safety, and, further, that every
+  linear value is eventually deallocated, and never referenced after
+  it is deallocated.
 
 \item We perform a case study of a low-latency in-memory server (\fref{sec:eval})
   implemented using our type system.  We do not yet modify the GHC memory
