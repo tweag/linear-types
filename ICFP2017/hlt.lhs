@@ -262,7 +262,7 @@ combinators~---~constraints and complications which the newcomer to the language
 could not easily ignore, were basic library functions augmented in this way.
 
 We propose a design that leaves most types, such as |Int|, unmodified, and
-instead associates linearity with {\em binders}, such as ``$\flet x =_{1}
+instead associates linearity with {\em binders}, such as ``$\flet x :_{1} T =
 \dots$'', indicating that $x$ must be used exactly once in the body.
 %
 We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
@@ -1462,7 +1462,7 @@ freed: \calc{} is safe from use-after-free errors.
 
 When speaking about linear types, it is frequent to think of them as
 uniqueness (or ownership) types. The most prominent representative of
-languages with such uniqueness types are Clean\todo{Cite Clean} and
+languages with such uniqueness types are Clean \todo{Cite Clean} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
