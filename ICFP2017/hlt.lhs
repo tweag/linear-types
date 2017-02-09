@@ -133,6 +133,7 @@
 % \title{\HaskeLL: Linear types with backwards compatibility in an established language}
 % \title{\HaskeLL: Linear types with Backwards Compatibility}
 \title{\HaskeLL: Systems Programming with \\ Backwards-Compatible Linear Types}
+\def\shorttitle{Backwards-Compatible Linear Types}
 
 
 \author{Jean-Philippe Bernardy}
