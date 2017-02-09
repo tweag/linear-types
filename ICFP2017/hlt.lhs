@@ -397,9 +397,9 @@ data List a where
   [] :: List a
   (:) :: a ⊸ List a ⊸ List a
 \end{code}
-That is, given a list |xs| with multiplicity $1$, pattern-matching will
-yield the sub-data of |xs| will multiplicity $1$.
-\rn{And {\em deallocate}, mention that too...}
+That is, given a list |xs| with multiplicity $1$,
+yield the elements of |xs| will multiplicity $1$.
+\rn{And {\em deallocate}, mention that too... JP: but with the simplified semantics we do not talk about allocation/deallocation of cons cells?}
 Thus the above list
 may contain resources without compromising safety.
 
@@ -422,18 +422,19 @@ strengthens the contract that the implementation of |(++)| must
 satisfy, but it does not restrict its usage. That is, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
-$ω$, |xs++ys| can be \emph{promoted} to multiplicity $ω$. In terms of resources,
-neither |xs| nor |ys| can contain resources, so
+$ω$, |xs++ys| is \emph{promoted} to multiplicity $ω$. In terms of resources,
+if neither |xs| nor |ys| can contain resources,
 neither can |xs++ys|: it is thus safe to share |xs++ys|.
 %
-\rn{Here's where I really wanted to know what happens if only one of them is linear...}
+If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
+|xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
 For an existing language, being able to strengthen |(++)| in a {\em
   backwards-compatible} way is a major boon.
 %
 Of course, not all functions are linear: a function may legitimately
 demand unrestricted input, even to construct an output with
-multiplicity $1$. For example the function repeating its input
+multiplicity $1$. For example the argument of the function repeating its input
 indefinitely needs to be unrestricted:
 \begin{code}
   cycle :: List a → List a
@@ -443,7 +444,7 @@ indefinitely needs to be unrestricted:
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
-The implicit conversions between multiplicities make it so that for
+As seen in the previous subsection, the implicit conversions between multiplicities make it so that for
 first-order code linear functions are more general. Higher-order code
 is more complex, so we introduce multiplicity polymorphism as a way to
 preserve effective code sharing of higher-order functions. For
@@ -463,7 +464,7 @@ and
 
 \HaskeLL{} generalises over linear and unrestricted arrows with the
 syntax $A →_ρ B$. Therefore, |map| can be given the following
-most general type: subsuming both versions is
+most general type:
 \begin{code}
   ∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b
 \end{code}
@@ -478,13 +479,15 @@ multiplicities respectively $ρ$ and $π$ can be composed into a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 
+\subsection{Linearity of constructors}
+
 \improvement{Let's change the segue into this idea, and just introduce
 bang with something like ``constructors can also require unrestricted
 arguments''.}
 One might be tempted to mark all data constructors as linear, i.e.
 with only |⊸|-arrows in their types, in the style of the |List| type
 above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any multiplicity. However, $ω$-multiplicated
+happy to be provided resources of any multiplicity. However, $ω$-annotated
 arrows in constructors are useful too, as the following data type
 illustrates\footnote{The type constructor |Bang| is in fact an
   encoding of the so-called \emph{exponential} modality written ${!}$
@@ -493,9 +496,10 @@ illustrates\footnote{The type constructor |Bang| is in fact an
   data Bang a where
     Bang :: a → Bang a
 \end{code}
-\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|}
-It is used to indicate that a linear function returns $ω$-multiplicated
-results. For example:
+\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|} It is used
+to indicate that a linear function returns results with multiplicity
+$ω$. For example, the following function effectively turns a boolean
+with multiplicity 1 into a boolean with multiplicity $ω$:
 \begin{code}
   copy :: Bool ⊸ Bang Bool
   copy True = Bang True
@@ -503,17 +507,19 @@ results. For example:
 \end{code}
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity of
-|Bool|, whereas |copy| \emph{always} returns an $ω$-multiplicated value,
+|Bool| even when it is promoted, whereas |copy| \emph{always} returns an $ω$-multiplicated value,
 regardless of the multiplicity of its argument.
 
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
 With linear types, it is possible to write a {\em pure} and {\em
-  memory-safe} API for managing foreign C data. Indeed, since linear
-data must be used \emph{exactly once}, it means that such data is
-statically guaranteed to eventually be consumed by the program (no
-unfreed garbage) and that the data cannot be referred to after being
-consumed (freedom from use-after-free or free-after-free bugs).
+  memory-safe} API for managing any external resource which cannot be
+duplicated. An important class of such a resource is foreign C
+data. Indeed, since linear data must be used \emph{exactly once}, it
+means that such data is statically guaranteed to eventually be
+consumed by the program (no unfreed garbage) and that the data cannot
+be referred to after being consumed (freedom from use-after-free or
+free-after-free bugs).
 
 Concretely, operations that do not free the data structure return a new
 copy of the data structure (which may be the same as the original).
@@ -551,14 +557,14 @@ evict   :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
 
 There are a few things going on in this API:
 \begin{itemize}
-\item |alloc| opens a new scope, delimited by the dynamic extent of
+\item The |alloc| function opens a new scope, delimited by the dynamic extent of
   its argument function. This function is provided a fresh queue,
   allocated in the foreign heap (for example using \verb|malloc()|).
   As enforced by the type-system, this queue must be used exactly once.
   The return type of argument
   function is |Bang a|, ensuring that no linear value can be returned:
   in particular the |Queue| must be consumed.
-  \rn{Note: explain reachability invariants here or earlier.}
+  \rn{Note: explain reachability invariants here or earlier. JP: please clarify what you'd like}
   
 \item Messages of type |Msg| are copied into unrestricted Haskell values
   (hence managed by the garbage collector) when they are returned by
@@ -571,69 +577,8 @@ There are a few things going on in this API:
   reaching the end of the scope, |free| must be called. Indeed, there
   is no other way to properly get rid of the queue. Calling any of the
   other linear functions does ``consume'' the queue, but returns a new
-  one, along with the obligation of getting rid of that one!
+  one, along with the obligation of getting rid of that one.
 \end{itemize}
-
-\paragraph{Reference implementation}
-The intention behind this queue API is to bind a C implementation of
-a queue data structure which manages memory explicitly.
-\rn{How exactly?  Lollipops directly in FFI import signatures?}
-However, we
-can give an implementation directly in \HaskeLL{}. For simplicity
-|Queue|s and |Vector|s are represented simply as lists. Therefore this
-implementation is by no mean efficient: it may, however serve as an
-executable specification for explicit memory management as we will see
-in \fref{sec:dynamics}.
-\begin{code}
-type Queue = List Msg
-type Vector x = List Msg
-\end{code}
-The |Storable| class demands that a linear value can be made
-non-linear (eg. by making a deep copy of it), and that it can be
-freed.
-\begin{code}
-class Storable a where
-  load :: a ⊸ Bang a
-  store :: a ⊸ a -- TODO: subtle
-  free' :: a ⊸ ()
-\end{code}
-\rn{As discussed before, needs a new name.  How about ``Linear''?}
-%
-Allocation can be implemented simply by calling the continuation. Free
-needs to free all messages. As will be apparent when we define the
-operational semantics for our language, the queue will reside outside
-of GC heap.  The Queue |alloc| function below only allocates an empty list, but
-all subsequent functions which manipulate the queue will do so on the non-GC heap.
-\begin{code}
-alloc   :: (Queue ⊸ Bang a) ⊸ a
-alloc k = case k [] of
-  Bang x -> x
-
-free    :: Queue ⊸ ()
-free (x:xs) = case storableFree x of
-  () -> free' xs
-free [] = ()
-\end{code}
-\rn{WARNING: storableFree still unbound.}
-The queue-manipulation functions look like regular Haskell code, with
-the added constraint that linearity of queue objects is type-checked.
-\begin{code}
-push    :: Msg -> Queue ⊸ Queue
-push msg msgs = store msg:msgs
-
-delete :: Msg -> Queue ⊸ Queue
-delete msg [] = []
-delete msg (x:xs) = case load x of
-  Bang x' -> if x' == msg  then xs
-                           else x':delete msg xs
-
-evict :: Int -> Queue ⊸ (Queue, Bang (Vector Msg))
-evict 0  q       = (q, Bang [])
-evict n  []      = ([], Bang [])
-evict n  (x:xs)  = case (load x, evict (n-1) xs) of
-  (Bang x', (xs',Bang v')) -> (xs',Bang (x':v'))
-\end{code}
-
 
 \section{\calc{} statics}
 \label{sec:statics}
