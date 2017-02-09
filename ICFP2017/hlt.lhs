@@ -1588,7 +1588,12 @@ beneficial is certain situations.
 
 Regarding absolute performance increase,
 \citeauthor{wakeling_linearity_1991} propose not attempt prompt free
-of thunks, and instead take advantage of linear arrays
+of thunks, and instead take advantage of linear arrays. In this paper,
+we go further and leave the management of external (linear) data to
+external code, only accessing it via an API. Yet, our language
+supports an implementation where each individual constructor with
+multiplicity 1 can be allocated on a linear heap, and deallocated when
+it is pattern matched. Implementing this behaviour is left for future work.
 
 \section{Conclusion}
 
