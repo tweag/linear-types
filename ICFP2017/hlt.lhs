@@ -1010,51 +1010,47 @@ extend \citet{launchbury_natural_1993}'s original syntax with
 \item[Primitives] $alloc$, $free$ and $push$ responsible respectively for allocating a
   queue, freeing a queue, and pushing a message to a queue.
 \end{description}
+\todo{types for alloc, push and free}
+\todo{in the translation, add rules for the multiplicity abstraction
+  and application}
 
 \begin{figure}
 
-  \figuresection{Syntax of the runtime language}
-  \begin{align*}
-    r &::=\\
-      &||  x\\
-      &||  λx. r\\
-      &||  r x\\
-      &||  λπ. r\\
-      &||  r p\\
-      &||  c x₁ … x_n\\
-      &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
-      &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r\\
-      &||  m_i\\
-      &||  alloc k\\
-      &||  push y z\\
-      &||  free x
-  \end{align*}
+  % \figuresection{Syntax of the runtime language}
+  % \begin{align*}
+  %   r &::=\\
+  %     &||  x\\
+  %     &||  λx. r\\
+  %     &||  r x\\
+  %     &||  λπ. r\\
+  %     &||  r p\\
+  %     &||  c x₁ … x_n\\
+  %     &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
+  %     &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r\\
+  %     &||  m_i\\
+  %     &||  alloc k\\
+  %     &||  push y z\\
+  %     &||  free x
+  % \end{align*}
 
   \figuresection{Translation of typed terms}
   \begin{align*}
-    (λ(x:_qA). t)^* &= λx. (t)^* \\
+    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
     x^*             &= x \\
-    (t_q  x )^*     &= (t)^*  x \\
-    (t_q  u )^*     &= \flet y =_{q} (u)^* \fin (t)^*  y \\
-    c_k  t₁ … t_n   &= \flet x₁ =_{q_1} (t₁)^*,…, x_n =_{q_n} (t_n)^*
+    (t_q  x )^*     &= (t)^*_q  x \\
+    (t_q  u )^*     &= \flet y :_q \_ = (u)^* \fin (t)^*  y \\
+    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} \_ = (t₁)^*,…, x_n :_{q_n} \_ = (t_n)^*
                       \fin c_k x₁ … x_n
   \end{align*}
   \begin{align*}
     (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁ =_{q₁} (t₁)^*,…, x_n=_{q_n} (t_n)^* \fin (u)^*
+    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n :_{q_n}A_n=_{q_n} (t_n)^* \fin (u)^*
   \end{align*}
 
   \caption{Syntax for the Launchbury-style semantics}
   \label{fig:launchbury:syntax}
 \end{figure}
-\improvement{[aspiwack] The multiplicity rules are here only for
-  compatibility with the strong typed semantics. They are a bit in the
-  way, really: for the standard dynamics we might as well erase all
-  the multiplicity, but I think this would end up making the presentation
-  heavier. Either we should say a word about multiplicity rules in
-  this paragraph, or we could simply note that all the weight can be
-  resolved statically (I believe that to be true, we should check) and
-  omit the rules.}
+
 The dynamic semantics is given in \ref{fig:dynamics}. Let us review
 the new rules
 \begin{description}
@@ -1080,18 +1076,20 @@ the new rules
   heap.
 \end{description}
 
+\todo{in the untyped dynamic semantics use typed bindings in the Γ, it
+will make proof simpler later}
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{w.abs}
+    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{m.abs}
 
 
     \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
-      e q ⇓_ρ Θ : z} \text{w.app}
+      e q ⇓_ρ Θ : z} \text{m.app}
 
-    \inferrule{ }{Γ : λx. e ⇓ Γ : λx. e}\text{abs}
+    \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓ Δ : λy.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+    \inferrule{Γ : e ⇓ Δ : λy:_pA.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
       e x ⇓ Θ : z} \text{application}
 
     \inferrule{Γ : e ⇓ Δ : z}{(Γ,x ↦_ω e) : x ⇓ (Δ;x ↦_ω z) :
@@ -1103,7 +1101,7 @@ the new rules
 
 
     \inferrule{(Γ,x_1 ↦_ω e_1,…,x_n ↦_ω e_n) : e ⇓ Δ : z}
-    {Γ : \flet x₁ =_{q₁} e₁ … x_n =_{q_n} e_n \fin e ⇓ Δ :
+    {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
       z}\text{let}
 
     \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
