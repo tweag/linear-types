@@ -874,10 +874,10 @@ context, especially in the case of applications.
     { Δ+\sum_i q_iΓ_i ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
-    {Γ ⊢ λπ. t : ∀π. A}\text{w.abs}
+    {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
 
     \inferrule{Γ ⊢ t :  ∀π. A}
-    {Γ ⊢ t p  :  A[p/π]}\text{w.app}
+    {Γ ⊢ t p  :  A[p/π]}\text{m.app}
   \end{mathpar}
 
   \caption{Typing rules}
@@ -1076,8 +1076,6 @@ the new rules
   heap.
 \end{description}
 
-\todo{in the untyped dynamic semantics use typed bindings in the Γ, it
-will make proof simpler later}
 \begin{figure}
   \begin{mathpar}
     \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{m.abs}
@@ -1092,15 +1090,15 @@ will make proof simpler later}
     \inferrule{Γ : e ⇓ Δ : λy:_pA.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
       e x ⇓ Θ : z} \text{application}
 
-    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x ↦_ω e) : x ⇓ (Δ;x ↦_ω z) :
+    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A z) :
       z}\text{shared variable}
 
 
-    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x ↦_1 e) : x ⇓ Δ :
+    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x :_1 A = e) : x ⇓ Δ :
       z}\text{linear variable}
 
 
-    \inferrule{(Γ,x_1 ↦_ω e_1,…,x_n ↦_ω e_n) : e ⇓ Δ : z}
+    \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
     {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
       z}\text{let}
 
@@ -1111,7 +1109,7 @@ will make proof simpler later}
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ,x ↦_1 ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+    \inferrule{Γ,x :_1 Queue = ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
 
     \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
 
@@ -1145,11 +1143,7 @@ semantics with the lifetime of objects more closely tracked. The
 strengthened semantics differs from \fref{fig:dynamics} in two
 aspects: the evaluation states are typed, and values with statically
 tracked lifetimes (linear values) are put on the linear
-heap.\improvement{Remark: the annotation on the untyped semantics is
-  useless. We have two choices: either we decide to remove annotations
-  from the untyped semantics altogether, or we keep all the type
-  annotations (not just multiplicity) and ignore them in the untyped
-  semantics, but we can unify the typed and untyped semantics}
+heap.
 
 In order to define the typed semantics, we shall introduce a few
 notations. First we will need a notion of product annotated with the
@@ -1212,9 +1206,11 @@ introduces the states of the strengthened evaluation relation.
   rules of \fref{fig:typed-semop}.
 \end{definition}
 \todo{missing abs rule in well-typed reduction}
-\todo{replace case-bang with alloc/free/push}
 \begin{figure}
-\begin{mathpar}
+  \begin{mathpar}
+
+\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B}\text{abs}
+
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
      Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
@@ -1245,15 +1241,15 @@ introduces the states of the strengthened evaluation relation.
   {Ξ,y_1:_{p_1qρ} A_1 … ,y_n:_{p_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
     Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
-{\text{case}}
+  {\text{case}}
 
-\inferrule
-   {Ξ,y:_ω A ⊢ (Γ||e ⇓ Δ||\varid{Bang}  x) :_1 \varid{Bang} A, u:_ω C, Σ \\
-    Ξ ⊢ (Δ||u[x/y] ⇓ Θ||z) :_ω C, Σ}
-   {Ξ ⊢ (Γ||\mathsf{case}_{1} e \{\varid{Bang}  y ↦ u\} ⇓ Θ||z) :_ω C, Σ}
-{\text{case-bang}}
+\inferrule{Γ,x :_1 Queue = ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+
+\inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
+
+\inferrule{Γ:x ⇓ Δ:⟨…⟩ }{Γ : free x ⇓ Δ : () }\text{free}
   \end{mathpar}
-  \caption{Typed operational semantics. (Omitting the obvious abs, w.abs and w.app for concision)}
+  \caption{Typed operational semantics. (Omitting the obvious abs, m.abs and m.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
