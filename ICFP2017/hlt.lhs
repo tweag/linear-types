@@ -834,33 +834,19 @@ For most purposes, $c_k$ behaves like a constant with the type
 $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
 \fref{fig:typing} make clear, this means in particular that from a an
 object $d$ of type $D$ with multiplicity $ω$, pattern matching
-extracts the sub-data of $d$ with multiplicity $ω$. Conversely, if all
+extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
 the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
 with multiplicity $ω$.
 
-Note that constructors with arguments of multiplicity $1$ are not more
-general than constructors with arguments of multiplicity $ω$, because if,
-when constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
-\emph{may} be either of multiplicity $1$ or of multiplicity $ω$, dually, when
-pattern-matching on $c x$, $x$ \emph{must} be of multiplicity $1$ (if the
-argument of $c$ had been of multiplicity $ω$, on the other hand, then $x$
-could be used either as having multiplicity $ω$ or $1$).
-
-The following examples of data-type declarations illustrate the role of
-multiplicities in constructor arguments:
-\begin{itemize}
-\item The type
-  $\data \varid{Pair} A B \where \varid{Pair} : A →_ω B →_ω
-  \varid{Pair} A B$ is the intuitionistic product (usually written
-  $A×B$)
-\item The type
-  $\data \varid{Tensor} A B \where \varid{Tensor} : A →_1 B →_1
-  \varid{Tensor} A B$ is the linear tensor product (usually written
-  $A⊗B$)
-\item The type
-  $\data \varid{Bang} A \where \varid{Bang} : A→_ω \varid{Bang} A$ is
-  the exponential modality of linear logic (usually written ${!}A$)
-\end{itemize}
+Note that, as discussed in \fref{sec:linear-constructors},
+constructors with arguments of multiplicity $1$ are not more general
+than constructors with arguments of multiplicity $ω$, because if, when
+constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$,
+dually, when pattern-matching on $c x$, $x$ \emph{must} be of
+multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
+on the other hand, then $x$ could be used either as having
+multiplicity $ω$ or $1$).
 
 The term syntax (\fref{fig:syntax}) is that of a
 type-annotated (\textit{à la} Church) simply typed $λ$-calculus
@@ -870,11 +856,16 @@ typing context from Section~\ref{sec:typing-contexts}). Multiplicity
 abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
-annotated by a multiplicity. This information is usually redundant, but we
-use it in Section~\ref{sec:dynamics} to define a compositional
+annotated by a multiplicity. This information is usually redundant,
+but we use it in Section~\ref{sec:dynamics} to define a compositional
 dynamic semantics with prompt deallocation of data. We sometimes omit
 the multiplicities or type annotations when they are obvious from the
-context, especially in the case of applications.
+context, especially in the case of applications.\unsure{[aspiwack]
+  Though, to be honest, we also need the type of the argument now (for
+  let-introduction), and we don't keep it. I'm tempted to drop these
+  annoying annotations and define the translation in the dynamics
+  section as acting on type derivations rather than terms which happen
+  to be well-typed}
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t_q u  :  B}\text{app}}
@@ -914,29 +905,35 @@ context, especially in the case of applications.
   \label{fig:typing}
 \end{figure}
 
-\improvement{explain that the $ωΓ$ in the
-  constructor rule is there for constant constructors.}
-
 We are now ready to understand the typing rules of
 \fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
 reads as: the term $t$ consumes $Γ$ and builds an $A$ with
 multiplicity $1$.  This is the only kind of judgement in \calc{}:
 there is no direct way to express ``the term $t$ consumes $Γ$ and
-builds an $A$ with multiplicity $p$''. Instead, we make use of context
-scaling: if \(Γ ⊢ t : A\) holds, then from consuming \(pΓ\) with the
-same term $t$, one builds an $A$ with multiplicity $p$. This idea is
-at play in the application rule:
-$$\apprule$$
-Here, $t$ requires its argument $u$ to have multiplicity $q$. Thus
-$Δ ⊢ u : A$ give us $u$ with a multiplicity of $1$, and therefore the
-application needs $qΔ$ to have a multiplicity $q$ of $u$ at its
-disposal. Thus all variables in the scope of the applications are
-accounted for, with appropriate multiplicities.
-\rn{Last jump needs a bit more unpacking...}
+builds an $A$ with multiplicity $p$''. The reason for this is the
+\emph{promotion principle}\footnote{The name \emph{promotion
+    principle} is a reference to the promotion rule of linear
+  logic. In \calc{}, however, promotion is implicit.}: to know how to
+create an unrestricted value it is sufficient (and, in fact,
+necessary) to know how to create a linear value. Thinking in terms of
+resources is the easiest way to shed light on this principle: an
+unrestricted value is simply a linear value which happens not to
+contain resources.
 
-Scaling the context in the application rule is the technical device
-which makes the promotion of linear data to unrestricted data implicit,
-hence making the intuitionistic $λ$-calculus is a subset of
+The promotion principle is formalised through the use of context
+scaling in rules such as the application rule:
+$$\apprule$$
+The idea is that since $Δ ⊢ u : A$ means creating a $u$ with
+multiplicity $1$, scaling the context to $qΔ$ also (implicitly) scales
+the right-hand side of the judgement: that is it creates a $u$ with
+multiplicity $q$ (as required by the function). To get a better grasp
+of this rule, you may want to consider how it indeed renders the
+following judgement well-typed (for $π$ a multiplicity variable):
+$$f:_ωA→_πB, x:_π A ⊢ f x$$
+
+This implicit use of the promotion principle in rules such as the
+application rule is the technical device
+which makes the intuitionistic $λ$-calculus a subset of
 \calc{}. Specifically the subset where all variables are annotated
 with the multiplicity $ω$:
 $$
@@ -948,21 +945,23 @@ $$
   {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
 {()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
 $$
-This latter fact is, in turn, why \HaskeLL{} is a conservative extension of Haskell
+This latter fact is, in turn, why \HaskeLL{} is an extension of Haskell
 (provided unannotated variables are understood
 to have multiplicity $ω$).
 
 The variable rule, used in the above example, may require some
 clarification.
 $$\varrule$$
-The variable rule is the rule which implements the weakening of
-unrestricted variables: that is, it allows ignoring variables of multiplicity
-$ω$. \footnote{Pushing weakening to
-the variable rule is classic in many lambda calculi, and in the case
-of linear logic, dates back at least to Andreoli's work on
-focusing~\cite{andreoli_logic_1992}.} Note that the judgement
+The variable rule is the rule which implements weakening of
+unrestricted variables: that is, it lets us ignore variables with
+multiplicity $ω$\footnote{Pushing weakening to the variable rule is
+  classic in many lambda calculi, and in the case of linear logic,
+  dates back at least to Andreoli's work on
+  focusing~\cite{andreoli_logic_1992}.}. Note that the judgement
 $x :_ω A ⊢ x : A$ is an instance of the variable rule, because
-$(x :_ω A)+(x :_1 A) = x:_ω A$.
+$(x :_ω A)+(x :_1 A) = x:_ω A$. The constructor rule has a similar
+$ωΓ$ context: it is necessary to support weakening at the level of
+constant constructors.
 
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
@@ -972,13 +971,13 @@ $p$. But, while in the application rule only the argument is affected
 by $p$, in the case rule, not only the scrutinee but also the variable
 bindings in the branches are affected by $p$. What it means,
 concretely, is that the multiplicity of data is \emph{inherited} by
-its sub-data: if we have an $A⊗B$ with multiplicity $1$, then we have
+its elements: if we have an $A⊗B$ with multiplicity $1$, then we have
 an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
 we have an $A⊗B$ with multiplicity $ω$ then we have an $A$ with
 multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
-must be~---~unrestricted)
+must be~---~unrestricted).
 \begin{code}
   data (⊗) a b where
     (,) : a ⊸ b ⊸ a⊗b
@@ -989,13 +988,33 @@ must be~---~unrestricted)
   snd  :: a⊗b → b
   snd (a,b)  = b
 \end{code}
+
+The reason why this inheritance of multiplicity is valid stems from
+our understanding of unrestricted values: an unrestricted value is
+owned by the garbage collector, which must also own its elements
+recursively. Phrased in terms of resources: if a value does not
+contain resources, neither do its elements.
+
+However, inheritance of multiplicity is not necessary for the system
+to work. It is a design choice which makes it possible to consider
+data-type constructors as linear by default, while preserving the
+semantics of the intuitionistic $λ$-calculus (as we already alluded to
+in \ref{sec:linear-constructors}). For \HaskeLL{}, it means that types
+defined in libraries which are not aware of linear type (\emph{i.e.}
+libraries in pure Haskell) can nevertheless be immediately useful in a
+linear context. Inheritance of multiplicity is a cornerstone of the
+backwards compatibility which is built into the design of \HaskeLL{}.
+
 \rn{Need operational intuition here.. if we create the pair as a linear
   object, and then we implicitly convert to unrestricted, and then we
-  project... where would the linear->GCd-heap copy happen?}
-
-\unsure{Shall we state that our type-system is decidable? It may not
-  be completely obvious that the problem of equality in a ring is
-  decidable.}
+  project... where would the linear->GCd-heap copy happen?
+  — [aspiwack] no copy happens implicitly: the promotion principle
+  (it is an actual rule in typical presentations of linear logic, but
+  not ours since it is part of the application rule and friends)
+  states that knowing how to make a linear something is sufficient to
+  build an unrestricted same-thing (in a scaled context), this is what
+  happens implicitly: you pretend you are building a linear whatever,
+  but turns out you were building an unrestricted whatever all along.}
 
 \section{\calc{} dynamics}
 \label{sec:dynamics}
