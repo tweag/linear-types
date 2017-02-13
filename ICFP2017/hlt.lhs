@@ -390,19 +390,26 @@ g k x y = k y x          -- Invalid, x has multiplicity 1
 %% let x : _ 1 A = ... in blah
 %% \end{code}
 
+Linear values can be construed as containing resources which must be
+deallocated explicitly, hence can be subject to use-after-free
+errors. A file handle may be such a resource, though in this article
+we will focus on data stored on a foreign heap. The linear type system
+of \HaskeLL{} will ensure both that the deallocation will happen, and
+that no use-after-free error occurs.
 
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
 data List a where
-  [] :: List a
-  (:) :: a ⊸ List a ⊸ List a
+  []   :: List a
+  (:)  :: a ⊸ List a ⊸ List a
 \end{code}
 That is, given a list |xs| with multiplicity $1$,
 yield the elements of |xs| will multiplicity $1$.
-\rn{And {\em deallocate}, mention that too... JP: but with the simplified semantics we do not talk about allocation/deallocation of cons cells?}
 Thus the above list
-may contain resources without compromising safety.
+may contain resources without compromising safety: that is, the
+resources in |xs| will be eventually deallocated and will not be used
+after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
@@ -489,35 +496,42 @@ function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 
 \subsection{Linearity of constructors}
+\label{sec:linear-constructors}
 
-\improvement{Let's change the segue into this idea, and just introduce
-bang with something like ``constructors can also require unrestricted
-arguments''.}
-One might be tempted to mark all data constructors as linear, i.e.
-with only |⊸|-arrows in their types, in the style of the |List| type
-above. After all, linear constructors, like any linear function, are
-happy to be provided resources of any multiplicity. However, $ω$-annotated
-arrows in constructors are useful too, as the following data type
-illustrates\footnote{The type constructor |Bang| is in fact an
-  encoding of the so-called \emph{exponential} modality written ${!}$
-  in linear logic.}:
+Constructors add their own bit of depth to this story. The design of
+\HaskeLL{} advocates treating data-type constructors as linear by
+default (that is, all of their arguments are linear). However,
+contrary to plain functions, linear constructors are not more general
+than constructors with unrestricted arguments.
+
+In \fref{sec:statics}, we will take the necessary step to make sure
+that linear constructors correspond to regular Haskell data types when
+restricted to the pure (non-linear) Haskell fragment. But even so,
+constructors with unrestricted arguments add expressiveness to
+\HaskeLL{}. The following data type is the prototypical example of
+data type with non-linear constructors\footnote{The type constructor
+  |Bang| is in fact an encoding of the so-called \emph{exponential}
+  modality written ${!}$ in linear logic.}:
 \begin{code}
   data Bang a where
     Bang :: a → Bang a
 \end{code}
-\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|} It is used
-to indicate that a linear function returns results with multiplicity
-$ω$. For example, the following function effectively turns a boolean
-with multiplicity 1 into a boolean with multiplicity $ω$:
+\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|} The |Bang|
+data type is used to indicate that a linear function returns results
+with multiplicity $ω$. Such data types are, in fact, the only way to
+signify unrestricted results. For example, the following function
+effectively turns a boolean with multiplicity 1 into a boolean with
+multiplicity $ω$:
 \begin{code}
   copy :: Bool ⊸ Bang Bool
-  copy True = Bang True
-  copy False = Bang False
+  copy True   = Bang True
+  copy False  = Bang False
 \end{code}
 We stress that the above is not the same as the linear identity
-function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity of
-|Bool| even when it is promoted, whereas |copy| \emph{always} returns an $ω$-multiplicated value,
-regardless of the multiplicity of its argument.
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
+of |Bool| even when it is promoted, whereas |copy| \emph{always}
+returns an $ω$-multiplicated value, regardless of the multiplicity of
+its argument.
 
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
@@ -526,9 +540,9 @@ With linear types, it is possible to write a {\em pure} and {\em
 duplicated. An important class of such a resource is foreign C
 data. Indeed, since linear data must be used \emph{exactly once}, it
 means that such data is statically guaranteed to eventually be
-consumed by the program (no unfreed garbage) and that the data cannot
-be referred to after being consumed (freedom from use-after-free or
-free-after-free bugs).
+consumed by the program (eventual deallocation) and that the data
+cannot be referred to after being consumed (freedom from
+use-after-free or free-after-free bugs).
 
 Concretely, operations that do not free the data structure return a new
 copy of the data structure (which may be the same as the original).
@@ -1208,7 +1222,6 @@ introduces the states of the strengthened evaluation relation.
 \todo{missing abs rule in well-typed reduction}
 \begin{figure}
   \begin{mathpar}
-
 \inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B}\text{abs}
 
 \inferrule
