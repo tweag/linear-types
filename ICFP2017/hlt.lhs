@@ -335,7 +335,7 @@ f :: A ⊸ B
 f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 
-We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. On the contrary, we say
+We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (which
 is to be understood as \emph{any finite number}). We also call
 functions linear if they have type $A ⊸ B$ and unrestricted if they
@@ -530,7 +530,7 @@ multiplicity $ω$:
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
 of |Bool| even when it is promoted, whereas |copy| \emph{always}
-returns an $ω$-multiplicated value, regardless of the multiplicity of
+returns an unrestricted value, regardless of the multiplicity of
 its argument.
 
 \subsection{A GC-less queue API}
@@ -562,7 +562,7 @@ exercise, we can define a free function by repeatedly popping a queue
 until it is empty:
 \begin{code}
   free :: Queue ⊸ ()
-  free q = case _ 1 pop q of
+  free q = case pop q of
     | Just (q',Bang _m) -> free q'
     | Nothing -> ()
 \end{code}
@@ -625,7 +625,7 @@ There are a few things going on in this API:
 
 \section{\calc{} statics}
 \label{sec:statics}
-In this section we turn the calculus at the core of \HaskeLL{}, namely
+In this section we turn to the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
@@ -636,18 +636,20 @@ which must be used \emph{exactly once} on each code path, and
 \emph{unrestricted} objects which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear object is to see it as an object that need not
-be controlled by the garbage collector: \emph{e.g.} because they are
-scarce resources, because they are controlled by foreign code, or
-because this object will not actually exist at run time because it will
-be fused away. The word \emph{need} matters here: because of
-polymorphism, it is possible for any given linear object to actually be controlled
-by the garbage collector (but may not be), and
-so, for most purposes, it must be treated as if it it were not.
+The best way to think of a linear object is to see it as an object
+that need not be controlled by the garbage collector: \emph{e.g.}
+because they are scarce resources, because they are controlled by
+foreign code, or because this object will not actually exist at run
+time because it will be fused away. The word \emph{need} matters here:
+because of polymorphism, it is possible for any given linear object to
+actually be controlled by the garbage collector, however, for most
+purposes, it must be treated as if it it were not.
 
 This framing drives the details of \calc{}. In particular unrestricted
 objects cannot contain linear objects,
-\rn{Here's the invariant that needs to be showcased earlier...}
+\rn{Here's the invariant that needs to be showcased
+  earlier... — [aspiwack] Do you feel the current presentation makes
+  this explicit enough?}
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
@@ -658,9 +660,8 @@ So any
 object containing a linear object must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
 thunks): \emph{e.g.} a partial application of a function to a linear
-object is linear.
-\rn{Yes but this doesn't really explain how the subscript on a function binding
-  constrains the user -- i.e. they can only {\em apply} the function once.}
+object is, itself, a linear object (which means that such
+a partial application must be applied exactly once).
 More generally, the application of a function
 to a linear object is linear, since it is, in general, a lazy
 thunk pointing to that linear object. (In fact, even in a strict
@@ -674,15 +675,10 @@ linear.)
 is... well, lacking context.  It would be better to first understand why/where
 we need to add and scale contexts.}
 
-In \calc{}, each variable in typing contexts is annotated with the number of times
-that the program must use the variable in question. We call this
-number of times the \emph{multiplicity} of the variable.
-\rn{TODO: fix redundancy here.  Not the 1st use of multiplicity.}
-
-Concrete multiplicities are either $1$ or $ω$: when the multiplicity
-is $1$, the program \emph{must} consume the variable exactly once;
-when the multiplicity is $ω$, the program \emph{may} consume the
-variable any number of times (possibly zero). For the sake of
+In \calc{}, each variable in typing contexts is annotated with a
+multiplicity.
+Concrete multiplicities are either $1$ or $ω$ which stand for linear
+and unrestricted bindings, respectively. For the sake of
 polymorphism, multiplicities are extended with multiplicity
 \emph{expressions}, which contain variables (ranged over by the
 metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
@@ -795,16 +791,16 @@ the judgement \(Γ ⊢ t : A\).
   \label{fig:contexts}
 \end{figure}
 
-The types of \calc{} (see \fref{fig:syntax}) are simple
-types with arrows (albeit multiplicated ones), data types, and multiplicity
-polymorphism.  The multiplicated function type is a generalization of the
-intuitionistic arrow and the linear arrow. We use the following
-notations:
+The types of \calc{} (see \fref{fig:syntax}) are simple types with
+arrows (albeit multiplicity-annotated ones), data types, and
+multiplicity polymorphism. The annotated function type is a
+generalization of the intuitionistic arrow and the linear arrow. We
+use the following notations:
 \begin{itemize}
 \item \(A → B ≝  A →_ω B\)
 \item \(A ⊸ B ≝ A →_1 B\)
 \end{itemize}
-The intuition behind the multiplicity-bearing arrow \(A →_q B\) is that you can
+The intuition behind the multiplicity-annotated arrow \(A →_q B\) is that you can
 get a \(B\) if you can provide an \(A\) with multiplicity \(q\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
 $f x$ is well-typed. Therefore, the constraints imposed by multiplicities on
@@ -960,7 +956,7 @@ The variable rule, used in the above example, may require some
 clarification.
 $$\varrule$$
 The variable rule is the rule which implements the weakening of
-$ω$-multiplicated variables: that is, it allows ignoring variables of multiplicity
+unrestricted variables: that is, it allows ignoring variables of multiplicity
 $ω$. \footnote{Pushing weakening to
 the variable rule is classic in many lambda calculi, and in the case
 of linear logic, dates back at least to Andreoli's work on
