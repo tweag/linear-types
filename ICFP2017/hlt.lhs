@@ -1440,6 +1440,9 @@ freed: \calc{} is safe from use-after-free errors.
     z}\text{case-bang}}
 \hfill\\
 \todo{More multiplicities}
+\hfill\\
+\todo{Discussion on negative types and how they are encoded (there are
+  not provided natively)}
 
 \section{Related work}
 
