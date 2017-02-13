@@ -1243,13 +1243,15 @@ introduces the states of the strengthened evaluation relation.
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
-\inferrule{Γ,x :_1 Queue = ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Bang A,Σ }{Ξ ⊢
+  (Γ || alloc k ⇓ Δ || z) :_ρ Bang A,Σ}\text{alloc}
 
-\inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
+\inferrule{Ξ ⊢ (Γ||y ⇓ Δ||⟨…⟩) :_1 Queue, w:_ω Msg,Σ\\ Ξ ⊢ (Δ||w ⇓ Θ||m_i) :_1
+  Msg,Σ}{Ξ ⊢ (Γ || push y w⇓ Θ || ⟨m_i,…⟩) :_1 Queue,Σ}\text{push}
 
-\inferrule{Γ:x ⇓ Δ:⟨…⟩ }{Γ : free x ⇓ Δ : () }\text{free}
+\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…⟩) :_1 (),Σ}{Ξ ⊢ (Γ || free x ⇓ Δ || ()) :_1 (),Σ}\text{free}
   \end{mathpar}
-  \caption{Typed operational semantics. (Omitting the obvious abs, m.abs and m.app for concision)}
+  \caption{Typed operational semantics. (Omitting the obvious m.abs and m.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
