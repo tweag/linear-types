@@ -1254,7 +1254,6 @@ introduces the states of the strengthened evaluation relation.
   The strengthened reduction relation is defined inductively by the
   rules of \fref{fig:typed-semop}.
 \end{definition}
-\todo{missing abs rule in well-typed reduction}
 \begin{figure}
   \begin{mathpar}
 \inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B}\text{abs}
