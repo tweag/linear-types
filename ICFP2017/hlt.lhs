@@ -545,8 +545,8 @@ cannot be referred to after being consumed (freedom from
 use-after-free or free-after-free bugs).
 
 Concretely, operations that do not free the data structure return a
-new copy of the data structure (which may, in actuality, be the same
-as the original). For instance, pushing in a queue would have the
+new copy of the data structure (which may, in actuality, reuse and
+update the original). For instance, pushing in a queue would have the
 following type:
 \begin{code}
 push :: Msg -> Queue ⊸ Queue
@@ -582,7 +582,7 @@ pressure, while retaining the memory-safety afforded by Haskell's type
 system.
 
 The complete \textsc{api} for a linearly typed queue allocated on a
-foreign heap could be as follows:
+foreign heap could be the following:
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 push    :: Msg -> Queue ⊸ Queue
@@ -741,12 +741,11 @@ equivalent contexts.
 \subsection{Typing}
 
 The static semantics of \calc{} is expressed in terms of the
-familiar-looking judgement \(Γ ⊢ t : A\). The meaning of this
-judgement, however, may be less familiar: remember that
-variable bindings in $Γ$ are annotated with a multiplicity. The
-judgement \(Γ ⊢ t : A\) ought to be read as follows: the term $t$
-consumes $Γ$ and builds \emph{exactly one} $A$. This section defines
-the judgement \(Γ ⊢ t : A\).
+familiar-looking judgement \(Γ ⊢ t : A\). Its meaning however, may be
+less familiar. The judgement \(Γ ⊢ t : A\) ought to be read as
+follows: the term $t$ builds \emph{exactly one} $A$, and consumes all
+of $Γ$, with the multiplicities specified.  This section precisely defines the
+typing judgement.
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -812,8 +811,8 @@ One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
 this does not hold, for the mere reason that there is no notion of
 subtyping in \calc{}. Indeed, our objective is to integrate with
 Haskell, which is based on Hindley-Milner-style
-polymorphism. Subtyping and polymorphism do not mesh well: this is the
-reason why \calc{} is based on polymorphism rather than subtyping.
+polymorphism, and subtyping and polymorphism do not mesh well.
+Thus \calc{} is based on polymorphism rather than subtyping.
 
 Data type declarations, also presented in \fref{fig:syntax},
 deserve some additional explanation.
@@ -917,8 +916,8 @@ builds an $A$ with multiplicity $p$''. The reason for this is the
 create an unrestricted value it is sufficient (and, in fact,
 necessary) to know how to create a linear value. Thinking in terms of
 resources is the easiest way to shed light on this principle: an
-unrestricted value is simply a linear value which happens not to
-contain resources.
+unrestricted result can only be constructed components which are
+themselves unrestricted.
 
 The promotion principle is formalised through the use of context
 scaling in rules such as the application rule:
@@ -928,7 +927,7 @@ multiplicity $1$, scaling the context to $qΔ$ also (implicitly) scales
 the right-hand side of the judgement: that is it creates a $u$ with
 multiplicity $q$ (as required by the function). To get a better grasp
 of this rule, you may want to consider how it indeed renders the
-following judgement well-typed (for $π$ a multiplicity variable):
+following judgement well-typed (for any multiplicity $π$):
 $$f:_ωA→_πB, x:_π A ⊢ f x$$
 
 This implicit use of the promotion principle in rules such as the
