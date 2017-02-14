@@ -45,9 +45,14 @@
 \def\freffigname{Figure}
 \def\frefdefname{Definition}
 \def\Frefdefname{Definition}
+\def\freflemname{Lemma}
+\def\Freflemname{Lemma}
 \def\fancyrefdeflabelprefix{def}
 \frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1#2}
 \Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1#2}
+\def\fancyreflemlabelprefix{lem}
+\frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1#2}
+\Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1#2}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -992,17 +997,17 @@ The reason why this inheritance of multiplicity is valid stems from
 our understanding of unrestricted values: an unrestricted value is
 owned by the garbage collector, which must also own its elements
 recursively. Phrased in terms of resources: if a value does not
-contain resources, neither do its elements.
+contain linear resources, neither do its elements.
 
-However, inheritance of multiplicity is not necessary for the system
-to work. It is a design choice which makes it possible to consider
+Inheritance of multiplicity is not necessary for the rest of the system
+to work. Yet, it is a design choice which makes it possible to consider
 data-type constructors as linear by default, while preserving the
 semantics of the intuitionistic $λ$-calculus (as we already alluded to
 in \ref{sec:linear-constructors}). For \HaskeLL{}, it means that types
 defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
-linear context. Inheritance of multiplicity is a cornerstone of the
-backwards compatibility which is built into the design of \HaskeLL{}.
+linear context. Inheritance of multiplicity is thus crucial for
+backwards compatibility, which a design goal of \HaskeLL{}.
 
 \rn{Need operational intuition here.. if we create the pair as a linear
   object, and then we implicitly convert to unrestricted, and then we
@@ -1025,18 +1030,19 @@ defines a semantics for lazy computation.
 
 \citeauthor{launchbury_natural_1993}'s semantics is a big-step
 semantics where variables play the role of pointers to the heap (hence
-represent sharing, which is the cornerstone of a lazy semantics). We
+represent sharing, which is the cornerstone of a lazy semantics). To illustrate
+the operational benefits of linearity, we
 augment that semantics with a foreign heap and queue
-primitives. Concretely, bindings in the heap are of the form $x↦_p e$
+primitives, but any linear API can be supported in the same way.  Concretely, bindings in the heap are of the form $x↦_p e$
 where $p∈\{1,ω\}$ a multiplicity: bindings with multiplicity $ω$
 represent objects on the regular, garbage-collected, heap, while
-bindings with multiplicity $1$ represent objects on a foreign heap,
-which we call the \emph{linear heap}. Queues and messages are
+bindings with multiplicity $1$ represent linear resources, which
+are reified here as objects on a \emph{linear heap}. Queues and messages are
 represented as literals\footnote{As such, queues will seem to be
   copied on the stack, but it is just an artifact of the particular
   presentation: it does not have a syntax for returning ``pointers''.}
 manipulated by the primitives. For the sake of simplicity of
-presentation, we will only show one primitive (\emph{push}) beyond
+presentation, we only show one primitive (\emph{push}) in addition to
 allocation and de-allocation.
 
 \citet{launchbury_natural_1993}'s semantics relies on a constrained
@@ -1045,20 +1051,20 @@ extend \citet{launchbury_natural_1993}'s original syntax with
 \begin{description}
 \item[Message literals] We assume a collection of message literals
   written $m_i$. We assume that the programmer can type such literals
-  in the program. They are not given more semantics than their
-  interaction with lists.
+  in the program\unsure{Perhaps just say that the context is extended with such things?}. They are not given more semantics than their
+  interaction with lists. \unsure{JP: i do not understand this last sentence.}
 \item[Queue literals] Queues are a kind of primitive data
   manipulated by primitive operations. As such the structure of queue
   is invisible to the constructs of \calc{}, therefore queues are
   represented a literals. Contrary to message literals, we assume that
-  the programmer \emph{cannot} type such literals: they are created by
+  the programmer \emph{cannot} type such literals\improvement{The programer gets none in the context? Do you really need them as literals though?}: they are created by
   primitive operations. Therefore queue literals will only be found in
-  the heap (specifically: on the linear heap).\improvement{describe
+  the heap (and specifically on the linear heap).\improvement{describe
     notation for queue literals}
 \item[Primitives] $alloc$, $free$ and $push$ responsible respectively for allocating a
   queue, freeing a queue, and pushing a message to a queue.
 \end{description}
-\todo{types for alloc, push and free}
+\todo{typing rules for alloc, push and free, and literals.}
 \todo{in the translation, add rules for the multiplicity abstraction
   and application}
 
@@ -1172,10 +1178,10 @@ the new rules
 While the semantics of \fref{fig:dynamics} describes quite closely
 what is implemented in the \textsc{ghc} extension prototype, it is not
 convenient for proving properties. There are two reasons to that fact:
-first the semantics is rather disjoint from the type system and, also,
+first the semantics is rather \improvement{weasel word}disjoint from the type system and, also,
 there are pointers from the garbage-collected heap to the linear
-heap. The latter property will happen, for instance, if the programmer
-needs a pair of queue: the pair will be allocated on the
+heap. Such pointers will occur, for instance, if the programmer
+needs a pair of queues: the pair will be allocated on the
 garbage-collected heap while the queues will live in the linear heap.
 
 This is not a problem in and on itself: pointers to queue may be seen
@@ -1207,13 +1213,15 @@ multiplicity of its first component.
 
 \end{definition}
 Weighted tensors are used to internalise a notion of stack that keeps
-tracks of multiplicity for the sake of the following definition, which
+tracks of multiplicities for the sake of the following definition, which
 introduces the states of the strengthened evaluation relation.
 
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
 
-\begin{definition}[Annotated state \& well-typed state]
+\begin{definition}[Annotated state]
+
+
   An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
   \begin{itemize}
   \item $Ξ$ is a typing context
@@ -1225,8 +1233,9 @@ introduces the states of the strengthened evaluation relation.
   \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
     a term, a multiplicity and an annotation.
   \end{itemize}
-
-  We say that such an annotated state is well-typed if the following
+\end{definition}
+\begin{definition}[Well-typed state]
+  We say that an annotated state is well-typed if the following
   typing judgement holds:
   $$
   Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
@@ -1301,8 +1310,8 @@ introduces the states of the strengthened evaluation relation.
   \label{fig:typed-semop}
 \end{figure}
 
-There are a few things of notice about the semantics of
-\fref{fig:typed-semop}. First, the let rule doesn't necessarily
+A few noteworthy remarks about the semantics in
+\fref{fig:typed-semop} can be made. First, the |let| rule does not necessarily
 allocate in the garbage collected heap anymore — this was the goal of
 the strengthened semantics to begin with — but nor does it
 systematically allocate bindings of the form $x :_1 A = e$ in the
@@ -1314,15 +1323,15 @@ of $x$'s lifetime. For the same reason, the linear variable case
 requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} will prove
 this restriction to be safe).
 
-The other important rule is the alloc rule: it requires a result of
-the form $Bang x$ of multiplicity $1$ while returning a
-result of multiplicity $ω$. It is crucial as the alloc rule is the
-only rule which make possible the use of a linear value to produce a
-garbage collected value, this will justify the fact that in the ordinary
+The other important rule is the |alloc| rule: it requires a result of
+the form $\varid{Bang} x$ of multiplicity $1$ while returning a
+result of multiplicity $ω$. This requirement is crucial, because the |alloc| rule is the
+only rule which makes possible the use of a linear value to produce a
+garbage collected value, which in turn justifies that in the ordinary
 semantics, queues can be allocated in the linear heap. The reason why
-it is possible is that, by definition, in $Bang x$, $x$ \emph{must} be
+it is possible is that, by definition, in $\varid{Bang} x$, $x$ \emph{must} be
 in the garbage-collected heap. In other words, when an expression $e :
-Bang A$ is forced to the form $Bang x$, it will have consumed all the
+\varid{Bang} A$ is forced to the form $\varid{Bang} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
 proved in Lemma~\ref{lem:type-safety} below).
 
@@ -1409,18 +1418,18 @@ programmed in, but the language itself does not leak resources).
   contains $ω$-bindings.
 \end{corollary}
 \begin{proof}
-  By Lemma \ref{lem:actual_type_safety}, % TODO fref?
+  By \fref{lem:actual_type_safety},
   we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
   $()$ conclude: in order for $()$ to be well typed, the environment
   introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
 For the absence of use-after-free errors, let us invoke a liveness
-property: that the type assignment is also a simulation of the
+property: namely that the type assignment is also a simulation of the
 strengthened semantics by the ordinary semantics (making type
 assignment a bisimulation). There is not a complete notion of progress
 which follows from this as big step semantics such as ours do not
-distinguish blocking from looping: we favoured clarity of exposition
+distinguish blocking from looping: we favour clarity of exposition
 over a completely formal argument for progress.
 
 \begin{lemma}[Liveness]\label{lem:liveness}
@@ -1437,7 +1446,7 @@ over a completely formal argument for progress.
 \end{proof}
 
 In conjunction with Corollary~\ref{cor:linear-variable},
-Lemma~\ref{lem:liveness} shows that well-typed program don't get
+Lemma~\ref{lem:liveness} shows that well-typed programs do not get
 blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
@@ -1461,23 +1470,24 @@ freed: \calc{} is safe from use-after-free errors.
 
 \subsection{Uniqueness types}
 
-When speaking about linear types, it is frequent to think of them as
-uniqueness (or ownership) types. The most prominent representative of
-languages with such uniqueness types are Clean \todo{Cite Clean} and
+A large chunk of the literature deals with linearity not by using linear types,
+bu intead by using uniqueness (or ownership) types. The most prominent representatives of
+languages with such uniqueness types are perhaps Clean \todo{Cite Clean} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
 
-There is a kind of duality between the two: linear type ensures
-that the argument of a linear function are used once by functions
-while the context can use it as many times as it needs; uniqueness
-types ensures that the argument of a function is not used anywhere
+
+There is a form of duality between the two: linear typing ensures
+that linear functions are use their argument once,
+while the context can point to it as many times as it pleases; while uniqueness
+typing ensures that the argument of a function is not pointed to anywhere
 else in the context, but the function can use it as it pleases (with
 some caveat).
 
 From a compiler's perspective, uniqueness type provide a non-aliasing
 analysis while linear types provides a cardinality analysis. The
-former aims at in-place updates and related optimisation, the latter
+former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
 of linear types in relation with fusion can be found
@@ -1485,9 +1495,9 @@ in~\citet{bernardy_composable_2015}.\todo{call-back to fusion in the
   perspectives}.
 
 Several points guided our choice of designing \HaskeLL{} around linear
-logic rather than uniqueness type: functional languages have more use
+logic rather than uniqueness types: 1. functional languages have more use
 for fusion than in-place update (\textsc{ghc} has a cardinality
-analysis, but it doesn't perform a non-aliasing analysis), there is a
+analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
 wealth of literature detailing the applications of linear
 logic — explicit memory
 management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
@@ -1495,8 +1505,7 @@ array
 computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
 protocol specification~\cite{honda_session_1993}, privacy
 guarantees\cite{gaboardi_linear_2013}, graphical
-interfaces\cite{krishnaswami_gui_2011}, … But the factor which was
-decisive was probably the fact that linear type systems are
+interfaces\cite{krishnaswami_gui_2011}; 4. and desicively, linear type systems are
 conceptually simpler than uniqueness type systems, which gave a
 clearer path to implementation in \textsc{ghc}.
 
@@ -1530,8 +1539,10 @@ Another point, rather specific to \textsc{ghc}, is that the kind
 system of \textsc{ghc} is quite rich, with support for impredicative
 dependent types, and a wealth of unboxed or otherwise primitive types
 which can't be substituted for polymorphic type arguments. It is not
-clear how to extend \textsc{ghc}'s kind system to support linear
-types.
+clear how to support linearity in \textsc{ghc} by extending its kind system.
+In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
+including its compatibility with dependent types, and
+such compatibility is pretty much necessary to accomodate the dependently-typed kinds of \textsc{ghc}.
 
 \subsection{Alms}
 \improvement{Citation pointing to \emph{e.g.}
