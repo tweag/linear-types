@@ -341,15 +341,13 @@ f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 
 We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
-that unrestricted (non-linear) parameters have multiplicity $ω$ (which
-is to be understood as \emph{any finite number}). We also call
+that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
+\emph{any finite number} of times, including zero). We also call
 functions linear if they have type $A ⊸ B$ and unrestricted if they
-have $A → B$.
+ahave $A → B$.
 
-To clarify the meaning of multiplicities, here are a few examples of what is
-allowed or not:
-\rn{This grows a bit tedious.  Maybe listing the one ``cannot'' and then
-  describing the remaining cases collectively?}
+To clarify the meaning of multiplicities, here are the rules for what is allowed
+at call sites:
 \begin{enumerate}
 
 \item An unrestricted (multiplicity $ω$) value 
@@ -401,6 +399,13 @@ errors. A file handle may be such a resource, though in this article
 we will focus on data stored on a foreign heap. The linear type system
 of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
+
+\subsection{Calling contexts}
+\note{Explain calling context here.}
+
+
+
+\subsection{Linear data}
 
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
@@ -645,16 +650,15 @@ The best way to think of a linear object is to see it as an object
 that need not be controlled by the garbage collector: \emph{e.g.}
 because they are scarce resources, because they are controlled by
 foreign code, or because this object will not actually exist at run
-time because it will be fused away. The word \emph{need} matters here:
+time because it will be fused away. 
+\rn{Currently this is the 1st mention of fusing}
+The word \emph{need} matters here:
 because of polymorphism, it is possible for any given linear object to
 actually be controlled by the garbage collector, however, for most
 purposes, it must be treated as if it it were not.
 
 This framing drives the details of \calc{}. In particular unrestricted
 objects cannot contain linear objects,
-\rn{Here's the invariant that needs to be showcased
-  earlier... — [aspiwack] Do you feel the current presentation makes
-  this explicit enough?}
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
