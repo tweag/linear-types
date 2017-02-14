@@ -174,6 +174,14 @@
   \postcode{???}
   \country{France}
 }
+\author{Ryan R. Newton}
+\affiliation{%
+  \institution{Indiana University}
+  \city{Bloomington}
+  % \state{VA}
+  % \postcode{???}
+  \country{USA}
+}
 
 
 \begin{abstract}
@@ -393,7 +401,7 @@ g k x y = k y x          -- Invalid, x has multiplicity 1
 %% let x : _ 1 A = ... in blah
 %% \end{code}
 
-Linear values can be construed as containing resources which must be
+Linear values can be construed as containing {\em resources} which must be
 deallocated explicitly, hence can be subject to use-after-free
 errors. A file handle may be such a resource, though in this article
 we will focus on data stored on a foreign heap. The linear type system
@@ -405,7 +413,7 @@ that no use-after-free error occurs.
 
 
 
-\subsection{Linear data}
+\subsection{Linear data types}
 
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
@@ -463,18 +471,18 @@ indefinitely needs to be unrestricted:
 A consequence of the above design is that unrestricted objects never
 point to (or contain) linear objects. (But the converse is possible.)
 One can make sense operationally of this rule by appealing to
-GC-semantics: when an unrestricted object is reclaimed by garbage
-collection, it would leave all resources that it points to unaccounted
+garbage collection: when an unrestricted object is reclaimed by GC,
+it would leave all resources that it points to unaccounted
 for. Conversely a pointer from a resource to the heap can simply act
 as a new GC root. We prove this invariant in \fref{sec:dynamics}.
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
-As seen in the previous subsection, the implicit conversions between multiplicities make it so that for
-first-order code linear functions are more general. Higher-order code
-is more complex, so we introduce multiplicity polymorphism as a way to
-preserve effective code sharing of higher-order functions. For
-example, the standard |map| function over (linear) lists:
+As seen above, implicit conversions between multiplicities make first-order
+linear functions {\em more general}. Higher-order code is more complex; so we
+introduce {\em multiplicity polymorphism} as a way to preserve effective code sharing
+of higher-order functions. For example, the standard |map| function over
+(linear) lists:
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
