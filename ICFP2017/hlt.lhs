@@ -1007,7 +1007,7 @@ in \ref{sec:linear-constructors}). For \HaskeLL{}, it means that types
 defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
-backwards compatibility, which a design goal of \HaskeLL{}.
+backwards compatibility, which is a design goal of \HaskeLL{}.
 
 \rn{Need operational intuition here.. if we create the pair as a linear
   object, and then we implicitly convert to unrestricted, and then we
@@ -1213,7 +1213,7 @@ multiplicity of its first component.
 
 \end{definition}
 Weighted tensors are used to internalise a notion of stack that keeps
-tracks of multiplicities for the sake of the following definition, which
+track of multiplicities for the sake of the following definition, which
 introduces the states of the strengthened evaluation relation.
 
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
@@ -1325,8 +1325,8 @@ this restriction to be safe).
 
 The other important rule is the |alloc| rule: it requires a result of
 the form $\varid{Bang} x$ of multiplicity $1$ while returning a
-result of multiplicity $ω$. This requirement is crucial, because the |alloc| rule is the
-only rule which makes possible the use of a linear value to produce a
+result of multiplicity $ω$. This constraint is crucial, because the |alloc| rule is the
+only rule which makes it possible to use of a linear value in order to produce a
 garbage collected value, which in turn justifies that in the ordinary
 semantics, queues can be allocated in the linear heap. The reason why
 it is possible is that, by definition, in $\varid{Bang} x$, $x$ \emph{must} be
@@ -1471,7 +1471,7 @@ freed: \calc{} is safe from use-after-free errors.
 \subsection{Uniqueness types}
 
 A large chunk of the literature deals with linearity not by using linear types,
-bu intead by using uniqueness (or ownership) types. The most prominent representatives of
+but instead by using uniqueness (or ownership) types. The most prominent representatives of
 languages with such uniqueness types are perhaps Clean \todo{Cite Clean} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
@@ -1479,9 +1479,9 @@ logic~\cite{girard_linear_1987}.
 
 
 There is a form of duality between the two: linear typing ensures
-that linear functions are use their argument once,
-while the context can point to it as many times as it pleases; while uniqueness
-typing ensures that the argument of a function is not pointed to anywhere
+that linear functions use their argument once,
+while the context can share a linear argument as many times as it pleases; while uniqueness
+typing ensures that the argument of a function is not where with anywhere
 else in the context, but the function can use it as it pleases (with
 some caveat).
 
