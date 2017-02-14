@@ -856,12 +856,12 @@ The term syntax (\fref{fig:syntax}) is that of a
 type-annotated (\textit{à la} Church) simply typed $λ$-calculus
 with let-definitions. Binders in $λ$-abstractions and type definitions
 are annotated with both their type and their multiplicity (echoing the
-typing context from Section~\ref{sec:typing-contexts}). Multiplicity
+typing context from \fref{sec:typing-contexts}). Multiplicity
 abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
 annotated by a multiplicity. This information is usually redundant,
-but we use it in Section~\ref{sec:dynamics} to define a compositional
+but we use it in \fref{sec:dynamics} to define a compositional
 dynamic semantics with prompt deallocation of data. We sometimes omit
 the multiplicities or type annotations when they are obvious from the
 context, especially in the case of applications.\unsure{[aspiwack]
@@ -1003,7 +1003,7 @@ Inheritance of multiplicity is not necessary for the rest of the system
 to work. Yet, it is a design choice which makes it possible to consider
 data-type constructors as linear by default, while preserving the
 semantics of the intuitionistic $λ$-calculus (as we already alluded to
-in \ref{sec:linear-constructors}). For \HaskeLL{}, it means that types
+in \fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
 defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
@@ -1105,7 +1105,7 @@ extend \citet{launchbury_natural_1993}'s original syntax with
   \label{fig:launchbury:syntax}
 \end{figure}
 
-The dynamic semantics is given in \ref{fig:dynamics}. Let us review
+The dynamic semantics is given in \fref{fig:dynamics}. Let us review
 the new rules
 \begin{description}
 \item[Linear variable] In the linear variable rule, the binding in the
@@ -1341,7 +1341,7 @@ it is possible is that, by definition, in $\varid{Bang} x$, $x$ \emph{must} be
 in the garbage-collected heap. In other words, when an expression $e :
 \varid{Bang} A$ is forced to the form $\varid{Bang} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
-proved in Lemma~\ref{lem:type-safety} below).
+proved in \fref{lem:type-safety} below).
 
 The crucial safety property of the strengthened relation is that it
 preserves well-typing of states.
@@ -1372,7 +1372,7 @@ on, we only consider well-typed states.
 \end{corollary}
 \begin{proof}
   Remember that we consider only well-typed states because of
-  Lemma~\ref{lem:type-safety}. Unfolding the typing rules it is easy
+  \fref{lem:type-safety}. Unfolding the typing rules it is easy
   to see that $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not well-typed: it
   would require $x:_1 A = ωΔ$ for some $Δ$, which cannot be.
 \end{proof}
@@ -1454,7 +1454,7 @@ over a completely formal argument for progress.
 \end{proof}
 
 In conjunction with Corollary~\ref{cor:linear-variable},
-Lemma~\ref{lem:liveness} shows that well-typed programs do not get
+\fref{lem:liveness} shows that well-typed programs do not get
 blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
@@ -1628,7 +1628,7 @@ invertible.
 In that respect, our system is closer to
 \citeauthor{ghica_bounded_2014}'s. What we keep from
 \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
-\ref{sec:statics}), which can be phrased in terms of linear logic as
+\fref{sec:statics}), which can be phrased in terms of linear logic as
 making the natural arrow $!A⊗!B ⟹ !(A⊗B)$ invertible. This choice is
 unusual from a linear logic perspective, but it is the key to be able
 to use types both linearly an unrestrictedly without intrusive
