@@ -558,7 +558,7 @@ push :: Msg -> Queue ⊸ Queue
 \end{code}
 While the |pop| function would be endowed with the following type:
 \begin{code}
-  pop :: Queue ⊸ Maybe (Queue,Bang Msg)
+  pop :: Queue ⊸ Maybe (Bang Msg,Queue)
 \end{code}
 In the case where there is no value left, no queue is returned,
 therefore |pop| must free the queue when its empty. Linear typing will
@@ -591,7 +591,7 @@ foreign heap could be the following:
 \begin{code}
 alloc   :: (Queue ⊸ Bang a) ⊸ a
 push    :: Msg -> Queue ⊸ Queue
-pop     :: Queue ⊸ Maybe (Queue, Bang Msg)
+pop     :: Queue ⊸ Maybe (Bang Msg, Queue)
 \end{code}
 There are a few things going on in this API:
 \begin{itemize}
@@ -1167,7 +1167,9 @@ the new rules
 
     \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
 
-    \inferrule{Γ:x ⇓ Δ:⟨…⟩ }{Γ : free x ⇓ Δ : () }\text{free}
+    \inferrule{Γ:x ⇓ Δ:⟨m_i,…⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
+
+    \inferrule{Γ:x ⇓ Δ:⟨⟩ }{Γ : pop x ⇓ Δ : () }\text{pop$_2$}
 
   \end{mathpar}
 
@@ -1298,13 +1300,19 @@ introduces the states of the strengthened evaluation relation.
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
-\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Bang A,Σ }{Ξ ⊢
-  (Γ || alloc k ⇓ Δ || z) :_ρ Bang A,Σ}\text{alloc}
+\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Bang A,Σ }{Ξ ⊢
+  (Γ || alloc k ⇓ Δ || z) :_ρ Bang A,Σ}\text{alloc}
 
 \inferrule{Ξ ⊢ (Γ||y ⇓ Δ||⟨…⟩) :_1 Queue, w:_ω Msg,Σ\\ Ξ ⊢ (Δ||w ⇓ Θ||m_i) :_1
   Msg,Σ}{Ξ ⊢ (Γ || push y w⇓ Θ || ⟨m_i,…⟩) :_1 Queue,Σ}\text{push}
 
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…⟩) :_1 (),Σ}{Ξ ⊢ (Γ || free x ⇓ Δ || ()) :_1 (),Σ}\text{free}
+
+\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨m_i,…⟩) :_1 Queue,Σ}{Ξ ⊢ (Γ || pop x ⇓
+  Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ || Just (w,y)) :_1 Maybe(Bang Msg,Queue),Σ}\text{pop$_1$}
+
+\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨⟩) :_1 Queue,Sigma}{Ξ ⊢ (Γ || pop x ⇓ Δ || ()) }\text{pop$_2$}
+
   \end{mathpar}
   \caption{Typed operational semantics. (Omitting the obvious m.abs and m.app for concision)}
   \label{fig:typed-semop}
