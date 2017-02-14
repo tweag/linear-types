@@ -920,9 +920,8 @@ builds an $A$ with multiplicity $p$''. The reason for this is the
   logic. In \calc{}, however, promotion is implicit.}: to know how to
 create an unrestricted value it is sufficient (and, in fact,
 necessary) to know how to create a linear value. Thinking in terms of
-resources is the easiest way to shed light on this principle: an
-unrestricted result can only be constructed components which are
-themselves unrestricted.
+resources is the easiest way to shed light on this principle: a value
+which does not contain resources can safely be shared or dropped.
 
 The promotion principle is formalised through the use of context
 scaling in rules such as the application rule:
@@ -932,7 +931,8 @@ multiplicity $1$, scaling the context to $qΔ$ also (implicitly) scales
 the right-hand side of the judgement: that is it creates a $u$ with
 multiplicity $q$ (as required by the function). To get a better grasp
 of this rule, you may want to consider how it indeed renders the
-following judgement well-typed (for any multiplicity $π$):
+following judgement well-typed. In this judgement, $π$ is a
+multiplicity variable, that is the judgement is multiplicity-polymorphic:
 $$f:_ωA→_πB, x:_π A ⊢ f x$$
 
 This implicit use of the promotion principle in rules such as the
