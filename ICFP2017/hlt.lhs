@@ -1029,7 +1029,7 @@ backwards compatibility, which is a design goal of \HaskeLL{}.
 
 We wish to give a dynamic semantics for \calc{} which accounts for the
 explicit allocations and de-allocations as seen in the queue
-example. To that effect we follow \citet{launchbury_natural_1993} who
+example of \fref{sec:queue-api}. To that effect we follow \citet{launchbury_natural_1993} who
 defines a semantics for lazy computation.
 
 \citeauthor{launchbury_natural_1993}'s semantics is a big-step
@@ -1037,36 +1037,47 @@ semantics where variables play the role of pointers to the heap (hence
 represent sharing, which is the cornerstone of a lazy semantics). To illustrate
 the operational benefits of linearity, we
 augment that semantics with a foreign heap and queue
-primitives, but any linear API can be supported in the same way.  Concretely, bindings in the heap are of the form $x↦_p e$
-where $p∈\{1,ω\}$ a multiplicity: bindings with multiplicity $ω$
-represent objects on the regular, garbage-collected, heap, while
-bindings with multiplicity $1$ represent linear resources, which
-are reified here as objects on a \emph{linear heap}. Queues and messages are
-represented as literals\footnote{As such, queues will seem to be
-  copied on the stack, but it is just an artifact of the particular
-  presentation: it does not have a syntax for returning ``pointers''.}
-manipulated by the primitives. For the sake of simplicity of
-presentation, we only show one primitive (\emph{push}) in addition to
-allocation and de-allocation.
+primitives, as discussed in \fref{sec:queue-api}. Any similar linear
+\textsc{api} can be supported in the same way.
+
+To account for a foreign heap, we have a single logical heap with
+bindings of the form $x :_p A = e$ where $p∈\{1,ω\}$ a multiplicity:
+bindings with multiplicity $ω$ represent objects on the regular,
+garbage-collected, heap, while bindings with multiplicity $1$
+represent objects on a foreign heap, which we call the \emph{linear
+  heap}. The ``pure'' language of \fref{sec:statics} is extended with
+values, types, and primitives for queues.
+% Queues and messages are
+% represented as literals\footnote{As such, queues will seem to be
+%   copied on the stack, but it is just an artifact of the particular
+%   presentation: it does not have a syntax for returning ``pointers''.}
+% manipulated by the primitives. For the sake of simplicity of
+% presentation, we only show one primitive (\emph{push}) in addition to
+% allocation and de-allocation.
 
 \citet{launchbury_natural_1993}'s semantics relies on a constrained
 $λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
 extend \citet{launchbury_natural_1993}'s original syntax with
 \begin{description}
 \item[Message literals] We assume a collection of message literals
-  written $m_i$. We assume that the programmer can type such literals
-  in the program\unsure{Perhaps just say that the context is extended with such things?}. They are not given more semantics than their
-  interaction with lists. \unsure{JP: i do not understand this last sentence.}
-\item[Queue literals] Queues are a kind of primitive data
-  manipulated by primitive operations. As such the structure of queue
-  is invisible to the constructs of \calc{}, therefore queues are
-  represented a literals. Contrary to message literals, we assume that
-  the programmer \emph{cannot} type such literals\improvement{The programer gets none in the context? Do you really need them as literals though?}: they are created by
-  primitive operations. Therefore queue literals will only be found in
-  the heap (and specifically on the linear heap).\improvement{describe
-    notation for queue literals}
-\item[Primitives] $alloc$, $free$ and $push$ responsible respectively for allocating a
-  queue, freeing a queue, and pushing a message to a queue.
+  written $m_i$. In a real-world scenario, messages would have some
+  structure, but for the purpose of this semantics we consider them as
+  simple constants. The type of messages is |Msg|.
+
+\item[Queue values] Queues are represented as values of the form
+  $⟨m_{i_1},…,m_{i_n}⟩$ (as a convention, messages are pushed to the
+  left, and exit to the right). We assume that such queue values are
+  not part of the source program: they are created by primitive
+  operations. Therefore queue literals will only be found in
+  the heap (and specifically on the linear heap). The type of queues
+  is |Queue|.
+
+\item[Primitives] The primitive functions
+  $alloc : (Queue ⊸ Bang A) ⊸ Bang A$, $push : Queue ⊸ Queue $ and
+  $pop : Queue ⊸ Maybe(Bang Msg,Queue)$ are responsible respectively
+  for allocating an empty queue, pushing a message to a queue, and popping a
+  message from a queue. The $pop$ primitive also de-allocates its
+  argument if it is an empty queue.
 \end{description}
 \todo{typing rules for alloc, push and free, and literals.}
 \todo{in the translation, add rules for the multiplicity abstraction
@@ -1125,13 +1136,20 @@ the new rules
   queue may require allocation to accommodate for the extra
   element. However its role is to allocate a root that will own a
   queue.
-\item[Free] In combination with the linear variable rule, deallocates
-  a queue.
 \item[Push] The push rule adds a message to a queue. Notice that the
   message itself is incorporated into the queue literal: there is no
   mention of a variable pointing to the message. This is because the
   message is copied from the garbage-collected heap to the linear
   heap.
+\item[Pop] The $pop$ primitive has two rules: when the queue contains
+  messages, the right-most message is returned (as well as a new
+  handle to the queue), when the queue is empty, it is
+  deallocated. The non-empty case is a little wordy because it must
+  ``allocate'' new variables on the heap in order to create a
+  $Just(w,y)$ value (to comply to the syntax, $Just$ can only be
+  applied to variables).\improvement{[aspiwack] I've cheated a bit,
+    here, as I've inlined the pair constructor inside $Just$ which is
+    not strictly speaking permitted.}
 \end{description}
 
 \begin{figure}
@@ -1171,7 +1189,7 @@ the new rules
 
     \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
 
-    \inferrule{Γ:x ⇓ Δ:⟨m_i,…⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
+    \inferrule{Γ:x ⇓ Δ:⟨…,m_i⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
 
     \inferrule{Γ:x ⇓ Δ:⟨⟩ }{Γ : pop x ⇓ Δ : () }\text{pop$_2$}
 
@@ -1312,7 +1330,7 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…⟩) :_1 (),Σ}{Ξ ⊢ (Γ || free x ⇓ Δ || ()) :_1 (),Σ}\text{free}
 
-\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨m_i,…⟩) :_1 Queue,Σ}{Ξ ⊢ (Γ || pop x ⇓
+\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…,m_i⟩) :_1 Queue,Σ}{Ξ ⊢ (Γ || pop x ⇓
   Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ || Just (w,y)) :_1 Maybe(Bang Msg,Queue),Σ}\text{pop$_1$}
 
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨⟩) :_1 Queue,Sigma}{Ξ ⊢ (Γ || pop x ⇓ Δ || ()) }\text{pop$_2$}
