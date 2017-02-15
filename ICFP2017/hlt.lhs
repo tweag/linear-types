@@ -273,8 +273,8 @@ unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) to add incompatible linear versions.
 But this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
-combinators~---~constraints and complications which the newcomer to the language
-could not easily ignore, were basic library functions augmented in this way.
+combinators~---~constraints and complications that the newcomer cannot easily
+ignore, if basic library functions are thus augmented.
 
 We propose a design that leaves most types, such as |Int|, unmodified, and
 instead associates linearity with {\em binders}, such as ``$\flet x :_{1} T =
@@ -283,7 +283,8 @@ instead associates linearity with {\em binders}, such as ``$\flet x :_{1} T =
 We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
 {\em type}.
 %
-Only function types change to include (optional) linearity.  Even linear
+Only function types change to include (optional) linearity constraints on their
+arguments.  Even linear
 functions support {\em backwards compatibility} by implicit conversion of
 arguments at function call sites.  (The intuition is that if {\em any} number of
 uses is valid, then exactly one use is permitted.)
@@ -383,7 +384,7 @@ at call sites:
 Indeed, when we say that a function is linear, we refer to its domain,
 not its co-domain. Hence, linearity of a function does not influence
 what it can return, only what it can take as arguments.
-
+%
 The same examples can be expressed in code: the function |g| below
 admits the following implementations, but not the last one:
 \begin{code}
@@ -395,11 +396,7 @@ g k x y = k x (f y)      -- Valid
 g k x y = k x y          -- Valid
 g k x y = k y x          -- Invalid, x has multiplicity 1
 \end{code}
-\rn{Would be nice to introduce let here and do this in terms of let.}
-
-%% \begin{code}
-%% let x : _ 1 A = ... in blah
-%% \end{code}
+% \rn{Would be nice to introduce let here and do this in terms of let.}
 
 Linear values can be construed as containing {\em resources} which must be
 deallocated explicitly, hence can be subject to use-after-free
@@ -409,7 +406,24 @@ of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
 
 \subsection{Calling contexts}
-\note{Explain calling context here.}
+
+As in the above example, a given call to |f| can yield either a linear or
+unrestricted value depending on the context in which its called.  For example,
+using a weighted version of |let|, we can write the following:
+
+\begin{code}
+f :: Int ⊸ Int
+
+let x : _ 1 Int = f 3
+    y : _ ω Int = f 4
+in ...
+\end{code}
+
+Subsequent code in the body can use |y| any number of times but must use |x|
+exactly once.  Further, a compiled implementation could arrange to call a {\em
+  different implementation} of |f| at these two call sites, with one allocating
+directly on the garbage-collected heap, and the other creating a linear value by
+other means.
 
 
 
