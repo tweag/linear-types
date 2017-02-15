@@ -573,6 +573,13 @@ While the |pop| function would be endowed with the following type:
 \begin{code}
   pop :: Queue ⊸ Maybe (Bang Msg,Queue)
 \end{code}
+where |Maybe| is linear:
+\begin{code}
+data Maybe a where
+  Nothing :: Maybe a
+  Just  :: a ⊸ Maybe a
+\end{code}
+
 In the case where there is no value left, no queue is returned,
 therefore |pop| must free the queue when its empty. Linear typing will
 ensure that we eventually end up popping from the empty queue. As an
