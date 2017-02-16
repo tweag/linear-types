@@ -271,7 +271,7 @@ case of Rust.
 % 
 Recent work~\cite{best-of-both-worlds} has come closer to unifying linear and
 unrestricted code, avoiding the need to {\em duplicate} basic library functions
-like compose ($\circ$) or append (|++|) to add incompatible linear versions.
+like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
 But this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
 combinators~---~constraints and complications that the newcomer cannot easily
@@ -479,7 +479,7 @@ A major benefit of \HaskeLL{} is that one can write linear code
 whenever it is possible, and use it in unrestricted contexts
 anyway. In \HaskeLL{}, giving a more precise type to |(++)|
 {\em strengthens} the contract that the implementation of |(++)| must
-satisfy, but it does not restrict its usage. That is, it is perfectly
+satisfy, but it does not restrict its usage. Indeed, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
 $ω$, |xs++ys| is \emph{promoted} to multiplicity $ω$. In terms of resources,
