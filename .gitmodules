@@ -1,3 +1,6 @@
 [submodule "PaperTools"]
 	path = PaperTools
 	url = git@github.com:jyp/PaperTools.git
+[submodule "deps/hyperion"]
+	path = deps/hyperion
+	url = git@github.com:tweag/hyperion.git
