@@ -15,14 +15,18 @@ a C implementation (in the `c` folder).
 For this microbenchmark you will need hyperion. 
 The current build operations are to be improved, and are the following.
 
-* clone hyperion at teh same level as the linear types folder
+* `git subodule update --init` to ensure that Hyperion is checked out
 * modify the batching strategy of hyperion, 
 ```
 -    foldMap (runBenchmark (sample 100 (fixed 5))) bks
 +    foldMap (runBenchmark (sample 1000000 (fixed 1))) bks
 ```
-* install python, matplotlib and numpy (used by `analysis.py`)
 * stack locally installed
+* nix-shell
+
+If you do not use nix:
+
+* install python, matplotlib and numpy (used by `analysis.py`)
 
 ## Use
 
