@@ -145,6 +145,7 @@
   \end{itemize}}}
 
 \newcommand{\Red}[1]{\textcolor{red}{#1}}
+\newcommand{\new}[1]{\textcolor{blue}{#1}}
 
 % Title portion
 
@@ -363,7 +364,8 @@ at call sites:
   \begin{enumerate}
   \item {\bf can} be passed to a linear function.
   \item {\bf can} be passed to a unrestricted function.  
-  \item {\bf can} be returned by a linear function.
+  \item {\bf can} be returned by a linear function, {\bf if and only if} the
+      argument is also unrestricted (see \fref{sec:calling-contexts}).
   \item {\bf can} be returned by a unrestricted function.    
   \end{enumerate}  
 
@@ -405,27 +407,41 @@ we will focus on data stored on a foreign heap. The linear type system
 of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
 
-\subsection{Calling contexts}
+\subsection{Calling contexts}\label{sec:calling-contexts}
 
-As in the above example, a given call to |f| can yield either a linear or
+\new{As in the above example, a given call to |f| can yield either a linear or
 unrestricted value depending on the context in which its called.  For example,
-using a weighted version of |let|, we can write the following:
+using a weighted version of |let|, we can write the following:}
 
 \begin{code}
 f :: Int ⊸ Int
 
-let x : _ 1 Int = f 3
-    y : _ ω Int = f 4
+let x :: _ 1 Int = f 3
+    y :: _ ω Int = f 4
 in ...
 \end{code}
 
-Subsequent code in the body can use |y| any number of times but must use |x|
-exactly once.  Further, a compiled implementation could arrange to call a {\em
+\new{Subsequent code in the body can use |y| any number of times but must use |x|
+exactly once.  Further, a compiler for \HaskeLL{} could arrange to call a {\em
   different implementation} of |f| at these two call sites, with one allocating
-directly on the garbage-collected heap, and the other creating a linear value by
-other means.
+directly on the garbage-collected heap, and the other creating a linear value in
+a separate heap.}
 
+% We think of a function call as always producing {\em one copy} of its output
+% by default.
 
+\new{In general a function call can always produce {\em one} copy of its output, but
+{\em scaling} the call site to produce an unrestricted output also requires
+unrestricted {\em input}.  For example, the following variant of the above
+example would not type check:
+\begin{code}
+let x :: _ 1 Int = 3
+    y :: _ ω Int = f x
+\end{code}
+Further, as we will see in the type system of \fref{sec:statics}, this means
+that even a curried function of type |A ⊸ B -> C| requires an unrestricted |A|
+argument to produce a |C| result of multiplicity |ω|.
+}
 
 \subsection{Linear data types}
 
@@ -437,9 +453,9 @@ data List a where
   (:)  :: a ⊸ List a ⊸ List a
 \end{code}
 That is, given a list |xs| with multiplicity $1$,
-yield the elements of |xs| will multiplicity $1$.
+yield the elements of |xs| with multiplicity $1$.
 Thus the above list
-may contain resources without compromising safety: that is, the
+may contain resources (such as file handles) without compromising safety: that is, the
 resources in |xs| will be eventually deallocated and will not be used
 after that.
 
@@ -457,8 +473,8 @@ any of the elements in |xs|, nor drop any element in |xs|.
 
 A major benefit of \HaskeLL{} is that one can write linear code
 whenever it is possible, and use it in unrestricted contexts
-anyway. That is, in \HaskeLL{}, giving a more precise type to |(++)|
-strengthens the contract that the implementation of |(++)| must
+anyway. In \HaskeLL{}, giving a more precise type to |(++)|
+{\em strengthens} the contract that the implementation of |(++)| must
 satisfy, but it does not restrict its usage. That is, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
@@ -468,6 +484,14 @@ neither can |xs++ys|: it is thus safe to share |xs++ys|.
 %
 If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
+
+\new{This design limits the assumptions the callee can make about its arguments.
+  The implementation of (|++|) that returns a linear value, still cannot {\em
+    assume} that both its inputs are linear.  It may be that only one of
+  |xs|,|ys| is linear.  Here, lazy evaluation has an interesting role to play,
+  by having linear thunks {\em free their own resources}.  Thus the code for
+  (++) needn't change to handle |xs :: _ 1| vs |xs :: _ ω| input scenarios,
+  rather, it merely enters thunks via |case|-decomposing lists.}
 
 For an existing language, being able to strengthen |(++)| in a {\em
   backwards-compatible} way is a major boon.
@@ -481,14 +505,16 @@ indefinitely needs to be unrestricted:
   cycle l = l ++ cycle l
 \end{code}
 
-\subsection{Reachability invariant}
+\subsection{Reachability invariant: no unrestricted→linear pointers}
 A consequence of the above design is that unrestricted objects never
 point to (or contain) linear objects. (But the converse is possible.)
 One can make sense operationally of this rule by appealing to
 garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
 for. Conversely a pointer from a resource to the heap can simply act
-as a new GC root. We prove this invariant in \fref{sec:dynamics}.
+as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
+\new{(In a practical implementation, this means that {\em all} pointers to linear
+  values reside on the stack and in registers, never in the GC heap.)}
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
@@ -526,19 +552,24 @@ That is: two functions of accepting arguments of arbitrary
 multiplicities respectively $ρ$ and $π$ can be composed into a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
+%
+\new{Finally, from a backwards-compatibility perspective, all of these
+  subscripts and binders for multiplicity polymorphism can be {\em ignored} by
+  (and perhaps even hidden from) the programmer who does not enable the linear
+  types language extension.}
 
 \subsection{Linearity of constructors}
 \label{sec:linear-constructors}
 
-Constructors add their own bit of depth to this story. The design of
+\new{Data} constructors add a wrinkle to this story. The design of
 \HaskeLL{} advocates treating data-type constructors as linear by
-default (that is, all of their arguments are linear). However,
-contrary to plain functions, linear constructors are not more general
+default (that is, all of their field arguments are linear). However,
+contrary to plain functions, linear data constructors are not more general
 than constructors with unrestricted arguments.
 
 In \fref{sec:statics}, we will take the necessary step to make sure
 that linear constructors correspond to regular Haskell data types when
-restricted to the pure (non-linear) Haskell fragment. But even so,
+restricted to the traditional (non-linear) Haskell fragment. But even so,
 constructors with unrestricted arguments add expressiveness to
 \HaskeLL{}. The following data type is the prototypical example of
 data type with non-linear constructors\footnote{The type constructor
