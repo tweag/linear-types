@@ -315,7 +315,7 @@ We make the following contributions:
 \begin{itemize}
 \item We formalize \HaskeLL{} as \calc{}, a linearly-typed extension of the
   $λ$-calculus with data types, and give its type system (\fref{sec:statics}),
-  highlighting how it is compatible with all existing Haskell features,
+  highlighting how it is compatible with existing Haskell features,
   including Haskell's \Red{kind system, constraints, GADTs, and even dependent types}.
 
 \item We provide a dynamic semantics for \calc{}, which is unusual,
@@ -537,7 +537,7 @@ indefinitely needs to be unrestricted:
   let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
 \end{code}
 
-\subsection{Reachability invariant: no unrestricted→linear pointers}
+\subsection{Reachability invariant: no unrestricted→linear pointers}\label{sec:invariant}
 A consequence of the above design is that unrestricted objects never
 point to (or contain) linear objects. (But the converse is possible.)
 One can make sense operationally of this rule by appealing to
@@ -614,7 +614,8 @@ data type with non-linear constructors\footnote{The type constructor
 \end{code}
 The |Unrestricted|
 data type is used to indicate that a linear function returns results
-with multiplicity $ω$---through which {\em no} linear value is reachable.
+with multiplicity $ω$---through which {\em no} linear value is reachable
+(by the invariant of \fref{sec:invariant}).
 Such data types are, in fact, the only way to
 signify unrestricted results. For example, the following function
 effectively turns a boolean with multiplicity 1 into a boolean with
