@@ -1297,14 +1297,9 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ,x :_1 Queue = ⟨⟩ : k x ⇓ Δ : z }{Γ: alloc k ⇓ Δ : z }\text{alloc}
+    \inferrule{Γ,x:_1 Packet = next() : k x ⇓ Δ : z}{Γ:get k ⇓ Δ:z}\text{get}
 
-    \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
-
-    \inferrule{Γ:x ⇓ Δ:⟨…,m_i⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Unrestricted w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
-
-    \inferrule{Γ:x ⇓ Δ:⟨⟩ }{Γ : pop x ⇓ Δ : () }\text{pop$_2$}
-
+    \inferrule{Γ:x ⇓ Δ:p_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
 
   \caption{Dynamic semantics}
