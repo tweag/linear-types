@@ -573,22 +573,22 @@ restricted to the traditional (non-linear) Haskell fragment. But even so,
 constructors with unrestricted arguments add expressiveness to
 \HaskeLL{}. The following data type is the prototypical example of
 data type with non-linear constructors\footnote{The type constructor
-  |Bang| is in fact an encoding of the so-called \emph{exponential}
+  |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
   modality written ${!}$ in linear logic.}:
 \begin{code}
-  data Bang a where
-    Bang :: a → Bang a
+  data Unrestricted a where
+    MkUnre :: a → Unrestricted a
 \end{code}
-\improvement{rename |Bang| \emph{e.g.} into |Unrestricted|} The |Bang|
+The |Unrestricted|
 data type is used to indicate that a linear function returns results
 with multiplicity $ω$. Such data types are, in fact, the only way to
 signify unrestricted results. For example, the following function
 effectively turns a boolean with multiplicity 1 into a boolean with
 multiplicity $ω$:
 \begin{code}
-  copy :: Bool ⊸ Bang Bool
-  copy True   = Bang True
-  copy False  = Bang False
+  copy :: Bool ⊸ Unrestricted Bool
+  copy True   = MkUnre True
+  copy False  = MkUnre False
 \end{code}
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
@@ -616,7 +616,7 @@ push :: Msg -> Queue ⊸ Queue
 \end{code}
 While the |pop| function would be endowed with the following type:
 \begin{code}
-  pop :: Queue ⊸ Maybe (Bang Msg,Queue)
+  pop :: Queue ⊸ Maybe (Unrestricted Msg,Queue)
 \end{code}
 where |Maybe| is linear:
 \begin{code}
@@ -633,7 +633,7 @@ until it is empty:
 \begin{code}
   free :: Queue ⊸ ()
   free q = case pop q of
-    | Just (q',Bang _m) -> free q'
+    | Just (q',MkUnre _m) -> free q'
     | Nothing -> ()
 \end{code}
 
@@ -654,9 +654,9 @@ system.
 The complete \textsc{api} for a linearly typed queue allocated on a
 foreign heap could be the following:
 \begin{code}
-alloc   :: (Queue ⊸ Bang a) ⊸ a
+alloc   :: (Queue ⊸ Unrestricted a) ⊸ a
 push    :: Msg -> Queue ⊸ Queue
-pop     :: Queue ⊸ Maybe (Bang Msg, Queue)
+pop     :: Queue ⊸ Maybe (Unrestricted Msg, Queue)
 \end{code}
 There are a few things going on in this API:
 \begin{itemize}
@@ -665,9 +665,9 @@ There are a few things going on in this API:
   queue, allocated in the foreign heap (for example using
   \verb|malloc()|).  As enforced by the type-system, this queue must
   be used exactly once.  The return type of the argument function is
-  |Bang a|, ensuring that no linear value can be returned: in
+  |Unrestricted a|, ensuring that no linear value can be returned: in
   particular the |Queue| must be consumed. (Recall the reachability
-  invariant: |Bang| cannot contain a linear object.)
+  invariant: |Unrestricted| cannot contain a linear object.)
 
 \item Messages of type |Msg| are unrestricted Haskell values managed
   by the garbage collector. They are \emph{copied} into the queue by
@@ -1133,8 +1133,8 @@ extend \citet{launchbury_natural_1993}'s original syntax with
   is |Queue|.
 
 \item[Primitives] The primitive functions
-  $alloc : (Queue ⊸ Bang A) ⊸ Bang A$, $push : Queue ⊸ Queue $ and
-  $pop : Queue ⊸ Maybe(Bang Msg,Queue)$ are responsible respectively
+  $alloc : (Queue ⊸ Unrestricted A) ⊸ Unrestricted A$, $push : Queue ⊸ Queue $ and
+  $pop : Queue ⊸ Maybe(Unrestricted Msg,Queue)$ are responsible respectively
   for allocating an empty queue, pushing a message to a queue, and popping a
   message from a queue. The $pop$ primitive also de-allocates its
   argument if it is an empty queue.
@@ -1249,7 +1249,7 @@ the new rules
 
     \inferrule{Γ:y ⇓ Δ:⟨…⟩ \\ Δ:w ⇓ Θ:m_i}{Γ : push y w⇓ Θ : ⟨m_i,…⟩}\text{push}
 
-    \inferrule{Γ:x ⇓ Δ:⟨…,m_i⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
+    \inferrule{Γ:x ⇓ Δ:⟨…,m_i⟩ }{Γ : pop x ⇓ Δ,w_0:_ω Msg = m_i, w:_1 Unrestricted w_0, y:_1 Queue = ⟨…⟩ : Just (w,y) }\text{pop$_1$}
 
     \inferrule{Γ:x ⇓ Δ:⟨⟩ }{Γ : pop x ⇓ Δ : () }\text{pop$_2$}
 
@@ -1382,8 +1382,8 @@ introduces the states of the strengthened evaluation relation.
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
-\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Bang A,Σ }{Ξ ⊢
-  (Γ || alloc k ⇓ Δ || z) :_ρ Bang A,Σ}\text{alloc}
+\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Unrestricted A,Σ }{Ξ ⊢
+  (Γ || alloc k ⇓ Δ || z) :_ρ Unrestricted A,Σ}\text{alloc}
 
 \inferrule{Ξ ⊢ (Γ||y ⇓ Δ||⟨…⟩) :_1 Queue, w:_ω Msg,Σ\\ Ξ ⊢ (Δ||w ⇓ Θ||m_i) :_1
   Msg,Σ}{Ξ ⊢ (Γ || push y w⇓ Θ || ⟨m_i,…⟩) :_1 Queue,Σ}\text{push}
@@ -1391,7 +1391,7 @@ introduces the states of the strengthened evaluation relation.
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…⟩) :_1 (),Σ}{Ξ ⊢ (Γ || free x ⇓ Δ || ()) :_1 (),Σ}\text{free}
 
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…,m_i⟩) :_1 Queue,Σ}{Ξ ⊢ (Γ || pop x ⇓
-  Δ,w_0:_ω Msg = m_i, w:_1 Bang w_0, y:_1 Queue = ⟨…⟩ || Just (w,y)) :_1 Maybe(Bang Msg,Queue),Σ}\text{pop$_1$}
+  Δ,w_0:_ω Msg = m_i, w:_1 Unrestricted w_0, y:_1 Queue = ⟨…⟩ || Just (w,y)) :_1 Maybe(Unrestricted Msg,Queue),Σ}\text{pop$_1$}
 
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨⟩) :_1 Queue,Sigma}{Ξ ⊢ (Γ || pop x ⇓ Δ || ()) }\text{pop$_2$}
 
@@ -1414,14 +1414,14 @@ requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} will prove
 this restriction to be safe).
 
 The other important rule is the |alloc| rule: it requires a result of
-the form $\varid{Bang} x$ of multiplicity $1$ while returning a
+the form $\varid{Unrestricted} x$ of multiplicity $1$ while returning a
 result of multiplicity $ω$. This constraint is crucial, because the |alloc| rule is the
 only rule which makes it possible to use of a linear value in order to produce a
 garbage collected value, which in turn justifies that in the ordinary
 semantics, queues can be allocated in the linear heap. The reason why
-it is possible is that, by definition, in $\varid{Bang} x$, $x$ \emph{must} be
+it is possible is that, by definition, in $\varid{MkUnre} x$, $x$ \emph{must} be
 in the garbage-collected heap. In other words, when an expression $e :
-\varid{Bang} A$ is forced to the form $\varid{Bang} x$, it will have consumed all the
+\varid{Unrestricted} A$ is forced to the form $\varid{MkUnre} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
 proved in \fref{lem:type-safety} below).
 
@@ -1437,11 +1437,11 @@ preserves well-typing of states.
 \begin{proof}
   By induction on the typed-reduction.
 
-  \todo{There used to be the case of the case-bang in more details,
+  \todo{There used to be the case of the case-unrestricted in more details,
     probably do alloc instead}
-  % The important case is the case-bang rule. By induction we have that
-  % $Ξ,y:_ω⊢(Δ||Bang x) :_1 Bang A,…$. Unfolding the typing rule for
-  % $Bang$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
+  % The important case is the case-unrestricted rule. By induction we have that
+  % $Ξ,y:_ω⊢(Δ||MkUnre x) :_1 Unrestricted A,…$. Unfolding the typing rule for
+  % $Unrestricted$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
   % prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
 \end{proof}
 
@@ -1544,12 +1544,12 @@ freed: \calc{} is safe from use-after-free errors.
 \section{Perspectives}
 \todo{Speak about fusion}
 \hfill\\
-\todo{Mention the case-bang rule (the case-bang rule can be found in
+\todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
   the source below this todo-box)}
-\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Bang} x
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Unrestricted} x
     \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
-    \mathsf{case}_{q} t \mathsf{of} \{\varid{Bang} y ↦ u\} ⇓_ρ Θ :
-    z}\text{case-bang}}
+    \mathsf{case}_{q} t \mathsf{of} \{\varid{MkUnre} y ↦ u\} ⇓_ρ Θ :
+    z}\text{case-unrestricted}}
 \hfill\\
 \todo{More multiplicities}
 \hfill\\
