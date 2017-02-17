@@ -271,7 +271,7 @@ case of Rust.
 % 
 Recent work~\cite{best-of-both-worlds} has come closer to unifying linear and
 unrestricted code, avoiding the need to {\em duplicate} basic library functions
-like compose ($\circ$) or append (|++|) to add incompatible linear versions.
+like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
 But this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
 combinators~---~constraints and complications that the newcomer cannot easily
@@ -409,10 +409,10 @@ that no use-after-free error occurs.
 
 \subsection{Calling contexts}\label{sec:calling-contexts}
 
-\new{As in the above example, a given call to |f| can yield either a linear or
+As in the above example, a given call to |f| can yield either a linear or
 unrestricted value depending on the context in which its called.  For example,
-using a weighted version of |let|, we can write the following:}
-
+using a weighted version of |let|, we can write the following:
+%
 \begin{code}
 f :: Int ⊸ Int
 
@@ -420,16 +420,20 @@ let x :: _ 1 Int = f 3
     y :: _ ω Int = f 4
 in ...
 \end{code}
-
-\new{Subsequent code in the body can use |y| any number of times but must use |x|
+%
+Subsequent code in the body can use |y| any number of times but must use |x|
 exactly once.  Further, a compiler for \HaskeLL{} could arrange to call a {\em
-  different implementation} of |f| at these two call sites, with one allocating
-directly on the garbage-collected heap, and the other creating a linear value in
-a separate heap.}
+  different implementation} of |f| at these two call sites, with the former allocating
+directly on the garbage-collected heap, and the latter creating a linear value in
+a separate heap.
 
 % We think of a function call as always producing {\em one copy} of its output
 % by default.
-
+\unsure{JP: I'd prefer a formulation like: ``the type system assumes
+  that a function produces {\em one} copy of its output. Yet, any
+  given function call can be promoted to an unrestricted call,
+  provided that all the linear arguments are unrestricted in the
+  context.''}
 \new{In general a function call can always produce {\em one} copy of its output, but
 {\em scaling} the call site to produce an unrestricted output also requires
 unrestricted {\em input}.  For example, the following variant of the above
@@ -475,7 +479,7 @@ A major benefit of \HaskeLL{} is that one can write linear code
 whenever it is possible, and use it in unrestricted contexts
 anyway. In \HaskeLL{}, giving a more precise type to |(++)|
 {\em strengthens} the contract that the implementation of |(++)| must
-satisfy, but it does not restrict its usage. That is, it is perfectly
+satisfy, but it does not restrict its usage. Indeed, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
 $ω$, |xs++ys| is \emph{promoted} to multiplicity $ω$. In terms of resources,
@@ -485,7 +489,7 @@ neither can |xs++ys|: it is thus safe to share |xs++ys|.
 If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
-\new{This design limits the assumptions the callee can make about its arguments.
+\new{\unsure{JP: in operational terms...}This design limits the assumptions that the callee can make about its arguments.
   The implementation of (|++|) that returns a linear value, still cannot {\em
     assume} that both its inputs are linear.  It may be that only one of
   |xs|,|ys| is linear.  Here, lazy evaluation has an interesting role to play,
@@ -553,15 +557,15 @@ multiplicities respectively $ρ$ and $π$ can be composed into a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 %
-\new{Finally, from a backwards-compatibility perspective, all of these
+Finally, from a backwards-compatibility perspective, all of these
   subscripts and binders for multiplicity polymorphism can be {\em ignored} by
-  (and perhaps even hidden from) the programmer who does not enable the linear
-  types language extension.}
+  and the programmer can even {\em disable} linear
+  types entirely thus hiding any syntactic extension.
 
 \subsection{Linearity of constructors}
 \label{sec:linear-constructors}
 
-\new{Data} constructors add a wrinkle to this story. The design of
+Data constructors add a twist to this story. The design of
 \HaskeLL{} advocates treating data-type constructors as linear by
 default (that is, all of their field arguments are linear). However,
 contrary to plain functions, linear data constructors are not more general
