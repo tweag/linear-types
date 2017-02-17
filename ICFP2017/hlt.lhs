@@ -448,12 +448,11 @@ For example, the following variant of the above
 example would not type check:
 \begin{code}
 let x :: _ 1 Int = 3
-    y :: _ ω Int = f x
+    y :: _ ω Int = f x -- not enough x's for this
 \end{code}
 Further, as we will see in the type system of \fref{sec:statics}, this means
 that even a curried function of type |A ⊸ B -> C| requires an unrestricted |A|
 argument to produce a |C| result of multiplicity |ω|.
-}
 
 \subsection{Linear data types}
 
