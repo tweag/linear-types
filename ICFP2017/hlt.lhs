@@ -247,13 +247,18 @@
 Can we use Haskell to implement a low-latency server that caches a large dataset
 in memory?  Today, the answer is a clear
 ``no''\footnote{\Red{{URL-of-reddit-discussion}}}.  The GC pauses are
-unacceptable (and would remain so even with incremental GC).
+unacceptable.
+% (and would remain so even with incremental GC).
 %
-This application requires minimizing GC pauses by managing the largest heap data
+This application requires minimizing GC pauses, not just by incrementalizing GC,
+but by managing the largest heap data
 structures outside of the regular heap.  Traditionally, programmers resort to
 pushing the data off-heap manually, accessing it through FFI calls.  But this
-common technique poses a safety risk to {\em clients} of the data structure, who may
-commit use-after-free errors.  Much better would be a type-safe solution.
+common technique poses safety risks: either not enforcing prompt deallocation,
+or allowing use-after-free errors.
+%% to {\em clients} of the data structure, who may
+%% commit use-after-free errors.
+Much better would be to rule out such problems via a type system.
 % that stays within the high-level language.
 
 Indeed, type systems can be useful for controlling resource usage, not just
@@ -279,7 +284,7 @@ unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
 But this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
-combinators~---~constraints and complications that the newcomer cannot easily
+combinators~---~type-class constraints and complications that the newcomer cannot easily
 ignore, if basic library functions are thus augmented.
 
 We propose a design that leaves most types, such as |Int|, unmodified, and
