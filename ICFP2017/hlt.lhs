@@ -386,6 +386,8 @@ at call sites:
   \item  {\bf can} be returned by a linear function (and
      the type-system guarantees that it can be promoted to a unrestricted
      value when the function is called in an unrestricted context).
+  \item \new{{\bf can} be returned by a unrestricted function.  In fact, {\em every}
+    unrestricted result can be received by the caller as linear.}
   \end{enumerate}
 
 % RRN: This looks like a duplicate:
@@ -394,8 +396,9 @@ at call sites:
 \end{enumerate}
 
 Indeed, when we say that a function is linear, we refer to its domain,
-not its co-domain. Hence, linearity of a function does not influence
-what it can return, only what it can take as arguments.
+not its co-domain.
+%% Hence, linearity of a function does not influence
+%% what it can return, only what it can take as arguments.
 %
 The same examples can be expressed in code: the function |g| below
 admits the following implementations, but not the last one:
@@ -417,6 +420,10 @@ we will focus on data stored on a foreign heap. The linear type system
 of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
 
+%% \begin{code}
+%%   let x :: _ 1  = 
+%% \end{code}
+
 \subsection{Calling contexts}\label{sec:calling-contexts}
 
 As in the above example, a given call to |f| can yield either a linear or
@@ -435,7 +442,7 @@ Subsequent code in the body can use |y| any number of times but must use |x|
 exactly once.  Further, a compiler for \HaskeLL{} could arrange to call a {\em
   different implementation} of |f| at these two call sites, with the former
 allocating directly on the garbage-collected heap, and the latter creating a
-linear value, potentially in a separate heap.
+linear value --- potentially in a separate heap.
 
 % \unsure{JP: I'd prefer a formulation like:}
 {The type system assumes that a function produces {\em one} copy of its
