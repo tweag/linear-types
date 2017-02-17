@@ -1297,7 +1297,7 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ,x:_1 Packet = next() : k x ⇓ Δ : z}{Γ:get k ⇓ Δ:z}\text{get}
+    \inferrule{Γ,x:_1 Packet = next() : k x ⇓ Δ : z}{Γ:get k ⇓ Δ:z}\text{get}
 
     \inferrule{Γ:x ⇓ Δ:p_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
@@ -1431,7 +1431,7 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule
   {Ξ ⊢ (Γ,x:_1 Packet = next() || k x ⇓ Δ || z) :_1 Unrestricted A, Σ}
-  {Ξ ⊢ (Γ||get k ⇓ Δ||z) :_ρ Unrestricted A,Σ}\text{get}
+  {Ξ ⊢ (Γ||get k ⇓ Δ||z) :_ρ Unrestricted A,Σ}\text{get}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||p_i) :_1 Packet,Σ}
