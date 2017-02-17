@@ -420,9 +420,6 @@ we will focus on data stored on a foreign heap. The linear type system
 of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
 
-%% \begin{code}
-%%   let x :: _ 1  = 
-%% \end{code}
 
 \subsection{Calling contexts}\label{sec:calling-contexts}
 
@@ -460,6 +457,19 @@ let x :: _ 1 Int = 3
 Further, as we will see in the type system of \fref{sec:statics}, this means
 that even a curried function of type |A ⊸ B -> C| requires an unrestricted,
 multiplicity $ω$, |A| argument to produce a |C| result of multiplicity |ω|.
+
+\new{On the other hand, to produce a {\em linear} result from an unrestricted
+  function is trivial.  The result of an unrestricted function call may always
+  flow to a linear binding.
+  Indeed, because they do {\em not} contain resources, it
+  is {\em always} safe to view an unrestricted value as linear, allowing:
+  |let x :: _ ω ... = e1;|$\;\;$|y :: _ 1 ... = x|.
+%% \begin{code}
+%%   let x :: _ ω T = e1
+%%       y :: _ 1 T = x
+%% \end{code}
+However, if an implementation chooses to treat linear values differently at
+runtime, then this change of multiplicity would incur runtime costs.}
 
 \subsection{Linear data types}
 
@@ -535,8 +545,9 @@ garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
 for. Conversely a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
-\new{(In a practical implementation, this means that {\em all} pointers to linear
-  values reside on the stack and in registers, never in the GC heap.)}
+\new{(In a practical implementation which {\em separated} the linear/GC heaps,
+  this means that {\em all} pointers to linear values would reside on the stack
+  and in registers, never in the GC heap.)}
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
