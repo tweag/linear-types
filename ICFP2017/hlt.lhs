@@ -451,8 +451,8 @@ let x :: _ 1 Int = 3
     y :: _ ω Int = f x -- not enough x's for this
 \end{code}
 Further, as we will see in the type system of \fref{sec:statics}, this means
-that even a curried function of type |A ⊸ B -> C| requires an unrestricted |A|
-argument to produce a |C| result of multiplicity |ω|.
+that even a curried function of type |A ⊸ B -> C| requires an unrestricted,
+multiplicity $ω$, |A| argument to produce a |C| result of multiplicity |ω|.
 
 \subsection{Linear data types}
 
@@ -463,12 +463,10 @@ data List a where
   []   :: List a
   (:)  :: a ⊸ List a ⊸ List a
 \end{code}
-That is, given a list |xs| with multiplicity $1$,
-yield the elements of |xs| with multiplicity $1$.
-Thus the above list
-may contain resources (such as file handles) without compromising safety: that is, the
-resources in |xs| will be eventually deallocated and will not be used
-after that.
+That is, given a list |xs| with multiplicity $1$, yield the {\em elements of
+  |xs|} with multiplicity $1$.  Thus the above list may contain resources (such
+as file handles) without compromising safety; the resources in |xs| will be
+eventually deallocated and will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
@@ -478,9 +476,12 @@ as follows:
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
-The type of |(++)| tells us that if we have a list |xs| with
-multiplicity $1$, appending any other list to it will never duplicate
-any of the elements in |xs|, nor drop any element in |xs|.
+The type of |(++)| tells us that if we have a list |xs| with multiplicity $1$,
+appending any other list to it will never duplicate any of the elements in |xs|,
+nor drop any element in |xs|\footnote{This follows from parametricity.
+  In order to {\em free} linear list elements, we must pattern match on them to
+  consume them, and thus must know their type (or have a type class instance).
+  Likewise to copy them.}.
 
 A major benefit of \HaskeLL{} is that one can write linear code
 whenever it is possible, and use it in unrestricted contexts
@@ -496,13 +497,14 @@ neither can |xs++ys|: it is thus safe to share |xs++ys|.
 If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
-\new{\unsure{JP: in operational terms...}This design limits the assumptions that the callee can make about its arguments.
-  The implementation of (|++|) that returns a linear value, still cannot {\em
-    assume} that both its inputs are linear.  It may be that only one of
-  |xs|,|ys| is linear.  Here, lazy evaluation has an interesting role to play,
-  by having linear thunks {\em free their own resources}.  Thus the code for
-  (++) needn't change to handle |xs :: _ 1| vs |xs :: _ ω| input scenarios,
-  rather, it merely enters thunks via |case|-decomposing lists.}
+{In operational terms, this design limits the assumptions that the callee can
+  make about its arguments.  An implementation of (|++|) that returns a linear
+  value still cannot {\em assume} that both its inputs are linear.  It may be
+  that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
+  an important role: by having linear thunks {\em free their own
+    resources}.  Thus the code for (++) needn't change to handle |xs :: _ 1| vs
+  |xs :: _ ω| input scenarios, rather, it merely decomposes lists with |case|,
+  entering thunks in the process.}
 
 For an existing language, being able to strengthen |(++)| in a {\em
   backwards-compatible} way is a major boon.
@@ -513,7 +515,9 @@ multiplicity $1$. For example the argument of the function repeating its input
 indefinitely needs to be unrestricted:
 \begin{code}
   cycle :: List a → List a
-  cycle l = l ++ cycle l
+  cycle l = l ++ cycle la
+
+  let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
 \end{code}
 
 \subsection{Reachability invariant: no unrestricted→linear pointers}
