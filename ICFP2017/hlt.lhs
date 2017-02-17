@@ -172,7 +172,6 @@
   \postcode{41255}
   \country{Sweden}}
 \author{Mathieu Boespflug}
-\author{Arnaud Spiwack}
 \affiliation{%
   \institution{Tweag I/O}
   \city{Paris}
@@ -194,7 +193,15 @@
   \city{Cambridge}
   \country{UK}
 }
-
+\author{Arnaud Spiwack}
+\affiliation{
+  \institution{Tweag I/O}
+}
+\affiliation{
+  \institution{\textsc{Irif}, Université Paris Diderot}
+  \city{Paris}
+  \country{France}
+}
 
 
 \begin{abstract}
