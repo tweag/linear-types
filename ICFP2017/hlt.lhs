@@ -188,6 +188,13 @@
   % \postcode{???}
   \country{USA}
 }
+\author{Simon Peyton Jones}
+\affiliation{
+  \institution{Microsoft Research}
+  \city{Cambridge}
+  \country{UK}
+}
+
 
 
 \begin{abstract}
