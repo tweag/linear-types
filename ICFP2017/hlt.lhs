@@ -1309,6 +1309,7 @@ the new rules
   \caption{Dynamic semantics}
   \label{fig:dynamics}
 \end{figure}
+\todo{add `close : MB ⊸ ()` in the semantcs}
 
 While the semantics of \fref{fig:dynamics} describes quite closely
 what is implemented in the \textsc{ghc} extension prototype, it is not
