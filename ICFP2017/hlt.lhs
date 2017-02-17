@@ -1443,7 +1443,7 @@ introduces the states of the strengthened evaluation relation.
 \inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨⟩) :_1 Queue,Sigma}{Ξ ⊢ (Γ || pop x ⇓ Δ || ()) }\text{pop$_2$}
 
   \end{mathpar}
-  \caption{Typed operational semantics. (Omitting the obvious m.abs and m.app for concision)}
+  \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
   \label{fig:typed-semop}
 \end{figure}
 
