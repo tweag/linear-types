@@ -1429,19 +1429,13 @@ introduces the states of the strengthened evaluation relation.
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
-\inferrule{Ξ ⊢ (Γ,x :_1 Queue = ⟨⟩ || k x ⇓ Δ || z) :_1 Unrestricted A,Σ }{Ξ ⊢
-  (Γ || alloc k ⇓ Δ || z) :_ρ Unrestricted A,Σ}\text{alloc}
+\inferrule
+  {Ξ ⊢ (Γ,x:_1 Packet = next() || k x ⇓ Δ || z) :_1 Unrestricted A, Σ}
+  {Ξ ⊢ (Γ||get k ⇓ Δ||z) :_ρ Unrestricted A,Σ}\text{get}
 
-\inferrule{Ξ ⊢ (Γ||y ⇓ Δ||⟨…⟩) :_1 Queue, w:_ω Msg,Σ\\ Ξ ⊢ (Δ||w ⇓ Θ||m_i) :_1
-  Msg,Σ}{Ξ ⊢ (Γ || push y w⇓ Θ || ⟨m_i,…⟩) :_1 Queue,Σ}\text{push}
-
-\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…⟩) :_1 (),Σ}{Ξ ⊢ (Γ || free x ⇓ Δ || ()) :_1 (),Σ}\text{free}
-
-\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨…,m_i⟩) :_1 Queue,Σ}{Ξ ⊢ (Γ || pop x ⇓
-  Δ,w_0:_ω Msg = m_i, w:_1 Unrestricted w_0, y:_1 Queue = ⟨…⟩ || Just (w,y)) :_1 Maybe(Unrestricted Msg,Queue),Σ}\text{pop$_1$}
-
-\inferrule{Ξ ⊢ (Γ||x ⇓ Δ||⟨⟩) :_1 Queue,Sigma}{Ξ ⊢ (Γ || pop x ⇓ Δ || ()) }\text{pop$_2$}
-
+\inferrule
+  {Ξ ⊢ (Γ||x ⇓ Δ||p_i) :_1 Packet,Σ}
+  {Ξ ⊢ (Γ||send x ⇓ Δ||()) :_1 (),Σ}\text{send}
   \end{mathpar}
   \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
   \label{fig:typed-semop}
