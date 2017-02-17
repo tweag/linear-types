@@ -591,15 +591,15 @@ Finally, from a backwards-compatibility perspective, all of these
   and the programmer can even {\em disable} linear
   types entirely thus hiding any syntactic extension.
 
-\subsection{Linearity of constructors}
+\subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:linear-constructors}
 
-Data constructors add a twist to this story. The design of
-\HaskeLL{} advocates treating data-type constructors as linear by
-default (that is, all of their field arguments are linear). However,
-contrary to plain functions, linear data constructors are not more general
-than constructors with unrestricted arguments.
-
+% Data constructors add a twist to this story.
+The design of \HaskeLL{} suggests converting most data-type constructors to be
+linear by default (that is, all of their field arguments are linear). However,
+contrary to plain functions, linear data constructors are not more general than
+constructors with unrestricted arguments.
+%
 In \fref{sec:statics}, we will take the necessary step to make sure
 that linear constructors correspond to regular Haskell data types when
 restricted to the traditional (non-linear) Haskell fragment. But even so,
@@ -614,7 +614,8 @@ data type with non-linear constructors\footnote{The type constructor
 \end{code}
 The |Unrestricted|
 data type is used to indicate that a linear function returns results
-with multiplicity $ω$. Such data types are, in fact, the only way to
+with multiplicity $ω$---through which {\em no} linear value is reachable.
+Such data types are, in fact, the only way to
 signify unrestricted results. For example, the following function
 effectively turns a boolean with multiplicity 1 into a boolean with
 multiplicity $ω$:
