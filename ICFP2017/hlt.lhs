@@ -1140,9 +1140,26 @@ backwards compatibility, which is a design goal of \HaskeLL{}.
 \label{sec:dynamics}
 
 We wish to give a dynamic semantics for \calc{} which accounts for the
-explicit allocations and de-allocations as seen in the queue
-example of \fref{sec:queue-api}. To that effect we follow \citet{launchbury_natural_1993} who
-defines a semantics for lazy computation.
+packet forwarding example of \fref{sec:packet??} where packets are
+kept out of the garbage collected heap, and freed immediately upon
+send. To that effect we follow \citet{launchbury_natural_1993} who
+defines a semantics for lazy computation. We will need to account for
+the |IO| monad.
+
+\paragraph{The IO monad}
+\todo{World-passing style, linear types make that correct, a world on
+  |main| and the fact that it injects a unique |World| into the
+  program}
+\hfill\\
+\todo{$data IO_0 = …$}
+
+\paragraph{Modeling network traffic}
+\todo{Laplace demon, the world consist only of the incoming streams of
+  packets, infinite two-dimensional matrix}
+\hfill\\
+\todo{Describe the primitives}
+
+\paragraph{Operational semantics}
 
 \citeauthor{launchbury_natural_1993}'s semantics is a big-step
 semantics where variables play the role of pointers to the heap (hence
@@ -1170,29 +1187,29 @@ values, types, and primitives for queues.
 \citet{launchbury_natural_1993}'s semantics relies on a constrained
 $λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
 extend \citet{launchbury_natural_1993}'s original syntax with
-\begin{description}
-\item[Message literals] We assume a collection of message literals
-  written $m_i$. In a real-world scenario, messages would have some
-  structure, but for the purpose of this semantics we consider them as
-  simple constants. The type of messages is |Msg|.
+% \begin{description}
+% \item[Message literals] We assume a collection of message literals
+%   written $m_i$. In a real-world scenario, messages would have some
+%   structure, but for the purpose of this semantics we consider them as
+%   simple constants. The type of messages is |Msg|.
 
-\item[Queue values] Queues are represented as values of the form
-  $⟨m_{i_1},…,m_{i_n}⟩$ (as a convention, messages are pushed to the
-  left, and exit to the right). We assume that such queue values are
-  not part of the source program: they are created by primitive
-  operations. Therefore queue literals will only be found in
-  the heap (and specifically on the linear heap). The type of queues
-  is |Queue|.
+% \item[Queue values] Queues are represented as values of the form
+%   $⟨m_{i_1},…,m_{i_n}⟩$ (as a convention, messages are pushed to the
+%   left, and exit to the right). We assume that such queue values are
+%   not part of the source program: they are created by primitive
+%   operations. Therefore queue literals will only be found in
+%   the heap (and specifically on the linear heap). The type of queues
+%   is |Queue|.
 
-\item[Primitives] The primitive functions
-  $alloc : (Queue ⊸ Unrestricted A) ⊸ Unrestricted A$, $push : Queue ⊸ Queue $ and
-  $pop : Queue ⊸ Maybe(Unrestricted Msg,Queue)$ are responsible respectively
-  for allocating an empty queue, pushing a message to a queue, and popping a
-  message from a queue. The $pop$ primitive also de-allocates its
-  argument if it is an empty queue.
-\end{description}
-\todo{typing rules for alloc, push and free, and literals.}
-\todo{in the translation, add rules for the multiplicity abstraction
+% \item[Primitives] The primitive functions
+%   $alloc : (Queue ⊸ Unrestricted A) ⊸ Unrestricted A$, $push : Queue ⊸ Queue $ and
+%   $pop : Queue ⊸ Maybe(Unrestricted Msg,Queue)$ are responsible respectively
+%   for allocating an empty queue, pushing a message to a queue, and popping a
+%   message from a queue. The $pop$ primitive also de-allocates its
+%   argument if it is an empty queue.
+% \end{description}
+% \todo{typing rules for alloc, push and free, and literals.}
+\improvement{in the translation, add rules for the multiplicity abstraction
   and application}
 
 \begin{figure}
@@ -1232,6 +1249,7 @@ extend \citet{launchbury_natural_1993}'s original syntax with
   \label{fig:launchbury:syntax}
 \end{figure}
 
+\todo{update to the new rules}
 The dynamic semantics is given in \fref{fig:dynamics}. Let us review
 the new rules
 \begin{description}
@@ -1314,19 +1332,18 @@ the new rules
 While the semantics of \fref{fig:dynamics} describes quite closely
 what is implemented in the \textsc{ghc} extension prototype, it is not
 convenient for proving properties. There are two reasons to that fact:
-first the semantics is rather \improvement{weasel word}disjoint from the type system and, also,
+first the semantics follows a different structure than the type system and, also,
 there are pointers from the garbage-collected heap to the linear
-heap. Such pointers will occur, for instance, if the programmer
-needs a pair of queues: the pair will be allocated on the
-garbage-collected heap while the queues will live in the linear heap.
+heap. Such pointers occur, for instance, in the priority queue from
+\fref{sec:packet??}: the queue itself is allocated on the garbage
+collected heap while packets are kept in the linear heap.
 
-This is not a problem in and on itself: pointers to queue may be seen
+This is not a problem in and on itself: pointers to packets may be seen
 as opaque by the garbage collector which will not collect them, so
 that their lifetime is still managed explicitly by the
 programmer. However, in order to prevent use-after-free bug, we must
-be sure that by the time a queue is freed, every object in the
-garbage-collected heap which points to that queue must be dead, even
-if they are still extant in the heap.
+be sure that by the time a packet is sent (hence freed), every extant object in the
+garbage-collected heap which points to that packet must be dead.
 
 In order to prove such a property, let us introduce a stronger
 semantics with the lifetime of objects more closely tracked. The
