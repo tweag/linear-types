@@ -1084,7 +1084,8 @@ Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule:
 $$\caserule$$
 Like the application rule it is parametrized by a multiplicity
-$p$. But, while in the application rule only the argument is affected
+$p$\improvement{[aspiwack] If I remove annotation on applications this
+will have to go}. But, while in the application rule only the argument is affected
 by $p$, in the case rule, not only the scrutinee but also the variable
 bindings in the branches are affected by $p$. What it means,
 concretely, is that the multiplicity of data is \emph{inherited} by
