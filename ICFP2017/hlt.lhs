@@ -433,20 +433,18 @@ in ...
 %
 Subsequent code in the body can use |y| any number of times but must use |x|
 exactly once.  Further, a compiler for \HaskeLL{} could arrange to call a {\em
-  different implementation} of |f| at these two call sites, with the former allocating
-directly on the garbage-collected heap, and the latter creating a linear value in
-a separate heap.
+  different implementation} of |f| at these two call sites, with the former
+allocating directly on the garbage-collected heap, and the latter creating a
+linear value, potentially in a separate heap.
 
-% We think of a function call as always producing {\em one copy} of its output
-% by default.
-\unsure{JP: I'd prefer a formulation like: ``the type system assumes
-  that a function produces {\em one} copy of its output. Yet, any
-  given function call can be promoted to an unrestricted call,
-  provided that all the linear arguments are unrestricted in the
-  context.''}
-\new{In general a function call can always produce {\em one} copy of its output, but
-{\em scaling} the call site to produce an unrestricted output also requires
-unrestricted {\em input}.  For example, the following variant of the above
+% \unsure{JP: I'd prefer a formulation like:}
+{The type system assumes that a function produces {\em one} copy of its
+  output. Yet, any given function call can be promoted to an unrestricted call,
+  provided that all the linear arguments are unrestricted in the calling context.}
+%% In general, a function call can always produce {\em one} copy of its output, but
+%% {\em scaling} the call site to produce an unrestricted output also requires
+%% unrestricted {\em input}.
+For example, the following variant of the above
 example would not type check:
 \begin{code}
 let x :: _ 1 Int = 3
