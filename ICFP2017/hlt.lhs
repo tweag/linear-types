@@ -203,6 +203,10 @@
   \country{France}
 }
 
+% The default list of authors is too long for headers
+\renewcommand{\shortauthors}{J.-P. Bernardy, M. Boespflug, R. Newton,
+  S. Peyton Jones, and A. Spiwack}
+
 
 \begin{abstract}
   \todo{Expand}
@@ -253,8 +257,6 @@
 
 \maketitle
 
-% The default list of authors is too long for headers}
-% \renewcommand{\shortauthors}{G. Zhou et. al.}
 
 \section{Introduction}
 
