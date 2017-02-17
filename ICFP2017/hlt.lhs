@@ -1297,13 +1297,13 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ,x:_1 MB = 0 : k x ⇓ Δ:z}{Γ:open k ⇓ Δ:z}\text{open}
+    \inferrule{Γ, x:_1 MB = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:open k w ⇓ Δ:z}\text{open}
 
     \inferrule
-      {Γ:x ⇓ Δ:i}
-      {Γ:get x ⇓ Δ,x:_1 MB = i+1, y:_1 Packet = p_i : (y,z)}\text{get}
+      {Γ:x ⇓ Δ:⟨j,i⟩}
+      {Γ:get x ⇓ Δ,x:_1 MB = ⟨j,i+1⟩, y:_1 Packet = p^j_i : (y,z)}\text{get}
 
-    \inferrule{Γ:x ⇓ Δ:p_i}{Γ:send x ⇓ Δ:()}\text{send}
+    \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
 
   \caption{Dynamic semantics}
@@ -1435,15 +1435,15 @@ introduces the states of the strengthened evaluation relation.
 
 
 \inferrule
-  {Ξ ⊢ (Γ,x:_1 MB = 0 || k x ⇓ Δ||z) :_1 Unrestricted A, Σ}
-  {Ξ ⊢ (Γ||open k ⇓ Δ||z) :_ρ Unrestricted A, Σ}\text{open}
+  {Ξ ⊢ (Γ, x:_1 MB = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
+  {Ξ ⊢ (Γ,w:_1 : World = j||open k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{open}
 
 \inferrule
-  {Ξ ⊢ (Γ||x ⇓ Δ||i) :_1 MB,Σ}
-  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 MB = i+1, y:_1 Packet = p_i || (y,z)) :_1 (Packet,MB),Σ}\text{get}
+  {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 MB,Σ}
+  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 MB = ⟨j,i+1⟩, y:_1 Packet = p^j_i || (y,z)) :_1 (Packet,MB),Σ}\text{get}
 
 \inferrule
-  {Ξ ⊢ (Γ||x ⇓ Δ||p_i) :_1 Packet,Σ}
+  {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 Packet,Σ}
   {Ξ ⊢ (Γ||send x ⇓ Δ||()) :_1 (),Σ}\text{send}
   \end{mathpar}
   \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
