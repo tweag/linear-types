@@ -1270,7 +1270,7 @@ the new rules
 
 
     \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
-      e q ⇓_ρ Θ : z} \text{m.app}
+      e q ⇓ Θ : z} \text{m.app}
 
     \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
 
