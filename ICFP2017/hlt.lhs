@@ -1639,6 +1639,41 @@ freed: \calc{} is safe from use-after-free errors.
 \subsection{Regions}
 
 \todo{stack discipline, lifting values to subregion is painful}
+Haskell's |ST| monad~\cite{launchbury_st_1995} taught us a
+conceptually simple approach to lifetimes. By equipping |ST| with a
+region argument |s| and exposing as the only way to get out of |ST|
+the function:
+\begin{code}
+  runST :: (forall s. ST s a) -> a
+\end{code}
+the type systems ensures that releasing every resource after |runST|
+is safe.
+
+The apparent simplicity (no need to modify the language) turns into a
+lot of complications when developed in practice beyond the |ST| monad.
+\begin{itemize}
+\item The region-based approach enforces a stack discipline for
+  allocation and deallocation. In our running example, if mailboxes
+  which are not used have to be kept until mailboxes open in there
+  scope has been closed, they would be monopolising precious resources
+  (typically a socket).
+\item It is not easy to mix data for different nested regions, even
+  though value from any region could in theory (and sometimes must)
+  interact with values from their parent region. For instance, storing
+  packets from two different mailboxes in a priority queue. To solve
+  this issue \citet{kiselyov_regions_2008} introduced a systematic way
+  to lift values from a region to their subregion. But while it solves
+  the issue in theory, it is rather hard to use in practice. The
+  HaskellR project \todo{cite HaskellR} uses
+  \citeauthor{kiselyov_regions_2008} to safely synchronise values
+  shared between two different garbage collectors. The use of HaskellR
+  in an industrial setting demonstrated that the lifting to subregions
+  imposes an unreasonable burden on the programmer. By contrast, with
+  linear types, values in two regions (in our running example packets
+  from different mailboxes) have the same type hence can safely be
+  mixed: any data structure containing packet of a mailbox will be
+  forced to be consumed before the mailbox is closed.
+\end{itemize}
 
 \subsection{Uniqueness types}
 
