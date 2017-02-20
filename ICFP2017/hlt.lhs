@@ -1612,6 +1612,13 @@ blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
 
+\section{Applications}
+
+\todo{conduit vs streaming}
+\hfill\\
+\todo{priority queue kept off heap (and evaluation?)}
+
+
 \section{Perspectives}
 \todo{Speak about fusion}
 \hfill\\
