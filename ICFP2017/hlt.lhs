@@ -1636,6 +1636,10 @@ freed: \calc{} is safe from use-after-free errors.
 
 \section{Related work}
 
+\subsection{Regions}
+
+\todo{stack discipline, lifting values to subregion is painful}
+
 \subsection{Uniqueness types}
 
 A large chunk of the literature deals with linearity not by using linear types,
