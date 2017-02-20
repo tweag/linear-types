@@ -1763,9 +1763,7 @@ such compatibility is pretty much necessary to accomodate the dependently-typed 
 
 \subsection{Alms}
 \improvement{Citation pointing to \emph{e.g.}
-  \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/} (And
-  rewrite this paragraph which contains a copy-paste of the paper's
-  abstract.)}
+  \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
 Alms is an \textsc{ml}-like language based on affine types (a variant
 of linear types where values can be used \emph{at most} once). It is
 uses the kinds to separate affine from unrestricted arguments.
