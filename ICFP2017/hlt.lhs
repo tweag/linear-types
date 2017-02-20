@@ -1147,7 +1147,7 @@ send. To that effect we follow \citet{launchbury_natural_1993} who
 defines a semantics for lazy computation. We will need also to account
 for the |IO| monad, which occurs in the \textsc{api} for packets.
 
-\paragraph{The IO monad}
+\subsection{The IO monad}
 
 It turns out that, as a matter of fact, the |IO| monad is easier to
 express with linear types. Or rather safer. Indeed, the |IO| monad is
@@ -1188,7 +1188,7 @@ In general, a toplevel definition of multiplicity $1$ corresponds to
 something which must be consumed exactly once at link time, which
 generalises the concept of the |main| function slightly.
 
-\paragraph{Modelling network traffic}
+\subsection{Modelling network traffic}
 
 We are not going to give an accurate, non-deterministic, model of
 \textsc{i/o} for the purpose of this section. Instead, we are going to
@@ -1218,7 +1218,7 @@ In addition to the abstract types $World$, $Packet$ and $MB$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives: |open|, |get|, and |send| as in \fref{sec:packet??}.
 
-\paragraph{Operational semantics}
+\subsection{Operational semantics}
 
 \citeauthor{launchbury_natural_1993}'s semantics is a big-step
 semantics where variables play the role of pointers to the heap (hence
