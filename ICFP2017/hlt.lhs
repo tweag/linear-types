@@ -1188,11 +1188,35 @@ In general, a toplevel definition of multiplicity $1$ corresponds to
 something which must be consumed exactly once at link time, which
 generalises the concept of the |main| function slightly.
 
-\paragraph{Modeling network traffic}
-\todo{Laplace demon, the world consist only of the incoming streams of
-  packets, infinite two-dimensional matrix}
-\hfill\\
-\todo{Describe the primitives}
+\paragraph{Modelling network traffic}
+
+We are not going to give an accurate, non-deterministic, model of
+\textsc{i/o} for the purpose of this section. Instead, we are going to
+consider the semantics as a Laplace demon: the entirety of the events
+past and future are pre-ordained, and the semantics has access to this
+knowledge.
+
+Since the only interaction in the world which we need to model in
+order to give a semantics to the packet example of \fref{sec:packet??}
+is to obtain a packet, it will be sufficient for this section to
+consider all the packets. Since there are several mailboxes and each
+can get their own streams of packets, therefore we suppose implicitly
+given a collection of packets $(p^j_i)_{j,i∈ℕ}$. Where the packet
+$p^j_i$ represents the $i$-th package which will be received by the
+$j$-th mailbox.
+
+Instead of using the world token as a proxy for an abstract world, we
+are going to use it to keep track of how many mailboxes have been
+opened. So the (unique) world token in the stack will hold an integer
+representing the number of mailboxes which have been
+opened. Similarly, the mailbox tokens will be pairs $⟨j,i⟩$ of
+integers where $j$ is the mailbox number and $i$ the number of packets
+the mailbox has received. In effect, the world and mailbox tokens are
+pointers into the infinite matrix of potential packets.
+
+In addition to the abstract types $World$, $Packet$ and $MB$, and the
+concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
+three primitives: |open|, |get|, and |send| as in \fref{sec:packet??}.
 
 \paragraph{Operational semantics}
 
