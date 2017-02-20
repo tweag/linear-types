@@ -1633,9 +1633,37 @@ interface.
 \subsection{Lower the \textsc{gc} pressure}
 \todo{priority queue kept off heap (and evaluation?)}
 
-\subsection{Streaming libraries}
-\todo{conduit vs streaming}
+\subsection{Safe streaming}
 
+The standard for writing streaming applications (\emph{e.g.} reading
+from a file) in Haskell is to use a combinator library such as Conduit
+or Machines. Such libraries have many advantages: they are fast, they
+release resources promptly, and they are safe.
+
+However, they come at a significant cost: they are rather difficult to
+use. As a result we have observed companies walking back from this
+type of library to use the simpler, but unsafe Streaming library.
+
+Unsafety of the stream library stems from the |uncons| function (in
+|Streaming.Prelude|):
+\begin{code}
+  uncons :: Monad m => Stream (Of a) m () -> m (Maybe (a, Stream (Of a) m ()))
+\end{code}
+Note the similarity with the |IO| monad: a stream is consumed and a
+new one is returned. Just like the |World| of the |IO| monad, the
+initial stream does not make sense anymore and reading from it will
+result in incorrect behaviour. We have observed this very mistake in
+actual industrial code, and it proved quite costly to hunt
+down. \Citet[Section 2.2]{lippmeier_parallel_2016} describe a very
+similar example of unsafety in the library Repa-flow.
+
+Provided we have a sufficiently linear notion of monad (see
+\citet[Section 3.3 (Monads)]{morris_best_2016} for a discussion on the
+interaction of monads and linear typing), we can make |uncons| safe
+merely by changing the arrow to a linear one:
+\begin{code}
+  uncons :: Monad m => Stream (Of a) m () ⊸ m (Maybe (a, Stream (Of a) m ()))
+\end{code}
 
 \section{Perspectives}
 \todo{Speak about fusion}
