@@ -1189,6 +1189,7 @@ something which must be consumed exactly once at link time, which
 generalises the concept of the |main| function slightly.
 
 \subsection{Modelling network traffic}
+\label{sec:model-io}
 
 We are not going to give an accurate, non-deterministic, model of
 \textsc{i/o} for the purpose of this section. Instead, we are going to
@@ -1212,84 +1213,42 @@ representing the number of mailboxes which have been
 opened. Similarly, the mailbox tokens will be pairs $⟨j,i⟩$ of
 integers where $j$ is the mailbox number and $i$ the number of packets
 the mailbox has received. In effect, the world and mailbox tokens are
-pointers into the infinite matrix of potential packets.
+pointers into the infinite matrix of potential packets. We will define
+these constants to have the same typing rules as zero-ary constructors
+(though there is no pattern-matching on constants),
+\emph{e.g.}:
+$$
+\inferrule{ }{ωΓ ⊢ j : World}\text{world}
+$$
 
 In addition to the abstract types $World$, $Packet$ and $MB$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
-three primitives: |open|, |get|, and |send| as in \fref{sec:packet??}.
+three primitives: |open|, |get|, and |send| as in
+\fref{sec:packet??}. Packets $p^j_i$ are considered
+constant.\improvement{reference to primitives which are dropped for
+  the sake of simplicity}
 
 \subsection{Operational semantics}
 
 \citeauthor{launchbury_natural_1993}'s semantics is a big-step
 semantics where variables play the role of pointers to the heap (hence
-represent sharing, which is the cornerstone of a lazy semantics). To illustrate
-the operational benefits of linearity, we
-augment that semantics with a foreign heap and queue
-primitives, as discussed in \fref{sec:queue-api}. Any similar linear
-\textsc{api} can be supported in the same way.
+represent sharing, which is the cornerstone of a lazy semantics).
 
 To account for a foreign heap, we have a single logical heap with
 bindings of the form $x :_p A = e$ where $p∈\{1,ω\}$ a multiplicity:
 bindings with multiplicity $ω$ represent objects on the regular,
 garbage-collected, heap, while bindings with multiplicity $1$
 represent objects on a foreign heap, which we call the \emph{linear
-  heap}. The ``pure'' language of \fref{sec:statics} is extended with
-values, types, and primitives for queues.
-% Queues and messages are
-% represented as literals\footnote{As such, queues will seem to be
-%   copied on the stack, but it is just an artifact of the particular
-%   presentation: it does not have a syntax for returning ``pointers''.}
-% manipulated by the primitives. For the sake of simplicity of
-% presentation, we only show one primitive (\emph{push}) in addition to
-% allocation and de-allocation.
+  heap}. The linear heap will hold the $World$ and $MB$ tokens as well
+as packets. \citet{launchbury_natural_1993}'s semantics relies on a
+constrained $λ$-calculus syntax which we remind in
+\fref{fig:launchbury:syntax}. We assume, in addition, that the
+primitives are $η$-expanded by the translation.
 
-\citet{launchbury_natural_1993}'s semantics relies on a constrained
-$λ$-calculus syntax which we remind in \fref{fig:launchbury:syntax}, and
-extend \citet{launchbury_natural_1993}'s original syntax with
-% \begin{description}
-% \item[Message literals] We assume a collection of message literals
-%   written $m_i$. In a real-world scenario, messages would have some
-%   structure, but for the purpose of this semantics we consider them as
-%   simple constants. The type of messages is |Msg|.
-
-% \item[Queue values] Queues are represented as values of the form
-%   $⟨m_{i_1},…,m_{i_n}⟩$ (as a convention, messages are pushed to the
-%   left, and exit to the right). We assume that such queue values are
-%   not part of the source program: they are created by primitive
-%   operations. Therefore queue literals will only be found in
-%   the heap (and specifically on the linear heap). The type of queues
-%   is |Queue|.
-
-% \item[Primitives] The primitive functions
-%   $alloc : (Queue ⊸ Unrestricted A) ⊸ Unrestricted A$, $push : Queue ⊸ Queue $ and
-%   $pop : Queue ⊸ Maybe(Unrestricted Msg,Queue)$ are responsible respectively
-%   for allocating an empty queue, pushing a message to a queue, and popping a
-%   message from a queue. The $pop$ primitive also de-allocates its
-%   argument if it is an empty queue.
-% \end{description}
-% \todo{typing rules for alloc, push and free, and literals.}
 \improvement{in the translation, add rules for the multiplicity abstraction
   and application}
 
 \begin{figure}
-
-  % \figuresection{Syntax of the runtime language}
-  % \begin{align*}
-  %   r &::=\\
-  %     &||  x\\
-  %     &||  λx. r\\
-  %     &||  r x\\
-  %     &||  λπ. r\\
-  %     &||  r p\\
-  %     &||  c x₁ … x_n\\
-  %     &||  \case[q] r {c_k  x₁ … x_{n_k} → r_k}\\
-  %     &||  \flet x_1 =_{q₁} r₁ … x_n =_{q_n} r_n \fin r\\
-  %     &||  m_i\\
-  %     &||  alloc k\\
-  %     &||  push y z\\
-  %     &||  free x
-  % \end{align*}
-
   \figuresection{Translation of typed terms}
   \begin{align*}
     (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
@@ -1308,37 +1267,31 @@ extend \citet{launchbury_natural_1993}'s original syntax with
   \label{fig:launchbury:syntax}
 \end{figure}
 
-\todo{update to the new rules}
+\unsure{Should we use handles with a separate heap for Packets, with
+  handle in the linear heap? It makes the semantics significantly more
+  verbose, but at least you don't have packets jumping to and from the
+  linear heap. — [aspiwack] I feel that adding heap and handles would
+  make the proofs much more tedious}
 The dynamic semantics is given in \fref{fig:dynamics}. Let us review
 the new rules
 \begin{description}
 \item[Linear variable] In the linear variable rule, the binding in the
-  linear heap is removed. While this can be exploited to signify
-  explicit de-allocation of objects on the linear heap. However, the
-  linear variable rule is best seen as a technical device to represent
-  the strictness of the queue primitives: the queue literal will then
-  be passed to a primitive, either \emph{free} to actually free the
-  queue, or \emph{push} to augment the queue with a message.
-\item[Alloc] The alloc rule creates a new (empty) queue and pass it to
-  its continuation. It is not the only rule which allocate in the
-  sense of using a |malloc|-like primitive: pushing a message to a
-  queue may require allocation to accommodate for the extra
-  element. However its role is to allocate a root that will own a
-  queue.
-\item[Push] The push rule adds a message to a queue. Notice that the
-  message itself is incorporated into the queue literal: there is no
-  mention of a variable pointing to the message. This is because the
-  message is copied from the garbage-collected heap to the linear
-  heap.
-\item[Pop] The $pop$ primitive has two rules: when the queue contains
-  messages, the right-most message is returned (as well as a new
-  handle to the queue), when the queue is empty, it is
-  deallocated. The non-empty case is a little wordy because it must
-  ``allocate'' new variables on the heap in order to create a
-  $Just(w,y)$ value (to comply to the syntax, $Just$ can only be
-  applied to variables).\improvement{[aspiwack] I've cheated a bit,
-    here, as I've inlined the pair constructor inside $Just$ which is
-    not strictly speaking permitted.}
+  linear heap is removed. In conjunction with the rule for $send$, it
+  represents de-allocation of packets.
+\item[Open] A new $MB$ is created with a fresh name ($j$), since it
+  has received no message yet, the mailbox token is $⟨j,0⟩$, and the
+  world token is bumped. The body $k$ is an $IO$ action, so it takes
+  the bumped world as an argument and returns a new one, which is then
+  returned as the final world after the entire $open$ action.
+\item[Get] The $get$ primitive receives the next packet as is
+  determined by the $(p^j_i)_{j,i∈ℕ}$ matrix, and the number of
+  packets received by the $MB$ is bumped.
+\item[Send] The $send$ primitive does not actually change the world,
+  since all the messages that will ever been received are preordained,
+  by assumption. So, from the point of view of this semantics is
+  concerned, $send$ simply frees its argument: the packet is stored in
+  a linear variable, so it's removed from the heap with the linear
+  variable rule, then the send rule drops it.
 \end{description}
 
 \begin{figure}
@@ -1563,13 +1516,6 @@ preserves well-typing of states.
 \end{lemma}
 \begin{proof}
   By induction on the typed-reduction.
-
-  \todo{There used to be the case of the case-unrestricted in more details,
-    probably do alloc instead}
-  % The important case is the case-unrestricted rule. By induction we have that
-  % $Ξ,y:_ω⊢(Δ||MkUnre x) :_1 Unrestricted A,…$. Unfolding the typing rule for
-  % $Unrestricted$, we have that $Δ=ωΔ'$ for some $Δ'$. Which is sufficient to
-  % prove that $Ξ⊢(Δ||u[x/y]) :_ω C , Σ$.
 \end{proof}
 
 Because of this property we can freely consider the restriction of the
@@ -1593,7 +1539,6 @@ semantics.
 
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
-\improvement{Explain what $Γ'$ ranges over.}
 \begin{definition}[Type assignment]
   A well-typed state is said to be a type assignment for an ordinary
   state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
@@ -1630,15 +1575,14 @@ safety from resource leaks (of course, resource leaks can always be
 programmed in, but the language itself does not leak resources).
 
 \begin{corollary}[Eventual de-allocation of linear values]
-  Let $⊢ t : ()$ be a closed term, where $\data () = ()$ is the data
-  declaration with a single constructor. If $:t ⇓ Δ:()$, then $Δ$ only
-  contains $ω$-bindings.
+  Let $w:_1 World ⊢ t : World$ be a well-typed term. If
+  $w :_1 World = 0 :t ⇓ Δ: j$, then $Δ$ only contains $ω$-bindings.
 \end{corollary}
 \begin{proof}
-  By \fref{lem:actual_type_safety},
-  we have $⊢ (Δ||() :_ρ ()), ⋅ $. Then the typing rules of $\flet$ and
-  $()$ conclude: in order for $()$ to be well typed, the environment
-  introduced by $\flet Δ$ must be of the form $ωΔ'$.
+  By \fref{lem:actual_type_safety}, we have $⊢ (Δ||j :_1 World), ⋅
+  $. Then the typing rules of $\flet$ and $j$ (see
+  \fref{sec:model-io}) conclude: in order for $j$ to be well typed,
+  the environment introduced by $\flet Δ$ must be of the form $ωΔ'$.
 \end{proof}
 
 For the absence of use-after-free errors, let us invoke a liveness
