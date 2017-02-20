@@ -1613,10 +1613,28 @@ linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
 
 \section{Applications}
+\label{sec:applications}
 
-\todo{conduit vs streaming}
-\hfill\\
+There is a wealth of literature regarding applying linear typing to
+many practical problems, for instance: explicit memory
+management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
+array
+computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
+protocol specification~\cite{honda_session_1993}, privacy
+guarantees\cite{gaboardi_linear_2013}, graphical
+interfaces\cite{krishnaswami_gui_2011}.
+
+This section develops a few examples which are directly usable in
+\HaskeLL{}, that is simply by changing Haskell's type system, and
+using the dynamic semantics of \fref{sec:dynamics} to justify the
+memory safety of a foreign heap implemented using a foreign function
+interface.
+
+\subsection{Lower the \textsc{gc} pressure}
 \todo{priority queue kept off heap (and evaluation?)}
+
+\subsection{Streaming libraries}
+\todo{conduit vs streaming}
 
 
 \section{Perspectives}
@@ -1706,13 +1724,7 @@ logic rather than uniqueness types: 1. functional languages have more use
 for fusion than in-place update (\textsc{ghc} has a cardinality
 analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
 wealth of literature detailing the applications of linear
-logic — explicit memory
-management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
-array
-computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
-protocol specification~\cite{honda_session_1993}, privacy
-guarantees\cite{gaboardi_linear_2013}, graphical
-interfaces\cite{krishnaswami_gui_2011}; 4. and desicively, linear type systems are
+logic — see \ref{sec:applications}; 4. and desicively, linear type systems are
 conceptually simpler than uniqueness type systems, which gave a
 clearer path to implementation in \textsc{ghc}.
 
