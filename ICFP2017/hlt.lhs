@@ -252,7 +252,8 @@
 \keywords{Haskell, laziness, linear logic, Linear types, systems
   programming}
 
-% \thanks{This work is supported by FIXME (for de-anonymised version only) }
+\thanks{This work has received funding from the European Commission
+  through the SAGE project (grant agreement no. 671500).}
 
 
 \maketitle
