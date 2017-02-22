@@ -475,8 +475,8 @@ Indeed, even though the type system assumes that a function produces
 to an unrestricted call, provided that all the function's (linear)
 arguments are unrestricted in the calling context.  In general, any
 sub-expression is type-checked as if it were constructing {\em one}
-value, but it can be promoted to $ω$ if all its free variables are
-$ω$-bound.
+value, but it can be promoted to $ω$ {\bf if all its free variables are
+$ω$-bound}.
 %
  Further, a compiler for \HaskeLL{} could arrange to call a {\em
   different implementation} of |f| at these two call sites, with the former
@@ -581,10 +581,10 @@ indefinitely needs to be unrestricted:
 \label{sec:invariant}
 A consequence of the above design is that unrestricted values never
 contain (point to) linear values. (But the converse is possible.)
-One can make sense operationally of this rule by appealing to
+One can make sense of this rule operationally  by appealing to
 garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
-for. Conversely a pointer from a resource to the heap can simply act
+for. Conversely, a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
 (In a practical implementation which {\em separates} the linear/GC heaps,
   this means that {\em all} pointers to linear values would reside on the stack
@@ -632,7 +632,7 @@ subscripts and binders for multiplicity polymorphism can be {\em
   ignored}.  Indeed, in a context where client code does not use
 linearity, all inputs will have multiplicity $ω$, and transitively all
 expressions can be promoted to $ω$.  Thus in such a context the
-compiler can even hide linearity extension to the programmer.
+compiler can even hide linearity extensions from the programmer.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:linear-constructors}
@@ -677,38 +677,103 @@ its argument.
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
 
-Imagine the following scenario. You are writing some kind of routing
-application: you receive packets on some mailbox, and you have to send
-them away in a way that maximises efficiency. In order to do that, you
-do not want to copy the packets out of the mailboxes when they are
-received: instead you simply associate a priority to packets and use a
-priority queue to reorder messages. The packets are then sent to their
-final destination in order of priority (in a realistic situation the
-priorities could be deadlines for sending packets and sends could be
-batched by waiting until the deadline to actually send packets).
+Imagine the following scenario. You are writing a server application that
+buffers data in memory before sending it out to receivers.
+%
+%% some kind of routing application: you receive packets on some mailbox, and you
+%% have to send them away in a way that maximises efficiency.
+%
+For simplicity, we consider a software-routing application that maintains
+messages in a priority queue before dequeuing them and sending them on to their
+destination.  But in general, this application is representative of a general
+class of low-latency servers of in-memory data---such as memcached.
 
-To add an additional twist to this story, mailboxes are fairly small,
-and if the mailbox is full, then further packets are dropped (causing
-significant loss of time and bandwidth as packets must be
-re-sent). Therefore, packets must be treated as scarce resources and
-freed as soon as they have been sent; in particular, freeing the space
-for packets cannot be delegated to the garbage collector lest the
-precious mailbox space be occupied by dead packets.
+In these applications, we need to manage both (1) message contents, and (2) a
+data structure such as a priority queue that stores our data in memory.  First,
+linearity can help with copy-free hand-off of messages between network
+interfaces and in-memory data structures.  Second, linearity can also help with
+keeping large data structures off of the GC heap.
+
+%% In order to do that, you do not want to copy the packets out of the mailboxes
+%% when they are received: instead you simply associate a priority to packets and
+%% use a priority queue to reorder messages. The packets are then sent to their
+%% final destination in order of priority (in a realistic situation the priorities
+%% could be deadlines for sending packets and sends could be batched by waiting
+%% until the deadline to actually send packets).
+
+For simplicity, we assume that creating a new ``mailbox'' (priority queue)
+automatically connects it to a network interface such that it will receive
+messages directed to the current network node.  The application receives a
+single, {\em linear} handle on the mailbox and must {\em return} that handle 
+to deallocate the data structure:
 
 \begin{code}
-  open    :: (MB ⊸ IO a) ⊸ IO a
-  close   :: MB ⊸ ()
-  get     :: MB ⊸ (Packet,MB)
-  send    :: Packet ⊸ ()
+  newMailBox :: (MB ⊸ IO a) ⊸ IO a
+  close      :: MB ⊸ ()
+\end{code}
 
+Here |close| could be in the IO monad but it is not necessary --- linearity will
+sequence it within the computation.  This is because |close|'s result must be
+consumed with |case|, i.e. ``|case close mb of () -> e1|''.  Receiving and
+sending packets can likewise live outside of IO, and are ultimately part of the
+IO action created with |newMailBox|:
+\rn{Audit this last sentence for me please.  Delete this comment when audited.}
+
+\begin{code}
+  get     :: MB ⊸ (Packet,MB)
+  send    :: Packet ⊸ ()  
+\end{code}
+
+|get| returns the highest priority message, whereas |send| forwards it on the
+network, if desired.
+%
+We elide the insert operation used to populate the mailbox when network events
+occur.  Rather, from our perspective, the mailbox fills up asynchronously, but
+because |MB| is linear, it can be stored outside of the GC heap and not traced.
+
+Further, when calling |get| and |send|, |Packet| need never be copied;
+it can be shuffled between the network interface card, to the mailbox, and then
+to the linear calling context of |send| all by reference.  In fact, it can be
+disassembled into a bytestring without copying:
+
+\begin{code}
   read    :: Packet ⊸ ByteString
   unread  :: Bytestring ⊸ Packet
 \end{code}
-\todo{explain \textsc{api}}
-\hfill\\
-\todo{linear queue implementation}
-\hfill\\
-\todo{elaborate}
+
+Instead, |read| can use the same storage to back the |ByteString|.  If the
+packet should be dropped, the bytestring can in turn be destroyed.  If, after
+inspection, it should be passed on, then it can be reassembled into a packet
+with |unread|.
+
+\note{TODO: advantages over finalizers}
+\if{0}
+{\bf Advantages over finalizers:}
+One may ask what the above API offers beyond the more traditional approach of
+using FFI pointers directly (|Ptr| in Haskell) to refer to packets
+and mailboxes, together with {\em finalizers} to (|ForeignPtr| in Haskell).
+
+This approach poses both safety and performance problems.  We
+would only want to
+\fi{}
+
+
+%% \todo{explain \textsc{api}}
+%% \hfill\\
+%% \todo{linear queue implementation}
+%% \hfill\\
+%% \todo{elaborate}
+
+
+%% To add an additional twist to this story, mailboxes are fairly small,
+%% and if the mailbox is full, then further packets are dropped (causing
+%% significant loss of time and bandwidth as packets must be
+%% re-sent). Therefore, packets must be treated as scarce resources and
+%% freed as soon as they have been sent; in particular, freeing the space
+%% for packets cannot be delegated to the garbage collector lest the
+%% precious mailbox space be occupied by dead packets.
+
+
 
 \section{\calc{} statics}
 \label{sec:statics}
