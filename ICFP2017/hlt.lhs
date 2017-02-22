@@ -1694,6 +1694,12 @@ merely by changing the arrow to a linear one:
 
 \section{Perspectives}
 
+Before we close this article, let us brush over a handful of
+interesting point which have not been addressed in the article so
+far. This section goes into less details than the rest of the article
+in order to explore the consequences of the design choices behind
+\HaskeLL{}.
+
 \subsection{Negative types}
 
 The reader familiar with linear logic may have noticed the absence of
