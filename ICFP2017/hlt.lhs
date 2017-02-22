@@ -1775,8 +1775,33 @@ admits a similar encoding:
     z}\text{case-unrestricted}}
 
 \subsection{Fusion}
-\todo{Speak about fusion}
+\label{sec:fusion}
 
+One of the benefits we hope to derive from extending Haskell with
+linear type is that linear types serve a programmer-facing interface to
+fusion and inlining. The idea behind using linear types as such is
+that since a linear function promises to use its argument exactly once,
+linear functions are always safe to inline.
+
+An exploration of this idea in the context of data-parallel
+programming can be found in \citet{bernardy_composable_2015}. But
+closer to our immediate concerns is \textsc{ghc}'s cardinality
+analysis~\cite{sergey_cardinality_2014}. \textsc{Ghc} deploys this
+cardinality analysis specifically because inlining is not always a
+correct operation with respect to the cost semantics, so such
+cardinality knowledge is necessary to be able to perform inlining
+optimisations.
+
+But, if you squint just right, you will notice that the abstract
+domain presented by \citet{sergey_cardinality_2014} is essentially the
+same as our multiplicity annotations. They have an extra $0$
+cardinality, but we would have needed a $0$ multiplicity anyway to
+accommodate dependent types~\cite{mcbride_rig_2016}.
+
+It will require significantly more implementation effort than just
+evolving the type system, so we do not plan to make such an extension
+immediately. But integrating the type system and the cardinality
+analysis is a next step which we are intent on achieving.
 
 \subsection{Generalising multiplicities}
 \todo{More multiplicities, reference to literature}
@@ -1845,8 +1870,8 @@ former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
 of linear types in relation with fusion can be found
-in~\citet{bernardy_composable_2015}.\todo{call-back to fusion in the
-  perspectives}.
+in~\citet{bernardy_composable_2015}, see also the discussion in
+\fref{sec:fusion}.
 
 Several points guided our choice of designing \HaskeLL{} around linear
 logic rather than uniqueness types: 1. functional languages have more use
@@ -1890,7 +1915,7 @@ which can't be substituted for polymorphic type arguments. It is not
 clear how to support linearity in \textsc{ghc} by extending its kind system.
 In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
 including its compatibility with dependent types, and
-such compatibility is pretty much necessary to accomodate the dependently-typed kinds of \textsc{ghc}.
+such compatibility is pretty much necessary to accommodate the dependently-typed kinds of \textsc{ghc}.
 
 \subsection{Alms}
 \improvement{Citation pointing to \emph{e.g.}
