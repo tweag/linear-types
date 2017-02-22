@@ -737,7 +737,7 @@ There are a few things going on in this API:
   be used exactly once.  The return type of the argument function is
   |Unrestricted a|, ensuring that no linear value can be returned: in
   particular the |Queue| must be consumed. (Recall the reachability
-  invariant: |Unrestricted| cannot contain a linear object.)
+  invariant: |Unrestricted| cannot contain a linear value.)
 
 \item Messages of type |Msg| are unrestricted Haskell values managed
   by the garbage collector. They are \emph{copied} into the queue by
@@ -747,7 +747,7 @@ There are a few things going on in this API:
   garbage-collected heap. The hypothesis is that while there is a very
   large amount of message inside the queue, there will be, at any
   given time, very few messages managed by the garbage
-  collector. Because these objects will typically be short-lived, they
+  collector. Because these will typically be short-lived, they
   will not normally survive a ``generation 0'' collection, hence
   contribute next to nothing to the \textsc{gc} pressure.
 
@@ -763,47 +763,48 @@ There are a few things going on in this API:
   calls, together with small Haskell wrappers to handle the
   serialisation/copy of messages}
 
+
+
 \section{\calc{} statics}
 \label{sec:statics}
 In this section we turn to the calculus at the core of \HaskeLL{}, namely
 \calc{}, and give a step by step account of its syntax and typing
 rules.
 
-In \calc{}, objects
-\rn{Why ``objects''?  Why not ``values''?}
-are classified into two categories: \emph{linear} objects,
+In \calc{}, values
+are classified into two categories: \emph{linear},
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted} objects which can be used an arbitrary number of
+\emph{unrestricted}, which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear object is to see it as an object
+The best way to think of a linear value is to see it as an object
 that need not be controlled by the garbage collector: \emph{e.g.}
 because they are scarce resources, because they are controlled by
-foreign code, or because this object will not actually exist at run
+foreign code, or because it will not actually exist at run
 time because it will be fused away. 
 \rn{Currently this is the 1st mention of fusing}
 The word \emph{need} matters here:
-because of polymorphism, it is possible for any given linear object to
+because of polymorphism, it is possible for any given linear value to
 actually be controlled by the garbage collector, however, for most
 purposes, it must be treated as if it it were not.
 
 This framing drives the details of \calc{}. In particular unrestricted
-objects cannot contain linear objects,
+values cannot contain linear values,
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
-perfectly fine for linear objects to refer to unrestricted objects.
+perfectly fine for linear values to refer to unrestricted ones.
 \rn{Well, ``perfectly fine'' means ``expensive pinning'' in this case, to amke
   them GC roots.}
 So any
-object containing a linear object must also be linear. Crucially this property
+value containing a linear value must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
 thunks): \emph{e.g.} a partial application of a function to a linear
-object is, itself, a linear object (which means that such
+value is, itself, a linear value (which means that such
 a partial application must be applied exactly once).
 More generally, the application of a function
-to a linear object is linear, since it is, in general, a lazy
-thunk pointing to that linear object. (In fact, even in a strict
+to a linear value is linear, since it is, in general, a lazy
+thunk pointing to that linear value. (In fact, even in a strict
 language, the result may contain the linear argument and so must be
 linear.)
 
@@ -970,8 +971,8 @@ $1$ or $ω$).
 
 For most purposes, $c_k$ behaves like a constant with the type
 $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-\fref{fig:typing} make clear, this means in particular that from a an
-object $d$ of type $D$ with multiplicity $ω$, pattern matching
+\fref{fig:typing} make clear, this means in particular that from a
+value $d$ of type $D$ with multiplicity $ω$, pattern matching
 extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
 the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
 with multiplicity $ω$.
@@ -1626,9 +1627,9 @@ over a completely formal argument for progress.
 
 In conjunction with Corollary~\ref{cor:linear-variable},
 \fref{lem:liveness} shows that well-typed programs do not get
-blocked, in particular that garbage-collected objects which point to the
+blocked, in particular that garbage-collected objects \Red{which point to the
 linear objects are not dereferenced after the linear object has been
-freed: \calc{} is safe from use-after-free errors.
+freed:} \calc{} is safe from use-after-free errors.
 
 \section{Applications}
 \label{sec:applications}
