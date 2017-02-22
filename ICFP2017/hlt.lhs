@@ -15,6 +15,7 @@
 %format ω = "\omega"
 %format π = "\pi"
 %format ρ = "\rho"
+%format ⅋ = "\parr"
 %subst keyword a = "\mathsf{" a "}"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \usepackage{natbib}
@@ -28,6 +29,7 @@
 \usepackage{amsthm}
 \usepackage{textcomp}
 \usepackage{amssymb}
+\usepackage{cmll}
 \usepackage{capt-of}
 \usepackage{hyperref}
 \hypersetup{
@@ -898,6 +900,7 @@ The equivalence relation is lifted to contexts in the obvious way. In
 the typing rules contexts can always be substituted for other
 equivalent contexts.
 \subsection{Typing}
+\label{sec:typing}
 
 The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). Its meaning however, may be
@@ -1700,9 +1703,68 @@ merely by changing the arrow to a linear one:
 
 \section{Perspectives}
 
+Before we close this article, let us brush over a handful of
+interesting point which have not been addressed in the article so
+far. This section goes into less details than the rest of the article
+in order to explore the consequences of the design choices behind
+\HaskeLL{}.
+
 \subsection{Negative types}
-\todo{Discussion on negative types and how they are encoded (there are
-  not provided natively)}
+
+The reader familiar with linear logic may have noticed the absence of
+the negative conjunction (usually written $A\&B$ in linear
+logic). Negative conjunction represent the kind of choice one has at a
+vending machine: consuming one dime from your wallet, you can choose
+to get either a diet soda or a chocolate snack.
+
+The reason for this absence is twofold: first negative conjunction
+makes more sense in presence of effects which haven't been much
+discussed, second it can easily be obtained by a simple and natural
+encoding. Namely
+\begin{code}
+  data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
+  type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
+\end{code}
+where |(⊕)| is the linear equivalent to Haskell's |Either| (in
+\HaskeLL{} |(⊕)| would be \emph{defined} as |Either| since data types
+are linear by default), and |⊥| is the type of effects. Which leaves
+us with the question: what is the type of effects? The answer is:
+pretty much anything you may want. In general, we want |⊥| to form a
+monoid which plays the role of sequencing effects. Havinb |⊥| being a
+monoid corresponds to so-called mixed rules in the linear logic
+literature (see \emph{e.g.} \citet{bernardy_composable_2015}).
+
+Naturalness of the encoding appears when exploring a simple function
+which builds a negative pair. Here the function leaving the
+context with the choice of ordering two values in either possible
+order:
+\begin{code}
+  pairUp :: a ⊸ b ⊸ (a,b)&(b,a)
+  pairUp a b (Left k)   = k (a,b)
+  pairUp a b (Right k)  = k (b,a)
+\end{code}
+So negative pairs are built by pattern matching on the context. Which
+is very close to the way negative pairs are constructed in sequent
+calculus presentations of linear logic (\emph{e.g.}
+\citet{curien_focus_2010})
+
+In the rare case where a pure version of negative pairs is needed, it
+can be obtained thanks to higher-rank polymorphism:
+\begin{code}
+  type A&B = forall k. ((A⊸k)⊕(B⊸k))⊸k
+\end{code}
+This type correspond to some kind of lazy pairs as the data is
+computed on demand, but it is not lazy in the sense that the result is
+memoised: in \HaskeLL{} lazy pairs in that latter sense are of type
+|Unrestricted (A⊗B)| (see discussion of the case rule in
+\fref{sec:typing}).
+
+Much of the same can be said about negative disjunction, which could
+better be called symmetrised function type. Negative disjunction
+admits a similar encoding:
+\begin{code}
+  type A⅋B = ((A⊸⊥)⊗(B⊸⊥))⊸⊥
+\end{code}
 
 \subsection{Linear values in a pure context}
 \todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
@@ -1791,7 +1853,7 @@ logic rather than uniqueness types: 1. functional languages have more use
 for fusion than in-place update (\textsc{ghc} has a cardinality
 analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
 wealth of literature detailing the applications of linear
-logic — see \ref{sec:applications}; 4. and desicively, linear type systems are
+logic — see \fref{sec:applications}; 4. and desicively, linear type systems are
 conceptually simpler than uniqueness type systems, which gave a
 clearer path to implementation in \textsc{ghc}.
 
