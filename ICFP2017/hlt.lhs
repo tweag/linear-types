@@ -220,7 +220,7 @@
   types can receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
 
-  We formalize the proposed type-system in a core calculus; we provide a dynamic
+  We formalise the proposed type-system in a core calculus; we provide a dynamic
   semantics as well as a proof of type safety.  Further, we show that every
   linear value is eventually deallocated, and not referenced thereafter.  We
   explore the applicability of linear typing in Haskell with a case study of a
@@ -350,7 +350,7 @@ unless the appropriate language extension is enabled.
 We make the following contributions:
 
 \begin{itemize}
-\item We formalize \HaskeLL{} as \calc{}, a linearly-typed extension of the
+\item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
   $λ$-calculus with data types. We provide its type system (\fref{sec:statics}),
   highlighting how it is compatible with existing Haskell features,
   including some popular extensions. \Red{(The kind system, constraints, GADTs, and even dependent types)}.
@@ -749,18 +749,18 @@ inspection, it should be passed on, then it can be reassembled into a packet
 with |unread|.
 
 
-{\bf Advantages over finalizers:} One may ask what the above API offers beyond
+{\bf Advantages over finalisers:} One may ask what the above API offers beyond
 the more traditional approach of using FFI pointers directly to refer to packets
-and mailboxes, together with {\em finalizers} to free those foreign pointers
+and mailboxes, together with {\em finalisers} to free those foreign pointers
 once the GC determines they are unreachable (|ForeignPtr| in Haskell).
 Unfortunately, his approach poses both safety and performance problems.
 %
-A finalizer creates a {\em proxy object} on the GC heap that points to the foreign
+A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
 object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
 will {\em not} be promptly freed before the end of |withMailBox|, rather it will
 eventually, nondeterministically be freed by garbage collection.
 %
-If we use finalizers for |Packet|s after they are dequeued from the mailbox,
+If we use finalisers for |Packet|s after they are dequeued from the mailbox,
 then we lack the ability to transfer ownership of the |Packet|s storage space
 upon |send|.  That is, we have no way to know at the point of |send| whether it
 is truly the last reference to the pointer, which isn't determined until a
@@ -1925,7 +1925,7 @@ duplication is explicit.
 
 In a sense, Rust quite beautifully solves the problem of being mindful
 about memory, resources, and latency. But this comes at a heavy price:
-Rust, as a programming language, is specifically optimized for writing
+Rust, as a programming language, is specifically optimised for writing
 programs that are structured using the RAII
 pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
 (where resource lifetimes are tied directly or indirectly to stack
