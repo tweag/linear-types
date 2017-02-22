@@ -719,7 +719,6 @@ sequence it within the computation.  This is because |close|'s result must be
 consumed with |case|, i.e. ``|case close mb of () -> e1|''.  Receiving and
 sending packets can likewise live outside of IO, and are ultimately part of the
 IO action created with |newMailBox|:
-\rn{Audit this last sentence for me please.  Delete this comment when audited.}
 
 \begin{code}
   get     :: MB ⊸ (Packet,MB)
