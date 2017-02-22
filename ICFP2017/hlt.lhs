@@ -387,7 +387,7 @@ by means of a number of examples.
 Firstly, along with the usual arrow type for intuitionistic functions,
 we propose an additional arrow type for linear arrows, written
 $A ⊸ B$. In the body of a linear function, the type system tracks that
-there is exactly one copy of the parameter available.
+there is exactly one copy of the parameter to consume.
 
 \begin{code}
 f :: A ⊸ B
@@ -398,42 +398,39 @@ We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly,
 that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
 \emph{any finite number} of times, including zero). We also call
 functions linear if they have type $A ⊸ B$ and unrestricted if they
-ahave $A → B$.
+have type $A → B$.
 
 To clarify the meaning of multiplicities, here are the rules for what is allowed
 at call sites:
 \begin{enumerate}
 
-\item An unrestricted (multiplicity $ω$) value 
+\item An unrestricted (multiplicity $ω$) value
   \begin{enumerate}
   \item {\bf can} be passed to a linear function.
-  \item {\bf can} be passed to a unrestricted function.  
-  \item {\bf can} be returned by a linear function, {\bf if and only if} the
-      argument is also unrestricted (see \fref{sec:calling-contexts}).
-  \item {\bf can} be returned by a unrestricted function.    
+  \item {\bf can} be passed to a unrestricted function.
+  \item {\bf can} be returned by a linear function.
+  \item {\bf can} be returned by a unrestricted function.
   \end{enumerate}  
 
 \item A linear (multiplicity $1$) value
   \begin{enumerate}
   \item  {\bf can} be passed to a linear function.
   \item  {\bf cannot} be passed to a unrestricted function.
-  \item  {\bf can} be returned by a linear function (and
-     the type-system guarantees that it can be promoted to a unrestricted
-     value when the function is called in an unrestricted context).
-  \item \new{{\bf can} be returned by a unrestricted function.  In fact, {\em every}
-    unrestricted result can be received by the caller as linear.}
+  \item  {\bf can} be returned by a linear function.
+  \item  {\bf can} be returned by a unrestricted function.
   \end{enumerate}
 
 % RRN: This looks like a duplicate:
 % \item A linear value {\bf can} be returned by a linear function.
 
 \end{enumerate}
-
-Indeed, when we say that a function is linear, we refer to its domain,
-not its co-domain.
-%% Hence, linearity of a function does not influence
-%% what it can return, only what it can take as arguments.
 %
+We stress that all functions can return linear values.  Indeed,
+conceptually, functions return always \emph{one} result.  Further,
+when we say that a function is linear, we refer to its domain, not its
+co-domain: linearity of a function does not influence what it can
+return.
+
 The same examples can be expressed in code: the function |g| below
 admits the following implementations, but not the last one:
 \begin{code}
