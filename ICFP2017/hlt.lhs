@@ -708,7 +708,7 @@ single, {\em linear} handle on the mailbox and must {\em return} that handle
 to deallocate the data structure:
 
 \begin{code}
-  newMailBox :: (MB ⊸ IO a) ⊸ IO a
+  withMailBox :: (MB ⊸ IO a) ⊸ IO a
   close      :: MB ⊸ ()
 \end{code}
 
@@ -746,16 +746,25 @@ packet should be dropped, the bytestring can in turn be destroyed.  If, after
 inspection, it should be passed on, then it can be reassembled into a packet
 with |unread|.
 
-\note{TODO: advantages over finalizers}
-\if{0}
-{\bf Advantages over finalizers:}
-One may ask what the above API offers beyond the more traditional approach of
-using FFI pointers directly (|Ptr| in Haskell) to refer to packets
-and mailboxes, together with {\em finalizers} to (|ForeignPtr| in Haskell).
 
-This approach poses both safety and performance problems.  We
-would only want to
-\fi{}
+{\bf Advantages over finalizers:} One may ask what the above API offers beyond
+the more traditional approach of using FFI pointers directly to refer to packets
+and mailboxes, together with {\em finalizers} to free those foreign pointers
+once the GC determines they are unreachable (|ForeignPtr| in Haskell).
+Unfortunately, his approach poses both safety and performance problems.
+%
+A finalizer creates a {\em proxy object} on the GC heap that points to the foreign
+object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
+will {\em not} be promptly freed before the end of |withMailBox|, rather it will
+eventually, nondeterministically be freed by garbage collection.
+%
+If we use finalizers for |Packet|s after they are dequeued from the mailbox,
+then we lack the ability to transfer ownership of the |Packet|s storage space
+upon |send|.  That is, we have no way to know at the point of |send| whether it
+is truly the last reference to the pointer, which isn't determined until a
+global GC.  Finally, if we want to manage a large number of linear objects,
+storing the proxy objects would cause the GC heap to grow proportionally to the
+number of linear objects!
 
 
 %% \todo{explain \textsc{api}}
