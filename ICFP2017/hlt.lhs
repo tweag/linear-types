@@ -1,7 +1,7 @@
 % -*- latex -*-
 
 % (1) Horrible, terrible, 1 column format.  111 characters in a line; bad on the eyes.
-\documentclass[acmlarge,dvipsnames,natbib]{acmart}
+\documentclass[acmlarge,dvipsnames,natbib,anonymous,review]{acmart}
 
 % (2) More or less the good old lovable format.  For use while writing/printing.
 % \documentclass[sigplan,dvipsnames,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
@@ -209,11 +209,26 @@
 
 
 \begin{abstract}
-  \todo{Expand}
-  This article introduces and describes a
-  linearly-typed lazy programming language which is designed to be
-  integrate well with an existing programming language, in particular
-  in GHC/Haskell.
+  Linear and affine type systems have a long and storied history, but not a
+  clear path forward to integrate with existing languages such as Haskell.
+  In this paper, we introduce a linear type system designed to enable
+  backwards-compatibility and code reuse across linear and non-linear clients of
+  a library.  Rather than bifurcate data types into linear and non-linear
+  counterparts, we instead attach linearity to {\em binders}.  Linear function
+  types can receive inputs from linearly-bound values, but can also operate over
+  unrestricted, regular values.
+
+  We formalize the proposed type-system in a core calculus; we provide a dynamic
+  semantics as well as a proof of type safety.  Further, we show that every
+  linear value is eventually deallocated, and not referenced thereafter.  We
+  explore the applicability of linear typing in Haskell with a case study of a
+  large, in-memory data structures that must serve responses with low latency.
+  
+  %% \todo{Expand}
+  %% This article introduces and describes a
+  %% linearly-typed lazy programming language which is designed to be
+  %% integrate well with an existing programming language, in particular
+  %% in GHC/Haskell.
 \end{abstract}
 
 
