@@ -278,19 +278,20 @@
 
 Can we use Haskell to implement a low-latency server that caches a large dataset
 in memory?  Today, the answer is a clear
-``no''\footnote{\Red{{URL-of-reddit-discussion}}}.  The GC pauses are
+``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by GC are
 unacceptable.
 % (and would remain so even with incremental GC).
 %
-This application requires minimizing GC pauses, not just by incrementalizing GC,
-but by managing the largest heap data
+Indeed GC pauses are in general proportional to the size of the heap even if the GC is incremental.,
+Consequently, such an application requires
+managing the largest heap data
 structures outside of the regular heap.  Traditionally, programmers resort to
-pushing the data off-heap manually, accessing it through FFI calls.  But this
+pushing the data off-heap manually, accessing it through FFI calls.  Unfortunately this
 common technique poses safety risks: either not enforcing prompt deallocation,
 or allowing use-after-free errors.
 %% to {\em clients} of the data structure, who may
 %% commit use-after-free errors.
-Much better would be to rule out such problems via a type system.
+It would be much better to rule out such problems via a type system.
 % that stays within the high-level language.
 
 Indeed, type systems can be useful for controlling resource usage, not just
@@ -303,23 +304,23 @@ effect on programming practice.  Few practical, full-scale languages are
 designed from the start with such features.  Rust is the major
 exception~\cite{matsakis_rust_2014}, and in Rust we see one of the attendant
 complications: adding advanced resource-tracking features puts a burden on
-language learners, who pass through an initiation period, ``fighting the borrow
+language learners, who pass through an initiation period: ``fighting the borrow
 checker''.
 
-Why can't more languages add linear or affine types?  Unfortunately, there has
+Could more languages be extended with linear or affine types?  Unfortunately, there has
 not been a clear path to augment preexisting type systems without (1) breaking
-existing code, and (2) forcing the feature on users who don't need it, as in the
+existing code, and (2) forcing the feature on users who don not need it, as in the
 case of Rust.
 % 
 Recent work~\cite{best-of-both-worlds} has come closer to unifying linear and
 unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
-But this approach still divides all types into unrestricted and linear, and adds
+Yet this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
 combinators~---~type-class constraints and complications that the newcomer cannot easily
 ignore, if basic library functions are thus augmented.
 
-We propose a design that leaves most types, such as |Int|, unmodified, and
+We propose a design that leaves most types unmodified, and
 instead associates linearity with {\em binders}, such as ``$\flet x :_{1} T =
 \dots$'', indicating that $x$ must be used exactly once in the body.
 %
@@ -327,10 +328,12 @@ We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
 {\em type}.
 %
 Only function types change to include (optional) linearity constraints on their
-arguments.  Even linear
-functions support {\em backwards compatibility} by implicit conversion of
-arguments at function call sites.  (The intuition is that if {\em any} number of
-uses is valid, then exactly one use is permitted.)
+arguments.  Further, even linear
+functions support {\em backwards compatibility} by implicit conversion
+at function call sites.
+
+% (The intuition is that if {\em any} number of uses is valid, then exactly one use is permitted.)
+% And also there is promotion, let the reader discover how it works in the next section.
 
 We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic ---
 and with it we can enrich standard Haskell Prelude types such as |map| and |++|,
@@ -346,21 +349,20 @@ We make the following contributions:
 
 \begin{itemize}
 \item We formalize \HaskeLL{} as \calc{}, a linearly-typed extension of the
-  $λ$-calculus with data types, and give its type system (\fref{sec:statics}),
+  $λ$-calculus with data types. We provide its type system (\fref{sec:statics}),
   highlighting how it is compatible with existing Haskell features,
-  including Haskell's \Red{kind system, constraints, GADTs, and even dependent types}.
+  including some popular extensions. \Red{(The kind system, constraints, GADTs, and even dependent types)}.
 
-\item We provide a dynamic semantics for \calc{}, which is unusual,
+\item We provide a dynamic semantics for \calc{},
   combining laziness with explicit deallocation of linear data.  In
   \fref{sec:dynamics} we prove type safety, and, further, that every
   linear value is eventually deallocated, and never referenced after
   it is deallocated.
 
 \item We perform a case study of a low-latency in-memory server (\fref{sec:eval})
-  implemented using our type system.  We do not yet modify the GHC memory
-  manager, rather, we show how linear types can make FFI-based implementations
+  implemented using our type system.  The runtime uses GHC's standard RTS.
+  Indeed, our goal is to show how linear types can make FFI-based implementations
   safe.
-  
 \end{itemize}
 
 
