@@ -1179,7 +1179,7 @@ $$
 \inferrule{ }{ωΓ ⊢ j : World}\text{world}
 $$
 
-In addition to the abstract types $World$, $Packet$ and $MB$, and the
+In addition to the abstract types $World$, $Packet$ and $\varid{MB}$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives: |open|, |get|, and |send| as in
 \fref{sec:packet}. Packets $p^j_i$ are considered
@@ -1197,7 +1197,7 @@ bindings of the form $x :_p A = e$ where $p∈\{1,ω\}$ a multiplicity:
 bindings with multiplicity $ω$ represent objects on the regular,
 garbage-collected, heap, while bindings with multiplicity $1$
 represent objects on a foreign heap, which we call the \emph{linear
-  heap}. The linear heap will hold the $World$ and $MB$ tokens as well
+  heap}. The linear heap will hold the $World$ and $\varid{MB}$ tokens as well
 as packets. \citet{launchbury_natural_1993}'s semantics relies on a
 constrained $λ$-calculus syntax which we remind in
 \fref{fig:launchbury:syntax}. We assume, in addition, that the
@@ -1236,14 +1236,14 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents de-allocation of packets.
-\item[Open] A new $MB$ is created with a fresh name ($j$), since it
+\item[Open] A new $\varid{MB}$ is created with a fresh name ($j$), since it
   has received no message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is bumped. The body $k$ is an $IO$ action, so it takes
   the bumped world as an argument and returns a new one, which is then
   returned as the final world after the entire $open$ action.
 \item[Get] The $get$ primitive receives the next packet as is
   determined by the $(p^j_i)_{j,i∈ℕ}$ matrix, and the number of
-  packets received by the $MB$ is bumped.
+  packets received by the $\varid{MB}$ is bumped.
 \item[Send] The $send$ primitive does not actually change the world,
   since all the messages that will ever been received are preordained,
   by assumption. So, from the point of view of this semantics is
@@ -1285,11 +1285,11 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ, x:_1 MB = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:open k w ⇓ Δ:z}\text{open}
+    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:open k w ⇓ Δ:z}\text{open}
 
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
-      {Γ:get x ⇓ Δ,x:_1 MB = ⟨j,i+1⟩, y:_1 Packet = p^j_i : (y,z)}\text{get}
+      {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i : (y,z)}\text{get}
 
     \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
@@ -1423,12 +1423,12 @@ introduces the states of the strengthened evaluation relation.
 
 
 \inferrule
-  {Ξ ⊢ (Γ, x:_1 MB = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
+  {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
   {Ξ ⊢ (Γ,w:_1 : World = j||open k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{open}
 
 \inferrule
-  {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 MB,Σ}
-  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 MB = ⟨j,i+1⟩, y:_1 Packet = p^j_i || (y,z)) :_1 (Packet,MB),Σ}\text{get}
+  {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
+  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i || (y,z)) :_1 (Packet,\varid{MB}),Σ}\text{get}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 Packet,Σ}
