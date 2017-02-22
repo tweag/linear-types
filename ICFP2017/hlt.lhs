@@ -309,7 +309,7 @@ checker''.
 
 Could more languages be extended with linear or affine types?  Unfortunately, there has
 not been a clear path to augment preexisting type systems without (1) breaking
-existing code, and (2) forcing the feature on users who don not need it, as in the
+existing code, and (2) forcing the feature on users who do not need it, as in the
 case of Rust.
 % 
 Recent work~\cite{best-of-both-worlds} has come closer to unifying linear and
