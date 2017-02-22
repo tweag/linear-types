@@ -31,6 +31,7 @@ in stdenv.mkDerivation {
                       logreq
                       scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math capt-of
                       ucs
+                      cmll
                       xstring ucharcat;
                   })
                 ];
