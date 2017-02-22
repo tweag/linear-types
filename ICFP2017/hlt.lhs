@@ -476,7 +476,7 @@ linear value --- potentially in a separate heap.
 % \unsure{JP: I'd prefer a formulation like:}
 {The type system assumes that a function produces {\em one} copy of its
   output. Yet, any given function call can be promoted to an unrestricted call,
-  provided that all the linear arguments are unrestricted in the calling context.}
+  provided that all the function's linear arguments are unrestricted in the calling context.}
 %% In general, a function call can always produce {\em one} copy of its output, but
 %% {\em scaling} the call site to produce an unrestricted output also requires
 %% unrestricted {\em input}.
@@ -487,8 +487,8 @@ let x :: _ 1 Int = 3
     y :: _ ω Int = f x -- not enough x's for this
 \end{code}
 Further, as we will see in the type system of \fref{sec:statics}, this means
-that even a curried function of type |A ⊸ B -> C| requires an unrestricted,
-multiplicity $ω$, |A| argument to produce a |C| result of multiplicity |ω|.
+that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
+(multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
 
 \new{On the other hand, to produce a {\em linear} result from an unrestricted
   function is trivial.  The result of an unrestricted function call may always
@@ -569,9 +569,12 @@ indefinitely needs to be unrestricted:
   let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
 \end{code}
 
-\subsection{Reachability invariant: no unrestricted→linear pointers}\label{sec:invariant}
-A consequence of the above design is that unrestricted objects never
-point to (or contain) linear objects. (But the converse is possible.)
+% \subsection{Reachability invariant: no unrestricted→linear pointers}
+% \subsection{Reachability invariant: no pointers to linear objects within unrestricted values}
+\subsection{Reachability invariant}
+\label{sec:invariant}
+A consequence of the above design is that unrestricted values never
+contain (point to) linear values. (But the converse is possible.)
 One can make sense operationally of this rule by appealing to
 garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
@@ -628,7 +631,7 @@ Finally, from a backwards-compatibility perspective, all of these
 
 % Data constructors add a twist to this story.
 The design of \HaskeLL{} suggests converting most data-type constructors to be
-linear by default (that is, all of their field arguments are linear). However,
+linear by default (that is, all of their field arguments marked linear). However,
 contrary to plain functions, linear data constructors are not more general than
 constructors with unrestricted arguments.
 %
