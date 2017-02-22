@@ -673,104 +673,41 @@ of |Bool| even when it is promoted, whereas |copy| \emph{always}
 returns an unrestricted value, regardless of the multiplicity of
 its argument.
 
-\subsection{A GC-less queue API}
-\label{sec:queue-api}
-With linear types, it is possible to write a {\em pure} and {\em
-  memory-safe} API for managing any external resource which cannot be
-duplicated. An important class of such a resource is foreign C
-data. Indeed, since linear data must be used \emph{exactly once}, it
-means that such data is statically guaranteed to eventually be
-consumed by the program (eventual deallocation) and that the data
-cannot be referred to after being consumed (freedom from
-use-after-free or free-after-free bugs).
+\subsection{Running example: zero-copy packets}
+\label{sec:packet}
 
-Concretely, operations that do not free the data structure return a
-new copy of the data structure (which may, in actuality, reuse and
-update the original). For instance, pushing in a queue would have the
-following type:
+Imagine the following scenario. You are writing some kind of routing
+application: you receive packets on some mailbox, and you have to send
+them away in a way that maximises efficiency. In order to do that, you
+do not want to copy the packets out of the mailboxes when they are
+received: instead you simply associate a priority to packets and use a
+priority queue to reorder messages. The packets are then sent to their
+final destination in order of priority (in a realistic situation the
+priorities could be deadlines for sending packets and sends could be
+batched by waiting until the deadline to actually send packets).
+
+To add an additional twist to this story, mailboxes are fairly small,
+and if the mailbox is full, then further packets are dropped (causing
+significant loss of time and bandwidth as packets must be
+re-sent). Therefore, packets must be treated as scarce resources and
+freed as soon as they have been sent; in particular, freeing the space
+for packets cannot be delegated to the garbage collector lest the
+precious mailbox space be occupied by dead packets.
+
 \begin{code}
-push :: Msg -> Queue ⊸ Queue
+  open    :: (MB ⊸ IO a) ⊸ IO a
+  close   :: MB ⊸ ()
+  get     :: MB ⊸ (Packet,MB)
+  send    :: Packet ⊸ ()
+
+  read    :: Packet ⊸ ByteString
+  unread  :: Bytestring ⊸ Packet
 \end{code}
-While the |pop| function would be endowed with the following type:
-\begin{code}
-  pop :: Queue ⊸ Maybe (Unrestricted Msg,Queue)
-\end{code}
-where |Maybe| is linear:
-\begin{code}
-data Maybe a where
-  Nothing :: Maybe a
-  Just  :: a ⊸ Maybe a
-\end{code}
-
-In the case where there is no value left, no queue is returned,
-therefore |pop| must free the queue when its empty. Linear typing will
-ensure that we eventually end up popping from the empty queue. As an
-exercise, we can define a free function by repeatedly popping a queue
-until it is empty:
-\begin{code}
-  free :: Queue ⊸ ()
-  free q = case pop q of
-    | Just (q',MkUnre _m) -> free q'
-    | Nothing -> ()
-\end{code}
-
-While this example is rather minimal and lends itself to many
-optimisations beyond keeping the data off the garbage-collected heap,
-it illustrates a real problem in the writing of low-latency Haskell
-applications: long-lived data kept in memory (in particular linked
-data structures) cause long \textsc{gc} pauses as the pointers must be
-traversed and the data copied during collection.\todo{link to or
-  replace by the discussion on experimental results}
-
-What linear types bring to this picture is the ability to keep this
-data on a foreign heap~—~typically allocated with
-\verb+malloc()+~—~hence costing nothing in terms of \textsc{gc}
-pressure, while retaining the memory-safety afforded by Haskell's type
-system.
-
-The complete \textsc{api} for a linearly typed queue allocated on a
-foreign heap could be the following:
-\begin{code}
-alloc   :: (Queue ⊸ Unrestricted a) ⊸ a
-push    :: Msg -> Queue ⊸ Queue
-pop     :: Queue ⊸ Maybe (Unrestricted Msg, Queue)
-\end{code}
-There are a few things going on in this API:
-\begin{itemize}
-\item The |alloc| function opens a new scope, delimited by the dynamic
-  extent of its argument function. This function is provided a fresh
-  queue, allocated in the foreign heap (for example using
-  \verb|malloc()|).  As enforced by the type-system, this queue must
-  be used exactly once.  The return type of the argument function is
-  |Unrestricted a|, ensuring that no linear value can be returned: in
-  particular the |Queue| must be consumed. (Recall the reachability
-  invariant: |Unrestricted| cannot contain a linear value.)
-
-\item Messages of type |Msg| are unrestricted Haskell values managed
-  by the garbage collector. They are \emph{copied} into the queue by
-  |push| so that the garbage collected version of the message may be
-  collected as the version inside the queue survives. Conversely,
-  |pop| will copy the message from the queue into the
-  garbage-collected heap. The hypothesis is that while there is a very
-  large amount of message inside the queue, there will be, at any
-  given time, very few messages managed by the garbage
-  collector. Because these will typically be short-lived, they
-  will not normally survive a ``generation 0'' collection, hence
-  contribute next to nothing to the \textsc{gc} pressure.
-
-\item Because the queue allocated by |alloc| must be consumed before
-  reaching the end of the scope, |pop| must be called and eventually
-  return |Nothing|. Indeed, there is no other way to properly get rid
-  of the queue. Calling any of the other linear functions does
-  ``consume'' the queue, but returns a new one, along with the
-  obligation of getting rid of this new queue.
-\end{itemize}
-
-\improvement{Write an implementation of queue using \textsc{ffi}
-  calls, together with small Haskell wrappers to handle the
-  serialisation/copy of messages}
-
-
+\todo{explain \textsc{api}}
+\hfill\\
+\todo{linear queue implementation}
+\hfill\\
+\todo{elaborate}
 
 \section{\calc{} statics}
 \label{sec:statics}
@@ -1167,7 +1104,7 @@ backwards compatibility, which is a design goal of \HaskeLL{}.
 \label{sec:dynamics}
 
 We wish to give a dynamic semantics for \calc{} which accounts for the
-packet forwarding example of \fref{sec:packet??} where packets are
+packet forwarding example of \fref{sec:packet} where packets are
 kept out of the garbage collected heap, and freed immediately upon
 send. To that effect we follow \citet{launchbury_natural_1993} who
 defines a semantics for lazy computation. We will need also to account
@@ -1176,7 +1113,7 @@ for the |IO| monad, which occurs in the \textsc{api} for packets.
 \subsection{The IO monad}
 
 Linear typing allows to safely and easily express world-passing
-semantics. \Cite{launchbury_st_1995} defines 
+semantics. \Citet{launchbury_st_1995} defines
 |IO a| as |World -> (World , a)|, for an abstract type |World| representing the state of the
 entire world. The idea is that every time some |IO| action is
 undertaken, the world has possibly changed so we \emph{consume} the
@@ -1220,7 +1157,7 @@ past and future are pre-ordained, and the semantics has access to this
 knowledge.
 
 Because the only interaction in the world which we need to model in
-order to give a semantics to the packet example of \fref{sec:packet??}
+order to give a semantics to the packet example of \fref{sec:packet}
 is to obtain a packet, it will be sufficient for this section to
 consider all the packets. Because there are several mailboxes and each
 can get their own streams of packets, we suppose implicitly a
@@ -1245,7 +1182,7 @@ $$
 In addition to the abstract types $World$, $Packet$ and $MB$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives: |open|, |get|, and |send| as in
-\fref{sec:packet??}. Packets $p^j_i$ are considered
+\fref{sec:packet}. Packets $p^j_i$ are considered
 constant.\improvement{reference to primitives which are dropped for
   the sake of simplicity}
 
@@ -1368,7 +1305,7 @@ convenient for proving properties. There are two reasons to that fact:
 first the semantics follows a different structure than the type system and, also,
 there are pointers from the garbage-collected heap to the linear
 heap. Such pointers occur, for instance, in the priority queue from
-\fref{sec:packet??}: the queue itself is allocated on the garbage
+\fref{sec:packet}: the queue itself is allocated on the garbage
 collected heap while packets are kept in the linear heap.
 
 This is not a problem in and on itself: pointers to packets may be seen
