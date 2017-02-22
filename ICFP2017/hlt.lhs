@@ -1794,16 +1794,50 @@ optimisations.
 But, if you squint just right, you will notice that the abstract
 domain presented by \citet{sergey_cardinality_2014} is essentially the
 same as our multiplicity annotations. They have an extra $0$
-cardinality, but we would have needed a $0$ multiplicity anyway to
-accommodate dependent types~\cite{mcbride_rig_2016}.
+cardinality for unused variables, but we need a $0$ multiplicity
+anyway, in a practical implementation, in order to accommodate
+\textsc{ghc}'s dependent types~\cite{mcbride_rig_2016}.
 
 It will require significantly more implementation effort than just
 evolving the type system, so we do not plan to make such an extension
 immediately. But integrating the type system and the cardinality
 analysis is a next step which we are intent on achieving.
 
-\subsection{Generalising multiplicities}
+\subsection{Extending multiplicities}
 \todo{More multiplicities, reference to literature}
+
+For the sake of this article, we use only $1$ and $ω$ as
+possibilities. We've already mentioned that we also need $0$ because
+of dependent types. But \calc{} can readily be extended to more
+multiplicities. In fact the articles from which we drew most
+inspiration in this design~\cite{ghica_bounded_2014,mcbride_rig_2016}
+have an abstract set of multiplicities.
+
+Applications of multiplicities beyond linear logic seem to often have
+too narrow a focus to have their place in a general purpose language
+such as Haskell. \Citet{ghica_bounded_2014} propose to use
+multiplicities to represent real time annotations, and
+\citet{petricek_coeffects_2013} show how to use multiplicities to
+track either implicit parameters (\emph{i.e.} dynamically scoped
+variables) or the size of the history that a dataflow program needs to
+remember. Of these, only the implicit parameters may be of relevance
+to Haskell, but even so, it is probably not desirable.
+
+Nevertheless, more multiplicities may prove useful. For instance we
+may want to consider a multiplicity for affine arguments (\emph{i.e.}
+arguments which can be used \emph{at most once}).
+
+The general setting for \calc{} is an ordered-semiring of
+multiplicities (with a join operation for type inference). The rules
+are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
+does not work for $q=0$ (in particular we see that we cannot
+substitute multiplicity variables by $0$). The variable rule is
+modified as:
+$$
+\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
+$$
+Where the order on contexts is the point-wise extension of the order
+on multiplicities.
 
 \section{Related work}
 
@@ -1996,13 +2030,14 @@ unusual from a linear logic perspective, but it is the key to be able
 to use types both linearly an unrestrictedly without intrusive
 multiplicity polymorphic annotation on all the relevant types.
 
-The literature on so-called coeffects uses type systems similar to
-\citeauthor{ghica_bounded_2014}, except with a linear arrow and
-multiplicities carried by the exponential modality
-instead. \Citet{brunel_coeffect_core_2014}, in particular, develops a
-Krivine realisability model for such a calculus. We are not aware of
-an account of Krivine realisability for lazy languages, hence it is
-not directly applicable to \calc.
+The literature on so-called
+coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
+uses type systems similar to \citeauthor{ghica_bounded_2014}, except
+with a linear arrow and multiplicities carried by the exponential
+modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
+develops a Krivine realisability model for such a calculus. We are not
+aware of an account of Krivine realisability for lazy languages, hence
+it is not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
