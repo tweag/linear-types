@@ -452,7 +452,7 @@ of \HaskeLL{} will ensure both that the deallocation will happen, and
 that no use-after-free error occurs.
 
 
-\subsection{Calling contexts}\label{sec:calling-contexts}
+\subsection{Calling contexts and promotion}\label{sec:calling-contexts}
 
 As in the above example, a given call to |f| can yield either a linear or
 unrestricted value depending on the context in which its called.  For example,
@@ -467,15 +467,22 @@ in ...
 \end{code}
 %
 Subsequent code in the body can use |y| any number of times but must use |x|
-exactly once.  Further, a compiler for \HaskeLL{} could arrange to call a {\em
+exactly once. We say that the second call is \emph{promoted} to $ω$.
+
+Indeed, even though the type system assumes that a function produces
+{\em one} copy of its output, any given function call can be promoted
+to an unrestricted call, provided that all the function's (linear)
+arguments are unrestricted in the calling context.  In general, any
+sub-expression is type-checked as if it were constructing {\em one}
+value, but it can be promoted to $ω$ if all its free variables are
+$ω$-bound.
+%
+ Further, a compiler for \HaskeLL{} could arrange to call a {\em
   different implementation} of |f| at these two call sites, with the former
 allocating directly on the garbage-collected heap, and the latter creating a
 linear value --- potentially in a separate heap.
 
 % \unsure{JP: I'd prefer a formulation like:}
-{The type system assumes that a function produces {\em one} copy of its
-  output. Yet, any given function call can be promoted to an unrestricted call,
-  provided that all the function's linear arguments are unrestricted in the calling context.}
 %% In general, a function call can always produce {\em one} copy of its output, but
 %% {\em scaling} the call site to produce an unrestricted output also requires
 %% unrestricted {\em input}.
@@ -489,18 +496,17 @@ Further, as we will see in the type system of \fref{sec:statics}, this means
 that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
 (multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
 
-\new{On the other hand, to produce a {\em linear} result from an unrestricted
-  function is trivial.  The result of an unrestricted function call may always
-  flow to a linear binding.
-  Indeed, because they do {\em not} contain resources, it
-  is {\em always} safe to view an unrestricted value as linear, allowing:
+On the other hand, producing a {\em linear} result from an unrestricted
+  function is trivial. (Remember that linearity only concerns the arguments.)
+  Thinking in terms of resources, it
+  is {\em always} safe to view an unrestricted value as linear, because they cannot contain resources. This allows in particular:
   |let x :: _ ω ... = e1;|$\;\;$|y :: _ 1 ... = x|.
 %% \begin{code}
 %%   let x :: _ ω T = e1
 %%       y :: _ 1 T = x
 %% \end{code}
 However, if an implementation chooses to treat linear values differently at
-runtime, then this change of multiplicity would incur runtime costs.}
+runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{Linear data types}
 
@@ -513,8 +519,8 @@ data List a where
 \end{code}
 That is, given a list |xs| with multiplicity $1$, yield the {\em elements of
   |xs|} with multiplicity $1$.  Thus the above list may contain resources (such
-as file handles) without compromising safety; the resources in |xs| will be
-eventually deallocated and will not be used after that.
+as file handles) without compromising safety; the type system will ensure that resources in |xs| will be
+eventually deallocated, and that they will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
@@ -579,14 +585,14 @@ garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
 for. Conversely a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
-\new{(In a practical implementation which {\em separated} the linear/GC heaps,
+(In a practical implementation which {\em separates} the linear/GC heaps,
   this means that {\em all} pointers to linear values would reside on the stack
-  and in registers, never in the GC heap.)}
+  and in registers, never in the GC heap.)
 
 \subsection{Higher-order linear functions: explicit multiplicity quantifiers}
 
 As seen above, implicit conversions between multiplicities make first-order
-linear functions {\em more general}. Higher-order code is more complex; so we
+linear functions {\em more general}. Higher-order code is more complex, so we
 introduce {\em multiplicity polymorphism} as a way to preserve effective code sharing
 of higher-order functions. For example, the standard |map| function over
 (linear) lists:
@@ -621,9 +627,11 @@ function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
-  subscripts and binders for multiplicity polymorphism can be {\em ignored} by
-  and the programmer can even {\em disable} linear
-  types entirely thus hiding any syntactic extension.
+subscripts and binders for multiplicity polymorphism can be {\em
+  ignored}.  Indeed, in a context where client code does not use
+linearity, all inputs will have multiplicity $ω$, and transitively all
+expressions can be promoted to $ω$.  Thus in such a context the
+compiler can even hide linearity extension to the programmer.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:linear-constructors}
