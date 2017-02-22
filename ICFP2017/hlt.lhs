@@ -1219,25 +1219,24 @@ consider the semantics as a Laplace demon: the entirety of the events
 past and future are pre-ordained, and the semantics has access to this
 knowledge.
 
-Since the only interaction in the world which we need to model in
+Because the only interaction in the world which we need to model in
 order to give a semantics to the packet example of \fref{sec:packet??}
 is to obtain a packet, it will be sufficient for this section to
-consider all the packets. Since there are several mailboxes and each
-can get their own streams of packets, therefore we suppose implicitly
-given a collection of packets $(p^j_i)_{j,i∈ℕ}$. Where the packet
+consider all the packets. Because there are several mailboxes and each
+can get their own streams of packets, we suppose implicitly a
+given collection of packets $(p^j_i)_{j,i∈ℕ}$. Where the packet
 $p^j_i$ represents the $i$-th package which will be received by the
 $j$-th mailbox.
 
 Instead of using the world token as a proxy for an abstract world, we
 are going to use it to keep track of how many mailboxes have been
-opened. So the (unique) world token in the stack will hold an integer
-representing the number of mailboxes which have been
-opened. Similarly, the mailbox tokens will be pairs $⟨j,i⟩$ of
+opened. So the (unique) world token in the stack will hold this number.
+Similarly, the mailbox tokens will be pairs $⟨j,i⟩$ of
 integers where $j$ is the mailbox number and $i$ the number of packets
 the mailbox has received. In effect, the world and mailbox tokens are
 pointers into the infinite matrix of potential packets. We will define
-these constants to have the same typing rules as zero-ary constructors
-(though there is no pattern-matching on constants),
+these constants as having the same typing rules as zero-ary constructors
+(but without the pattern-matching rule):
 \emph{e.g.}:
 $$
 \inferrule{ }{ωΓ ⊢ j : World}\text{world}
