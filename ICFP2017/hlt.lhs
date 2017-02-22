@@ -359,10 +359,11 @@ We make the following contributions:
   linear value is eventually deallocated, and never referenced after
   it is deallocated.
 
-\item We perform a case study of a low-latency in-memory server (\fref{sec:eval})
+\item \Red{We perform a case study of a low-latency in-memory server (\fref{sec:eval})
   implemented using our type system.  The runtime uses GHC's standard RTS.
   Indeed, our goal is to show how linear types can make FFI-based implementations
-  safe.
+  safe.}
+  \rn{Looks like this is going to be removed...}
 \end{itemize}
 
 
@@ -380,11 +381,11 @@ We make the following contributions:
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
-Before diving into the technical details, let us give an overview of
+Before diving into the technical details, we overview 
 \HaskeLL, the proposed design for extending Haskell with linear types,
-by means of a number of examples.
-
-Firstly, along with the usual arrow type for intuitionistic functions,
+through a number of examples.
+%
+First, along with the usual arrow type for intuitionistic functions,
 we propose an additional arrow type for linear arrows, written
 $A ⊸ B$. In the body of a linear function, the type system tracks that
 there is exactly one copy of the parameter to consume.
