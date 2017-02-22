@@ -706,7 +706,7 @@ precious mailbox space be occupied by dead packets.
 \todo{explain \textsc{api}}
 \hfill\\
 \todo{linear queue implementation}
-\hill\\
+\hfill\\
 \todo{elaborate}
 
 \section{\calc{} statics}
@@ -1113,7 +1113,7 @@ for the |IO| monad, which occurs in the \textsc{api} for packets.
 \subsection{The IO monad}
 
 Linear typing allows to safely and easily express world-passing
-semantics. \Cite{launchbury_st_1995} defines 
+semantics. \Citet{launchbury_st_1995} defines
 |IO a| as |World -> (World , a)|, for an abstract type |World| representing the state of the
 entire world. The idea is that every time some |IO| action is
 undertaken, the world has possibly changed so we \emph{consume} the
