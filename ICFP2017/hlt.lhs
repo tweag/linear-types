@@ -673,6 +673,42 @@ of |Bool| even when it is promoted, whereas |copy| \emph{always}
 returns an unrestricted value, regardless of the multiplicity of
 its argument.
 
+\subsection{Running example: zero-copy packets}
+\label{sec:packet}
+
+Imagine the following scenario. You are writing some kind of routing
+application: you receive packets on some mailbox, and you have to send
+them away in a way that maximises efficiency. In order to do that, you
+do not want to copy the packets out of the mailboxes when they are
+received: instead you simply associate a priority to packets and use a
+priority queue to reorder messages. The packets are then sent to their
+final destination in order of priority (in a realistic situation the
+priorities could be deadlines for sending packets and sends could be
+batched by waiting until the deadline to actually send packets).
+
+To add an additional twist to this story, mailboxes are fairly small,
+and if the mailbox is full, then further packets are dropped (causing
+significant loss of time and bandwidth as packets must be
+re-sent). Therefore, packets must be treated as scarce resources and
+freed as soon as they have been sent; in particular, freeing the space
+for packets cannot be delegated to the garbage collector lest the
+precious mailbox space be occupied by dead packets.
+
+\begin{code}
+  open    :: (MB ⊸ IO a) ⊸ IO a
+  close   :: MB ⊸ ()
+  get     :: MB ⊸ (Packet,MB)
+  send    :: Packet ⊸ ()
+
+  read    :: Packet ⊸ ByteString
+  unread  :: Bytestring ⊸ Packet
+\end{code}
+\todo{explain \textsc{api}}
+\hfill\\
+\todo{linear queue implementation}
+\hill\\
+\todo{elaborate}
+
 \subsection{A GC-less queue API}
 \label{sec:queue-api}
 With linear types, it is possible to write a {\em pure} and {\em
@@ -1167,7 +1203,7 @@ backwards compatibility, which is a design goal of \HaskeLL{}.
 \label{sec:dynamics}
 
 We wish to give a dynamic semantics for \calc{} which accounts for the
-packet forwarding example of \fref{sec:packet??} where packets are
+packet forwarding example of \fref{sec:packet} where packets are
 kept out of the garbage collected heap, and freed immediately upon
 send. To that effect we follow \citet{launchbury_natural_1993} who
 defines a semantics for lazy computation. We will need also to account
@@ -1220,7 +1256,7 @@ past and future are pre-ordained, and the semantics has access to this
 knowledge.
 
 Since the only interaction in the world which we need to model in
-order to give a semantics to the packet example of \fref{sec:packet??}
+order to give a semantics to the packet example of \fref{sec:packet}
 is to obtain a packet, it will be sufficient for this section to
 consider all the packets. Since there are several mailboxes and each
 can get their own streams of packets, therefore we suppose implicitly
@@ -1246,7 +1282,7 @@ $$
 In addition to the abstract types $World$, $Packet$ and $MB$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives: |open|, |get|, and |send| as in
-\fref{sec:packet??}. Packets $p^j_i$ are considered
+\fref{sec:packet}. Packets $p^j_i$ are considered
 constant.\improvement{reference to primitives which are dropped for
   the sake of simplicity}
 
@@ -1369,7 +1405,7 @@ convenient for proving properties. There are two reasons to that fact:
 first the semantics follows a different structure than the type system and, also,
 there are pointers from the garbage-collected heap to the linear
 heap. Such pointers occur, for instance, in the priority queue from
-\fref{sec:packet??}: the queue itself is allocated on the garbage
+\fref{sec:packet}: the queue itself is allocated on the garbage
 collected heap while packets are kept in the linear heap.
 
 This is not a problem in and on itself: pointers to packets may be seen
