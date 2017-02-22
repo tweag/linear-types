@@ -1690,19 +1690,25 @@ merely by changing the arrow to a linear one:
 \end{code}
 
 \section{Perspectives}
-\todo{Speak about fusion}
-\hfill\\
+
+\subsection{Negative types}
+\todo{Discussion on negative types and how they are encoded (there are
+  not provided natively)}
+
+\subsection{Linear values in a pure context}
 \todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
   the source below this todo-box)}
 \providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Unrestricted} x
     \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
     \mathsf{case}_{q} t \mathsf{of} \{\varid{MkUnre} y ↦ u\} ⇓_ρ Θ :
     z}\text{case-unrestricted}}
-\hfill\\
-\todo{More multiplicities}
-\hfill\\
-\todo{Discussion on negative types and how they are encoded (there are
-  not provided natively)}
+
+\subsection{Fusion}
+\todo{Speak about fusion}
+
+
+\subsection{Generalising multiplicities}
+\todo{More multiplicities, reference to literature}
 
 \section{Related work}
 
