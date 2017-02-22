@@ -718,7 +718,7 @@ Here |close| could be in the IO monad but it is not necessary --- linearity will
 sequence it within the computation.  This is because |close|'s result must be
 consumed with |case|, i.e. ``|case close mb of () -> e1|''.  Receiving and
 sending packets can likewise live outside of IO, and are ultimately part of the
-IO action created with |newMailBox|:
+IO action created with |withMailBox|:
 
 \begin{code}
   get     :: MB ⊸ (Packet,MB)
@@ -1212,7 +1212,7 @@ Linear typing gives a much more direct solution to the problem: if the
 \end{code}
 Notice that the |a| of |IO a| is always unrestricted, so that |IO| has
 the same semantics as in Haskell (it is also the semantics which we
-need to ensure that |open| is safe).
+need to ensure that |withMailBox| is safe).
 
 The last missing piece is to inject a |World| to start the
 computation. Haskell relies on a |main :: IO ()| function, of which
@@ -1258,7 +1258,7 @@ $$
 
 In addition to the abstract types $World$, $Packet$ and $\varid{MB}$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
-three primitives: |open|, |get|, and |send| as in
+three primitives: |withMailBox|, |get|, and |send| as in
 \fref{sec:packet}. Packets $p^j_i$ are considered
 constant.\improvement{reference to primitives which are dropped for
   the sake of simplicity}
@@ -1313,11 +1313,11 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents de-allocation of packets.
-\item[Open] A new $\varid{MB}$ is created with a fresh name ($j$), since it
+\item[NewMailBox] A new $\varid{MB}$ is created with a fresh name ($j$), since it
   has received no message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is bumped. The body $k$ is an $IO$ action, so it takes
   the bumped world as an argument and returns a new one, which is then
-  returned as the final world after the entire $open$ action.
+  returned as the final world after the entire $withMailBox$ action.
 \item[Get] The $get$ primitive receives the next packet as is
   determined by the $(p^j_i)_{j,i∈ℕ}$ matrix, and the number of
   packets received by the $\varid{MB}$ is bumped.
@@ -1362,7 +1362,7 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:open k w ⇓ Δ:z}\text{open}
+    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:withMailBox k w ⇓ Δ:z}\text{withMailBox}
 
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
@@ -1501,7 +1501,7 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule
   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
-  {Ξ ⊢ (Γ,w:_1 : World = j||open k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{open}
+  {Ξ ⊢ (Γ,w:_1 : World = j||withMailBox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailBox}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
