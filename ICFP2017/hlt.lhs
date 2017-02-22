@@ -642,7 +642,7 @@ linear by default (that is, all of their field arguments marked linear). However
 contrary to plain functions, linear data constructors are not more general than
 constructors with unrestricted arguments.
 %
-In \fref{sec:statics}, we will take the necessary step to make sure
+In \fref{sec:statics}, we take the necessary steps to make sure
 that linear constructors correspond to regular Haskell data types when
 restricted to the traditional (non-linear) Haskell fragment. But even so,
 constructors with unrestricted arguments add expressiveness to
