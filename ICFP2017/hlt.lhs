@@ -1175,26 +1175,22 @@ for the |IO| monad, which occurs in the \textsc{api} for packets.
 
 \subsection{The IO monad}
 
-It turns out that, as a matter of fact, the |IO| monad is easier to
-express with linear types. Or rather safer. Indeed, the |IO| monad is
-represented in Haskell in ``world passing
-style''~\cite{launchbury_st_1995}. That is, |IO a| means |World ->
-(World,a)|, for an abstract type |World| representing the state of the
+Linear typing allows to safely and easily express world-passing
+semantics. \Cite{launchbury_st_1995} defines 
+|IO a| as |World -> (World , a)|, for an abstract type |World| representing the state of the
 entire world. The idea is that every time some |IO| action is
 undertaken, the world has possibly changed so we \emph{consume} the
 current view of the world and return the new version.
 
-This gives a pure interface to \textsc{i/o}. However, it is crucial
-that the world is not duplicated: indeed otherwise the programmer
-would have access and old version of the world, as well as the current
-one. But because the world is just a virtual placeholder, this breaks
-referential transparency. Haskell solves this issue by forcing the
-programmer to use |IO| via its monadic interface, which ensures that
-|World| is not duplicated.
+The above gives a pure interface to \textsc{i/o}. However, it leaves the possibility
+for the programmer to access and old version of the world, as well as the current
+one, which is expensive to implement. In practice, one does not want to perform such a duplication,
+and thus Haskell solves the issue by forcing the
+programmer to use |IO| via its monadic interface.
 
-Linear logic gives a much more direct solution to the problem: if the
-|World| is kept linear, then there is no way to duplicate the
-|World|. Namely, it is enough to define |IO| as
+Linear typing gives a much more direct solution to the problem: if the
+|World| is kept linear, then there is no way to observe two different
+|World|s. Namely, it is enough to define |IO| as
 \improvement{Write definition of |IO| in \calc{} syntax}
 \begin{code}
   data IO0  a = IO0 : World ⊸ a -> IO0 a
@@ -1212,7 +1208,7 @@ World$ in the context.
 
 In general, a toplevel definition of multiplicity $1$ corresponds to
 something which must be consumed exactly once at link time, which
-generalises the concept of the |main| function slightly.
+generalises the concept of the |main| function, if only slightly.
 
 \subsection{Modelling network traffic}
 \label{sec:model-io}
