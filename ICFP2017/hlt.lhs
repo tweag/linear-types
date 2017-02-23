@@ -634,20 +634,13 @@ map f []      = []
 map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two following incomparable types:
-\begin{code}
-  (a ⊸ b) -> List a ⊸ List b
-\end{code}
-and
-\begin{code}
-  (a -> b) -> List a -> List b
-\end{code}
-
+  |(a ⊸ b) -> List a ⊸ List b|  and
+  |(a -> b) -> List a -> List b|.
+%
 \HaskeLL{} generalises over linear and unrestricted arrows with the
 syntax $A →_ρ B$. Therefore, |map| can be given the following
 most general type:
-\begin{code}
-  ∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b
-\end{code}
+ | ∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b|
 %
 Likewise, function composition can be given the following type:
 \begin{code}
