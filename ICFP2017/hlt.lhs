@@ -279,6 +279,9 @@
 
 \section{Introduction}
 
+\todo{This article is motivated by our combined academic and
+  industrial experience}
+
 Can we use Haskell to implement a low-latency server that caches a large dataset
 in memory?  Today, the answer is a clear\improvement{adapt to fit the ``running example''?}
 ``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by GC are
@@ -350,6 +353,11 @@ unless the appropriate language extension is enabled.
 
 We make the following contributions:
 
+\todo{unlike most system \calc{} has linearity associated to arrows
+  and not to types. Something about reuse of datatypes.}
+\unsure{linearity is usually considered difficult in present of
+  laziness. Contribution: work around this? How do we solve problems
+  Runciman et al p9}
 \begin{itemize}
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
   $λ$-calculus with data types. We provide its type system (\fref{sec:statics}),
@@ -509,7 +517,9 @@ However, if an implementation chooses to treat linear values differently at
 runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{Linear data types}
-
+\todo{we interpret all arrows in regular Haskell datatypes as linear
+  arrows, tuples are linear as well. Inconsistent with p12, search
+  replace tensor-notation}
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
@@ -672,6 +682,7 @@ function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
 of |Bool| even when it is promoted, whereas |copy| \emph{always}
 returns an unrestricted value, regardless of the multiplicity of
 its argument.
+\todo{Add example: |f xs = ys ++ ys where Un ys = copy xs|}
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
@@ -719,7 +730,7 @@ sending packets can likewise live outside of |IO|, and are ultimately part of th
 |IO| action created with |withMailBox|:
 
 \begin{code}
-  get     :: MB ⊸ (Packet ⊗ MB)
+  get     :: MB ⊸ (Packet , MB)
   send    :: Packet ⊸ ()
 \end{code}
 
@@ -765,6 +776,8 @@ global GC.  Finally, if we were to manage a large number of linear objects,
 storing the proxy objects would cause the GC heap to grow proportionally to the
 number of linear objects, and so would the GC pauses.
 
+\todo{priority queue \textsc{api} and a tiny main program, plus an
+  example implementation of priority queue}
 
 %% \todo{explain \textsc{api}}
 %% \hfill\\
@@ -1254,6 +1267,7 @@ three primitives: |withMailBox|, |get|, and |send| as in
 \fref{sec:packet}. Packets $p^j_i$ are considered
 constant.\improvement{reference to primitives which are dropped for
   the sake of simplicity}
+\todo{types of the primitives}
 
 \subsection{Operational semantics}
 
@@ -1305,7 +1319,7 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents de-allocation of packets.
-\item[NewMailBox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
+\item[WithMailBox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
   has not received any message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is incremented. The body $k$ is an $IO$ action, so it takes
   the incremented world as an argument and returns a new one, which is then
@@ -1320,6 +1334,9 @@ the new rules
   a linear variable, so it is removed from the heap with the linear
   variable rule; then the send rule drops it.
 \end{description}
+
+\todo{separate proof in a separate section, and move the statements of
+the theorem to the beginning of the section}
 
 \begin{figure}
   \begin{mathpar}
@@ -1400,7 +1417,7 @@ multiplicity of its first component.
   types:
   \begin{itemize}
   \item $\data A~{}_1\!⊗ B = ({}_1\!,) : A ⊸ B ⊸ A~{}_1\!⊗ B$
-  \item $\data A~{}_ω\!⊗ B = ({}_ω\!,) : A → B ⊸ A~{}_1\!⊗ B$
+  \item $\data A~{}_ω\!⊗ B = ({}_ω\!,) : A → B ⊸ A~{}_ω\!⊗ B$
   \end{itemize}
 
 \end{definition}
@@ -1693,6 +1710,9 @@ merely by changing the arrow to a linear one:
 \end{code}
 
 \section{Perspectives}
+
+\todo{combine with conclusions}
+\todo{explain the problem with errors/exception}
 
 Before concluding, let us brush over a handful of
 interesting points which have not been addressed in the article so
