@@ -808,7 +808,7 @@ This framing drives the details of \calc{}. In particular unrestricted
 values cannot contain linear values,
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
-have dangling pointers or memory leaks. On the other hand it is
+have dangling pointers or memory leaks. On the other hand, it is
 valid for linear values to refer to unrestricted ones: linear values act as GC roots.
 So any
 value containing a linear value must also be linear. Crucially this property
@@ -1719,7 +1719,7 @@ Some programming languages featuring session types have instead native
 support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
 $(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
 modelled after classical logic.  Instead, the CPS approaches works
-better for languages bases on gintuitionistic logic, such as
+better for languages bases on intuitionistic logic, such as
 Haskell. Hence we choose not to support duality specially.
 
 The following example gives a taste of what linear CPS code may look
