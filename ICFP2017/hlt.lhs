@@ -2005,9 +2005,7 @@ including its compatibility with dependent types, and
 such compatibility is pretty much necessary to accommodate the dependently-typed kinds of \textsc{ghc}.
 
 \subsection{Alms}
-\improvement{Citation pointing to \emph{e.g.}
-  \url{http://users.eecs.northwestern.edu/~jesse/pubs/alms/}}
-Alms is an \textsc{ml}-like language based on affine types (a variant
+Alms~\cite{tov_practical_2011} is an \textsc{ml}-like language based on affine types (a variant
 of linear types where values can be used \emph{at most} once). It is
 uses the kinds to separate affine from unrestricted arguments.
 
