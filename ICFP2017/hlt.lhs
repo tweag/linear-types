@@ -523,7 +523,7 @@ runtime, then this change of multiplicity would incur runtime costs.
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
-data List a where
+data [a] where
   []   :: a
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
@@ -536,7 +536,7 @@ Many list-based functions conserve the multiplicity of data, and thus can
 be given a more precise type. For example we can write |(++)|
 as follows:
 \begin{code}
-(++) :: List a ⊸ List a ⊸ List a
+(++) :: [a] ⊸ [a] ⊸ [a]
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
@@ -578,10 +578,10 @@ demand unrestricted input, even to construct an output with
 multiplicity $1$. For example the argument of the function repeating its input
 indefinitely needs to be unrestricted:
 \begin{code}
-  cycle :: List a → List a
+  cycle :: [a] → [a]
   cycle l = l ++ cycle l
 
-  let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
+  let xs :: _ 1 [Char] = cycle ['a','b','c']  -- Valid
 \end{code}
 
 
@@ -676,13 +676,13 @@ map f []      = []
 map f (x:xs)  = f x : map f xs
 \end{code}
 can be given the two following incomparable types:
-  |(a ⊸ b) -> List a ⊸ List b|  and
-  |(a -> b) -> List a -> List b|.
+  |(a ⊸ b) -> [a] ⊸ [b]|  and
+  |(a -> b) -> [a] -> [b]|.
 %
 \HaskeLL{} generalises over linear and unrestricted arrows with the
 syntax $A →_ρ B$. Therefore, |map| can be given the following
 most general type:
- | ∀ρ. (a -> _ ρ b) -> List a -> _ ρ List b|
+ | ∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
 %
 Likewise, function composition can be given the following type:
 \begin{code}
@@ -2176,4 +2176,4 @@ prototype quite lean.
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
-%  LocalWords:  unrestrictedly bidirectionality
+%  LocalWords:  unrestrictedly bidirectionality GADT
