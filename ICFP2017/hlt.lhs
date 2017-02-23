@@ -1210,11 +1210,11 @@ The last missing piece is to inject a |World| to start the
 computation. Haskell relies on a |main :: IO ()| function, of which
 there must be a single one at link time. In \calc{} the simplest way
 to achieve the same result is to start computation with a $world :_1
-World$ in the context.
+\varid{World}$ in the context.
 
 In general, a toplevel definition of multiplicity $1$ corresponds to
 something which must be consumed exactly once at link time, which
-generalises the concept of the |main| function, if only slightly.
+generalises the concept of the |main| function (if only slightly).
 
 \subsection{Modelling network traffic}
 \label{sec:model-io}
@@ -1245,10 +1245,10 @@ these constants as having the same typing rules as zero-ary constructors
 (but without the pattern-matching rule):
 \emph{e.g.}:
 $$
-\inferrule{ }{ωΓ ⊢ j : World}\text{world}
+\inferrule{ }{ωΓ ⊢ j : \varid{World}}\text{world}
 $$
 
-In addition to the abstract types $World$, $Packet$ and $\varid{MB}$, and the
+In addition to the abstract types $\varid{World}$, $Packet$ and $\varid{MB}$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives: |withMailBox|, |get|, and |send| as in
 \fref{sec:packet}. Packets $p^j_i$ are considered
@@ -1266,7 +1266,7 @@ bindings of the form $x :_p A = e$ where $p∈\{1,ω\}$ a multiplicity:
 bindings with multiplicity $ω$ represent objects on the regular,
 garbage-collected, heap, while bindings with multiplicity $1$
 represent objects on a foreign heap, which we call the \emph{linear
-  heap}. The linear heap will hold the $World$ and $\varid{MB}$ tokens as well
+  heap}. The linear heap will hold the $\varid{World}$ and $\varid{MB}$ tokens as well
 as packets. \citet{launchbury_natural_1993}'s semantics relies on a
 constrained $λ$-calculus syntax which we remind in
 \fref{fig:launchbury:syntax}. We assume, in addition, that the
@@ -1305,20 +1305,20 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents de-allocation of packets.
-\item[NewMailBox] A new $\varid{MB}$ is created with a fresh name ($j$), since it
-  has received no message yet, the mailbox token is $⟨j,0⟩$, and the
-  world token is bumped. The body $k$ is an $IO$ action, so it takes
-  the bumped world as an argument and returns a new one, which is then
+\item[NewMailBox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
+  has not received any message yet, the mailbox token is $⟨j,0⟩$, and the
+  world token is incremented. The body $k$ is an $IO$ action, so it takes
+  the incremented world as an argument and returns a new one, which is then
   returned as the final world after the entire $withMailBox$ action.
 \item[Get] The $get$ primitive receives the next packet as is
   determined by the $(p^j_i)_{j,i∈ℕ}$ matrix, and the number of
-  packets received by the $\varid{MB}$ is bumped.
+  packets received by the $\varid{MB}$ is incremented.
 \item[Send] The $send$ primitive does not actually change the world,
-  since all the messages that will ever been received are preordained,
-  by assumption. So, from the point of view of this semantics is
-  concerned, $send$ simply frees its argument: the packet is stored in
-  a linear variable, so it's removed from the heap with the linear
-  variable rule, then the send rule drops it.
+  because all the messages that will ever be received are preordained,
+  by assumption. So, from the point of view of this semantics,
+  $send$ simply frees its argument: the packet is stored in
+  a linear variable, so it is removed from the heap with the linear
+  variable rule; then the send rule drops it.
 \end{description}
 
 \begin{figure}
@@ -1354,7 +1354,7 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 World = j:withMailBox k w ⇓ Δ:z}\text{withMailBox}
+    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailBox k w ⇓ Δ:z}\text{withMailBox}
 
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
@@ -1390,9 +1390,9 @@ strengthened semantics differs from \fref{fig:dynamics} in two
 aspects: the evaluation states are typed, and values with statically
 tracked lifetimes (linear values) are put on the linear
 heap.
-
-In order to define the typed semantics, we shall introduce a few
-notations. First we will need a notion of product annotated with the
+%
+In order to define the typed semantics, we introduce a few
+notations. First we need a notion of product annotated with the
 multiplicity of its first component.
 \begin{definition}[Weighted tensors]
 
@@ -1441,8 +1441,8 @@ introduces the states of the strengthened evaluation relation.
 
 \begin{definition}[Strengthened reduction relation]
   We define the strengthened reduction relation, also written $⇓$, as a
-  relation on annotated state. Because $Ξ$, $ρ$, $A$ and $Σ$ will
-  always be the same for related states, we abbreviate
+  relation on annotated states. Because $Ξ$, $ρ$, $A$ and $Σ$ are
+  always the same for related states, we abbreviate
   $$
   (Ξ ⊢ Γ||t :_ρ A,Σ) ⇓ (Ξ ⊢ Δ||z :_ρ A,Σ)
   $$
@@ -1493,7 +1493,7 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule
   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
-  {Ξ ⊢ (Γ,w:_1 : World = j||withMailBox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailBox}
+  {Ξ ⊢ (Γ,w:_1 : \varid{World} = j||withMailBox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailBox}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
@@ -1530,7 +1530,7 @@ it is possible is that, by definition, in $\varid{MkUnre} x$, $x$ \emph{must} b
 in the garbage-collected heap. In other words, when an expression $e :
 \varid{Unrestricted} A$ is forced to the form $\varid{MkUnre} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
-proved in \fref{lem:type-safety} below).
+proved in \fref[plain]{lem:type-safety} below).
 
 The crucial safety property of the strengthened relation is that it
 preserves well-typing of states.
@@ -1545,7 +1545,7 @@ preserves well-typing of states.
   By induction on the typed-reduction.
 \end{proof}
 
-Because of this property we can freely consider the restriction of the
+Thanks to this property we can freely consider the restriction of the
 strengthened relation to well-typed states. For this reason, from now
 on, we only consider well-typed states.
 
@@ -1554,7 +1554,7 @@ on, we only consider well-typed states.
 \end{corollary}
 \begin{proof}
   Remember that we consider only well-typed states because of
-  \fref{lem:type-safety}. Unfolding the typing rules it is easy
+  \fref{lem:type-safety}. By unfolding the typing rules it is easy
   to see that $Ξ ⊢ (Γ,x:_1A=e ||x) :_ωB , Σ$ is not well-typed: it
   would require $x:_1 A = ωΔ$ for some $Δ$, which cannot be.
 \end{proof}
@@ -1575,7 +1575,7 @@ semantics.
   linear, and to drop unnecessary $ω$ bindings.
 \end{definition}
 
-Notice that for a closed term, type assigment reduces to the fact that
+Note that for a closed term, type assigment reduces to the fact that
 $e$ has a type. So we can see type assignment to state as a
 generalisation of type assignment to terms which is preserved during
 the reduction. Let us turn to prove that fact, noticing that type
@@ -1596,17 +1596,17 @@ states.
   reader.
 \end{proof}
 
-From type-safety follows the fact that a completely evaluated program
+From type-safety, it follows that a completely evaluated program
 has necessarily de-allocated all the linear heap. This is a form of
 safety from resource leaks (of course, resource leaks can always be
 programmed in, but the language itself does not leak resources).
 
 \begin{corollary}[Eventual de-allocation of linear values]
-  Let $w:_1 World ⊢ t : World$ be a well-typed term. If
-  $w :_1 World = 0 :t ⇓ Δ: j$, then $Δ$ only contains $ω$-bindings.
+  Let $w:_1 \varid{World} ⊢ t : \varid{World}$ be a well-typed term. If
+  $w :_1 \varid{World} = 0 :t ⇓ Δ: j$, then $Δ$ only contains $ω$-bindings.
 \end{corollary}
 \begin{proof}
-  By \fref{lem:actual_type_safety}, we have $⊢ (Δ||j :_1 World), ⋅
+  By \fref{lem:actual_type_safety}, we have $⊢ (Δ||j :_1 \varid{World}), ⋅
   $. Then the typing rules of $\flet$ and $j$ (see
   \fref{sec:model-io}) conclude: in order for $j$ to be well typed,
   the environment introduced by $\flet Δ$ must be of the form $ωΔ'$.
@@ -1642,7 +1642,7 @@ freed:} \calc{} is safe from use-after-free errors.
 \section{Applications}
 \label{sec:applications}
 
-There is a wealth of literature regarding applying linear typing to
+There is a wealth of literature regarding the application of linear typing to
 many practical problems, for instance: explicit memory
 management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
 array
@@ -1694,36 +1694,34 @@ merely by changing the arrow to a linear one:
 
 \section{Perspectives}
 
-Before we close this article, let us brush over a handful of
-interesting point which have not been addressed in the article so
+Before concluding, let us brush over a handful of
+interesting points which have not been addressed in the article so
 far. This section goes into less details than the rest of the article
 in order to explore the consequences of the design choices behind
 \HaskeLL{}.
 
 \subsection{Negative types}
-
 The reader familiar with linear logic may have noticed the absence of
-the negative conjunction (usually written $A\&B$ in linear
-logic). Negative conjunction represent the kind of choice one has at a
-vending machine: consuming one dime from your wallet, you can choose
-to get either a diet soda or a chocolate snack.
+the additive conjunction (usually written $A\&B$ in linear
+logic). The additive conjunction represents a choice made by the program
+rather than by the context, and in this sense it is dual to the additive disjunction ($⊕$),
+which is the linear equivalent to Haskell's |Either|.
 
-The reason for this absence is twofold: first negative conjunction
-makes more sense in presence of effects which haven't been much
+The reason for this absence is twofold: first, negative conjunction
+makes more sense in presence of effects, which have not been much
 discussed, second it can easily be obtained by a simple and natural
 encoding. Namely
 \begin{code}
   data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
   type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
 \end{code}
-where |(⊕)| is the linear equivalent to Haskell's |Either| (in
-\HaskeLL{} |(⊕)| would be \emph{defined} as |Either| since data types
-are linear by default), and |⊥| is the type of effects. Which leaves
+where  |⊥| is the type of effects. Which leaves
 us with the question: what is the type of effects? The answer is:
-pretty much anything you may want. In general, we want |⊥| to form a
-monoid which plays the role of sequencing effects. Havinb |⊥| being a
+pretty much anything you may want. As a rule, the |⊥| type will form a monoid
+monoid, whose composition plays the role of sequencing effects. Having |⊥| being a
 monoid corresponds to so-called mixed rules in the linear logic
-literature (see \emph{e.g.} \citet{bernardy_composable_2015}).
+literature.
+% (see \textit{e.g.} \citet{bernardy_composable_2015}).
 
 Naturalness of the encoding appears when exploring a simple function
 which builds a negative pair. Here the function leaving the
@@ -1768,42 +1766,39 @@ admits a similar encoding:
 \subsection{Fusion}
 \label{sec:fusion}
 
-One of the benefits we hope to derive from extending Haskell with
-linear type is that linear types serve a programmer-facing interface to
-fusion and inlining. The idea behind using linear types as such is
-that since a linear function promises to use its argument exactly once,
-linear functions are always safe to inline.
+Linear types can be used as a programmer-facing interface to fusion
+and inlining. Indeed, because a linear function promises to use its
+argument exactly once, linear functions are always safe to inline:
+doing so will not worsen the program performance.
 
-An exploration of this idea in the context of data-parallel
-programming can be found in \citet{bernardy_composable_2015}. But
-closer to our immediate concerns is \textsc{ghc}'s cardinality
-analysis~\cite{sergey_cardinality_2014}. \textsc{Ghc} deploys this
-cardinality analysis specifically because inlining is not always a
-correct operation with respect to the cost semantics, so such
-cardinality knowledge is necessary to be able to perform inlining
-optimisations.
+% An exploration of this idea in the context of data-parallel
+% programming can be found in \citet{bernardy_composable_2015}.
 
-But, if you squint just right, you will notice that the abstract
-domain presented by \citet{sergey_cardinality_2014} is essentially the
-same as our multiplicity annotations. They have an extra $0$
-cardinality for unused variables, but we need a $0$ multiplicity
-anyway, in a practical implementation, in order to accommodate
-\textsc{ghc}'s dependent types~\cite{mcbride_rig_2016}.
+Usually, inlining and fusion work as an optimisation.  For example,
+\textsc{Ghc} deploys a cardinality
+analysis~\cite{sergey_cardinality_2014} which determines how many
+times function uses their arguments (essentially, our
+multiplicities). Such an analysis is necessarily a heuristic (the
+problem is undecidable). Additionally, to be effective it must analyse
+a large number of functions at once. Consequently, it is very hard for
+the progammer to write efficient code by relying on such optimisation:
+a small, local, seemingly innocuous change can have rippling effects
+throughout the program. In constrast, linear types can be used to
+\emph{declare} cardinalities, and thus force the compiler to behave in
+a certain way.
 
-It will require significantly more implementation effort than just
-evolving the type system, so we do not plan to make such an extension
-immediately. But integrating the type system and the cardinality
-analysis is a next step which we are intent on achieving.
+The implementation of the interaction between cardinality and multiplicities
+is left as future work, as it requires a significant effort.
 
 \subsection{Extending multiplicities}
 \todo{More multiplicities, reference to literature}
 
 For the sake of this article, we use only $1$ and $ω$ as
-possibilities. We've already mentioned that we also need $0$ because
-of dependent types. But \calc{} can readily be extended to more
-multiplicities. In fact the articles from which we drew most
-inspiration in this design~\cite{ghica_bounded_2014,mcbride_rig_2016}
-have an abstract set of multiplicities.
+possibilities.  In fact, \calc{} can readily be extended to more
+multiplicities: we can follow \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016} which work with abstract sets of
+multiplicities.  In particular, in order to support dependent types,
+we additionally need a $0$ multiplicity.
 
 Applications of multiplicities beyond linear logic seem to often have
 too narrow a focus to have their place in a general purpose language
@@ -1822,7 +1817,7 @@ arguments which can be used \emph{at most once}).
 The general setting for \calc{} is an ordered-semiring of
 multiplicities (with a join operation for type inference). The rules
 are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
-does not work for $q=0$ (in particular we see that we cannot
+must exclude $q=0$ (in particular we see that we cannot
 substitute multiplicity variables by $0$). The variable rule is
 modified as:
 $$
