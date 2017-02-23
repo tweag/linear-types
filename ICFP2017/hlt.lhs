@@ -1700,59 +1700,37 @@ far. This section goes into less details than the rest of the article
 in order to explore the consequences of the design choices behind
 \HaskeLL{}.
 
-\subsection{Negative types}
-The reader familiar with linear logic may have noticed the absence of
-the additive conjunction (usually written $A\&B$ in linear
-logic). The additive conjunction represents a choice made by the program
-rather than by the context, and in this sense it is dual to the additive disjunction ($⊕$),
-which is the linear equivalent to Haskell's |Either|.
+\subsection{Protocols and negative types}
+It is well known that concurrent programs can be conveniently encoded
+by using continuations. By using types, we can additionally verify
+that the protocols match: namely, if a program $p$ implements a
+protocol $P$, then a program $p'$ which has the dual type ($P^⊥$) is
+guaranteed to communicate with $p$ without deadlock. In ML-family
+languages, the dual can be represented simply by an arrow to to $⊥$:
+$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
+communication on a channel).  All effectful programs must then use CPS
+so they eventually terminate with an effect. An issue of such encoding
+is that a continuation can be called several times, which can be
+problematic because the order of the protocol is not respected. Thanks
+to linear types, we can solve the problem simply by encoding the dual
+as a linear arrow: $P^⊥ = P ⊸ ⊥$.
 
-The reason for this absence is twofold: first, negative conjunction
-makes more sense in presence of effects, which have not been much
-discussed, second it can easily be obtained by a simple and natural
-encoding. Namely
+Some programming languages featuring session types have instead native
+support negation: for each type constructor there is a dual:
+$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
+modelled after classical logics.  Instead, the CPS approaches works
+better for languages bases on gintuitionistic logic, such as
+Haskell. Hence we choose not to support duality specially.
+
+The following example gives a taste of what linear CPS code may look
+like.
 \begin{code}
   data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
   type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
-\end{code}
-where  |⊥| is the type of effects. Which leaves
-us with the question: what is the type of effects? The answer is:
-pretty much anything you may want. As a rule, the |⊥| type will form a monoid
-monoid, whose composition plays the role of sequencing effects. Having |⊥| being a
-monoid corresponds to so-called mixed rules in the linear logic
-literature.
-% (see \textit{e.g.} \citet{bernardy_composable_2015}).
 
-Naturalness of the encoding appears when exploring a simple function
-which builds a negative pair. Here the function leaving the
-context with the choice of ordering two values in either possible
-order:
-\begin{code}
-  pairUp :: a ⊸ b ⊸ (a,b)&(b,a)
-  pairUp a b (Left k)   = k (a,b)
-  pairUp a b (Right k)  = k (b,a)
-\end{code}
-So negative pairs are built by pattern matching on the context. Which
-is very close to the way negative pairs are constructed in sequent
-calculus presentations of linear logic (\emph{e.g.}
-\citet{curien_focus_2010})
-
-In the rare case where a pure version of negative pairs is needed, it
-can be obtained thanks to higher-rank polymorphism:
-\begin{code}
-  type A&B = forall k. ((A⊸k)⊕(B⊸k))⊸k
-\end{code}
-This type correspond to some kind of lazy pairs as the data is
-computed on demand, but it is not lazy in the sense that the result is
-memoised: in \HaskeLL{} lazy pairs in that latter sense are of type
-|Unrestricted (A⊗B)| (see discussion of the case rule in
-\fref{sec:typing}).
-
-Much of the same can be said about negative disjunction, which could
-better be called symmetrised function type. Negative disjunction
-admits a similar encoding:
-\begin{code}
-  type A⅋B = ((A⊸⊥)⊗(B⊸⊥))⊸⊥
+if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
+if' True   p k = p (Left   k)
+if' False  p k = p (Right  k)
 \end{code}
 
 \subsection{Linear values in a pure context}

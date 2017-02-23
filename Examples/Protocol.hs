@@ -11,7 +11,7 @@ import Data.Monoid
 -- Broken man's linear types.
 type a ⊗ b = (a,b)
 type a ⊸ b = a -> b
-
+infixr ⊸
 type Effect = IO () -- for simplicity
 -- instance Monoid Effect
 
@@ -56,3 +56,9 @@ exampleServer client = case client of
 
 
 -- See 'StorageServer.hs' for a more realistic server.
+
+type a & b = N (Either (N a) (N b))
+
+if_ :: Bool ⊸ (a & a) ⊸ (a ⊸ Effect) ⊸ Effect
+if_ True  p k = p (Left  k)
+if_ False p k = p (Right k)
