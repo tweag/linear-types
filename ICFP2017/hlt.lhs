@@ -1769,7 +1769,6 @@ The implementation of the interaction between cardinality and multiplicities
 is left as future work, as it requires a significant effort.
 
 \subsection{Extending multiplicities}
-\todo{More multiplicities, reference to literature}
 
 For the sake of this article, we use only $1$ and $ω$ as
 possibilities.  In fact, \calc{} can readily be extended to more
