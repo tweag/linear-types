@@ -686,20 +686,28 @@ with multiplicity $ω$---through which {\em no} linear value is reachable
 (by the invariant of \fref{sec:invariant}).
 Such data types are, in fact, the only way to
 signify unrestricted results. For example, the following function
-effectively turns a boolean with multiplicity 1 into a boolean with
-multiplicity $ω$:
+effectively turns a list with multiplicity $1$ into a list with
+multiplicity $ω$:\unsure{or |copy :: (a⊸Unrestricted a) ⊸ [a] ⊸
+  Unrestricted [a]|?}
 \begin{code}
-  copy :: Bool ⊸ Unrestricted Bool
-  copy True   = MkUnre True
-  copy False  = MkUnre False
+  copy :: [Bool] ⊸ Unrestricted [Bool]
+  copy (True:l)   = MkUnre (True:l')   where MkUnre l' = copy l
+  copy (False:l)  = MkUnre (False:l')  where MkUnre l' = copy l
 \end{code}
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
 of |Bool| even when it is promoted, whereas |copy| \emph{always}
 returns an unrestricted value, regardless of the multiplicity of its
-argument.  \todo{Add example: |f xs = ys ++ ys where Un ys = copy
-  xs|. JP: I tried to do this for xs::[Int], but then we have some
-  contortions for the Ints. I stand my ground: it's easier to justify with a typeclass.}
+argument.
+
+With the |copy| function returning an |Unrestricted| result we can
+write the following linear function, which passes a linear list by
+copy to an unrestricted function (not copying the list would violate
+linearity).
+\begin{code}
+  f :: [Bool] ⊸ [Bool]
+  f xs = cycle ys where MkUnre ys = copy xs
+\end{code}
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
