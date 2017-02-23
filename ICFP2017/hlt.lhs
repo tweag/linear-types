@@ -1712,7 +1712,6 @@ merely by changing the arrow to a linear one:
 \section{Perspectives}
 
 \todo{combine with conclusions}
-\todo{explain the problem with errors/exception}
 
 Before concluding, let us brush over a handful of
 interesting points which have not been addressed in the article so
@@ -1722,9 +1721,11 @@ in order to explore the consequences of the design choices behind
 
 \subsection{Dealing with exceptions}
 Correctly freeing linear values in the presence of exceptions is a
-difficult problem, that we leave for further work.  Both
-\citet{thrippleton_memory_2007} and \citet{tov_theory_2011} have
-developed solutions that we may be able to leverage.
+difficult problem. Indeed, it is unclear how to account for a linear
+|x| in the expression |error ``oops'' + x|. We leave this problem
+for further work.  Both \citet{thrippleton_memory_2007} and
+\citet{tov_theory_2011} have developed solutions that we may be able
+to leverage.
 
 \subsection{Protocols and negative types}
 It is well known that concurrent programs can be conveniently encoded
