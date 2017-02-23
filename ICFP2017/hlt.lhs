@@ -1807,7 +1807,6 @@ on multiplicities.
 
 \subsection{Regions}
 
-\todo{stack discipline, lifting values to subregion is painful}
 Haskell's |ST| monad~\cite{launchbury_st_1995} taught us a
 conceptually simple approach to lifetimes. By equipping |ST| with a
 region argument |s| and exposing as the only way to get out of |ST|
