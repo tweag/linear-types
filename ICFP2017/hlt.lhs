@@ -566,7 +566,7 @@ If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
   value still cannot {\em assume} that both its inputs are linear.  It may be
   that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
   an important role: by having linear thunks {\em free their own
-    resources}.  Thus the code for (++) needn't change to handle |xs :: _ 1| vs
+    resources}.  Thus the code for |(++)| need not change to handle |xs :: _ 1| vs
   |xs :: _ ω| input scenarios, rather, it merely decomposes lists with |case|,
   entering thunks in the process.}
 
@@ -579,7 +579,7 @@ multiplicity $1$. For example the argument of the function repeating its input
 indefinitely needs to be unrestricted:
 \begin{code}
   cycle :: List a → List a
-  cycle l = l ++ cycle la
+  cycle l = l ++ cycle l
 
   let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
 \end{code}
@@ -1011,11 +1011,12 @@ Concrete multiplicities are either $1$ or $ω$ which stand for linear
 and unrestricted bindings, respectively. For the sake of
 polymorphism, multiplicities are extended with multiplicity
 \emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
+metasyntactic variables \(π\) and \(ρ\)), sum\resolved{We use sums
   nowhere in the examples; shall we remove this? -- [Aspiwack] in the
   case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
   there may indeed be no benefit to formal sums in the scope of this
-  paper}, and product. The complete syntax of multiplicities and
+  paper. JP: in the end it is somewhat ugly to remove sums, and we get to the situation that we can no longer extend to $0$ multiplicities. So let's keep them.},
+and product. The complete syntax of multiplicities and
 contexts can be found in \fref{fig:contexts}.
 
 In addition, multiplicities are equipped with an equivalence relation,
@@ -1789,7 +1790,7 @@ modelled after classical logic.  Instead, the CPS approaches works
 better for languages bases on intuitionistic logic, such as
 Haskell. Hence we choose not to support duality specially.
 
-The following example gives a taste of what linear CPS code may look
+The following example gives a glimpse of what linear CPS code may look
 like.
 \begin{code}
   data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
