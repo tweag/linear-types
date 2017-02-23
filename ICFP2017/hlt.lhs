@@ -680,9 +680,10 @@ multiplicity $ω$:
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
 of |Bool| even when it is promoted, whereas |copy| \emph{always}
-returns an unrestricted value, regardless of the multiplicity of
-its argument.
-\todo{Add example: |f xs = ys ++ ys where Un ys = copy xs|}
+returns an unrestricted value, regardless of the multiplicity of its
+argument.  \todo{Add example: |f xs = ys ++ ys where Un ys = copy
+  xs|. JP: I tried to do this for xs::[Int], but then we have some
+  contortions for the Ints. I stand my ground: it's easier to justify with a typeclass.}
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
