@@ -516,28 +516,6 @@ On the other hand, producing a {\em linear} result from an unrestricted
 However, if an implementation chooses to treat linear values differently at
 runtime, then this change of multiplicity would incur runtime costs.
 
-
-\subsection{TEMP: experimenting}
-
-{Our radical position is that data types in \HaskeLL{} should have {\em linear
-  fields by default}. This includes all standard data type definitions, such as
-pairs and lists:}
-
-\begin{code}
-data (,) a b = (,) a b
-data []  a   = [] | (:) a [a]
-\end{code}
-
-Which, if written in a GADT syntax would use linear arrows:
-
-\begin{code}
-data [] a where
-  []   :: [a]
-  (:)  :: a ⊸ [a] ⊸ [a]
-\end{code}
-
-
-
 \subsection{Linear data types}
 
 \todo{we interpret all arrows in regular Haskell datatypes as linear
@@ -546,8 +524,8 @@ Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
 data List a where
-  []   :: List a
-  (:)  :: a ⊸ List a ⊸ List a
+  []   :: a
+  (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
 That is, given a list |xs| with multiplicity $1$, yield the {\em elements of
   |xs|} with multiplicity $1$.  Thus the above list may contain resources (such
@@ -606,6 +584,71 @@ indefinitely needs to be unrestricted:
   let xs :: _ 1 List Char = cycle ['a','b','c']  -- Valid
 \end{code}
 
+
+% Data constructors add a twist to this story.
+The design of \HaskeLL{} suggests converting most data-type constructors to be
+linear by default (that is, all of their field arguments marked linear). However,
+contrary to plain functions, linear data constructors are not more general than
+constructors with unrestricted arguments.
+
+
+\subsection{Linearity of constructors: the usefulness of unrestricted constructors}
+\label{sec:linear-constructors}
+We have designed \HaskeLL{} to make sure that linear constructors
+correspond to regular Haskell data types when restricted to the
+traditional (non-linear) Haskell fragment. Thus our radical position
+is that data types in \HaskeLL{} should have {\em linear fields when
+  defined not using GADT syntax}, including all standard data type
+definitions, such as pairs and lists (hence our stealing the special
+syntax for lists above). At the risk of labouring the point, pairs thus defined
+\begin{code}
+data (,) a b = (,) a b
+\end{code}
+would use linear arrows in GADT syntax:
+\begin{code}
+data (a,b) where
+  (,) ::  a ⊸ b ⊸ (a,b)
+\end{code}
+But even so,
+constructors with unrestricted arguments add expressiveness to
+\HaskeLL{}. The following data type is the prototypical example of
+data type with non-linear constructors\footnote{The type constructor
+  |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
+  modality written ${!}$ in linear logic.}:
+\begin{code}
+  data Unrestricted a where
+    MkUnre :: a → Unrestricted a
+\end{code}
+The |Unrestricted|
+data type is used to indicate that a linear function returns results
+with multiplicity $ω$---through which {\em no} linear value is reachable
+(by the invariant of \fref{sec:invariant}).
+Such data types are, in fact, the only way to
+signify unrestricted results. For example, the following function
+effectively turns a list with multiplicity $1$ into a list with
+multiplicity $ω$:\unsure{or |copy :: (a⊸Unrestricted a) ⊸ [a] ⊸
+  Unrestricted [a]|?}
+\begin{code}
+  copy :: [Bool] ⊸ Unrestricted [Bool]
+  copy (True:l)   = MkUnre (True:l')   where MkUnre l' = copy l
+  copy (False:l)  = MkUnre (False:l')  where MkUnre l' = copy l
+\end{code}
+We stress that the above is not the same as the linear identity
+function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
+of |Bool| even when it is promoted, whereas |copy| \emph{always}
+returns an unrestricted value, regardless of the multiplicity of its
+argument.
+
+With the |copy| function returning an |Unrestricted| result we can
+write the following linear function, which passes a linear list by
+copy to an unrestricted function (not copying the list would violate
+linearity).
+\begin{code}
+  f :: [Bool] ⊸ [Bool]
+  f xs = cycle ys where MkUnre ys = copy xs
+\end{code}
+
+
 % \subsection{Reachability invariant: no unrestricted→linear pointers}
 % \subsection{Reachability invariant: no pointers to linear objects within unrestricted values}
 \subsection{Reachability invariant}
@@ -658,55 +701,6 @@ linearity, all inputs will have multiplicity $ω$, and transitively all
 expressions can be promoted to $ω$.  Thus in such a context the
 compiler can even hide linearity extensions from the programmer.
 
-\subsection{Linearity of constructors: the usefulness of unrestricted constructors}
-\label{sec:linear-constructors}
-
-% Data constructors add a twist to this story.
-The design of \HaskeLL{} suggests converting most data-type constructors to be
-linear by default (that is, all of their field arguments marked linear). However,
-contrary to plain functions, linear data constructors are not more general than
-constructors with unrestricted arguments.
-%
-In \fref{sec:statics}, we take the necessary steps to make sure
-that linear constructors correspond to regular Haskell data types when
-restricted to the traditional (non-linear) Haskell fragment. But even so,
-constructors with unrestricted arguments add expressiveness to
-\HaskeLL{}. The following data type is the prototypical example of
-data type with non-linear constructors\footnote{The type constructor
-  |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
-  modality written ${!}$ in linear logic.}:
-\begin{code}
-  data Unrestricted a where
-    MkUnre :: a → Unrestricted a
-\end{code}
-The |Unrestricted|
-data type is used to indicate that a linear function returns results
-with multiplicity $ω$---through which {\em no} linear value is reachable
-(by the invariant of \fref{sec:invariant}).
-Such data types are, in fact, the only way to
-signify unrestricted results. For example, the following function
-effectively turns a list with multiplicity $1$ into a list with
-multiplicity $ω$:\unsure{or |copy :: (a⊸Unrestricted a) ⊸ [a] ⊸
-  Unrestricted [a]|?}
-\begin{code}
-  copy :: [Bool] ⊸ Unrestricted [Bool]
-  copy (True:l)   = MkUnre (True:l')   where MkUnre l' = copy l
-  copy (False:l)  = MkUnre (False:l')  where MkUnre l' = copy l
-\end{code}
-We stress that the above is not the same as the linear identity
-function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
-of |Bool| even when it is promoted, whereas |copy| \emph{always}
-returns an unrestricted value, regardless of the multiplicity of its
-argument.
-
-With the |copy| function returning an |Unrestricted| result we can
-write the following linear function, which passes a linear list by
-copy to an unrestricted function (not copying the list would violate
-linearity).
-\begin{code}
-  f :: [Bool] ⊸ [Bool]
-  f xs = cycle ys where MkUnre ys = copy xs
-\end{code}
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
