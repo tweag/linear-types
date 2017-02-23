@@ -1288,11 +1288,15 @@ $$
 
 In addition to the abstract types $\varid{World}$, $Packet$ and $\varid{MB}$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
-three primitives: |withMailBox|, |get|, and |send| as in
-\fref{sec:packet}. Packets $p^j_i$ are considered
+three primitives (see also \fref{sec:packet}):
+\begin{itemize}
+\item |withMailBox :: (MB ⊸ IO a) ⊸ IO a|
+\item |get :: MB ⊸ (Packet , MB)|
+\item |send :: Packet ⊸ ()|
+\end{itemize}
+Packets $p^j_i$ are considered
 constant.\improvement{reference to primitives which are dropped for
   the sake of simplicity}
-\todo{types of the primitives}
 
 \subsection{Operational semantics}
 
