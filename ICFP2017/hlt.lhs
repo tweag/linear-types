@@ -1718,7 +1718,7 @@ and $p'$ is guaranteed deadlock-free.
 Some programming languages featuring session types have instead native
 support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
 $(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
-modelled after classical logics.  Instead, the CPS approaches works
+modelled after classical logic.  Instead, the CPS approaches works
 better for languages bases on gintuitionistic logic, such as
 Haskell. Hence we choose not to support duality specially.
 
@@ -2065,6 +2065,9 @@ prototype quite lean.
 \bibliographystyle{ACM-Reference-Format.bst}
 
 \end{document}
+% Local Variables:
+% ispell-local-dictionary: "british"
+% End:
 
 %  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
