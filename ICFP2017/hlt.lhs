@@ -795,12 +795,10 @@ which must be used \emph{exactly once} on each code path, and
 \emph{unrestricted}, which can be used an arbitrary number of
 times (including zero).
 
-The best way to think of a linear value is to see it as an object
+The best way to think of linear values is to see them as objects
 that need not be controlled by the garbage collector: \emph{e.g.}
 because they are scarce resources, because they are controlled by
-foreign code, or because it will not actually exist at run
-time because it will be fused away. 
-\rn{Currently this is the 1st mention of fusing}
+foreign code.
 The word \emph{need} matters here:
 because of polymorphism, it is possible for any given linear value to
 actually be controlled by the garbage collector, however, for most
@@ -811,9 +809,7 @@ values cannot contain linear values,
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand it is
-perfectly fine for linear values to refer to unrestricted ones.
-\rn{Well, ``perfectly fine'' means ``expensive pinning'' in this case, to amke
-  them GC roots.}
+valid for linear values to refer to unrestricted ones: linear values act as GC roots.
 So any
 value containing a linear value must also be linear. Crucially this property
 applies to closures as well (both partial applications and lazy
@@ -821,17 +817,15 @@ thunks): \emph{e.g.} a partial application of a function to a linear
 value is, itself, a linear value (which means that such
 a partial application must be applied exactly once).
 More generally, the application of a function
-to a linear value is linear, since it is, in general, a lazy
-thunk pointing to that linear value. (In fact, even in a strict
-language, the result may contain the linear argument and so must be
-linear.)
+to a linear value is linear, since it is, in general, a closure
+pointing to that linear value.
 
 \subsection{Typing contexts}
 \label{sec:typing-contexts}
 
 \rn{I would like to switch this with 3.2.  Jumping right into typing contexts
 is... well, lacking context.  It would be better to first understand why/where
-we need to add and scale contexts.}
+We need to add and scale contexts.}
 
 In \calc{}, each variable in typing contexts is annotated with a
 multiplicity.
