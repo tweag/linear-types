@@ -17,6 +17,7 @@
 %format ρ = "\rho"
 %format ⅋ = "\parr"
 %subst keyword a = "\mathsf{" a "}"
+%format bigSpace = "\hspace{2cm}"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -1163,14 +1164,8 @@ following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted).
 \begin{code}
-  data (,) a b where
-    (,) : a ⊸ b ⊸ (a,b)
-
-  first  :: (a,b) → a
-  first (a,b)  = a
-
-  snd  :: (a,b) → b
-  snd (a,b)  = b
+  first  ::  (a,b) →   a     bigSpace    snd  ::  (a,b) →   b
+  first      (a,b)  =  a                 snd      (a,b)  =  b
 \end{code}
 
 The reason why this inheritance of multiplicity is valid stems from
