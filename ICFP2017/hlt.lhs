@@ -75,6 +75,7 @@
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
 \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
 \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+\newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
 \newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
@@ -279,7 +280,7 @@
 \section{Introduction}
 
 Can we use Haskell to implement a low-latency server that caches a large dataset
-in memory?  Today, the answer is a clear
+in memory?  Today, the answer is a clear\improvement{adapt to fit the ``running example''?}
 ``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by GC are
 unacceptable.
 % (and would remain so even with incremental GC).
@@ -297,7 +298,7 @@ It would be much better to rule out such problems via a type system.
 % that stays within the high-level language.
 
 Indeed, type systems can be useful for controlling resource usage, not just
-ensuring correctness.  Affine types~\cite{finishme}, linear
+ensuring correctness. \critical{Fix references}  Affine types~\cite{finishme}, linear
 types~\cite{finishme}, permission types \cite{finishme}, and fractional
 permissions \cite{finishme} enable safe manual memory management as well as safe
 handling of scarce resources such as sockets and file handles.  All these
@@ -447,11 +448,11 @@ g k x y = k y x          -- Invalid, x has multiplicity 1
 \end{code}
 % \rn{Would be nice to introduce let here and do this in terms of let.}
 
-Linear values can be construed as containing {\em resources} which must be
-deallocated explicitly, hence can be subject to use-after-free
-errors. A file handle may be such a resource, though in this article
-we will focus on data stored on a foreign heap. The linear type system
-of \HaskeLL{} will ensure both that the deallocation will happen, and
+Linear values can be thought as containing {\em resources} which must be
+deallocated explicitly, and hence can be subject to use-after-free
+errors. A file handle is such a resource, though in this article
+we focus on data stored on a foreign heap. The linear type system
+of \HaskeLL{} ensures both that the deallocation eventually happens, and
 that no use-after-free error occurs.
 
 
@@ -480,22 +481,18 @@ sub-expression is type-checked as if it were constructing {\em one}
 value, but it can be promoted to $ω$ {\bf if all its free variables are
 $ω$-bound}.
 %
- Further, a compiler for \HaskeLL{} could arrange to call a {\em
+ (Further, a compiler for \HaskeLL{} could arrange to call a {\em
   different implementation} of |f| at these two call sites, with the former
 allocating directly on the garbage-collected heap, and the latter creating a
-linear value --- potentially in a separate heap.
+linear value --- potentially in a separate heap.)
 
-% \unsure{JP: I'd prefer a formulation like:}
-%% In general, a function call can always produce {\em one} copy of its output, but
-%% {\em scaling} the call site to produce an unrestricted output also requires
-%% unrestricted {\em input}.
 For example, the following variant of the above
 example would not type check:
 \begin{code}
 let x :: _ 1 Int = 3
     y :: _ ω Int = f x -- not enough x's for this
 \end{code}
-Further, as we will see in the type system of \fref{sec:statics}, this means
+Further, as we explain in \fref{sec:statics}, this means
 that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
 (multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
 
@@ -1692,7 +1689,7 @@ actual industrial code, and it proved quite costly to hunt
 down. \Citet[Section 2.2]{lippmeier_parallel_2016} describe a very
 similar example of unsafety in the library Repa-flow.
 
-Provided we have a sufficiently linear notion of monad (see
+Provided a sufficiently linear notion of monad (see
 \citet[Section 3.3 (Monads)]{morris_best_2016} for a discussion on the
 interaction of monads and linear typing), we can make |uncons| safe
 merely by changing the arrow to a linear one:
