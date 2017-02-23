@@ -562,7 +562,7 @@ If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
 {In operational terms, this design limits the assumptions that the callee can
-  make about its arguments.  An implementation of (|++|) that returns a linear
+  make about its arguments.  An implementation of |(++)| that returns a linear
   value still cannot {\em assume} that both its inputs are linear.  It may be
   that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
   an important role: by having linear thunks {\em free their own
@@ -1719,6 +1719,12 @@ interesting points which have not been addressed in the article so
 far. This section goes into less details than the rest of the article
 in order to explore the consequences of the design choices behind
 \HaskeLL{}.
+
+\subsection{Dealing with exceptions}
+Correctly freeing linear values in the presence of exceptions is a
+difficult problem, that we leave for further work.  Both
+\citet{thrippleton_memory_2007} and \citet{tov_theory_2011} have
+developed solutions that we may be able to leverage.
 
 \subsection{Protocols and negative types}
 It is well known that concurrent programs can be conveniently encoded
