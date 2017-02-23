@@ -519,8 +519,8 @@ runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{TEMP: experimenting}
 
-{Our radical position is that data types in \HaskeLL should have {\em linear
-  fields by default}. Which includes all standard data type definitions, such as
+{Our radical position is that data types in \HaskeLL{} should have {\em linear
+  fields by default}. This includes all standard data type definitions, such as
 pairs and lists:}
 
 \begin{code}
