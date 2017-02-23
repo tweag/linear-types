@@ -490,7 +490,7 @@ For example, the following variant of the above
 example would not type check:
 \begin{code}
 let x :: _ 1 Int = 3
-    y :: _ ω Int = f x -- not enough x's for this
+    y :: _ ω Int = f x -- not enough |x|'s for this
 \end{code}
 Further, as we explain in \fref{sec:statics}, this means
 that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
@@ -1704,8 +1704,7 @@ in order to explore the consequences of the design choices behind
 It is well known that concurrent programs can be conveniently encoded
 by using continuations. By using types, we can additionally verify
 that the protocols match: namely, if a program $p$ implements a
-protocol $P$, then a program $p'$ which has the dual type ($P^⊥$) is
-guaranteed to communicate with $p$ without deadlock. In ML-family
+protocol $P$, then a program $p'$ intended to communicate with $p$ is given the dual type ($P^⊥$).In ML-family
 languages, the dual can be represented simply by an arrow to to $⊥$:
 $P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
 communication on a channel).  All effectful programs must then use CPS
@@ -1713,7 +1712,8 @@ so they eventually terminate with an effect. An issue of such encoding
 is that a continuation can be called several times, which can be
 problematic because the order of the protocol is not respected. Thanks
 to linear types, we can solve the problem simply by encoding the dual
-as a linear arrow: $P^⊥ = P ⊸ ⊥$.
+as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
+and $p'$ is guanranteed deadlock-free.
 
 Some programming languages featuring session types have instead native
 support negation: for each type constructor there is a dual:
