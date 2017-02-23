@@ -2055,13 +2055,10 @@ In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
 multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
 represents the multiplicity of $t$. So, in
 \citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
-required, instead of computer $ωΓ$, it is enough to check that
+required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
-result into the following being derivable:
-$$
-⊢_ω λx. (x,x) : A ⊸ (A⊗A)
-$$
-Which we do not consider desirable: it means that there cannot be
+results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A⊗A)$ being derivable.
+This derivation is not desirable: it means that there cannot be
 reusable definitions of linear functions. In terms of linear logic,
 \citeauthor{mcbride_rig_2016} makes the natural arrow $!(A⊸B) ⟹ !A⊸!B$
 invertible.
@@ -2077,7 +2074,7 @@ multiplicity polymorphic annotation on all the relevant types.
 
 The literature on so-called
 coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
-uses type systems similar to \citeauthor{ghica_bounded_2014}, except
+uses type systems similar to \citeauthor{ghica_bounded_2014}, but
 with a linear arrow and multiplicities carried by the exponential
 modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
 develops a Krivine realisability model for such a calculus. We are not
