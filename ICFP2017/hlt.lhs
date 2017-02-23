@@ -541,8 +541,7 @@ data [] a where
 \subsection{Linear data types}
 
 \todo{we interpret all arrows in regular Haskell datatypes as linear
-  arrows, tuples are linear as well. Inconsistent with p12, search
-  replace tensor-notation}
+  arrows, tuples are linear as well.}
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
@@ -1162,21 +1161,21 @@ will have to go}. But, while in the application rule only the argument is affect
 by $p$, in the case rule, not only the scrutinee but also the variable
 bindings in the branches are affected by $p$. What it means,
 concretely, is that the multiplicity of data is \emph{inherited} by
-its elements: if we have an $A⊗B$ with multiplicity $1$, then we have
+its elements: if we have an $(A,B)$ with multiplicity $1$, then we have
 an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
-we have an $A⊗B$ with multiplicity $ω$ then we have an $A$ with
+we have an $(A,B)$ with multiplicity $ω$ then we have an $A$ with
 multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted).
 \begin{code}
-  data (⊗) a b where
-    (,) : a ⊸ b ⊸ a⊗b
+  data (,) a b where
+    (,) : a ⊸ b ⊸ (a,b)
 
-  first  :: a⊗b → a
+  first  :: (a,b) → a
   first (a,b)  = a
 
-  snd  :: a⊗b → b
+  snd  :: (a,b) → b
   snd (a,b)  = b
 \end{code}
 
@@ -2071,7 +2070,7 @@ represents the multiplicity of $t$. So, in
 \citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
 required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
-results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A⊗A)$ being derivable.
+results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
 This derivation is not desirable: it means that there cannot be
 reusable definitions of linear functions. In terms of linear logic,
 \citeauthor{mcbride_rig_2016} makes the natural arrow $!(A⊸B) ⟹ !A⊸!B$
@@ -2081,7 +2080,8 @@ In that respect, our system is closer to
 \citeauthor{ghica_bounded_2014}'s. What we keep from
 \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
 \fref{sec:statics}), which can be phrased in terms of linear logic as
-making the natural arrow $!A⊗!B ⟹ !(A⊗B)$ invertible. This choice is
+making the natural arrow $!A⊗!B ⟹ !(A⊗B)$\unsure{Should we use the
+  notations from the article here? |Unrestricted| and |(,)|} invertible. This choice is
 unusual from a linear logic perspective, but it is the key to be able
 to use types both linearly an unrestrictedly without intrusive
 multiplicity polymorphic annotation on all the relevant types.
