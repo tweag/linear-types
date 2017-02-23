@@ -682,10 +682,10 @@ buffers data in memory before sending it out to receivers.
 %% some kind of routing application: you receive packets on some mailbox, and you
 %% have to send them away in a way that maximises efficiency.
 %
-For simplicity, we consider a software-routing application that maintains
+For simplicity, we consider a message-routing application that maintains
 messages in a priority queue before dequeuing them and sending them on to their
 destination.  But in general, this application is representative of a general
-class of low-latency servers of in-memory data---such as memcached.
+class of low-latency servers of in-memory data---such as {\sc memcached}.\improvement{ref?}
 
 In these applications, we need to manage both (1) message contents, and (2) a
 data structure such as a priority queue that stores our data in memory.  First,
@@ -703,7 +703,7 @@ keeping large data structures off of the GC heap.
 For simplicity, we assume that creating a new ``mailbox'' (priority queue)
 automatically connects it to a network interface such that it will receive
 messages directed to the current network node.  The application receives a
-single, {\em linear} handle on the mailbox and must {\em return} that handle 
+single, {\em linear} handle on the mailbox and must {\em close} that handle
 to deallocate the data structure:
 
 \begin{code}
@@ -711,26 +711,27 @@ to deallocate the data structure:
   close      :: MB ⊸ ()
 \end{code}
 
-Here |close| could be in the IO monad but it is not necessary --- linearity will
-sequence it within the computation.  This is because |close|'s result must be
-consumed with |case|, i.e. ``|case close mb of () -> e1|''.  Receiving and
-sending packets can likewise live outside of IO, and are ultimately part of the
-IO action created with |withMailBox|:
+Here |close| could be in the IO monad but it is not necessary --- linearity ensures
+proper sequencing within the computation.  Indeed, |close|'s result must be
+consumed with |case|, i.e. ``|case close mb of () -> e1|'' before we can |return| any result.
+Receiving and
+sending packets can likewise live outside of |IO|, and are ultimately part of the
+|IO| action created with |withMailBox|:
 
 \begin{code}
-  get     :: MB ⊸ (Packet,MB)
-  send    :: Packet ⊸ ()  
+  get     :: MB ⊸ (Packet ⊗ MB)
+  send    :: Packet ⊸ ()
 \end{code}
 
-|get| returns the highest priority message, whereas |send| forwards it on the
+The |get| function returns the highest priority message, whereas |send| forwards it on the
 network, if desired.
 %
 We elide the insert operation used to populate the mailbox when network events
 occur.  Rather, from our perspective, the mailbox fills up asynchronously, but
-because |MB| is linear, it can be stored outside of the GC heap and not traced.
+because |MB| is linear, it can be stored outside of the GC heap and not traced\unsure{JP: I don't understand what 'traced' means here.}.
 
-Further, when calling |get| and |send|, |Packet| need never be copied;
-it can be shuffled between the network interface card, to the mailbox, and then
+Further, when calling |get| and |send|, |Packet|s never need to be copied:
+they can be shuffled between the network interface card, to the mailbox, and then
 to the linear calling context of |send| all by reference.  In fact, it can be
 disassembled into a bytestring without copying:
 
@@ -740,7 +741,7 @@ disassembled into a bytestring without copying:
 \end{code}
 
 Instead, |read| can use the same storage to back the |ByteString|.  If the
-packet should be dropped, the bytestring can in turn be destroyed.  If, after
+packet should be dropped, the |Bytestring| can in turn be destroyed (by using a free function that we do not show here).  If, after
 inspection, it should be passed on, then it can be reassembled into a packet
 with |unread|.
 
@@ -749,7 +750,7 @@ with |unread|.
 the more traditional approach of using FFI pointers directly to refer to packets
 and mailboxes, together with {\em finalisers} to free those foreign pointers
 once the GC determines they are unreachable (|ForeignPtr| in Haskell).
-Unfortunately, his approach poses both safety and performance problems.
+This approach poses both safety and performance problems.
 %
 A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
 object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
@@ -758,11 +759,11 @@ eventually, nondeterministically be freed by garbage collection.
 %
 If we use finalisers for |Packet|s after they are dequeued from the mailbox,
 then we lack the ability to transfer ownership of the |Packet|s storage space
-upon |send|.  That is, we have no way to know at the point of |send| whether it
-is truly the last reference to the pointer, which isn't determined until a
-global GC.  Finally, if we want to manage a large number of linear objects,
+upon |send|.  That is, wend |send| is executed there is way to know at whether its argument
+is truly the last reference to the pointer, which is not determined until a
+global GC.  Finally, if we were to manage a large number of linear objects,
 storing the proxy objects would cause the GC heap to grow proportionally to the
-number of linear objects!
+number of linear objects, and so would the GC pauses.
 
 
 %% \todo{explain \textsc{api}}
