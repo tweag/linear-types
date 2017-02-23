@@ -519,8 +519,6 @@ runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{Linear data types}
 
-\todo{we interpret all arrows in regular Haskell datatypes as linear
-  arrows, tuples are linear as well.}
 Using the new linear arrow, we can define a linear version of the list
 type, as follows:
 \begin{code}
