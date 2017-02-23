@@ -820,76 +820,6 @@ More generally, the application of a function
 to a linear value is linear, since it is, in general, a closure
 pointing to that linear value.
 
-\subsection{Typing contexts}
-\label{sec:typing-contexts}
-
-\rn{I would like to switch this with 3.2.  Jumping right into typing contexts
-is... well, lacking context.  It would be better to first understand why/where
-We need to add and scale contexts.}
-
-In \calc{}, each variable in typing contexts is annotated with a
-multiplicity.
-Concrete multiplicities are either $1$ or $ω$ which stand for linear
-and unrestricted bindings, respectively. For the sake of
-polymorphism, multiplicities are extended with multiplicity
-\emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
-  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
-  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
-  there may indeed be no benefit to formal sums in the scope of this
-  paper}, and product. The complete syntax of multiplicities and
-contexts can be found in \fref{fig:contexts}.
-
-In addition, multiplicities are equipped with an equivalence relation,
-written $(=)$, and defined as follows:
-\begin{definition}[equivalence of multiplicities]
-  \label{def:equiv-mutiplicity}
-  The equivalence of multiplicities is the smallest transitive and
-  reflexive relation, which obeys the following laws:
-\begin{itemize}
-\item $+$ and $·$ are associative and commutative
-\item $1$ is the unit of $·$
-\item $·$ distributes over $+$
-\item $ω · ω = ω$
-\item $1 + ω = ω$
-\item $1 + 1 = ω$
-\item $ω + ω = ω$
-\end{itemize}
-\end{definition}
-Thus, multiplicities form a semi-ring (without a zero), which extends to a
-module structure on typing contexts as follows.
-
-\begin{definition}[Context addition]~
-  \begin{align*}
-    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
-    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
-    () + Δ &= Δ
-  \end{align*}
-\end{definition}
-Context addition is total: if a variable occurs in both operands the
-first rule applies (with possible re-ordering of bindings in $Δ$), if
-not the second or third rule applies.
-
-\begin{definition}[Context scaling]
-  \begin{displaymath}
-    p(x :_q A, Γ) =  x :_{pq} A, pΓ
-  \end{displaymath}
-\end{definition}
-
-\begin{lemma}[Contexts form a module]
-  The following laws hold:
-  \begin{align*}
-    Γ + Δ &= Δ + Γ\\
-    p (Γ+Δ) &= p Γ + p Δ\\
-    (p+q) Γ &= p Γ+ q Γ \\
-    (pq) Γ &= p (q Γ)\\
-    1 Γ &= Γ
-  \end{align*}
-\end{lemma}
-
-The equivalence relation is lifted to contexts in the obvious way. In
-the typing rules contexts can always be substituted for other
-equivalent contexts.
 \subsection{Typing}
 \label{sec:typing}
 
@@ -897,8 +827,7 @@ The static semantics of \calc{} is expressed in terms of the
 familiar-looking judgement \(Γ ⊢ t : A\). Its meaning however, may be
 less familiar. The judgement \(Γ ⊢ t : A\) ought to be read as
 follows: the term $t$ builds \emph{exactly one} $A$, and consumes all
-of $Γ$, with the multiplicities specified.  This section precisely defines the
-typing judgement.
+of $Γ$.  This section precisely defines the syntax of types and the typing judgement.
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -1057,6 +986,77 @@ context, especially in the case of applications.\unsure{[aspiwack]
   \label{fig:typing}
 \end{figure}
 
+\subsection{Contexts}
+\label{sec:typing-contexts}
+Most typing rules mutiply contexts by a multiplicity. In this
+subsection we explain what this means and in general discuss the
+structure of contexts.
+
+In \calc{}, each variable in typing contexts is annotated with a
+multiplicity.
+Concrete multiplicities are either $1$ or $ω$ which stand for linear
+and unrestricted bindings, respectively. For the sake of
+polymorphism, multiplicities are extended with multiplicity
+\emph{expressions}, which contain variables (ranged over by the
+metasyntactic variables \(π\) and \(ρ\)), sum\improvement{We use sums
+  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
+  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
+  there may indeed be no benefit to formal sums in the scope of this
+  paper}, and product. The complete syntax of multiplicities and
+contexts can be found in \fref{fig:contexts}.
+
+In addition, multiplicities are equipped with an equivalence relation,
+written $(=)$, and defined as follows:
+\begin{definition}[equivalence of multiplicities]
+  \label{def:equiv-mutiplicity}
+  The equivalence of multiplicities is the smallest transitive and
+  reflexive relation, which obeys the following laws:
+\begin{itemize}
+\item $+$ and $·$ are associative and commutative
+\item $1$ is the unit of $·$
+\item $·$ distributes over $+$
+\item $ω · ω = ω$
+\item $1 + ω = ω$
+\item $1 + 1 = ω$
+\item $ω + ω = ω$
+\end{itemize}
+\end{definition}
+Thus, multiplicities form a semi-ring (without a zero), which extends to a
+module structure on typing contexts as follows.
+
+\begin{definition}[Context addition]~
+  \begin{align*}
+    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
+    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
+    () + Δ &= Δ
+  \end{align*}
+\end{definition}
+Context addition is total: if a variable occurs in both operands the
+first rule applies (with possible re-ordering of bindings in $Δ$), if
+not the second or third rule applies.
+
+\begin{definition}[Context scaling]
+  \begin{displaymath}
+    p(x :_q A, Γ) =  x :_{pq} A, pΓ
+  \end{displaymath}
+\end{definition}
+
+\begin{lemma}[Contexts form a module]
+  The following laws hold:
+  \begin{align*}
+    Γ + Δ &= Δ + Γ\\
+    p (Γ+Δ) &= p Γ + p Δ\\
+    (p+q) Γ &= p Γ+ q Γ \\
+    (pq) Γ &= p (q Γ)\\
+    1 Γ &= Γ
+  \end{align*}
+\end{lemma}
+
+The equivalence relation is lifted to contexts in the obvious way. In
+the typing rules contexts can always be substituted for other
+equivalent contexts.
+
+\subsection{Typing rules}
 We are now ready to understand the typing rules of
 \fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
 reads as: the term $t$ consumes $Γ$ and builds an $A$ with
