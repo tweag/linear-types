@@ -1702,7 +1702,7 @@ in order to explore the consequences of the design choices behind
 
 \subsection{Protocols and negative types}
 It is well known that concurrent programs can be conveniently encoded
-by using continuations. By using types, we can additionally verify
+by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
 that the protocols match: namely, if a program $p$ implements a
 protocol $P$, then a program $p'$ intended to communicate with $p$ is given the dual type ($P^⊥$).In ML-family
 languages, the dual can be represented simply by an arrow to to $⊥$:
@@ -1713,10 +1713,10 @@ is that a continuation can be called several times, which can be
 problematic because the order of the protocol is not respected. Thanks
 to linear types, we can solve the problem simply by encoding the dual
 as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
-and $p'$ is guanranteed deadlock-free.
+and $p'$ is guaranteed deadlock-free.
 
 Some programming languages featuring session types have instead native
-support negation: for each type constructor there is a dual:
+support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
 $(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
 modelled after classical logics.  Instead, the CPS approaches works
 better for languages bases on gintuitionistic logic, such as
