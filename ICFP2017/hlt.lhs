@@ -1728,7 +1728,7 @@ However, they come at a significant cost: they are rather difficult to
 use. As a result we have observed companies walking back from this
 type of library to use the simpler, but unsafe Streaming library.
 
-Unsafety of the stream library stems from the |uncons| function (in
+The lack of safety of the stream library stems from the |uncons| function (in
 |Streaming.Prelude|):
 \begin{code}
   uncons :: Monad m => Stream (Of a) m () -> m (Maybe (a, Stream (Of a) m ()))
