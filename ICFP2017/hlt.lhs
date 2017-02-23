@@ -680,9 +680,10 @@ multiplicity $ω$:
 We stress that the above is not the same as the linear identity
 function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
 of |Bool| even when it is promoted, whereas |copy| \emph{always}
-returns an unrestricted value, regardless of the multiplicity of
-its argument.
-\todo{Add example: |f xs = ys ++ ys where Un ys = copy xs|}
+returns an unrestricted value, regardless of the multiplicity of its
+argument.  \todo{Add example: |f xs = ys ++ ys where Un ys = copy
+  xs|. JP: I tried to do this for xs::[Int], but then we have some
+  contortions for the Ints. I stand my ground: it's easier to justify with a typeclass.}
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
@@ -1750,7 +1751,6 @@ merely by changing the arrow to a linear one:
 \section{Perspectives}
 
 \todo{combine with conclusions}
-\todo{explain the problem with errors/exception}
 
 Before concluding, let us brush over a handful of
 interesting points which have not been addressed in the article so
@@ -1760,9 +1760,11 @@ in order to explore the consequences of the design choices behind
 
 \subsection{Dealing with exceptions}
 Correctly freeing linear values in the presence of exceptions is a
-difficult problem, that we leave for further work.  Both
-\citet{thrippleton_memory_2007} and \citet{tov_theory_2011} have
-developed solutions that we may be able to leverage.
+difficult problem. Indeed, it is unclear how to account for a linear
+|x| in the expression |error ``oops'' + x|. We leave this problem
+for further work.  Both \citet{thrippleton_memory_2007} and
+\citet{tov_theory_2011} have developed solutions that we may be able
+to leverage.
 
 \subsection{Protocols and negative types}
 It is well known that concurrent programs can be conveniently encoded
