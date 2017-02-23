@@ -688,41 +688,49 @@ its argument.
 \label{sec:packet}
 
 Imagine the following scenario. You are writing a server application that
-buffers data in memory before sending it out to receivers.
+stores data in memory before sending it out to receivers.
+%% %
+%% %% some kind of routing application: you receive packets on some mailbox, and you
+%% %% have to send them away in a way that maximises efficiency.
+%% %
+%% For simplicity, we consider a message-routing application that maintains
+%% messages in a priority queue before dequeuing them and sending them on to their
+%% destination.  
+This is representative of a general
+class of low-latency servers of in-memory data, such as {\sc memcached} \cite{memcached}.
 %
-%% some kind of routing application: you receive packets on some mailbox, and you
-%% have to send them away in a way that maximises efficiency.
+As an example, let's consider an application where the data
+manipulated are simply packets.  In this scenario, we first need to read packets
+from, and send them to, network interfaces.  Indeed, linearity can help with
+{\em copy-free} hand-off of packets between network interfaces and in-memory data
+structures.
 %
-For simplicity, we consider a message-routing application that maintains
-messages in a priority queue before dequeuing them and sending them on to their
-destination.  But in general, this application is representative of a general
-class of low-latency servers of in-memory data---such as {\sc memcached}.\improvement{ref?}
+For example, let's assume that the user can acquire a linear handle on a {\em
+  mailbox} which allows them to dequeue messages:
 
-In these applications, we need to manage both (1) message contents, and (2) a
-data structure such as a priority queue that stores our data in memory.  First,
-linearity can help with copy-free hand-off of messages between network
-interfaces and in-memory data structures.  Second, linearity can also help with
-keeping large data structures off of the GC heap.
+%% In these applications, we need to manage both (1) message contents, and (2) a
+%% data structure such as a priority queue that stores our data in memory.  
 
-%% In order to do that, you do not want to copy the packets out of the mailboxes
-%% when they are received: instead you simply associate a priority to packets and
-%% use a priority queue to reorder messages. The packets are then sent to their
-%% final destination in order of priority (in a realistic situation the priorities
-%% could be deadlines for sending packets and sends could be batched by waiting
-%% until the deadline to actually send packets).
+%% %% In order to do that, you do not want to copy the packets out of the mailboxes
+%% %% when they are received: instead you simply associate a priority to packets and
+%% %% use a priority queue to reorder messages. The packets are then sent to their
+%% %% final destination in order of priority (in a realistic situation the priorities
+%% %% could be deadlines for sending packets and sends could be batched by waiting
+%% %% until the deadline to actually send packets).
 
-For simplicity, we assume that creating a new ``mailbox'' (priority queue)
-automatically connects it to a network interface such that it will receive
-messages directed to the current network node.  The application receives a
-single, {\em linear} handle on the mailbox and must {\em close} that handle
-to deallocate the data structure:
+%% For simplicity, we assume that creating a new ``mailbox'' (priority queue)
+%% automatically connects it to a network interface such that it will receive
+%% messages directed to the current network node.
 
 \begin{code}
   withMailBox :: (MB ⊸ IO a) ⊸ IO a
   close      :: MB ⊸ ()
 \end{code}
 
-Here |close| could be in the IO monad but it is not necessary --- linearity ensures
+The mailbox handle must be returned linearly to a |close| call in order to
+release it.
+%
+Here |close| could be in the IO monad but need not be --- linearity ensures
 proper sequencing within the computation.  Indeed, |close|'s result must be
 consumed with |case|, i.e. ``|case close mb of () -> e1|'' before we can |return| any result.
 Receiving and
@@ -734,16 +742,21 @@ sending packets can likewise live outside of |IO|, and are ultimately part of th
   send    :: Packet ⊸ ()
 \end{code}
 
-The |get| function returns the highest priority message, whereas |send| forwards it on the
+The |get| function returns the next available packet, whereas |send| forwards it on the
 network, if desired.
 %
-We elide the insert operation used to populate the mailbox when network events
-occur.  Rather, from our perspective, the mailbox fills up asynchronously, but
-because |MB| is linear, it can be stored outside of the GC heap and not traced\unsure{JP: I don't understand what 'traced' means here.}.
-
-Further, when calling |get| and |send|, |Packet|s never need to be copied:
+In the simplest case, we could read a message and send it immediately --- without
+any filtering or buffering.
+%
+%% We elide the insert operation used to populate the mailbox when network events
+%% occur.  Rather, from our perspective, the mailbox fills up asynchronously, but
+%% because |MB| is linear, it can be stored outside of the GC heap and not
+%% traced\unsure{JP: I don't understand what 'traced' means here.}. \rn{traced
+%% by the garbage collector}
+%
+When calling |get| and |send|, |Packet|s never need to be copied:
 they can be shuffled between the network interface card, to the mailbox, and then
-to the linear calling context of |send| all by reference.  In fact, it can be
+to the linear calling context of |send| all by reference.  In fact, a packet can be
 disassembled into a bytestring without copying:
 
 \begin{code}
@@ -756,43 +769,29 @@ packet should be dropped, the |Bytestring| can in turn be destroyed (by using a 
 inspection, it should be passed on, then it can be reassembled into a packet
 with |unread|.
 
-
-{\bf Advantages over finalisers:} One may ask what the above API offers beyond
-the more traditional approach of using FFI pointers directly to refer to packets
-and mailboxes, together with {\em finalisers} to free those foreign pointers
-once the GC determines they are unreachable (|ForeignPtr| in Haskell).
-This approach poses both safety and performance problems.
+{\bf Buffering data in memory:}
+% ------------------------------------
+Once we get data from the network, we can pass it linearly into data structures
+to store it for for arbitrary, non-lexical, non-FIFO lifetimes.  Furthermore, we
+can define these data structures directly in linear \HaskeLL{} code.  For
+example, a prioriy queue:
 %
-A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
-object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
-will {\em not} be promptly freed before the end of |withMailBox|, rather it will
-eventually, nondeterministically be freed by garbage collection.
+\begin{code}
+type Priority = Int
+empty  :: PQ a 
+insert :: Priority -> a ⊸ PQ a ⊸ PQ a
+next   :: PQ a ⊸ (a, PQ a)
+\end{code}
 %
-If we use finalisers for |Packet|s after they are dequeued from the mailbox,
-then we lack the ability to transfer ownership of the |Packet|s storage space
-upon |send|.  That is, wend |send| is executed there is way to know at whether its argument
-is truly the last reference to the pointer, which is not determined until a
-global GC.  Finally, if we were to manage a large number of linear objects,
-storing the proxy objects would cause the GC heap to grow proportionally to the
-number of linear objects, and so would the GC pauses.
+Here both queue elements and the queue itself are managed linearly.
+In \fref{sec:applications}, we give an example implementation of these queues in
+\HaskeLL{}, and we discuss the implications for garbage collection overheads.
 
-\todo{priority queue \textsc{api} and a tiny main program, plus an
-  example implementation of priority queue}
-
-%% \todo{explain \textsc{api}}
-%% \hfill\\
-%% \todo{linear queue implementation}
-%% \hfill\\
-%% \todo{elaborate}
+%% \note{Second, linearity can also help with keeping large data structures off of the GC
+%% heap.}
 
 
-%% To add an additional twist to this story, mailboxes are fairly small,
-%% and if the mailbox is full, then further packets are dropped (causing
-%% significant loss of time and bandwidth as packets must be
-%% re-sent). Therefore, packets must be treated as scarce resources and
-%% freed as soon as they have been sent; in particular, freeing the space
-%% for packets cannot be delegated to the garbage collector lest the
-%% precious mailbox space be occupied by dead packets.
+
 
 
 
@@ -1225,7 +1224,7 @@ there must be a single one at link time. In \calc{} the simplest way
 to achieve the same result is to start computation with a $world :_1
 \varid{World}$ in the context.
 
-In general, a toplevel definition of multiplicity $1$ corresponds to
+In general, a top-level definition of multiplicity $1$ corresponds to
 something which must be consumed exactly once at link time, which
 generalises the concept of the |main| function (if only slightly).
 
@@ -1674,8 +1673,47 @@ using the dynamic semantics of \fref{sec:dynamics} to justify the
 memory safety of a foreign heap implemented using a foreign function
 interface.
 
+
 \subsection{Lower the \textsc{gc} pressure}
 \todo{priority queue kept off heap (and evaluation?)}
+
+\note{Haskell code for priority queue}
+
+{\bf Advantages over finalisers:}
+% ------------------------------------
+One may ask what the above API offers beyond
+the more traditional approach of using FFI pointers directly to refer to packets
+and mailboxes, together with {\em finalisers} to free those foreign pointers
+once the GC determines they are unreachable (|ForeignPtr| in Haskell).
+This approach poses both safety and performance problems.
+%
+A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
+object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
+will {\em not} be promptly freed before the end of |withMailBox|, rather it will
+eventually, nondeterministically be freed by garbage collection.
+%
+If we use finalisers for |Packet|s after they are dequeued from the mailbox,
+then we lack the ability to transfer ownership of the |Packet|s storage space
+upon |send|.  That is, wend |send| is executed there is way to know at whether its argument
+is truly the last reference to the pointer, which is not determined until a
+global GC.  Finally, if we were to manage a large number of linear objects,
+storing the proxy objects would cause the GC heap to grow proportionally to the
+number of linear objects, and so would the GC pauses.
+
+\todo{priority queue \textsc{api} and a tiny main program, plus an
+  example implementation of priority queue}
+
+
+%% To add an additional twist to this story, mailboxes are fairly small,
+%% and if the mailbox is full, then further packets are dropped (causing
+%% significant loss of time and bandwidth as packets must be
+%% re-sent). Therefore, packets must be treated as scarce resources and
+%% freed as soon as they have been sent; in particular, freeing the space
+%% for packets cannot be delegated to the garbage collector lest the
+%% precious mailbox space be occupied by dead packets.
+
+
+
 
 \subsection{Safe streaming}
 

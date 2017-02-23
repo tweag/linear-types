@@ -11,7 +11,7 @@ clean:
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
 
-%.pdf: %.tex ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls
+%.pdf: %.tex  ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls
 	latexmk -pdf $*
 
 %.cls: %.ins
