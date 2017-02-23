@@ -1364,8 +1364,10 @@ the new rules
   variable rule; then the send rule drops it.
 \end{description}
 
-\todo{separate proof in a separate section, and move the statements of
-the theorem to the beginning of the section}
+\subsection{Type safety}
+
+\todo{move the statements of the theorem to the beginning of the
+  section}
 
 \begin{figure}
   \begin{mathpar}
