@@ -1704,7 +1704,8 @@ in order to explore the consequences of the design choices behind
 It is well known that concurrent programs can be conveniently encoded
 by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
 that the protocols match: namely, if a program $p$ implements a
-protocol $P$, then a program $p'$ intended to communicate with $p$ is given the dual type ($P^⊥$).In ML-family
+protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
+dual type ($P^⊥$). In ML-family
 languages, the dual can be represented simply by an arrow to to $⊥$:
 $P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
 communication on a channel).  All effectful programs must then use CPS
