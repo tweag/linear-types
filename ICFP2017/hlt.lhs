@@ -516,7 +516,30 @@ On the other hand, producing a {\em linear} result from an unrestricted
 However, if an implementation chooses to treat linear values differently at
 runtime, then this change of multiplicity would incur runtime costs.
 
+
+\subsection{TEMP: experimenting}
+
+{Our radical position is that data types in \HaskeLL should have {\em linear
+  fields by default}. Which includes all standard data type definitions, such as
+pairs and lists:}
+
+\begin{code}
+data (,) a b = (,) a b
+data []  a   = [] | (:) a [a]
+\end{code}
+
+Which, if written in a GADT syntax would use linear arrows:
+
+\begin{code}
+data [] a where
+  []   :: [a]
+  (:)  :: a ⊸ [a] ⊸ [a]
+\end{code}
+
+
+
 \subsection{Linear data types}
+
 \todo{we interpret all arrows in regular Haskell datatypes as linear
   arrows, tuples are linear as well. Inconsistent with p12, search
   replace tensor-notation}
