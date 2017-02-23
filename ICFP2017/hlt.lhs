@@ -1428,7 +1428,7 @@ collected heap while packets are kept in the linear heap.
 This is not a problem in and on itself: pointers to packets may be seen
 as opaque by the garbage collector which will not collect them, so
 that their lifetime is still managed explicitly by the
-programmer. However, in order to prevent use-after-free bug, we must
+programmer. However, in order to prevent use-after-free bugs, we must
 be sure that by the time a packet is sent (hence freed), every extant object in the
 garbage-collected heap which points to that packet must be dead.
 
@@ -1482,9 +1482,9 @@ introduces the states of the strengthened evaluation relation.
   $$
   Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
   bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
-  for $(e_1 {}_{ρ_1}\!, (…, (e_n{}_{ρ_n},())))$, and
+  for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
   $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
-  $A_1{}_{ρ_1}\!⊗(…(A_n{}_{ρ_n}\!⊗()))$.
+  $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
 \end{definition}
 
 \begin{definition}[Strengthened reduction relation]
