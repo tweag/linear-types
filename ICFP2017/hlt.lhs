@@ -2043,20 +2043,20 @@ foreign function interface. This helps make the prototype quite lean.
 \subsection{Dealing with exceptions}
 Exceptions run afoul of linearity. Consider for instance the
 expression |error "oops" + x|, for some linear |x|. Evaluating |x| may
-be required in order to free resources. But |x| will not be evaluated,
+be required in order to free resources, but |x| will not be evaluated,
 hence the resources will linger.
 
 Haskell program can raise exceptions even during the evaluation of
-pure code~\cite{peyton_jones_exceptions_1999}. So we have to take it
+pure code~\cite{peyton_jones_exceptions_1999}, so we have to take it
 into account in order to demonstrate the eventual deallocation of
 resources. Both \citet{thrippleton_memory_2007} and
 \citet{tov_theory_2011} develop solutions, but they rely on effect
-type systems which probably requires too much change to an existing
-compiler, additionally effect type systems would not be compatible
+type systems which probably require too much change to an existing
+compiler. Additionally, effect type systems would not be compatible
 with Haskell's asynchronous exception
 mechanism~\cite{marlow_async_exceptions_2001}.
 
-Since we are using explicit allocators for resources such as
+Because we are using explicit allocators for resources such as
 |withMailbox :: (MB ⊸ IO a) ⊸ IO a|. These allocators can be
 responsible for safe deallocation in response to exceptions,
 internally making use of the bracket operation~\cite[Section
