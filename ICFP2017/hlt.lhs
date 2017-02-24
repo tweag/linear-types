@@ -2105,14 +2105,14 @@ it is pattern matched. Implementing this behaviour is left for future work.
 
 \section{Conclusion}
 
-This paper demonstrates how an existing lazy language, such
+This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
-the language, in the following sense:
+the language, in the sense that:
 \begin{itemize}
 \item Existing programs are valid in the extended language
   \emph{without modification}.
 \item Such programs retain the same semantics.
-\item Furthermore, the performance of existing programs is not affected.
+\item The performance of existing programs is not affected.
 \end{itemize}
 In other words: regular Haskell comes first. Additionally, first-order
 linearly typed functions and data structures are usable directly from
@@ -2130,10 +2130,10 @@ design integrates very well in \textsc{ghc}.
 
 It is worth stressing that, in order to implement foreign data
 structures like we have advocated, in this article, as a means to
-reduce \textsc{gc} pressure and latency, we only need to modify the
-type system: primitives to manipulate foreign data can be implemented
-in libraries using the foreign function interface. This helps make the
-prototype quite lean.
+provide safe access to resources or reduce \textsc{gc} pressure and
+latency, we only need to modify the type system: primitives to
+manipulate foreign data can be implemented in libraries using the
+foreign function interface. This helps make the prototype quite lean.
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{ACM-Reference-Format.bst}
