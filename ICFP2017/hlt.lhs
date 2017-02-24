@@ -583,14 +583,6 @@ indefinitely needs to be unrestricted:
   let xs :: _ 1 [Char] = cycle ['a','b','c']  -- Valid
 \end{code}
 
-
-% Data constructors add a twist to this story.
-The design of \HaskeLL{} suggests converting most data-type constructors to be
-linear by default (that is, all of their field arguments marked linear). However,
-contrary to plain functions, linear data constructors are not more general than
-constructors with unrestricted arguments.
-
-
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:linear-constructors}
 We have designed \HaskeLL{} to make sure that linear constructors
@@ -633,10 +625,10 @@ multiplicity $ω$:\unsure{or |copy :: (a⊸Unrestricted a) ⊸ [a] ⊸
   copy (False:l)  = MkUnre (False:l')  where MkUnre l' = copy l
 \end{code}
 We stress that the above is not the same as the linear identity
-function, |id :: Bool ⊸ Bool|. Indeed, |id| conserves the multiplicity
-of |Bool| even when it is promoted, whereas |copy| \emph{always}
-returns an unrestricted value, regardless of the multiplicity of its
-argument.
+function, |id :: [Bool] ⊸ [Bool]|. Indeed, |id| conserves the
+multiplicity of the input |[Bool]|, whereas |copy| \emph{always}
+returns an unrestricted value even when it is not promoted, regardless
+of the multiplicity of its argument.
 
 With the |copy| function returning an |Unrestricted| result we can
 write the following linear function, which passes a linear list by
@@ -801,7 +793,7 @@ example a priority queue can look like:
 
 insert :: Priority -> a ⊸ PQ a ⊸ PQ a
 insert p x q Empty = Cons p x q
-insert p x (Cons p' x' q') = if p < p' = Cons p x (Cons p' x' q') else Cons p' x' (insert p x q')
+insert p x (Cons p' x' q') = if p < p' then Cons p x (Cons p' x' q') else Cons p' x' (insert p x q')
 next   :: PQ a ⊸ Maybe (a, PQ a)
 next Empty = Nothing
 next (Cons _ x q) = Just (x,q)
