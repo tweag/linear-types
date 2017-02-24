@@ -2054,7 +2054,7 @@ required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
 results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
 This derivation is not desirable: it means that there cannot be
-reusable definitions of linear functions. In terms of linear logic,
+reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
 \citeauthor{mcbride_rig_2016} makes the natural arrow $!(A⊸B) ⟹ !A⊸!B$
 invertible.
 
