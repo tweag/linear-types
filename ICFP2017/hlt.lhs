@@ -704,7 +704,7 @@ intution:
 \item To consume a base type once, like |Int| or |Bytestring|, just evaluate it.
 \item To consume a function value once, call it once, and consume its result once.
 \item To consume a pair once, evaluate it and consume each of its components once.
-\item More geenerally, to consume a value of an algebraic data type once, evaluate
+\item More generally, to consume a value of an algebraic data type once, evaluate
   it and consume all its linear components once.
 \end{itemize}
 
@@ -1311,7 +1311,7 @@ Linear typing gives a much more direct solution to the problem: if the
 |World|s. Namely, it is enough to define |IO| as
 \improvement{Write definition of |IO| in \calc{} syntax}
 \begin{code}
-  data IO0  a = IO0 : World ⊸ a -> IO0 a
+  data IO0  a where IO0 : World ⊸ a -> IO0 a
   type IO   a = World ⊸ IO0 a
 \end{code}
 Notice that the |a| of |IO a| is always unrestricted, so that |IO| has
@@ -1877,7 +1877,7 @@ lot of complications when developed in practice beyond the |ST| monad.
   to lift values from a region to their subregion. But while it solves
   the issue in theory, it is rather hard to use in practice. The
   HaskellR project \todo{cite HaskellR} uses
-  \citeauthor{kiselyov_regions_2008} to safely synchronise values
+  \citeauthor{kiselyov_regions_2008}'s regions to safely synchronise values
   shared between two different garbage collectors. The use of HaskellR
   in an industrial setting demonstrated that the lifting to subregions
   imposes an unreasonable burden on the programmer. By contrast, with
