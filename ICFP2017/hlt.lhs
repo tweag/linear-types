@@ -1761,128 +1761,6 @@ merely by changing the arrow to a linear one:
   uncons :: Monad m => Stream (Of a) m () ⊸ m (Maybe (a, Stream (Of a) m ()))
 \end{code}
 
-\section{Perspectives}
-
-\todo{combine with conclusions}
-
-Before concluding, let us brush over a handful of
-interesting points which have not been addressed in the article so
-far. This section goes into less details than the rest of the article
-in order to explore the consequences of the design choices behind
-\HaskeLL{}.
-
-\subsection{Dealing with exceptions}
-Correctly freeing linear values in the presence of exceptions is a
-difficult problem. Indeed, it is unclear how to account for a linear
-|x| in the expression |error ``oops'' + x|. We leave this problem
-for further work.  Both \citet{thrippleton_memory_2007} and
-\citet{tov_theory_2011} have developed solutions that we may be able
-to leverage.
-
-\subsection{Protocols and negative types}
-It is well known that concurrent programs can be conveniently encoded
-by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
-that the protocols match: namely, if a program $p$ implements a
-protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
-dual type ($P^⊥$). In ML-family
-languages, the dual can be represented simply by an arrow to to $⊥$:
-$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
-communication on a channel).  All effectful programs must then use CPS
-so they eventually terminate with an effect. An issue of such encoding
-is that a continuation can be called several times, which can be
-problematic because the order of the protocol is not respected. Thanks
-to linear types, we can solve the problem simply by encoding the dual
-as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
-and $p'$ is guaranteed deadlock-free.
-
-Some programming languages featuring session types have instead native
-support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
-$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
-modelled after classical logic.  Instead, the CPS approaches works
-better for languages bases on intuitionistic logic, such as
-Haskell. Hence we choose not to support duality specially.
-
-The following example gives a glimpse of what linear CPS code may look
-like.
-\begin{code}
-  data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
-  type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
-
-if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
-if' True   p k = p (Left   k)
-if' False  p k = p (Right  k)
-\end{code}
-
-\subsection{Linear values in a pure context}
-\todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
-  the source below this todo-box)}
-\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Unrestricted} x
-    \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
-    \mathsf{case}_{q} t \mathsf{of} \{\varid{MkUnre} y ↦ u\} ⇓_ρ Θ :
-    z}\text{case-unrestricted}}
-
-\subsection{Fusion}
-\label{sec:fusion}
-
-Linear types can be used as a programmer-facing interface to fusion
-and inlining. Indeed, because a linear function promises to use its
-argument exactly once, linear functions are always safe to inline:
-doing so will not worsen the program performance.
-
-% An exploration of this idea in the context of data-parallel
-% programming can be found in \citet{bernardy_composable_2015}.
-
-Usually, inlining and fusion work as an optimisation.  For example,
-\textsc{Ghc} deploys a cardinality
-analysis~\cite{sergey_cardinality_2014} which determines how many
-times function uses their arguments (essentially, our
-multiplicities). Such an analysis is necessarily a heuristic (the
-problem is undecidable). Additionally, to be effective it must analyse
-a large number of functions at once. Consequently, it is very hard for
-the progammer to write efficient code by relying on such optimisation:
-a small, local, seemingly innocuous change can have rippling effects
-throughout the program. In constrast, linear types can be used to
-\emph{declare} cardinalities, and thus force the compiler to behave in
-a certain way.
-
-The implementation of the interaction between cardinality and multiplicities
-is left as future work, as it requires a significant effort.
-
-\subsection{Extending multiplicities}
-
-For the sake of this article, we use only $1$ and $ω$ as
-possibilities.  In fact, \calc{} can readily be extended to more
-multiplicities: we can follow \citet{ghica_bounded_2014} and
-\citet{mcbride_rig_2016} which work with abstract sets of
-multiplicities.  In particular, in order to support dependent types,
-we additionally need a $0$ multiplicity.
-
-Applications of multiplicities beyond linear logic seem to often have
-too narrow a focus to have their place in a general purpose language
-such as Haskell. \Citet{ghica_bounded_2014} propose to use
-multiplicities to represent real time annotations, and
-\citet{petricek_coeffects_2013} show how to use multiplicities to
-track either implicit parameters (\emph{i.e.} dynamically scoped
-variables) or the size of the history that a dataflow program needs to
-remember. Of these, only the implicit parameters may be of relevance
-to Haskell, but even so, it is probably not desirable.
-
-Nevertheless, more multiplicities may prove useful. For instance we
-may want to consider a multiplicity for affine arguments (\emph{i.e.}
-arguments which can be used \emph{at most once}).
-
-The general setting for \calc{} is an ordered-semiring of
-multiplicities (with a join operation for type inference). The rules
-are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
-must exclude $q=0$ (in particular we see that we cannot
-substitute multiplicity variables by $0$). The variable rule is
-modified as:
-$$
-\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
-$$
-Where the order on contexts is the point-wise extension of the order
-on multiplicities.
-
 \section{Related work}
 
 \subsection{Regions}
@@ -2103,7 +1981,7 @@ supports an implementation where each individual constructor with
 multiplicity 1 can be allocated on a linear heap, and deallocated when
 it is pattern matched. Implementing this behaviour is left for future work.
 
-\section{Conclusion}
+\section{Conclusion and further works}
 
 This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
@@ -2134,6 +2012,119 @@ provide safe access to resources or reduce \textsc{gc} pressure and
 latency, we only need to modify the type system: primitives to
 manipulate foreign data can be implemented in libraries using the
 foreign function interface. This helps make the prototype quite lean.
+
+\subsection{Dealing with exceptions}
+Correctly freeing linear values in the presence of exceptions is a
+difficult problem. Indeed, it is unclear how to account for a linear
+|x| in the expression |error "oops" + x|. We leave this problem
+for further work.  Both \citet{thrippleton_memory_2007} and
+\citet{tov_theory_2011} have developed solutions that we may be able
+to leverage.
+
+\subsection{Protocols and negative types}
+It is well known that concurrent programs can be conveniently encoded
+by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
+that the protocols match: namely, if a program $p$ implements a
+protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
+dual type ($P^⊥$). In ML-family
+languages, the dual can be represented simply by an arrow to to $⊥$:
+$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
+communication on a channel).  All effectful programs must then use CPS
+so they eventually terminate with an effect. An issue of such encoding
+is that a continuation can be called several times, which can be
+problematic because the order of the protocol is not respected. Thanks
+to linear types, we can solve the problem simply by encoding the dual
+as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
+and $p'$ is guaranteed deadlock-free.
+
+Some programming languages featuring session types have instead native
+support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
+$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
+modelled after classical logic.  Instead, the CPS approaches works
+better for languages bases on intuitionistic logic, such as
+Haskell. Hence we choose not to support duality specially.
+
+The following example gives a glimpse of what linear CPS code may look
+like.
+\begin{code}
+  data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
+  type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
+
+if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
+if' True   p k = p (Left   k)
+if' False  p k = p (Right  k)
+\end{code}
+
+\subsection{Linear values in a pure context}
+\todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
+  the source below this todo-box)}
+\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Unrestricted} x
+    \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
+    \mathsf{case}_{q} t \mathsf{of} \{\varid{MkUnre} y ↦ u\} ⇓_ρ Θ :
+    z}\text{case-unrestricted}}
+
+\subsection{Fusion}
+\label{sec:fusion}
+
+Linear types can be used as a programmer-facing interface to fusion
+and inlining. Indeed, because a linear function promises to use its
+argument exactly once, linear functions are always safe to inline:
+doing so will not worsen the program performance.
+
+% An exploration of this idea in the context of data-parallel
+% programming can be found in \citet{bernardy_composable_2015}.
+
+Usually, inlining and fusion work as an optimisation.  For example,
+\textsc{Ghc} deploys a cardinality
+analysis~\cite{sergey_cardinality_2014} which determines how many
+times function uses their arguments (essentially, our
+multiplicities). Such an analysis is necessarily a heuristic (the
+problem is undecidable). Additionally, to be effective it must analyse
+a large number of functions at once. Consequently, it is very hard for
+the progammer to write efficient code by relying on such optimisation:
+a small, local, seemingly innocuous change can have rippling effects
+throughout the program. In constrast, linear types can be used to
+\emph{declare} cardinalities, and thus force the compiler to behave in
+a certain way.
+
+The implementation of the interaction between cardinality and multiplicities
+is left as future work, as it requires a significant effort.
+
+\subsection{Extending multiplicities}
+
+For the sake of this article, we use only $1$ and $ω$ as
+possibilities.  In fact, \calc{} can readily be extended to more
+multiplicities: we can follow \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016} which work with abstract sets of
+multiplicities.  In particular, in order to support dependent types,
+we additionally need a $0$ multiplicity.
+
+Applications of multiplicities beyond linear logic seem to often have
+too narrow a focus to have their place in a general purpose language
+such as Haskell. \Citet{ghica_bounded_2014} propose to use
+multiplicities to represent real time annotations, and
+\citet{petricek_coeffects_2013} show how to use multiplicities to
+track either implicit parameters (\emph{i.e.} dynamically scoped
+variables) or the size of the history that a dataflow program needs to
+remember. Of these, only the implicit parameters may be of relevance
+to Haskell, but even so, it is probably not desirable.
+
+Nevertheless, more multiplicities may prove useful. For instance we
+may want to consider a multiplicity for affine arguments (\emph{i.e.}
+arguments which can be used \emph{at most once}).
+
+The general setting for \calc{} is an ordered-semiring of
+multiplicities (with a join operation for type inference). The rules
+are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
+must exclude $q=0$ (in particular we see that we cannot
+substitute multiplicity variables by $0$). The variable rule is
+modified as:
+$$
+\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
+$$
+Where the order on contexts is the point-wise extension of the order
+on multiplicities.
+
 
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
 \bibliographystyle{ACM-Reference-Format.bst}
