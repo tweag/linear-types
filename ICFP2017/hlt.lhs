@@ -2014,12 +2014,27 @@ manipulate foreign data can be implemented in libraries using the
 foreign function interface. This helps make the prototype quite lean.
 
 \subsection{Dealing with exceptions}
-Correctly freeing linear values in the presence of exceptions is a
-difficult problem. Indeed, it is unclear how to account for a linear
-|x| in the expression |error "oops" + x|. We leave this problem
-for further work.  Both \citet{thrippleton_memory_2007} and
-\citet{tov_theory_2011} have developed solutions that we may be able
-to leverage.
+Exceptions run afoul of linearity. Consider for instance the
+expression |error "oops" + x|, for some linear |x|. Evaluating |x| may
+be required in order to free resources. But |x| will not be evaluated,
+hence the resources will linger.
+
+Haskell program can raise exceptions even during the evaluation of
+pure code~\cite{peyton_jones_exceptions_1999}. So we have to take it
+into account in order to demonstrate the eventual deallocation of
+resources. Both \citet{thrippleton_memory_2007} and
+\citet{tov_theory_2011} develop solutions, but they rely on effect
+type systems which probably requires too much change to an existing
+compiler, additionally effect type systems would not be compatible
+with Haskell's asynchronous exception
+mechanism~\cite{marlow_async_exceptions_2001}.
+
+Since we are using explicit allocators for resources such as
+|withMailbox :: (MB ⊸ IO a) ⊸ IO a|. These allocators can be
+responsible for safe deallocation in response to exceptions,
+internally making use of the bracket operation~\cite[Section
+7.1]{marlow_async_exceptions_2001}. A full justification of this fact
+is left for future work.
 
 \subsection{Protocols and negative types}
 It is well known that concurrent programs can be conveniently encoded
