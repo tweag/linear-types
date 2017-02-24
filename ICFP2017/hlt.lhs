@@ -1399,7 +1399,7 @@ the new rules
 \todo{add `close : MB ⊸ ()` in the semantcs}
 
 While the semantics of \fref{fig:dynamics} describes quite closely
-what is implemented in the \textsc{ghc} extension prototype, it is not
+what our plans for implementation in the \textsc{ghc}, it is not
 convenient for proving properties. There are two reasons to that fact:
 first the semantics follows a different structure than the type system and, also,
 there are pointers from the garbage-collected heap to the linear
