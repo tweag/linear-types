@@ -794,10 +794,17 @@ can define these data structures directly in linear \HaskeLL{} code.  For
 example, a prioriy queue:
 %
 \begin{code}
-type Priority = Int
-empty  :: PQ a 
+  type Priority = Int
+  data PQ a where
+    Empty :: PQ a
+    Cons :: Priority -> a ⊸ PQ a ⊸ PQ a
+
 insert :: Priority -> a ⊸ PQ a ⊸ PQ a
-next   :: PQ a ⊸ (a, PQ a)
+insert p x q Empty = Cons p x q
+insert p x (Cons p' x' q') = if p < p' = Cons p x (Cons p' x' q') else Cons p' x' (insert p x q')
+next   :: PQ a ⊸ Maybe (a, PQ a)
+next Empty = Nothing
+next (Cons _ x q) = Just (x,q)
 \end{code}
 %
 Here both queue elements and the queue itself are managed linearly.
