@@ -800,6 +800,10 @@ managed outside the GC heap.  In \fref{sec:applications}, we discuss
 the implications for garbage collection overheads.\todo{Do we? if so
   refer to subsection}
 
+\todo{tiny ``main'' program}
+
+
+
 %% \note{Second, linearity can also help with keeping large data structures off of the GC
 %% heap.}
 
@@ -1713,10 +1717,6 @@ is truly the last reference to the pointer, which is not determined until a
 global GC.  Finally, if we were to manage a large number of linear objects,
 storing the proxy objects would cause the GC heap to grow proportionally to the
 number of linear objects, and so would the GC pauses.
-
-\todo{priority queue \textsc{api} and a tiny main program, plus an
-  example implementation of priority queue}
-
 
 %% To add an additional twist to this story, mailboxes are fairly small,
 %% and if the mailbox is full, then further packets are dropped (causing
