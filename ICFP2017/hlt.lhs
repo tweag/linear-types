@@ -617,26 +617,20 @@ with multiplicity $ω$---through which {\em no} linear value is reachable
 Such data types are, in fact, the only way to
 signify unrestricted results. For example, the following function
 effectively turns a list with multiplicity $1$ into a list with
-multiplicity $ω$:\unsure{or |copy :: (a⊸Unrestricted a) ⊸ [a] ⊸
-  Unrestricted [a]|?}
+multiplicity $ω$, as long as one can do so for its elements.
 \begin{code}
-  copy :: [Bool] ⊸ Unrestricted [Bool]
-  copy (True:l)   = MkUnre (True:l')   where MkUnre l' = copy l
-  copy (False:l)  = MkUnre (False:l')  where MkUnre l' = copy l
+  copy :: (a⊸Unrestricted a) -> [a] ⊸ Unrestricted [a]
+  copy cpElem (x:xs) = MkUnre (x':xs')   where   MkUnre xs'  = copy    xs
+                                                 MkUnre x'   = cpElem  x
 \end{code}
-We stress that the above is not the same as the linear identity
-function, |id :: [Bool] ⊸ [Bool]|. Indeed, |id| conserves the
-multiplicity of the input |[Bool]|, whereas |copy| \emph{always}
-returns an unrestricted value even when it is not promoted, regardless
-of the multiplicity of its argument.
-
-With the |copy| function returning an |Unrestricted| result we can
-write the following linear function, which passes a linear list by
-copy to an unrestricted function (not copying the list would violate
-linearity).
+We stress that the above does not reduce to the linear identity
+function, |id :: [a] ⊸ [a]|. Indeed, with the |copy| function
+we can write the following linear
+function, which passes a linear list by copy to the unrestricted
+function |cycle| (if one were to replace |copy cpElem| by |id|, linearity would be violated).
 \begin{code}
-  f :: [Bool] ⊸ [Bool]
-  f xs = cycle ys where MkUnre ys = copy xs
+  f :: (a⊸Unrestricted a) -> [a] ⊸ [a]
+  f cpElem xs = cycle ys where MkUnre ys = copy cpElem xs
 \end{code}
 
 
