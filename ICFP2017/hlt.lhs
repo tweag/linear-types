@@ -2100,29 +2100,34 @@ if' False  p k = p (Right  k)
 \subsection{Fusion}
 \label{sec:fusion}
 
-Linear types can be used as a programmer-facing interface to fusion
-and inlining. Indeed, because a linear function promises to use its
-argument exactly once, linear functions are always safe to inline:
-doing so will not worsen the program performance.
+Inlining is a staple of program optimisation exposing opportunities
+for many program transformation including fusion. Not every function
+can be inline without negative effects on performance: inlining a
+function with two use sites of the argument may result in duplicating
+a computation.
 
-% An exploration of this idea in the context of data-parallel
-% programming can be found in \citet{bernardy_composable_2015}.
+In order to discover inlining opportunities \textsc{ghc} deploys a
+cardinality analysis~\cite{sergey_cardinality_2014} which determines
+how many times function uses their arguments. The limitation of such
+an analysis is that it is necessarily heuristic (the problem is
+undecidable). Consequently, it can be hard for the programmer to rely
+on such optimisations: a small, seemingly innocuous change can prevent
+a critical inlining opportunity and have rippling effects throughout
+the program. Hunting down such a performance regression proves very
+painful in practice.
 
-Usually, inlining and fusion work as an optimisation.  For example,
-\textsc{Ghc} deploys a cardinality
-analysis~\cite{sergey_cardinality_2014} which determines how many
-times function uses their arguments (essentially, our
-multiplicities). Such an analysis is necessarily a heuristic (the
-problem is undecidable). Additionally, to be effective it must analyse
-a large number of functions at once. Consequently, it is very hard for
-the progammer to write efficient code by relying on such optimisation:
-a small, local, seemingly innocuous change can have rippling effects
-throughout the program. In constrast, linear types can be used to
-\emph{declare} cardinalities, and thus force the compiler to behave in
-a certain way.
+Linear types can address this issue and serve as a programmer-facing
+interface to inlining: because it is always safe to inline a linear
+function, we can make it part of the \emph{semantics} of linear
+functions that they are always inlined. In fact, the system of
+multiplicity annotation of \calc{} can be faithfully embedded the
+abstract domain presented by \citet{sergey_cardinality_2014}. This
+gives confidence in the fact that multiplicity annotation can serve as
+cardinality \emph{declarations}.
 
-The implementation of the interaction between cardinality and multiplicities
-is left as future work, as it requires a significant effort.
+Formalising and implementing the integration of multiplicity
+annotation in the cardinality analysis is left as future work, as it
+requires a significant effort.
 
 \subsection{Extending multiplicities}
 
