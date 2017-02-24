@@ -1955,7 +1955,7 @@ for fusion than in-place update (\textsc{ghc} has a cardinality
 analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
 wealth of literature detailing the applications of linear
 logic — see \fref{sec:applications}; 4. and desicively, linear type systems are
-conceptually simpler than uniqueness type systems, which gave a
+conceptually simpler than uniqueness type systems, which gives a
 clearer path to implementation in \textsc{ghc}.
 
 \subsection{Linearity as a property of types vs. a property of bindings}
@@ -1969,8 +1969,7 @@ In effect, this imposes a clean separation between the linear world
 and the unrestricted world. An advantage of this approach is that it
 instantiate both to linear types and to uniqueness types depending on
 how they the two worlds relate, and even have characteristics of
-both\footnote{See Edsko de Vries's recent exposition at
-  \url{http://edsko.net/2017/01/08/linearity-in-haskell/}}.
+both\cite{devries_linearity_2017}.
 
 Such approaches have been very successful for theory: see for instance
 the line of work on so-called \emph{mixed linear and non-linear logic}
