@@ -762,6 +762,38 @@ they can be shuffled between the network interface card, to the mailbox, and the
 to the linear calling context of |send| all by reference.  In fact, a packet can be
 disassembled into a bytestring without copying:
 
+{\bf Advantages over finalisers:}
+% ------------------------------------
+One may ask what the above API offers beyond
+the more traditional approach of using FFI pointers directly to refer to packets
+and mailboxes, together with {\em finalisers} to free those foreign pointers
+once the GC determines they are unreachable (|ForeignPtr| in Haskell).
+This approach poses both safety and performance problems.
+%
+A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
+object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
+will {\em not} be promptly freed before the end of |withMailBox|, rather it will
+eventually, nondeterministically be freed by garbage collection.
+%
+If we use finalisers for |Packet|s after they are dequeued from the mailbox,
+then we lack the ability to transfer ownership of the |Packet|s storage space
+upon |send|.  That is, when |send| is executed there is way to know whether its argument
+is truly the last reference to the pointer, which is not determined until a
+global GC.  Finally, if we were to manage a large number of linear objects,
+storing the proxy objects would cause the GC heap to grow proportionally to the
+number of linear objects, and so would the GC pauses.
+
+%% To add an additional twist to this story, mailboxes are fairly small,
+%% and if the mailbox is full, then further packets are dropped (causing
+%% significant loss of time and bandwidth as packets must be
+%% re-sent). Therefore, packets must be treated as scarce resources and
+%% freed as soon as they have been sent; in particular, freeing the space
+%% for packets cannot be delegated to the garbage collector lest the
+%% precious mailbox space be occupied by dead packets.
+
+
+{\bf Buffering data in memory:}
+% ------------------------------------
 \begin{code}
   read    :: Packet ⊸ ByteString
   unread  :: Bytestring ⊸ Packet
@@ -772,8 +804,6 @@ packet should be dropped, the |Bytestring| can in turn be destroyed (by using a 
 inspection, it should be passed on, then it can be reassembled into a packet
 with |unread|.
 
-{\bf Buffering data in memory:}
-% ------------------------------------
 Once we get data from the network, we can pass it linearly into data structures
 to store it for arbitrary, non-lexical, non-FIFO lifetimes.  Furthermore, we
 can define these data structures directly in linear \HaskeLL{} code.  For
@@ -1693,41 +1723,38 @@ interface.
 
 
 \subsection{Lower the \textsc{gc} pressure}
-\todo{priority queue kept off heap (and evaluation?)}
 
-\note{Haskell code for priority queue}
+In a practical implementation of the zero-copy packet example of
+\fref{sec:packet}, the priority queue can easily become a bottleneck
+as it will frequently stay large. We can start by having a less
+obnoxiously naive implementation of queues. But this would not solve
+the issue with which we are concerned in this section: garbage
+collection latency. Indeed, the variance in latency incurred by
+\textsc{gc} pauses can be very costly in distributed application as
+having a large number of processes which may decide to run a long
+pause increasing the probability that at least one is running a pause,
+so waiting on a large number of processes is slowed down (by the
+slowest of them) much more often than a sequential application. This
+phenomenon is known as Little's law~\cite{little_proof_1961}.
 
-{\bf Advantages over finalisers:}
-% ------------------------------------
-One may ask what the above API offers beyond
-the more traditional approach of using FFI pointers directly to refer to packets
-and mailboxes, together with {\em finalisers} to free those foreign pointers
-once the GC determines they are unreachable (|ForeignPtr| in Haskell).
-This approach poses both safety and performance problems.
-%
-A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
-object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
-will {\em not} be promptly freed before the end of |withMailBox|, rather it will
-eventually, nondeterministically be freed by garbage collection.
-%
-If we use finalisers for |Packet|s after they are dequeued from the mailbox,
-then we lack the ability to transfer ownership of the |Packet|s storage space
-upon |send|.  That is, wend |send| is executed there is way to know at whether its argument
-is truly the last reference to the pointer, which is not determined until a
-global GC.  Finally, if we were to manage a large number of linear objects,
-storing the proxy objects would cause the GC heap to grow proportionally to the
-number of linear objects, and so would the GC pauses.
+One solution to this problem is to allocate the priority queue with
+|malloc| instead of using the garbage collector's allocator. Of
+course, uses |malloc| leaves memory safety in the hand of the
+programmer. Fortunately, it turns out that the same arguments we used
+to justify proper deallocation of mailboxes in \fref{sec:dynamics} can
+be used to show that, with linear typing, we can allocate a priority
+queue with |malloc| safely (in effect considering the priority queue
+as a resource). We just need to re the |empty| queue from
+\fref{sec:packet} with a |withQueue :: (PQ a ⊸ IO a) ⊸ IO a| primitive
+in the same style as |withMailBox|.
 
-%% To add an additional twist to this story, mailboxes are fairly small,
-%% and if the mailbox is full, then further packets are dropped (causing
-%% significant loss of time and bandwidth as packets must be
-%% re-sent). Therefore, packets must be treated as scarce resources and
-%% freed as soon as they have been sent; in particular, freeing the space
-%% for packets cannot be delegated to the garbage collector lest the
-%% precious mailbox space be occupied by dead packets.
-
-
-
+We can go even further and allow malloc'd queues to build pure values,
+it is enough to replace the type of |withQueue| as |withQueue :: (PQ a
+⊸ Unrestricted a) ⊸ Unrestricted a)|. Justifying the safety of this
+type requires additional arguments as the result of |withQueue| may be
+promoted (|IO| action are never promoted because of the |World|),
+hence one must make sure that the linear heap is properly emptied,
+which this is implied by the typing rules for |Unrestricted|
 
 \subsection{Safe streaming}
 
@@ -2069,14 +2096,6 @@ if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
 if' True   p k = p (Left   k)
 if' False  p k = p (Right  k)
 \end{code}
-
-\subsection{Linear values in a pure context}
-\todo{Mention the case-unrestricted rule (the case-unrestricted rule can be found in
-  the source below this todo-box)}
-\providecommand\casebangrule{\inferrule{Γ: t ⇓_{q} Δ : \varid{Unrestricted} x
-    \\ Δ : u[x/y] ⇓_ρ Θ : z} {Γ :
-    \mathsf{case}_{q} t \mathsf{of} \{\varid{MkUnre} y ↦ u\} ⇓_ρ Θ :
-    z}\text{case-unrestricted}}
 
 \subsection{Fusion}
 \label{sec:fusion}
