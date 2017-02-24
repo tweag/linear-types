@@ -1722,39 +1722,39 @@ memory safety of a foreign heap implemented using a foreign function
 interface.
 
 
-\subsection{Lower the \textsc{gc} pressure}
+\subsection{Lowering the \textsc{gc} pressure}
 
 In a practical implementation of the zero-copy packet example of
-\fref{sec:packet}, the priority queue can easily become a bottleneck
-as it will frequently stay large. We can start by having a less
-obnoxiously naive implementation of queues. But this would not solve
-the issue with which we are concerned in this section: garbage
+\fref{sec:packet}, the priority queue can easily become a bottleneck,
+because it will frequently stay large. We can start by having a less
+obnoxiously naive implementation of queues, but this optimisation would not solve
+the issue with which we are concerned with in this section: garbage
 collection latency. Indeed, the variance in latency incurred by
-\textsc{gc} pauses can be very costly in distributed application as
+\textsc{gc} pauses can be very costly in a distributed application. Indeed,
 having a large number of processes which may decide to run a long
-pause increasing the probability that at least one is running a pause,
-so waiting on a large number of processes is slowed down (by the
+pause increase the probability that at least one is running a pause.
+Consequently, waiting on a large number of processes is slowed down (by the
 slowest of them) much more often than a sequential application. This
 phenomenon is known as Little's law~\cite{little_proof_1961}.
 
 One solution to this problem is to allocate the priority queue with
 |malloc| instead of using the garbage collector's allocator. Of
-course, uses |malloc| leaves memory safety in the hand of the
-programmer. Fortunately, it turns out that the same arguments we used
+course, using |malloc| leaves memory safety in the hand of the
+programmer. Fortunately, it turns out that the same arguments that we used
 to justify proper deallocation of mailboxes in \fref{sec:dynamics} can
 be used to show that, with linear typing, we can allocate a priority
 queue with |malloc| safely (in effect considering the priority queue
-as a resource). We just need to re the |empty| queue from
-\fref{sec:packet} with a |withQueue :: (PQ a ⊸ IO a) ⊸ IO a| primitive
+as a resource). We just need to replace the |empty| queue function from
+\fref{sec:packet} by a |withQueue :: (PQ a ⊸ IO a) ⊸ IO a| primitive,
 in the same style as |withMailBox|.
 
-We can go even further and allow malloc'd queues to build pure values,
+We can go even further and allow |malloc|'d queues to build pure values:
 it is enough to replace the type of |withQueue| as |withQueue :: (PQ a
 ⊸ Unrestricted a) ⊸ Unrestricted a)|. Justifying the safety of this
 type requires additional arguments as the result of |withQueue| may be
-promoted (|IO| action are never promoted because of the |World|),
+promoted (|IO| action are never promoted because of their |World| parameter),
 hence one must make sure that the linear heap is properly emptied,
-which this is implied by the typing rules for |Unrestricted|
+which is in fact implied by the typing rules for |Unrestricted|.
 
 \subsection{Safe streaming}
 
