@@ -789,9 +789,9 @@ with |unread|.
 {\bf Buffering data in memory:}
 % ------------------------------------
 Once we get data from the network, we can pass it linearly into data structures
-to store it for for arbitrary, non-lexical, non-FIFO lifetimes.  Furthermore, we
+to store it for arbitrary, non-lexical, non-FIFO lifetimes.  Furthermore, we
 can define these data structures directly in linear \HaskeLL{} code.  For
-example, a prioriy queue:
+example a priority queue can look like:
 %
 \begin{code}
   type Priority = Int
@@ -807,9 +807,12 @@ next Empty = Nothing
 next (Cons _ x q) = Just (x,q)
 \end{code}
 %
-Here both queue elements and the queue itself are managed linearly.
-In \fref{sec:applications}, we give an example implementation of these queues in
-\HaskeLL{}, and we discuss the implications for garbage collection overheads.
+Here both queue elements and the queue are intended to be used
+linearly. The above is obviously not efficient, but our point is that
+regular \HaskeLL{} data can be used to point onto data which is
+managed outside the GC heap.  In \fref{sec:applications}, we discuss
+the implications for garbage collection overheads.\todo{Do we? if so
+  refer to subsection}
 
 %% \note{Second, linearity can also help with keeping large data structures off of the GC
 %% heap.}
