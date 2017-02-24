@@ -1732,7 +1732,7 @@ the issue with which we are concerned with in this section: garbage
 collection latency. Indeed, the variance in latency incurred by
 \textsc{gc} pauses can be very costly in a distributed application. Indeed,
 having a large number of processes which may decide to run a long
-pause increase the probability that at least one is running a pause.
+pause increases the probability that at least one is running a pause.
 Consequently, waiting on a large number of processes is slowed down (by the
 slowest of them) much more often than a sequential application. This
 phenomenon is known as Little's law~\cite{little_proof_1961}.
