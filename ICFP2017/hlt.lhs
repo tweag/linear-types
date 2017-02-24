@@ -417,12 +417,12 @@ f x = {- |x| has multiplicity $1$ here -}
 We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
 any number of times, including zero). We call
-a function \emph{linear} if it has type |A -o B| and \emph{unrestricted} if it has
+a function \emph{linear} if it has type |A ⊸ B| and \emph{unrestricted} if it has
 type |A -> B|.
 
-The linear arrow type |A -o B| guarantees that any function with that type will
+The linear arrow type |A ⊸ B| guarantees that any function with that type will
 consume its argument exactly once.
-However, a function of type |A -o B|
+However, a function of type |A ⊸ B|
 \emph{places no requirement on the caller};
 the latter is free to pass either a linear or non-linear value to the function.
 % To clarify the meaning of multiplicities, here are the rules for what is allowed
@@ -466,7 +466,6 @@ g1 k x y = k x y          -- Valid
 g2 k x y = k y x          -- Invalid: fails x's multiplicity guarantee
 g3 k x y = k x (k y y)    -- Valid: y can be passed to linear k
 \end{code}
-% \rn{Would be nice to introduce let here and do this in terms of let.}
 Here |g2| shows that the linear variable |x| cannot be passed to the non-linear
 function |(k y)|.  But the other way round is fine:
 |g3| illustrates that the non-linear variable |y| can be passed
@@ -563,7 +562,10 @@ neither can |xs++ys|: it is thus safe to share |xs++ys|.
 If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
-\simon{I removed a para I don't agree with here.}
+\simon{I removed a para I don't agree with here. — [aspiwack] I agree
+  that it is quite premature: it detailed an implementation strategy
+  for prompt-deallocation of cons cells, but this is something we
+  don't actually touch in the article.}
 % {In operational terms, this design limits the assumptions that the callee can
 %   make about its arguments.  An implementation of |(++)| that returns a linear
 %   value still cannot {\em assume} that both its inputs are linear.  It may be
@@ -659,11 +661,13 @@ value when it consumes it!  We imagine that there there are two heaps: the famil
 \emph{dynamic heap} managed by the garbage collector, and a \emph{linear heap}
 managed by the programmer.
 
-Then we might alocate anf ree objects on the linear heap thus:
+Then we might allocate and free objects on the linear heap thus:
 \begin{code}
-allocT :: (T -o a) -o a
-freeT  :: T -o ()
-\end{code}
+allocT :: (T ⊸ a) ⊸ a
+freeT  :: T ⊸ ()
+\end{code}\unsure{[aspiwack] Should we properly restrict the type of
+  |allocT| so that |allocT id| is not well-typed (which makes it
+  possible to promote |T| and skip deallocation).}
 Here |alloc k| somehow allocates a value of type |T| on the linear heap, and passes it to |k|.
 The continuation |k| must eventually free |T| by calling |free|.
 If there are any \emph{other} ways of
@@ -680,7 +684,9 @@ for. Conversely, a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
 (In a practical implementation which {\em separates} the linear/GC heaps,
   this means that {\em all} pointers to linear values would reside on the stack
-  and in registers, never in the GC heap.)
+  and in registers, never in the GC heap.)\unsure{While there is a
+    sense in which it is true, we contradict this last parenthetic remark
+    in \fref{sec:dynamics}. Should we just remove it?}
 
 \subsection{Linearity polymorphism} \label{sec:lin-poly}
 
@@ -859,9 +865,8 @@ next (Cons _ x q) = Just (x,q)
 Here both queue elements and the queue are intended to be used
 linearly. The above is obviously not efficient, but our point is that
 regular \HaskeLL{} data can be used to point onto data which is
-managed outside the GC heap.  In \fref{sec:applications}, we discuss
-the implications for garbage collection overheads.\todo{Do we? if so
-  refer to subsection}
+managed outside the GC heap. In \fref{sec:lower-gc}, we discuss
+the implications for garbage collection overheads.
 
 \todo{tiny ``main'' program}
 
@@ -1244,17 +1249,6 @@ defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
 backwards compatibility, which is a design goal of \HaskeLL{}.
-
-\rn{Need operational intuition here.. if we create the pair as a linear
-  object, and then we implicitly convert to unrestricted, and then we
-  project... where would the linear->GCd-heap copy happen?
-  — [aspiwack] no copy happens implicitly: the promotion principle
-  (it is an actual rule in typical presentations of linear logic, but
-  not ours since it is part of the application rule and friends)
-  states that knowing how to make a linear something is sufficient to
-  build an unrestricted same-thing (in a scaled context), this is what
-  happens implicitly: you pretend you are building a linear whatever,
-  but turns out you were building an unrestricted whatever all along.}
 
 \section{\calc{} dynamics}
 \label{sec:dynamics}
@@ -1756,6 +1750,7 @@ interface.
 
 
 \subsection{Lowering the \textsc{gc} pressure}
+\label{sec:lower-gc}
 
 In a practical implementation of the zero-copy packet example of
 \fref{sec:packet}, the priority queue can easily become a bottleneck,
