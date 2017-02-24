@@ -83,6 +83,7 @@
 
 % Peanut gallery comments by Ryan:
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
+\newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -285,34 +286,33 @@
 
 Can we use Haskell to implement a low-latency server that caches a large dataset
 in memory?  Today, the answer is a clear\improvement{adapt to fit the ``running example''?}
-``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by GC are
-unacceptable.
+``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by garbage collection are
+unacceptable:
 % (and would remain so even with incremental GC).
 %
-Indeed GC pauses are in general proportional to the size of the heap even if the GC is incremental.,
-Consequently, such an application requires
-managing the largest heap data
-structures outside of the regular heap.  Traditionally, programmers resort to
-pushing the data off-heap manually, accessing it through FFI calls.  Unfortunately this
-common technique poses safety risks: either not enforcing prompt deallocation,
-or allowing use-after-free errors.
+GC pauses are in general proportional to the size of the heap even if the GC is incremental.
+Typically, programmers therefore allocate these large, long-lived data structures
+in manually-managed off-heap memory, accessing it through FFI calls.
+Unfortunately this
+common technique poses safety risks: not enforcing prompt deallocation, space
+leaks (by failure to deallocate at all), or use-after-free errors.
 %% to {\em clients} of the data structure, who may
 %% commit use-after-free errors.
 It would be much better to rule out such problems via a type system.
 % that stays within the high-level language.
 
-Indeed, type systems can be useful for controlling resource usage, not just
+It is well known that type systems can be useful for controlling resource usage, not just
 ensuring correctness. \critical{Fix references}  Affine types~\cite{finishme}, linear
 types~\cite{finishme}, permission types \cite{finishme}, and fractional
 permissions \cite{finishme} enable safe manual memory management as well as safe
 handling of scarce resources such as sockets and file handles.  All these
-approaches are heavily researched, yet these ideas have had relatively little
-effect on programming practice.  Few practical, full-scale languages are
+approaches have been extensively studied, \emph{yet these ideas have had relatively little
+effect on programming practice}.  Few practical, full-scale languages are
 designed from the start with such features.  Rust is the major
 exception~\cite{matsakis_rust_2014}, and in Rust we see one of the attendant
 complications: adding advanced resource-tracking features puts a burden on
-language learners, who pass through an initiation period: ``fighting the borrow
-checker''.
+language learners, who pass through
+an initiation period of ``fighting the borrow checker''.
 
 Could more languages be extended with linear or affine types?  Unfortunately, there has
 not been a clear path to augment preexisting type systems without (1) breaking
@@ -324,60 +324,70 @@ unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
 Yet this approach still divides all types into unrestricted and linear, and adds
 constraints on linearity status to the types of standard
-combinators~---~type-class constraints and complications that the newcomer cannot easily
-ignore, if basic library functions are thus augmented.
+combinators, including type-class constraints and complications that the newcomer cannot easily
+ignore.
 
-We propose a design that leaves most types unmodified, and
-instead associates linearity with {\em binders}, such as ``$\flet x :_{1} T =
+In this paper we propose a new design that leaves most \emph{types} unmodified, and
+instead associates linearity with {\em binders}, such as ``$\flet x \!:_{1}\! T =
 \dots$'', indicating that $x$ must be used exactly once in the body.
 %
 We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
 {\em type}.
 %
 Only function types change to include (optional) linearity constraints on their
-arguments.  Further, even linear
-functions support {\em backwards compatibility} by implicit conversion
-at function call sites.
+arguments.  However, these new linear functions are \emph{backward-compatible}:
+they can be applied to non-linear values as well as linear ones.
 
 % (The intuition is that if {\em any} number of uses is valid, then exactly one use is permitted.)
 % And also there is promotion, let the reader discover how it works in the next section.
 
-We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic ---
-and with it we can enrich standard Haskell Prelude types such as |map| and |++|,
-adding, but not requiring, the possibility of linear uses of those functions.
+We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic.
+With it we can enrich the types of standard Haskell Prelude functions, such as |map| and |++|,
+by adding (but not requiring) the possibility of linear uses of those functions.
 Existing function applications, such as |xs ++ ys|, continue to typecheck as
 before, {\em unless} the inputs happen to be linear values.
 % 
-Indeed, with this approach, a programmer may not need to learn about linearity
+With this approach, a programmer does not need to learn about linearity
 to use linear functions, and they may not even {\em see} linearity information
 unless the appropriate language extension is enabled.
-
 We make the following contributions:
 
-\todo{unlike most system \calc{} has linearity associated to arrows
-  and not to types. Something about reuse of datatypes.}
-\unsure{linearity is usually considered difficult in present of
-  laziness. Contribution: work around this? How do we solve problems
-  Runciman et al p9}
 \begin{itemize}
+\item We present a design for \HaskeLL{}, which offers linear typing in Haskell
+  in a fully backward-compatible way (\fref{sec:programming-intro}). In particular, existing
+  Haskell data types can contain linear values as well as non-linear ones;
+  and linear functions can be applied to non-linear values.
+  Most previous designs force an inconveniently
+  sharp distinction between linear and non-linear code (\fref{sec:related}).
+  Interestingly, our design is fully compatible with laziness, which has
+  typically been challenging for linear systems because of the unpredictable
+  evaluation order of laziness \cite[p9]{runciman-et-al}.
+
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
-  $λ$-calculus with data types. We provide its type system (\fref{sec:statics}),
+  $λ$-calculus with data types (\fref{sec:statics}). We provide its type system,
   highlighting how it is compatible with existing Haskell features,
   including some popular extensions. \Red{(The kind system, constraints, GADTs, and even dependent types)}.
+  A distinctive feature of \calc{} is that linearity appears only bindings
+  and function arrows, rather than pervasively in types.  Also unusually, we can readily
+  support linearity polymorphism (\fref{sec:lin-poly}).
 
 \item We provide a dynamic semantics for \calc{},
-  combining laziness with explicit deallocation of linear data.  In
-  \fref{sec:dynamics} we prove type safety, and, further, that every
-  linear value is eventually deallocated, and never referenced after
+  combining laziness with explicit deallocation of linear data (vref{sec:dynamics}).
+  We prove type safety, of course.  But we also prove that the type system guarantees
+  the key memory-management properties that we seek: that every
+  linear value is eventually deallocated, and is never referenced after
   it is deallocated.
 
-\item \Red{We perform a case study of a low-latency in-memory server (\fref{sec:eval})
-  implemented using our type system.  The runtime uses GHC's standard RTS.
-  Indeed, our goal is to show how linear types can make FFI-based implementations
-  safe.}
-  \rn{Looks like this is going to be removed...}
+% \item \Red{We perform a case study of a low-latency in-memory server (\fref{sec:eval})
+%   implemented using our type system.  The runtime uses GHC's standard RTS.
+%   Indeed, our goal is to show how linear types can make FFI-based implementations
+%  safe.}
+%  \rn{Looks like this is going to be removed...}
+\simon{I removed the case study}
 \end{itemize}
-
+Our work is directly motivated by the needs of large-scale low-latency applications in industrial
+practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
+The literature is dense with related work, which we dicuss in \fref{sec:related}.
 
 %% \note{In interactive low-latency systems (web servers, graphical user
 %%   interfaces, high-speed trading systems, real-time analytics and query
@@ -393,147 +403,144 @@ We make the following contributions:
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
-Before diving into the technical details, we overview 
-\HaskeLL, the proposed design for extending Haskell with linear types,
-through a number of examples.
+We begin with an overview of
+\HaskeLL, our proposed extension of Haskell with linear types.
 %
-First, along with the usual arrow type for intuitionistic functions,
-we propose an additional arrow type for linear arrows, written
-$A ⊸ B$. In the body of a linear function, the type system tracks that
+First, along with the usual arrow type |A -> B|,
+we propose an additional arrow type for \emph{linear arrows}, written
+|A ⊸ B|. In the body of a linear function, the type system tracks that
 there is exactly one copy of the parameter to consume.
 
 \begin{code}
 f :: A ⊸ B
 f x = {- |x| has multiplicity $1$ here -}
 \end{code}
-
+\noindent
 We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
-\emph{any finite number} of times, including zero). We also call
-functions linear if they have type $A ⊸ B$ and unrestricted if they
-have type $A → B$.
+any number of times, including zero). We call
+a function \emph{linear} if it has type |A -o B| and \emph{unrestricted} if it has
+type |A -> B|.
 
-To clarify the meaning of multiplicities, here are the rules for what is allowed
-at call sites:
-\begin{enumerate}
-
-\item An unrestricted (multiplicity $ω$) value
-  \begin{enumerate}
-  \item {\bf can} be passed to a linear function.
-  \item {\bf can} be passed to a unrestricted function.
-  \item {\bf can} be returned by a linear function.
-  \item {\bf can} be returned by a unrestricted function.
-  \end{enumerate}  
-
-\item A linear (multiplicity $1$) value
-  \begin{enumerate}
-  \item  {\bf can} be passed to a linear function.
-  \item  {\bf cannot} be passed to a unrestricted function.
-  \item  {\bf can} be returned by a linear function.
-  \item  {\bf can} be returned by a unrestricted function.
-  \end{enumerate}
-
-% RRN: This looks like a duplicate:
-% \item A linear value {\bf can} be returned by a linear function.
-
-\end{enumerate}
+The linear arrow type |A -o B| guarantees that any function with that type will
+consume its argument exactly once.
+However, a function of type |A -o B|
+\emph{places no requirement on the caller};
+the latter is free to pass either a linear or non-linear value to the function.
+% To clarify the meaning of multiplicities, here are the rules for what is allowed
+% at call sites:
+% \begin{enumerate}
+% 
+% \item An unrestricted (multiplicity $ω$) value
+%   \begin{enumerate}
+%   \item {\bf can} be passed to a linear function.
+%   \item {\bf can} be passed to a unrestricted function.
+%   \item {\bf can} be returned by a linear function.
+%   \item {\bf can} be returned by a unrestricted function.
+%   \end{enumerate}  
+% 
+% \item A linear (multiplicity $1$) value
+%   \begin{enumerate}
+%   \item  {\bf can} be passed to a linear function.
+%   \item  {\bf cannot} be passed to a unrestricted function.
+%   \item  {\bf can} be returned by a linear function.
+%   \item  {\bf can} be returned by a unrestricted function.
+%   \end{enumerate}
+% 
+% % RRN: This looks like a duplicate:
+% % \item A linear value {\bf can} be returned by a linear function.
+% 
+% \end{enumerate}
+% %
+% We stress that all functions can return linear values.  Indeed,
+% conceptually, functions return always \emph{one} result.  Further,
+% when we say that a function is linear, we refer to its domain, not its
+% co-domain: linearity of a function does not influence what it can
+% return.
 %
-We stress that all functions can return linear values.  Indeed,
-conceptually, functions return always \emph{one} result.  Further,
-when we say that a function is linear, we refer to its domain, not its
-co-domain: linearity of a function does not influence what it can
-return.
-
-The same examples can be expressed in code: the function |g| below
-admits the following implementations, but not the last one:
+% The same examples can be expressed in code: the function |g| below
+% admits the following implementations, but not the last one:
+For example, consider these definitions of a function |g|:
 \begin{code}
-f :: a ⊸ a
-g :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
+g1,g2,g3 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 
-g k x y = k (f x) y      -- Valid
-g k x y = k x (f y)      -- Valid
-g k x y = k x y          -- Valid
-g k x y = k y x          -- Invalid, x has multiplicity 1
+g1 k x y = k x y          -- Valid
+g2 k x y = k y x          -- Invalid: fails x's multiplicity guarantee
+g3 k x y = k x (k y y)    -- Valid: y can be passed to linear k
 \end{code}
 % \rn{Would be nice to introduce let here and do this in terms of let.}
-
-Linear values can be thought as containing {\em resources} which must be
-deallocated explicitly, and hence can be subject to use-after-free
-errors. A file handle is such a resource, though in this article
-we focus on data stored on a foreign heap. The linear type system
-of \HaskeLL{} ensures both that the deallocation eventually happens, and
-that no use-after-free error occurs.
-
+Here |g2| shows that the linear variable |x| cannot be passed to the non-linear
+function |(k y)|.  But the other way round is fine:
+|g3| illustrates that the non-linear variable |y| can be passed
+to the linear function |k| respectively.
 
 \subsection{Calling contexts and promotion}\label{sec:calling-contexts}
 
-As in the above example, a given call to |f| can yield either a linear or
-unrestricted value depending on the context in which its called.  For example,
-using a weighted version of |let|, we can write the following:
-%
+The call of a linear function consumes its argument once only if the
+call itself is consumed once.  For example, consider these definitions
+of the same function |g|:
 \begin{code}
-f :: Int ⊸ Int
+f :: a ⊸ a
+g4,g5,g6 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 
-let x :: _ 1 Int = f 3
-    y :: _ ω Int = f 4
-in ...
+g4 k x y = k x (f y)      -- Valid: y can be passed to linear f
+g5 k x y = k (f x) y      -- Valid: k consumes (f x)'s result once
+g6 k x y = k y (f x)      -- Invalid: fails x's multiplicity guarantee
 \end{code}
-%
-Subsequent code in the body can use |y| any number of times but must use |x|
-exactly once. We say that the second call is \emph{promoted} to $ω$.
+In |g5|, the linear |x| can be passed to |f| because the result of |(f x)| is
+consumed linearly by |k|.  But in |g6|, |x| is still passed to the linear function
+|f|, but the call |(f x)| is in a non-linear context, so |x| too is
+used non-linearly and the code is ill-typed.
 
-Indeed, even though the type system assumes that a function produces
-{\em one} copy of its output, any given function call can be promoted
-to an unrestricted call, provided that all the function's (linear)
-arguments are unrestricted in the calling context.  In general, any
-sub-expression is type-checked as if it were constructing {\em one}
+In general, any sub-expression is type-checked as if it were constructing {\em one}
 value, but it can be promoted to $ω$ {\bf if all its free variables are
-$ω$-bound}.
+$ω$-bound}. We will see the specifics in \fref{sec:statics}.
 %
- (Further, a compiler for \HaskeLL{} could arrange to call a {\em
-  different implementation} of |f| at these two call sites, with the former
-allocating directly on the garbage-collected heap, and the latter creating a
-linear value --- potentially in a separate heap.)
-
-For example, the following variant of the above
-example would not type check:
-\begin{code}
-let x :: _ 1 Int = 3
-    y :: _ ω Int = f x -- not enough |x|'s for this
-\end{code}
-Further, as we explain in \fref{sec:statics}, this means
-that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
-(multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
-
-On the other hand, producing a {\em linear} result from an unrestricted
-  function is trivial. (Remember that linearity only concerns the arguments.)
-  Thinking in terms of resources, it
-  is {\em always} safe to view an unrestricted value as linear, because they cannot contain resources. This allows in particular:
-  |let x :: _ ω ... = e1;|$\;\;$|y :: _ 1 ... = x|.
-%% \begin{code}
-%%   let x :: _ ω T = e1
-%%       y :: _ 1 T = x
-%% \end{code}
-However, if an implementation chooses to treat linear values differently at
-runtime, then this change of multiplicity would incur runtime costs.
+% (Further, a compiler for \HaskeLL{} could arrange to call a {\em
+%  different implementation} of |f| at these two call sites, with the former
+% allocating directly on the garbage-collected heap, and the latter creating a
+% linear value --- potentially in a separate heap.)
+% 
+% For example, the following variant of the above
+% example would not type check:
+% \begin{code}
+% let x :: _ 1 Int = 3
+%     y :: _ ω Int = f x -- not enough |x|'s for this
+% \end{code}
+% Further, as we explain in \fref{sec:statics}, this means
+% that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
+% (multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
+% 
+% On the other hand, producing a {\em linear} result from an unrestricted
+%   function is trivial. (Remember that linearity only concerns the arguments.)
+%   Thinking in terms of resources, it
+%   is {\em always} safe to view an unrestricted value as linear, because they cannot contain resources. This allows in particular:
+%   |let x :: _ ω ... = e1;|$\;\;$|y :: _ 1 ... = x|.
+% %% \begin{code}
+% %%   let x :: _ ω T = e1
+% %%       y :: _ 1 T = x
+% %% \end{code}
+% However, if an implementation chooses to treat linear values differently at
+% runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{Linear data types}
 
-Using the new linear arrow, we can define a linear version of the list
-type, as follows:
+Using the new linear arrow, we can define Haskell's list type as follows:
 \begin{code}
 data [a] where
   []   :: a
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
-That is, given a list |xs| with multiplicity $1$, yield the {\em elements of
-  |xs|} with multiplicity $1$.  Thus the above list may contain resources (such
-as file handles) without compromising safety; the type system will ensure that resources in |xs| will be
-eventually deallocated, and that they will not be used after that.
+That is, we give a linear type to the |(:)| data constructor.  This is
+not a new data type: this \emph{is} \HaskeLL{}'s list type, and all
+Haskell functions will work over it perfectly well.  But we can
+\emph{also} use the very same list type to linear resources (such as
+file handles) without compromising safety; the type system will ensure
+that resources in |xs| will be eventually deallocated, and that they
+will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
-be given a more precise type. For example we can write |(++)|
-as follows:
+be given a more precise type. For example we can write |(++)| as follows:
 \begin{code}
 (++) :: [a] ⊸ [a] ⊸ [a]
 []      ++ ys = ys
@@ -546,11 +553,9 @@ nor drop any element in |xs|\footnote{This follows from parametricity.
   consume them, and thus must know their type (or have a type class instance).
   Likewise to copy them.}.
 
-A major benefit of \HaskeLL{} is that one can write linear code
-whenever it is possible, and use it in unrestricted contexts
-anyway. In \HaskeLL{}, giving a more precise type to |(++)|
+But notice that giving a more precise type to |(++)| only
 {\em strengthens} the contract that the implementation of |(++)| must
-satisfy, but it does not restrict its usage. Indeed, it is perfectly
+satisfy; \emph{but it does not restrict its usage}. For example, it is perfectly
 legal to provide an |xs| of multiplicity $ω$ to |(++)| ($1$ is, after
 all, a finite multiplicity). If both |xs| and |ys| have multiplicity
 $ω$, |xs++ys| is \emph{promoted} to multiplicity $ω$. In terms of resources,
@@ -560,14 +565,15 @@ neither can |xs++ys|: it is thus safe to share |xs++ys|.
 If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
 |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
 
-{In operational terms, this design limits the assumptions that the callee can
-  make about its arguments.  An implementation of |(++)| that returns a linear
-  value still cannot {\em assume} that both its inputs are linear.  It may be
-  that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
-  an important role: by having linear thunks {\em free their own
-    resources}.  Thus the code for |(++)| need not change to handle |xs :: _ 1| vs
-  |xs :: _ ω| input scenarios, rather, it merely decomposes lists with |case|,
-  entering thunks in the process.}
+\simon{I removed a para I don't agree with here.}
+% {In operational terms, this design limits the assumptions that the callee can
+%   make about its arguments.  An implementation of |(++)| that returns a linear
+%   value still cannot {\em assume} that both its inputs are linear.  It may be
+%   that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
+%   an important role: by having linear thunks {\em free their own
+%     resources}.  Thus the code for |(++)| need not change to handle |xs :: _ 1| vs
+%   |xs :: _ ω| input scenarios, rather, it merely decomposes lists with |case|,
+%  entering thunks in the process. }
 
 For an existing language, being able to strengthen |(++)| in a {\em
   backwards-compatible} way is a major boon.
@@ -585,6 +591,7 @@ indefinitely needs to be unrestricted:
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:linear-constructors}
+
 We have designed \HaskeLL{} to make sure that linear constructors
 correspond to regular Haskell data types when restricted to the
 traditional (non-linear) Haskell fragment. Thus our radical position
@@ -634,10 +641,38 @@ function |cycle| (if one were to replace |copy cpElem| by |id|, linearity would 
 \end{code}
 
 
-% \subsection{Reachability invariant: no unrestricted→linear pointers}
-% \subsection{Reachability invariant: no pointers to linear objects within unrestricted values}
-\subsection{Reachability invariant}
+\subsection{Operational intuitions}
 \label{sec:invariant}
+
+Suppose that a linear function takes as its argument a {\em resource}
+--- such as a file handle, channel, or memory block.  Then the function guarantees:
+\begin{itemize}
+\item that the resource will be consumed, and can be de-allocated at that moment;
+\item that the resource will not be used after being freed, because
+the function guarantees not to consume it more than once.
+\end{itemize}
+In this way, the linear type system
+of \HaskeLL{} ensures both that the deallocation happens, and
+that no use-after-free error occurs.
+
+But wait! We said earlier that a non-linear value can be passed to a linear
+function, so it would absolutely \emph{not} be safe for the function to de-allocate the
+value when it consumes it!  We imagine that there there are two heaps: the familiar
+\emph{dynamic heap} managed by the garbage collector, and a \emph{linear heap}
+managed by the programmer.
+
+Then we might alocate anf ree objects on the linear heap thus:
+\begin{code}
+allocT :: (T -o a) -o a
+freeT  :: T -o ()
+\end{code}
+Here |alloc k| somehow allocates a value of type |T| on the linear heap, and passes it to |k|.
+The continuation |k| must eventually free |T| by calling |free|.
+If there are any \emph{other} ways of
+making a value of type |T| on the dynamic heap (e.g. |mkT :: Int -> T|),
+then |free| might be given either a value on the linear heap or the dynamic heap.
+It can only free the former, so it must make a dynamic test to tell which is the case.
+
 A consequence of the above design is that unrestricted values never
 contain (point to) linear values. (But the converse is possible.)
 One can make sense of this rule operationally  by appealing to
@@ -649,7 +684,7 @@ as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
   this means that {\em all} pointers to linear values would reside on the stack
   and in registers, never in the GC heap.)
 
-\subsection{Higher-order linear functions: explicit multiplicity quantifiers}
+\subsection{Linearity polymorphism} \label{sec:lin-poly}
 
 As seen above, implicit conversions between multiplicities make first-order
 linear functions {\em more general}. Higher-order code is more complex, so we
@@ -1788,7 +1823,7 @@ merely by changing the arrow to a linear one:
   uncons :: Monad m => Stream (Of a) m () ⊸ m (Maybe (a, Stream (Of a) m ()))
 \end{code}
 
-\section{Related work}
+\section{Related work} \label{sec:related}
 
 \subsection{Regions}
 
