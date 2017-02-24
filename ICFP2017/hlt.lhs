@@ -281,9 +281,6 @@
 
 \section{Introduction}
 
-\todo{This article is motivated by our combined academic and
-  industrial experience}
-
 Can we use Haskell to implement a low-latency server that caches a large dataset
 in memory?  Today, the answer is a clear\improvement{adapt to fit the ``running example''?}
 ``no''\footnote{\Red{{URL-of-reddit-discussion}}}, because pauses incurred by garbage collection are
@@ -361,29 +358,30 @@ We make the following contributions:
   sharp distinction between linear and non-linear code (\fref{sec:related}).
   Interestingly, our design is fully compatible with laziness, which has
   typically been challenging for linear systems because of the unpredictable
-  evaluation order of laziness \cite[p9]{runciman-et-al}.
+  evaluation order of laziness
+  \cite[p9]{wakeling_linearity_1991}.\unsure{Though, to be honest, we
+    don't run into problems because we don't have a lazy
+    pattern-matching on linear data. Though I [aspiwack] don't think
+    it's a useful feature for linear data: W\&R want to use it to make
+    an infinite stream, but the stream must be consumed in its
+    entirety so the program would just loop if it had some infinite
+    linear data.}
 
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
   $λ$-calculus with data types (\fref{sec:statics}). We provide its type system,
   highlighting how it is compatible with existing Haskell features,
-  including some popular extensions. \Red{(The kind system, constraints, GADTs, and even dependent types)}.
+  including some popular extensions (the kind system, constraints, GADTs, and even dependent types).
   A distinctive feature of \calc{} is that linearity appears only bindings
   and function arrows, rather than pervasively in types.  Also unusually, we can readily
   support linearity polymorphism (\fref{sec:lin-poly}).
 
 \item We provide a dynamic semantics for \calc{},
-  combining laziness with explicit deallocation of linear data (vref{sec:dynamics}).
+  combining laziness with explicit deallocation of linear data (\fref{sec:dynamics}).
   We prove type safety, of course.  But we also prove that the type system guarantees
   the key memory-management properties that we seek: that every
   linear value is eventually deallocated, and is never referenced after
   it is deallocated.
 
-% \item \Red{We perform a case study of a low-latency in-memory server (\fref{sec:eval})
-%   implemented using our type system.  The runtime uses GHC's standard RTS.
-%   Indeed, our goal is to show how linear types can make FFI-based implementations
-%  safe.}
-%  \rn{Looks like this is going to be removed...}
-\simon{I removed the case study}
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
