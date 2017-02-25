@@ -228,12 +228,6 @@
   linear value is eventually deallocated, and not referenced thereafter.  We
   explore the applicability of linear typing in Haskell with a case study of a
   large, in-memory data structures that must serve responses with low latency.
-  
-  %% \todo{Expand}
-  %% This article introduces and describes a
-  %% linearly-typed lazy programming language which is designed to be
-  %% integrate well with an existing programming language, in particular
-  %% in GHC/Haskell.
 \end{abstract}
 
 %
@@ -294,10 +288,7 @@ accessing it through FFI calls. Unfortunately this common technique
 poses safety risks: not enforcing prompt deallocation, space leaks (by
 failure to deallocate at all), as well use-after-free or double-free
 errors as when programming in plain C.
-%% to {\em clients} of the data structure, who may
-%% commit use-after-free errors.
 It would be much better to rule out such problems via a type system.
-% that stays within the high-level language.
 
 It is well known that type systems can be useful for controlling resource usage, not just
 ensuring correctness. \critical{Fix references}  Affine types~\cite{finishme}, linear
@@ -336,9 +327,6 @@ We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
 Only function types change to include (optional) linearity constraints on their
 arguments.  However, these new linear functions are \emph{backward-compatible}:
 they can be applied to non-linear values as well as linear ones.
-
-% (The intuition is that if {\em any} number of uses is valid, then exactly one use is permitted.)
-% And also there is promotion, let the reader discover how it works in the next section.
 
 We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic.
 With it we can enrich the types of standard Haskell Prelude functions, such as |map| and |++|,
@@ -390,17 +378,6 @@ Our work is directly motivated by the needs of large-scale low-latency applicati
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
 The literature is dense with related work, which we dicuss in \fref{sec:related}.
 
-%% \note{In interactive low-latency systems (web servers, graphical user
-%%   interfaces, high-speed trading systems, real-time analytics and query
-%%   services, games, etc), pausing threads performing useful work is
-%%   problematic. Because these pauses can happen at any time, for indeterminate
-%%   periods of time, an unbounded number of times, the tail-end of runtime
-%%   distributions increases.}
-
-%% \note{The latency observed on this use-case caused Pusher to walk away from
-%%   Haskell\footnote{\url{https://blog.pusher.com/golangs-real-time-gc-in-theory-and-practice/}}.}
-
-
 
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
@@ -428,39 +405,7 @@ consume its argument exactly once.
 However, a function of type |A ⊸ B|
 \emph{places no requirement on the caller};
 the latter is free to pass either a linear or non-linear value to the function.
-% To clarify the meaning of multiplicities, here are the rules for what is allowed
-% at call sites:
-% \begin{enumerate}
-% 
-% \item An unrestricted (multiplicity $ω$) value
-%   \begin{enumerate}
-%   \item {\bf can} be passed to a linear function.
-%   \item {\bf can} be passed to a unrestricted function.
-%   \item {\bf can} be returned by a linear function.
-%   \item {\bf can} be returned by a unrestricted function.
-%   \end{enumerate}  
-% 
-% \item A linear (multiplicity $1$) value
-%   \begin{enumerate}
-%   \item  {\bf can} be passed to a linear function.
-%   \item  {\bf cannot} be passed to a unrestricted function.
-%   \item  {\bf can} be returned by a linear function.
-%   \item  {\bf can} be returned by a unrestricted function.
-%   \end{enumerate}
-% 
-% % RRN: This looks like a duplicate:
-% % \item A linear value {\bf can} be returned by a linear function.
-% 
-% \end{enumerate}
-% %
-% We stress that all functions can return linear values.  Indeed,
-% conceptually, functions return always \emph{one} result.  Further,
-% when we say that a function is linear, we refer to its domain, not its
-% co-domain: linearity of a function does not influence what it can
-% return.
-%
-% The same examples can be expressed in code: the function |g| below
-% admits the following implementations, but not the last one:
+
 For example, consider these definitions of a function |g|:
 \begin{code}
 g1,g2,g3 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
@@ -491,34 +436,6 @@ In |g5|, the linear |x| can be passed to |f| because the result of |(f x)| is
 consumed linearly by |k|.  But in |g6|, |x| is still passed to the linear function
 |f|, but the call |(f x)| is in a non-linear context, so |x| too is
 used non-linearly and the code is ill-typed.
-
-%
-% (Further, a compiler for \HaskeLL{} could arrange to call a {\em
-%  different implementation} of |f| at these two call sites, with the former
-% allocating directly on the garbage-collected heap, and the latter creating a
-% linear value --- potentially in a separate heap.)
-% 
-% For example, the following variant of the above
-% example would not type check:
-% \begin{code}
-% let x :: _ 1 Int = 3
-%     y :: _ ω Int = f x -- not enough |x|'s for this
-% \end{code}
-% Further, as we explain in \fref{sec:statics}, this means
-% that even a curried function of type |A ⊸ B -> C| requires an unrestricted 
-% (multiplicity $ω$) |A| argument to produce a |C| result of multiplicity |ω|.
-% 
-% On the other hand, producing a {\em linear} result from an unrestricted
-%   function is trivial. (Remember that linearity only concerns the arguments.)
-%   Thinking in terms of resources, it
-%   is {\em always} safe to view an unrestricted value as linear, because they cannot contain resources. This allows in particular:
-%   |let x :: _ ω ... = e1;|$\;\;$|y :: _ 1 ... = x|.
-% %% \begin{code}
-% %%   let x :: _ ω T = e1
-% %%       y :: _ 1 T = x
-% %% \end{code}
-% However, if an implementation chooses to treat linear values differently at
-% runtime, then this change of multiplicity would incur runtime costs.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
@@ -668,11 +585,6 @@ garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
 for. Conversely, a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
-%  (In a practical implementation which {\em separates} the linear/GC heaps,
-%  this means that {\em all} pointers to linear values would reside on the stack
-%  and in registers, never in the GC heap.)\unsure{While there is a
-%    sense in which it is true, we contradict this last parenthetic remark
-%    in \fref{sec:dynamics}. Should we just remove it?}
 
 We have repeatedly said that a linear function guarantees to ``consume'' its
 argument exactly once if the call is consumed exactly once.
