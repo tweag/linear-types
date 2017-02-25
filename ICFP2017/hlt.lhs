@@ -1763,26 +1763,21 @@ lot of complications when developed in practice beyond the |ST| monad.
   forced to be consumed before the mailbox is closed.
 \end{itemize}
 
-\subsection{Advantages over finalisers:}
+\subsection{Finalisers}
 
-One may ask what the above API offers beyond
-the more traditional approach of using FFI pointers directly to refer to packets
-and mailboxes, together with {\em finalisers} to free those foreign pointers
-once the GC determines they are unreachable (|ForeignPtr| in Haskell).
-This approach poses both safety and performance problems.
-%
-A finaliser creates a {\em proxy object} on the GC heap that points to the foreign
-object.  We can use such a |ForeignPtr| for the mailbox, but then the mailbox
-will {\em not} be promptly freed before the end of |withMailBox|, rather it will
-eventually, nondeterministically be freed by garbage collection.
-%
-If we use finalisers for |Packet|s after they are dequeued from the mailbox,
-then we lack the ability to transfer ownership of the |Packet|s storage space
-upon |send|.  That is, when |send| is executed there is way to know whether its argument
-is truly the last reference to the pointer, which is not determined until a
-global GC.  Finally, if we were to manage a large number of linear objects,
-storing the proxy objects would cause the GC heap to grow proportionally to the
-number of linear objects, and so would the GC pauses.
+An alternate approach to memory safety of resources in
+garbage-collected language is to reify the resource as a \emph{proxy
+  object} on the \textsc{gc} heap and attach a finaliser to the
+proxy. That is, when the garbage collector frees the proxy it is
+instructed to perform an action which, in this case, will free the
+resource as well.
+
+This is not usually done in practice because, as argued by
+\citet{kiselyov_iteratees_2012}, the garbage collector gives no
+real-time guarantee for the deallocation of dead data (this is
+especially the case for an incremental garbage collector which is
+paramount in low-latency applications). This causes a form a resource
+leak, where scarce resources may be rendered unavailable for a long time.
 
 \subsection{Uniqueness types}
 
@@ -2150,4 +2145,5 @@ on multiplicities.
 %  LocalWords:  optimizations denotational withNewArray updateArray
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
-%  LocalWords:  unrestrictedly bidirectionality GADT
+%  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
+%  LocalWords:  Finalisers
