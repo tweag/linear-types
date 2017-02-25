@@ -43,7 +43,6 @@
 % \usepackage{fontspec}
 % \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
-% TODO: \newcommand*{\fancyreflemlabelprefix}{lem}
 \def\frefsecname{Section}
 \def\freffigname{Figure}
 \def\frefdefname{Definition}
@@ -51,11 +50,11 @@
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
 \def\fancyrefdeflabelprefix{def}
-\frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1#2}
-\Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1#2}
+\frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1}
+\Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1}
 \def\fancyreflemlabelprefix{lem}
-\frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1#2}
-\Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1#2}
+\frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1}
+\Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
