@@ -654,11 +654,9 @@ In our model there there are two heaps: the familiar
 managed by the programmer supported by statically-checked guarantees.
 Then we might provide primitives to allocate and free objects on the linear heap thus:
 \begin{code}
-allocT :: (T ⊸ a) ⊸ a
+allocT :: (T ⊸ IO a) ⊸ IO a
 freeT  :: T ⊸ ()
-\end{code}\unsure{[aspiwack] Should we properly restrict the type of
-  |allocT| so that |allocT id| is not well-typed (which makes it
-  possible to promote |T| and skip deallocation).}
+\end{code}
 Here |alloc k| allocates a value of type |T| on the linear heap, and passes it to |k|.
 The continuation |k| must eventually free |T| by calling |free|.
 If there are any \emph{other} ways of
