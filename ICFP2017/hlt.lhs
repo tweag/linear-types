@@ -1723,6 +1723,41 @@ merely by changing the arrow to a linear one:
   uncons :: Monad m => Stream (Of a) m () ⊸ m (Maybe (a, Stream (Of a) m ()))
 \end{code}
 
+\subsection{Protocols}
+
+It is well known that concurrent programs can be conveniently encoded
+by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
+that the protocols match: namely, if a program $p$ implements a
+protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
+dual type ($P^⊥$). In ML-family
+languages, the dual can be represented simply by an arrow to to $⊥$:
+$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
+communication on a channel).  All effectful programs must then use CPS
+so they eventually terminate with an effect. An issue of such encoding
+is that a continuation can be called several times, which can be
+problematic because the order of the protocol is not respected. Thanks
+to linear types, we can solve the problem simply by encoding the dual
+as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
+and $p'$ is guaranteed deadlock-free.
+
+Some programming languages featuring session types have instead native
+support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
+$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
+modelled after classical logic.  Instead, the CPS approaches works
+better for languages bases on intuitionistic logic, such as
+Haskell. Hence we choose not to support duality specially.
+
+The following example gives a glimpse of what linear CPS code may look
+like.
+\begin{code}
+  data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
+  type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
+
+if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
+if' True   p k = p (Left   k)
+if' False  p k = p (Right  k)
+\end{code}
+
 \section{Related work} \label{sec:related}
 
 \subsection{Regions}
@@ -2013,40 +2048,6 @@ responsible for safe deallocation in response to exceptions,
 internally making use of the bracket operation~\cite[Section
 7.1]{marlow_async_exceptions_2001}. A full justification of this fact
 is left for future work.
-
-\subsection{Protocols and negative types}
-It is well known that concurrent programs can be conveniently encoded
-by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
-that the protocols match: namely, if a program $p$ implements a
-protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
-dual type ($P^⊥$). In ML-family
-languages, the dual can be represented simply by an arrow to to $⊥$:
-$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
-communication on a channel).  All effectful programs must then use CPS
-so they eventually terminate with an effect. An issue of such encoding
-is that a continuation can be called several times, which can be
-problematic because the order of the protocol is not respected. Thanks
-to linear types, we can solve the problem simply by encoding the dual
-as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
-and $p'$ is guaranteed deadlock-free.
-
-Some programming languages featuring session types have instead native
-support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
-$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
-modelled after classical logic.  Instead, the CPS approaches works
-better for languages bases on intuitionistic logic, such as
-Haskell. Hence we choose not to support duality specially.
-
-The following example gives a glimpse of what linear CPS code may look
-like.
-\begin{code}
-  data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
-  type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
-
-if' :: Bool ⊸ (a & a) ⊸ (a ⊸ ⊥) ⊸ ⊥
-if' True   p k = p (Left   k)
-if' False  p k = p (Right  k)
-\end{code}
 
 \subsection{Fusion}
 \label{sec:fusion}
