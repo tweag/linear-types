@@ -564,26 +564,6 @@ But notice that giving a more precise type to |(++)| only
 \end{code}  
 Here the two arguments to |(++)| have different multiplicities, but
 the function |f| guarantees to consume |xs| precisely once.
-% If both |xs| and |ys| have multiplicity
-% $ω$, |xs++ys| is \emph{promoted} to multiplicity $ω$. In terms of resources,
-% if neither |xs| nor |ys| can contain resources,
-% neither can |xs++ys|: it is thus safe to share |xs++ys|.
-%
-% If |xs| has multiplicity $ω$ and |ys| has multiplicity 1, then
-% |xs++ys| has only multiplicity 1, and |xs| is being used only once, which is valid.
-
-\simon{I removed a para I don't agree with here. — [aspiwack] I agree
-  that it is quite premature: it detailed an implementation strategy
-  for prompt-deallocation of cons cells, but this is something we
-  don't actually touch in the article.}
-% {In operational terms, this design limits the assumptions that the callee can
-%   make about its arguments.  An implementation of |(++)| that returns a linear
-%   value still cannot {\em assume} that both its inputs are linear.  It may be
-%   that only one of |xs|,|ys| is linear.  Here, lazy evaluation can play
-%   an important role: by having linear thunks {\em free their own
-%     resources}.  Thus the code for |(++)| need not change to handle |xs :: _ 1| vs
-%   |xs :: _ ω| input scenarios, rather, it merely decomposes lists with |case|,
-%  entering thunks in the process. }
 
 For an existing language, being able to strengthen |(++)|, and similar functions, in a {\em
   backwards-compatible} way is a huge boon.
