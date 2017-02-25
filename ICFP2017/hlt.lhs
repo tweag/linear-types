@@ -770,18 +770,20 @@ three packets on the network then send them all out.
   sendAll q | Just (p,q')  <- next q = case send p of () -> sendAll q'
   sendAll q | Nothing      <- next q = ()
 
+  enqueue :: MB ⊸ PQ a ⊸ (PQ a,MB)
+  enqueue mb q =
+    let
+      !(p,mb')              = get mb
+      !(!(mkUnre prio),p')  = priority p
+    in ( mb' , insert prio p' q )
+
   main :: IO ()
   main = withMailBox $ \ mb0 ->
     let
-      !(p1,mb1)   = get mb0
-      !(!(mkUnre pr1),p1')  = priority p1
-      q1          = insert pr1 p1' empty
-      !(p2,mb2)   = get mb1
-      !(!(mkUnre pr2),p2')  = priority p2
-      q2          = insert pr2 p2' q1
-      !(p3,mb3)   = get mb2
-      !(!(mkUnre pr3),p3')  = priority p3
-      q3          = insert pr3 p3' q2
+      !(mb1,q1)  = enqueue mb0 empty
+      !(mb2,q2)  = enqueue mb1 q1
+      !(mb3,q3)  = enqueue mb2 q2
+      !()        = close mb3
     in return $ sendAll q3
 \end{code}
 
