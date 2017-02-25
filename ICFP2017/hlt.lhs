@@ -492,9 +492,6 @@ consumed linearly by |k|.  But in |g6|, |x| is still passed to the linear functi
 |f|, but the call |(f x)| is in a non-linear context, so |x| too is
 used non-linearly and the code is ill-typed.
 
-In general, any sub-expression is type-checked as if it were constructing {\em one}
-value, but it can be promoted to $ω$ {\bf if all its free variables are
-$ω$-bound}. We will see the specifics in \fref{sec:statics}.
 %
 % (Further, a compiler for \HaskeLL{} could arrange to call a {\em
 %  different implementation} of |f| at these two call sites, with the former
@@ -688,6 +685,13 @@ intution:
 \item More generally, to consume a value of an algebraic data type once, evaluate
   it and consume all its linear components once.
 \end{itemize}
+
+In general, any sub-expression is type-checked as if it were to be
+consumed exactly once. However, an expression which does not contain
+resources, that is an expression all free variables of which have
+multiplicity $ω$, can in fact be consumed many times, such an
+expression is said to be \emph{promoted}. We will see the specifics in
+\fref{sec:statics}.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:non-linear-constructors}
