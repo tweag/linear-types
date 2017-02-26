@@ -666,15 +666,15 @@ a linear list of |T| values into the dynamic heap:
 
 Crucially, our proposal has allowed the authors to solve latency
 issues and improve throughput in a real-world application. Imagine
-that you are writing a server application. It receives data, then
+a server application which receives data and then
 stores it for a while before sending it out to receivers, perhaps in
 a different order. This general pattern characterizes a large class of
 low-latency servers of in-memory data, such as
 Memcached~\cite{memcached} or burst
 buffers~\cite{liu_burstbuffer_2012}.
 
-As an example, consider a software-defined packet switch. First, we
-need to read packets from, and send them to, network interfaces.
+As an example, consider a software-defined\unsure{what is the -defined supposed to mean?} packet switch. First, we
+need to read packets from, and send them to network interfaces.
 Linearity can help with {\em copy-free} hand-off of packets between
 network interfaces and in-memory data structures.
 %
@@ -705,7 +705,10 @@ sending packets can likewise live outside of |IO|, and are ultimately part of th
   \fref{sec:dynamics}, so we may decide either to say: ``they should,
   in actuality, be in |IO| but for the sake of simplicity we forget
   about that'' or put these actions in |IO|. The latter's better, but
-  then the semantics will be all annoying for little gain. }
+  then the semantics will be all annoying for little gain.
+  [jp] better yet state that we assume that mailboxes are
+  independent. It's a feature of the system to be able to express
+  independence of bits of IO. (As you write: separation logic!) }
 \begin{code}
   get   :: MB ⊸ (Packet , MB)
   send  :: Packet ⊸ ()
