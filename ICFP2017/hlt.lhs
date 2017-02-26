@@ -278,7 +278,7 @@
 
 Can we use Haskell to implement a low-latency server that caches
 a large dataset in-memory? Today, the answer is
-a clear\improvement{adapt to fit the ``running example''?}
+a clear
 ``no''\footnote{https://blog.pusher.com/latency-working-set-ghc-gc-pick-two/},
 because pauses incurred by garbage collection (GC), observed in the
 order of 50ms or more, are unacceptable. Pauses are in general
