@@ -18,6 +18,9 @@
 %format ⅋ = "\parr"
 %subst keyword a = "\mathsf{" a "}"
 %format bigSpace = "\hspace{2cm}"
+%format allocT = "alloc_T"
+%format freeT = "free_T"
+%format copyT = "copy_T"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -416,9 +419,10 @@ g3 k x y = k x (k y y)    -- Valid: y can be passed to linear k
 As in |g2|, a linear variable |x| cannot be passed to the non-linear
 function |(k y)|.  But the other way round is fine:
 |g3| illustrates that the non-linear variable |y| can be passed
-to the linear function |k| respectively.
+to the linear function |k|.
 
-\subsection{Calling contexts and promotion}\label{sec:calling-contexts}
+\subsection{Calling contexts and promotion}
+\label{sec:calling-contexts}
 
 The call of a linear function consumes its argument once only if the
 call itself is consumed once.  For example, consider these definitions
@@ -432,7 +436,7 @@ g5 k x y = k (f x) y      -- Valid: k consumes (f x)'s result once
 g6 k x y = k y (f x)      -- Invalid: fails x's multiplicity guarantee
 \end{code}
 In |g5|, the linear |x| can be passed to |f| because the result of |(f x)| is
-consumed linearly by |k|.  But in |g6|, |x| is still passed to the linear function
+consumed linearly by |k|.  In |g6|, |x| is still passed to the linear function
 |f|, but the call |(f x)| is in a non-linear context, so |x| too is
 used non-linearly and the code is ill-typed.
 
@@ -450,7 +454,7 @@ not a new, linear list type: this \emph{is} \HaskeLL{}'s list type, and all
 Haskell functions will work over it perfectly well.  But we can
 \emph{also} use the very same list type to contain linear resources (such as
 file handles) without compromising safety; the type system will ensure
-that resources in |xs| will be eventually deallocated, and that they
+that resources in |xs| will eventually be deallocated, and that they
 will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
@@ -494,11 +498,11 @@ is that data types in \HaskeLL{} should have {\em linear fields by default},
 including all standard definitions, such as pairs, tuples, |Maybe|, lists, and so on.
 More precisely, when defined in old-style Haskell-98 syntax, all fields are
 linear; when defined using GADT syntax, the programmer can explicitly choose.
-For example, pairs thus defined
+For example, in our system pairs defined as
 \begin{code}
 data (,) a b = (,) a b
 \end{code}
-would use linear arrows; this is explicit when defined in GADT syntax:
+would use linear arrows. This becomes explicit when defined in GADT syntax:
 \begin{code}
 data (a,b) where
   (,) ::  a ⊸ b ⊸ (a,b)
@@ -508,11 +512,15 @@ to have contstructors with unrestricted arrows.
 
 \subsection{Linearity polymorphism} \label{sec:lin-poly}
 
-As seen above, implicit conversions between multiplicities make first-order
-linear functions {\em more general}. Higher-order code is more complex, so we
-introduce {\em multiplicity polymorphism} as a way to preserve effective code sharing
-of higher-order functions. For example, the standard |map| function over
-(linear) lists:
+Higher-order code is more complex, so we
+introduce {\em multiplicity polymorphism} as a way to preserve
+effective code sharing of higher-order functions. For example, the
+standard |map| function over (linear) lists:
+
+As seen above, implicit conversions between multiplicities make
+first-order linear functions {\em more general}. But the higher-order
+case thickens the plot. Consider that the standard |map| function over
+(linear) lists,
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
@@ -521,28 +529,28 @@ can be given the two following incomparable types:
   |(a ⊸ b) -> [a] ⊸ [b]|  and
   |(a -> b) -> [a] -> [b]|.
 %
-\HaskeLL{} generalises over linear and unrestricted arrows with the
-syntax $A →_ρ B$. Therefore, |map| can be given the following
-most general type:
- | ∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
+In \HaskeLL{}, we can generalise over linear and unrestricted arrows
+using {\em multiplicity polymorphism}. This is written $A →_ρ B$. In
+the case at hand, |map| can be given the following most general type:
+| ∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
 %
-Likewise, function composition can be given the following type:
+Likewise, function composition can be given the following general type:
 \begin{code}
 (∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
 (f ∘ g) x = f (g x)
 \end{code}
-That is: two functions of accepting arguments of arbitrary
-multiplicities respectively $ρ$ and $π$ can be composed into a
+That is: two functions that accept arguments of arbitrary
+multiplicities ($ρ$ and $π$ respectively) can be composed to form a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
 subscripts and binders for multiplicity polymorphism can be {\em
-  ignored}.  Indeed, in a context where client code does not use
+  ignored}. Indeed, in a context where client code does not use
 linearity, all inputs will have multiplicity $ω$, and transitively all
-expressions can be promoted to $ω$.  Thus in such a context the
-compiler can even hide linearity extensions from the programmer.
-
+expressions can be promoted to $ω$. Thus in such a context the
+compiler, or indeed documentation tools, can even altogether hide
+linearity extensions from the programmer.
 
 \subsection{Operational intuitions}
 \label{sec:invariant} \label{sec:consumed}
@@ -550,31 +558,31 @@ compiler can even hide linearity extensions from the programmer.
 Suppose that a linear function takes as its argument a {\em resource},
 such as a file handle, channel, or memory block.  Then the function guarantees:
 \begin{itemize}
-\item that the resource will be consumed, and can be de-allocated at that moment;
-\item that the resource will not be used after being freed, because
-the function guarantees not to consume it more than once.
+\item that the resource will be consumed and destroyed by the time it returns;
+\item that the resource can only be consumed once so will never be
+  used after being destroyed.
 \end{itemize}
-In this way, the linear type system
-of \HaskeLL{} ensures both that the deallocation happens, and
-that no use-after-free error occurs.
+In this way, the linear type system of \HaskeLL{} ensures both that
+resource deallocation happens, and that no use-after-free error
+occurs.
 
 But wait! We said earlier that a non-linear value can be passed to a linear
-function, so it would absolutely \emph{not} be safe for the function to de-allocate the
+function, so it would absolutely \emph{not} be safe for the function to deallocate the
 value when it consumes it!  To understand this we need to explain our operational model.
 
 In our model there there are two heaps: the familiar
 \emph{dynamic heap} managed by the garbage collector, and a \emph{linear heap}
 managed by the programmer supported by statically-checked guarantees.
-Then we might provide primitives to allocate and free objects on the linear heap thus:
+We assume two primitives to allocate and free objects on the linear heap:
 \begin{code}
-allocT :: (T ⊸ IO a) ⊸ IO a
-freeT  :: T ⊸ ()
+allocT  :: (T ⊸ IO a) ⊸ IO a
+freeT   :: T ⊸ ()
 \end{code}
-Here |alloc k| allocates a value of type |T| on the linear heap, and passes it to |k|.
-The continuation |k| must eventually free |T| by calling |free|.
+Here |allocT k| allocates a value of type |T| on the linear heap, and passes it to |k|.
+The continuation |k| must eventually free |T| by calling |freeT|.
 If there are any \emph{other} ways of
 making a value of type |T| on the dynamic heap (e.g. |mkT :: Int -> T|),
-then |free| might be given either a value on the linear heap or the dynamic heap.
+then |freeT| might be given either a value on the linear heap or the dynamic heap.
 It can only free the former, so it must make a dynamic test to tell which is the case.
 
 A consequence of the above design is that unrestricted values never
@@ -590,7 +598,7 @@ argument exactly once if the call is consumed exactly once.
 What precisely does ``consume'' mean?  We can now give a more precise operational
 intution:
 \begin{itemize}
-\item To consume a base type once, like |Int| or |Bytestring|, just evaluate it.
+\item To consume an atomic base type once, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function value once, call it once, and consume its result once.
 \item To consume a pair once, evaluate it and consume each of its components once.
 \item More generally, to consume a value of an algebraic data type once, evaluate
@@ -599,9 +607,9 @@ intution:
 
 In general, any sub-expression is type-checked as if it were to be
 consumed exactly once. However, an expression which does not contain
-resources, that is an expression all free variables of which have
-multiplicity $ω$, can in fact be consumed many times, such an
-expression is said to be \emph{promoted}. We will see the specifics in
+resources, that is an expression whose free variables all have
+multiplicity $ω$, can be consumed many times. Such an
+expression is said to be \emph{promoted}. We leave the specifics to
 \fref{sec:statics}.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
@@ -609,15 +617,15 @@ expression is said to be \emph{promoted}. We will see the specifics in
 
 We saw in \fref{sec:linear-constructors} that data types in \HaskeLL{} have
 linear arguments by default. Do we ever need data constructors
-unrestricted arguments?  Yes, we we do.
+unrestricted arguments?  Yes, we do.
 
 Using the type |T| of \fref{sec:consumed}, suppose we wanted a primitive
 to copy a |T| from the linear heap to the dynamic heap. We could define it
 in CPS style like this
 \begin{code}
-  copyT :: (T -> a) ⊸ T ⊸ a
+  copyT :: (T -> r) ⊸ T ⊸ r
 \end{code}
-a more convenient interface is this:
+But a direct-style interface is more convenient:
 \begin{code}
   copyT :: T ⊸ Unrestricted a
 \end{code}
@@ -627,18 +635,18 @@ a non-linear constructor\footnote{The type constructor
   modality written ${!}$ in linear logic.}:
 \begin{code}
   newtype Unrestricted a where
-    MkUnre :: a → Unrestricted a
+    Unrestricted :: a → Unrestricted a
 \end{code}
 The |Unrestricted|
-data type is used to indicate that when a value |(MkUnre x)| is consumed
+data type is used to indicate that when a value |(Unrestricted x)| is consumed
 once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
 consumed.
-With our primitive in hand we can now use ordinary Haskell to copy
+With our primitive in hand, we can now use ordinary code to copy
 a linear list of |T| values into the dynamic heap:
 \begin{code}
-  copy :: (a⊸Unrestricted a) -> [a] ⊸ Unrestricted [a]
-  copy cpElem (x:xs) = MkUnre (x':xs')   where   MkUnre xs'  = copy    xs
-                                                 MkUnre x'   = cpElem  x
+  copy :: (a ⊸ Unrestricted a) -> [a] ⊸ Unrestricted [a]
+  copy copyElt (x:xs) = Unrestricted (x':xs')  where  Unrestricted xs'  = copy xs
+                                                      Unrestricted x'   = copyElt x
 \end{code}
 % We stress that the above does not reduce to the linear identity
 % function, |id :: [a] ⊸ [a]|. Indeed, with the |copy| function
@@ -647,42 +655,40 @@ a linear list of |T| values into the dynamic heap:
 % function |cycle| (if one were to replace |copy cpElem| by |id|, linearity would be violated).
 % \begin{code}
 %   f :: (a⊸Unrestricted a) -> [a] ⊸ [a]
-%   f cpElem xs = cycle ys where MkUnre ys = copy cpElem xs
+%   f cpElem xs = cycle ys where Unrestricted ys = copy cpElem xs
 % \end{code}
 
 
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
 
-Let us bring these ideas together in an example driven from a
-real-world application. Imagine that you are writing a server
-application: the receives data, stores it for a while, before sending
-it out to receivers, perhaps in a different order. This is
-representative of a general class of low-latency servers of in-memory
-data, such as Memcached~\cite{memcached} or burst
+Crucially, our proposal has allowed the authors to solve latency
+issues and improve throughput in a real-world application. Imagine
+that you are writing a server application. It receives data, then
+stores it for a while before sending it out to receivers, perhaps in
+a different order. This general pattern characterizes a large class of
+low-latency servers of in-memory data, such as
+Memcached~\cite{memcached} or burst
 buffers~\cite{liu_burstbuffer_2012}.
 
-As an example, let us consider an application where the data
-manipulated are simply packets. In this scenario, we first need to
-read packets from, and send them to, network interfaces.  Linearity
-can help with {\em copy-free} hand-off of packets between network
-interfaces and in-memory data structures.
+As an example, consider a packet sniffer. First, we need to read
+packets from, and send them to, network interfaces. Linearity can help
+with {\em copy-free} hand-off of packets between network interfaces
+and in-memory data structures.
 %
-Let us assume that the user can acquire a linear handle on a {\em
-  mailbox} which allows them to dequeue incoming packets (for the sake
-of simplicity we will not wonder where the packets are coming from):
+Assume that the user can acquire a linear handle on a {\em
+  mailbox} of packets:
 
 \begin{code}
-  withMailBox :: (MB ⊸ IO a) ⊸ IO a
-  close      :: MB ⊸ ()
+  withMailBox  :: (MailBox ⊸ IO a) ⊸ IO a
+  close        :: MailBox ⊸ ()
 \end{code}
-
-The mailbox handle must be returned linearly to a |close| call in order to
+The mailbox handle must be passed to |close| eventually in order to
 release it.
 %
-Here |close| could be in the IO monad but need not be --- linearity ensures
-proper sequencing within the computation.  Indeed, |close|'s result must be
-consumed with |case|, i.e. ``|case close mb of () -> e1|'' before we can |return| any result.
+|close| could be in the |IO| monad, but need not be --- linearity ensures
+proper sequencing within the computation.  This is because |close|'s result must be
+consumed with |case|, i.e. |case close mb of () -> e1| before we can |return| any result.
 Receiving and
 sending packets can likewise live outside of |IO|, and are ultimately part of the
 |IO| action created with |withMailBox|:\improvement{[aspiwack] Simon
@@ -697,21 +703,19 @@ sending packets can likewise live outside of |IO|, and are ultimately part of th
   in actuality, be in |IO| but for the sake of simplicity we forget
   about that'' or put these actions in |IO|. The latter's better, but
   then the semantics will be all annoying for little gain. }
-
 \begin{code}
-  get     :: MB ⊸ (Packet , MB)
-  send    :: Packet ⊸ ()
+  get   :: MB ⊸ (Packet , MB)
+  send  :: Packet ⊸ ()
 \end{code}
 
-The |get| function returns the next available packet, whereas |send| forwards it on the
-network, if desired.
+|get| yields the next available packet, whereas |send| forwards it on the
+network.
 %
-In the simplest case, we could read a message and send it immediately --- without
+In the simplest case, we can read a message and send it immediately --- without
 any filtering or buffering.
 When calling |get| and |send|, |Packet|s never need to be copied:
-they can be shuffled between the network interface card, to the mailbox, and then
-to the linear calling context of |send| all by reference.
-
+they can be passed along from the network interface card to the mailbox
+and then to the linear calling context of |send|, all by reference.
 
 \paragraph{Buffering data in memory}
 
@@ -1296,7 +1300,7 @@ the new rules
 \begin{description}
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
-  represents de-allocation of packets.
+  represents deallocation of packets.
 \item[WithMailBox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
   has not received any message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is incremented. The body $k$ is an $IO$ action, so it takes
@@ -1523,9 +1527,9 @@ result of multiplicity $ω$. This constraint is crucial, because the |alloc| rul
 only rule which makes it possible to use of a linear value in order to produce a
 garbage collected value, which in turn justifies that in the ordinary
 semantics, queues can be allocated in the linear heap. The reason why
-it is possible is that, by definition, in $\varid{MkUnre} x$, $x$ \emph{must} be
+it is possible is that, by definition, in $\varid{Unrestricted} x$, $x$ \emph{must} be
 in the garbage-collected heap. In other words, when an expression $e :
-\varid{Unrestricted} A$ is forced to the form $\varid{MkUnre} x$, it will have consumed all the
+\varid{Unrestricted} A$ is forced to the form $\varid{Unrestricted} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
 proved in \fref[plain]{lem:type-safety} below).
 
@@ -1594,11 +1598,11 @@ states.
 \end{proof}
 
 From type-safety, it follows that a completely evaluated program
-has necessarily de-allocated all the linear heap. This is a form of
+has necessarily deallocated all the linear heap. This is a form of
 safety from resource leaks (of course, resource leaks can always be
 programmed in, but the language itself does not leak resources).
 
-\begin{corollary}[Eventual de-allocation of linear values]
+\begin{corollary}[Eventual deallocation of linear values]
   Let $w:_1 \varid{World} ⊢ t : \varid{World}$ be a well-typed term. If
   $w :_1 \varid{World} = 0 :t ⇓ Δ: j$, then $Δ$ only contains $ω$-bindings.
 \end{corollary}
