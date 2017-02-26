@@ -671,17 +671,18 @@ low-latency servers of in-memory data, such as
 Memcached~\cite{memcached} or burst
 buffers~\cite{liu_burstbuffer_2012}.
 
-As an example, consider a packet sniffer. First, we need to read
-packets from, and send them to, network interfaces. Linearity can help
-with {\em copy-free} hand-off of packets between network interfaces
-and in-memory data structures.
+As an example, consider a software-defined packet switch. First, we
+need to read packets from, and send them to, network interfaces.
+Linearity can help with {\em copy-free} hand-off of packets between
+network interfaces and in-memory data structures.
 %
 Assume that the user can acquire a linear handle on a {\em
   mailbox} of packets:
 
 \begin{code}
-  withMailBox  :: (MailBox ⊸ IO a) ⊸ IO a
-  close        :: MailBox ⊸ ()
+  data MB
+  withMailbox  :: (MB ⊸ IO a) ⊸ IO a
+  close        :: MB ⊸ ()
 \end{code}
 The mailbox handle must be passed to |close| eventually in order to
 release it.
@@ -691,7 +692,7 @@ proper sequencing within the computation.  This is because |close|'s result must
 consumed with |case|, i.e. |case close mb of () -> e1| before we can |return| any result.
 Receiving and
 sending packets can likewise live outside of |IO|, and are ultimately part of the
-|IO| action created with |withMailBox|:\improvement{[aspiwack] Simon
+|IO| action created with |withMailbox|:\improvement{[aspiwack] Simon
   convinced me that this was not actually the case if we consider that
   |get| and |send| have an effect on the rest of the |IO| action so
   they must not only be ordered between them, but also with respect to
@@ -720,10 +721,10 @@ and then to the linear calling context of |send|, all by reference.
 \paragraph{Buffering data in memory}
 
 So what can our server do with the packets once they are retrieved
-from the network? Depending on the goals of the server, it will
-implement a policy dictating what packet to send when. To implement
-such a policy the packets are stored in a priority queue.
+from the network? To support software defined switch policies that
+dictate what packet to forward when, we introduce a priority queue.
 \begin{code}
+data PQ a
 empty   :: PQ a
 insert  :: Int -> a ⊸ PQ a ⊸ PQ a
 next    :: PQ a ⊸ Maybe (a, PQ a)
@@ -781,7 +782,7 @@ three packets on the network then send them all out.
     in ( mb' , insert prio p' q )
 
   main :: IO ()
-  main = withMailBox $ \ mb0 ->
+  main = withMailbox $ \ mb0 ->
     let
       !(mb1,q1)  = enqueue mb0 empty
       !(mb2,q2)  = enqueue mb1 q1
@@ -1195,7 +1196,7 @@ Linear typing gives a much more direct solution to the problem: if the
 \end{code}
 Notice that the |a| of |IO a| is always unrestricted, so that |IO| has
 the same semantics as in Haskell (it is also the semantics which we
-need to ensure that |withMailBox| is safe).
+need to ensure that |withMailbox| is safe).
 
 The last missing piece is to inject a |World| to start the
 computation. Haskell relies on a |main :: IO ()| function, of which
@@ -1243,7 +1244,7 @@ In addition to the abstract types $\varid{World}$, $Packet$ and $\varid{MB}$, an
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives (see also \fref{sec:packet}):
 \begin{itemize}
-\item |withMailBox :: (MB ⊸ IO a) ⊸ IO a|
+\item |withMailbox :: (MB ⊸ IO a) ⊸ IO a|
 \item |get :: MB ⊸ (Packet , MB)|
 \item |send :: Packet ⊸ ()|
 \end{itemize}
@@ -1301,11 +1302,11 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents deallocation of packets.
-\item[WithMailBox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
+\item[WithMailbox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
   has not received any message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is incremented. The body $k$ is an $IO$ action, so it takes
   the incremented world as an argument and returns a new one, which is then
-  returned as the final world after the entire $withMailBox$ action.
+  returned as the final world after the entire $withMailbox$ action.
 \item[Get] The $get$ primitive receives the next packet as is
   determined by the $(p^j_i)_{j,i∈ℕ}$ matrix, and the number of
   packets received by the $\varid{MB}$ is incremented.
@@ -1355,7 +1356,7 @@ the new rules
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
-    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailBox k w ⇓ Δ:z}\text{withMailBox}
+    \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailbox k w ⇓ Δ:z}\text{withMailbox}
 
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
@@ -1494,7 +1495,7 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule
   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
-  {Ξ ⊢ (Γ,w:_1 : \varid{World} = j||withMailBox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailBox}
+  {Ξ ⊢ (Γ,w:_1 : \varid{World} = j||withMailbox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailbox}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
@@ -1684,7 +1685,7 @@ be used to show that, with linear typing, we can allocate a priority
 queue with |malloc| safely (in effect considering the priority queue
 as a resource). We just need to replace the |empty| queue function from
 \fref{sec:packet} by a |withQueue :: (PQ a ⊸ IO a) ⊸ IO a| primitive,
-in the same style as |withMailBox|.
+in the same style as |withMailbox|.
 
 We can go even further and allow |malloc|'d queues to build pure values:
 it is enough to replace the type of |withQueue| as |withQueue :: (PQ a
