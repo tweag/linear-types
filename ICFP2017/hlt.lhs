@@ -882,7 +882,7 @@ of $Γ$.  This section precisely defines the syntax of types and the typing judg
     e,s,t,u & ::= \\
             & ||  x & \text{variable} \\
             & ||  λ(x:_qA). t & \text{abstraction} \\
-            & ||  t_q s & \text{application} \\
+            & ||  t s & \text{application} \\
             & ||  λπ. t & \text{multiplicity abstraction} \\
             & ||  t p & \text{multiplicity application} \\
             & ||  c t₁ … t_n & \text{data construction} \\
@@ -965,7 +965,7 @@ context, especially in the case of applications.\unsure{[aspiwack]
   to be well-typed}
 
 %%% typing rule macros %%%
-\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t_q u  :  B}\text{app}}
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
       x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
