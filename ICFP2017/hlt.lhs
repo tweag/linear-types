@@ -563,7 +563,11 @@ such as a file handle, channel, or memory block.  Then the function guarantees:
 \item that the resource will be consumed and destroyed by the time it
   returns;\improvement{[aspiwack] not exactly by the time the function returns: it could
     pass the resource along. Proposal: ``when its return value is
-    consumed'' or ``when the call is consumed'' (as below).}
+    consumed'' or ``when the call is consumed'' (as below). Other proposal:
+    %
+    that by the time it returns the resource is either consumed and
+    destroyed or return (perhaps indirectly) in the returned value.
+  Even better proposal: adjust the definition of ``consume'' at the end of the subsection; which at the time of writing is incorrect.}
 \item that the resource can only be consumed once so will never be
   used after being destroyed.
 \end{itemize}
@@ -572,13 +576,13 @@ resource deallocation happens, and that no use-after-free error
 occurs.
 
 But wait! We said earlier that a non-linear value can be passed to a linear
-function, so it would absolutely \emph{not} be safe for the function to deallocate the
-value when it consumes it!  To understand this we need to explain our operational model.
-
+function, so it would absolutely \emph{not} be safe for the function to always deallocate its
+argument when it is consumed!  To understand this we need to explain our operational model.
+%
 In our model there there are two heaps: the familiar
 \emph{dynamic heap} managed by the garbage collector, and a \emph{linear heap}
 managed by the programmer supported by statically-checked guarantees.
-We assume two primitives to allocate and free objects on the linear heap:
+Assume for a moment two primitives to allocate and free objects on the linear heap:
 \begin{code}
 allocT  :: (T ⊸ IO a) ⊸ IO a
 freeT   :: T ⊸ ()
@@ -592,7 +596,7 @@ It can only free the former, so it must make a dynamic test to tell which is the
 
 A consequence of the above design is that unrestricted values never
 contain (point to) linear values. (But the converse is possible.)
-One can make sense of this rule operationally  by appealing to
+One can make sense of this rule by appealing to
 garbage collection: when an unrestricted object is reclaimed by GC,
 it would leave all resources that it points to unaccounted
 for. Conversely, a pointer from a resource to the heap can simply act
@@ -601,7 +605,7 @@ as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
 We have repeatedly said that a linear function guarantees to ``consume'' its
 argument exactly once if the call is consumed exactly once.
 What precisely does ``consume'' mean?  We can now give a more precise operational
-intution:
+intution:\unsure{This definition seems problematic, as it forgets that values can be returned.}
 \begin{itemize}
 \item To consume an atomic base type once, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function value once, call it once, and consume its result once.
