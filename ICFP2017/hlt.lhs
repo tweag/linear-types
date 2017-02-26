@@ -384,7 +384,7 @@ The literature is dense with related work, which we dicuss in \fref{sec:related}
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
 We begin with an overview of
-\HaskeLL, our proposed extension of Haskell with linear types.
+\HaskeLL, our proposed extension of Haskell with linear types. All claims made in this section will be substantiated later.
 %
 First, along with the usual arrow type |A -> B|,
 we propose an additional arrow type, standing for \emph{linear arrows}, written
@@ -478,14 +478,14 @@ nor drop any element in |xs|\footnote{This follows from parametricity.
   consume them, and thus must know their type (or have a type class instance).
   Likewise to copy them.}.
 
-But notice that giving a more precise type to |(++)| only
+Giving a more precise type to |(++)| only
 {\em strengthens} the contract that |(++)| offers to its callers;
-\emph{but it does not restrict its usage}. For example:
+\emph{it does not restrict its usage}. For example:
 \begin{code}
   sum :: [Int] ⊸ Int
   f :: [Int] ⊸ [Int] -> Int
   f xs ys = sum (xs ++ ys) + sum ys
-\end{code}  
+\end{code}
 Here the two arguments to |(++)| have different multiplicities, but
 the function |f| guarantees to consume |xs| precisely once.
 
@@ -505,7 +505,7 @@ is that data types in \HaskeLL{} should have {\em linear fields by default},
 including all standard definitions, such as pairs, tuples, |Maybe|, lists, and so on.
 More precisely, when defined in old-style Haskell-98 syntax, all fields are
 linear; when defined using GADT syntax, the programmer can explicitly choose.
-For example, in our system pairs defined as
+For example, in our system, pairs defined as
 \begin{code}
 data (,) a b = (,) a b
 \end{code}
