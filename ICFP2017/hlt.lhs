@@ -21,6 +21,7 @@
 %format allocT = "alloc_T"
 %format freeT = "free_T"
 %format copyT = "copy_T"
+%format __ = "\_"
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -94,7 +95,7 @@
 % \newtheorem{lemma}{Lemma}
 \newtheorem{remark}{Remark}
 
-\newcommand\calc{{\ensuremath{λ^q}}}
+\newcommand\calc{{\ensuremath{λ^q_\to}}}
 
 \usepackage{booktabs} % For formal tables
 
@@ -730,25 +731,22 @@ insert  :: Int -> a ⊸ PQ a ⊸ PQ a
 next    :: PQ a ⊸ Maybe (a, PQ a)
 \end{code}
 The interface is familiar, except that since the priority queue must
-accept packet it must have linear arrows. The typing system will then
-\emph{guarantee} that despite being stored in a data structure,
-every packet will be eventually sent.
+accept packets it must have linear arrows. In this way, the type
+system will \emph{guarantee} that despite being stored in a data
+structure, every packet will eventually be sent.
 
-The denotation of priorities is application dependent: if the server
-attempts to batch network traffic it may be a deadline for sending the
-packet, in a caching application the server may be trying to evict the
-bigger packets first in order to leave more room for incoming
-packets. We give ourselves a function to infer a priority for a
-packet:
+In a packet switch, priorities could represent deadlines associated to
+each packet\footnote{whereas in a caching application, the server may
+  be trying to evict the bigger packets first in order to leave more
+  room for incoming packets}. So we give ourselves a function to infer
+a priority for a packet:
 \begin{code}
-  priority: Packet ⊸ (Unrestricted Int,Packet)
+  priority :: Packet ⊸ (Unrestricted Int,Packet)
 \end{code}
-It is probably implemented from other primitives concerning packets,
-but such details are irrelevant for our example.
 
-The take-away is that the priority queue can be implemented as a
-\HaskeLL{} data type. Here is a rather silly example implementation as
-a sorted list:
+The takeaway is that the priority queue can be implemented as
+a \HaskeLL{} data type. Here is a naive implementation as a sorted
+list:
 \begin{code}
   data PQ a where
     Empty :: PQ a
@@ -757,18 +755,19 @@ a sorted list:
   empty = Empty
 
   insert p x q Empty = Cons p x q
-  insert p x (Cons p' x' q') = if p < p' then Cons p x (Cons p' x' q') else Cons p' x' (insert p x q')
+  insert p x (Cons p' x' q')  | p < p' = Cons p x (Cons p' x' q')
+                              | otherwise = Cons p' x' (insert p x q')
 
   next Empty = Nothing
-  next (Cons _ x q) = Just (x,q)
+  next (Cons __ x q) = Just (x,q)
 \end{code}
 %
 In \fref{sec:lower-gc}, we will return to the implementation of the
 priority queue and discuss the implications for garbage collection
 overheads.
 
-Let us tie this section up by implementing a tiny server which reads
-three packets on the network then send them all out.
+Finally, here is a tiny packet switch that forwards all packets
+on the network once three packets are available.
 \begin{code}
   sendAll :: PQ Packet ⊸ ()
   sendAll q | Just (p,q')  <- next q = case send p of () -> sendAll q'
@@ -794,13 +793,12 @@ three packets on the network then send them all out.
 \section{\calc{} statics}
 \label{sec:statics}
 In this section we turn to the calculus at the core of \HaskeLL{}, namely
-\calc{}, and give a step by step account of its syntax and typing
+\calc{}, for which we provide a step-by-step account of its syntax and typing
 rules.
 
-In \calc{}, values
-are classified into two categories: \emph{linear},
+In \calc{}, there are two classes of values: \emph{linear values},
 which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted}, which can be used an arbitrary number of
+\emph{unrestricted values}, which can be used an arbitrary number of
 times (including zero).
 
 The best way to think of linear values is to see them as objects
@@ -811,9 +809,12 @@ The word \emph{need} matters here:
 because of polymorphism, it is possible for any given linear value to
 actually be controlled by the garbage collector, however, for most
 purposes, it must be treated as if it it were not.
+\improvement{MB: This paragraph is too imprecise as it stands.
+  I reread it several times but am non the wiser for it, meaning it
+  might as well be removed. Needs a rewrite.}
 
-This framing drives the details of \calc{}. In particular unrestricted
-values cannot contain linear values,
+This framing drives the details of \calc{}. In particular, unrestricted
+values cannot contain linear values
 because the garbage collector needs to
 control transitively the deallocation of every sub-object: otherwise we may
 have dangling pointers or memory leaks. On the other hand, it is
@@ -831,10 +832,15 @@ pointing to that linear value.
 \subsection{Typing}
 \label{sec:typing}
 
-The static semantics of \calc{} is expressed in terms of the
-familiar-looking judgement \(Γ ⊢ t : A\). Its meaning however, may be
-less familiar. The judgement \(Γ ⊢ t : A\) ought to be read as
-follows: the term $t$ builds \emph{exactly one} $A$, and consumes all
+The term syntax (\fref{fig:syntax}) is that of a type-annotated
+(\textit{à la} Church) simply typed $λ$-calculus with let-definitions.
+Binders in $λ$-abstractions and type definitions are annotated both
+with their type and their multiplicity (echoing the typing context
+from \fref{sec:typing-contexts}). Multiplicity abstraction and
+application are explicit.
+
+In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
+A\) has a non-standard reading: it asserts that the term $t$ builds \emph{exactly one} $A$, and consumes all
 of $Γ$.  This section precisely defines the syntax of types and the typing judgement.
 
 \begin{figure}
@@ -897,20 +903,22 @@ arrow types are dual to those they impose on variables in the context:
 a function of type $A→B$ \emph{must} be applied to an argument of
 multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
 argument of multiplicity $1$ or $ω$.
-One may thus expect the type $A⊸B$ to be a subtype of $A→B$, however
-this does not hold, for the mere reason that there is no notion of
-subtyping in \calc{}. Indeed, our objective is to integrate with
-Haskell, which is based on Hindley-Milner-style
-polymorphism, and subtyping and polymorphism do not mesh well.
-Thus \calc{} is based on polymorphism rather than subtyping.
 
-Data type declarations, also presented in \fref{fig:syntax},
-deserve some additional explanation.
+One might expect the type $A⊸B$ to be a subtype of $A→B$. This is
+however, not so: there is no notion of
+subtyping in \calc{}. This is a salient choice in our design. Our objective is to integrate with
+existing typed functional languages such as Haskell and the ML family, which are based on Hindley-Milner-style
+polymorphism, where subtyping and polymorphism do not mesh well.
+\improvement{Cite specific issues here (absence of principal types?).}
+\calc{} uses polymorphism where other systems use subtyping.
+\improvement{Can we cite prior art that falls in this category?}
+
+Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
   \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 The above declaration means that \(D\) has \(m\) constructors
-\(c_k\), for \(k ∈ 1…m\), each with \(n_k\) arguments. Arguments of
+\(c_k\) (where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions:
 an argument of multiplicity $ω$ means that the data type can store,
 at that position, data which \emph{must} have multiplicity $ω$;
@@ -920,7 +928,7 @@ that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
 $1$ or $ω$).
 
 For most purposes, $c_k$ behaves like a constant with the type
-$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$ \unsure{MB: Shouldn't these be lollipops?}. As the typing rules of
 \fref{fig:typing} make clear, this means in particular that from a
 value $d$ of type $D$ with multiplicity $ω$, pattern matching
 extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
@@ -936,13 +944,6 @@ dually, when pattern-matching on $c x$, $x$ \emph{must} be of
 multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
 on the other hand, then $x$ could be used either as having
 multiplicity $ω$ or $1$).
-
-The term syntax (\fref{fig:syntax}) is that of a
-type-annotated (\textit{à la} Church) simply typed $λ$-calculus
-with let-definitions. Binders in $λ$-abstractions and type definitions
-are annotated with both their type and their multiplicity (echoing the
-typing context from \fref{sec:typing-contexts}). Multiplicity
-abstraction and application are explicit.
 
 It is perhaps more surprising that applications and cases are
 annotated by a multiplicity. This information is usually redundant,
@@ -1998,7 +1999,7 @@ supports an implementation where each individual constructor with
 multiplicity 1 can be allocated on a linear heap, and deallocated when
 it is pattern matched. Implementing this behaviour is left for future work.
 
-\section{Conclusion and further works}
+\section{Conclusion and future work}
 
 This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
