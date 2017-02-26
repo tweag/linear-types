@@ -1731,30 +1731,29 @@ merely by changing the arrow to a linear one:
 \subsection{Protocols}
 
 \Citet{honda_session_1993} introduces the idea of using types to
-represent, and enforce, protocols. \Citet{wadler_propositions_2012}
-proved that \citeauthor{honda_session_1993}'s system is isomorphic to
-(classical) linear logic. The very high-level idea is that one end of
-a communication channel by typed with the protocol $P$ and the other
-end the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
-an A'', the dual $A^⊥$ denotes ``I will send an A''. Then protocol can
-be composed with pairs: the protocol $(A,B^⊥)$ means ``I expect an
+represent and enforce protocols. \Citet{wadler_propositions_2012}
+showed that \citeauthor{honda_session_1993}'s system is isomorphic to
+(classical) linear logic. The high-level idea is that one end of
+a communication channel is typed with the protocol $P$ and the other
+end with the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
+an A'', the dual $A^⊥$ denotes ``I will send an A''. Then, protocols can
+be composed using pairs: the protocol $(A,B^⊥)$ means ``I expect an
 $A$, and I will send a $B$''.
 
-The question then becomes: how to represent the dual $P^⊥$ in our
-intuitionistic setting? The answer is rather standard: using (linear)
-continuation passing style: $P^⊥ = P⊸⊥$, where $⊥$ represents the type
-of effects (|⊥ = IO ()| would be a typical choice in Haskell). This
-amounts to the standard encoding of linear logic in intuitionistic
-linear logic using continuation. Using $P^⊥ = P→⊥$ would not be
-sufficient to enforce the protocol $P$ as a process can skip sending a
-required value or expect two value where one ought to be sent, causing
+In our intuitionistic setting, we can represent the dual $P^⊥$ by using
+continuation passing style: $P^⊥ = P⊸⊥$, where $⊥$ represents a type
+of effects (|⊥ = IO ()| would be a typical choice in Haskell). This encoding
+is the standard embedding of classical (linear) logic in intuitionistic
+(linear) logic. Using $P^⊥ = P→⊥$ would not be
+sufficient to enforce the protocol $P$, because a process can skip sending a
+required value or expect two values where one ought to be sent, potentially causing
 deadlocks.
 
-This touches on the reason why \calc{} does not have a built-in way to
-construct the so-called additive product $A\&B$, the dual to (linear)
-sum: the definition of $A\&B$ depends on the choice of effects. The
-following example (an effectful \emph{if} combinator) gives a glimpse
-of linear \textsc{cps} code:
+Thus there are two reasons why \calc{} does not have a built-in additive
+product ($A\&B$), dual to (linear) sum: 1. uniformity commands to
+use the general dualisation pattern instead and 2. the definition would depend on the
+choice of effects. The following example (a linear |if|
+combinator) shows a glimpse of linear \textsc{cps} code:
 \begin{code}
   data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
   type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
