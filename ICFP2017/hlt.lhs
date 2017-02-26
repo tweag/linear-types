@@ -801,56 +801,37 @@ on the network once three packets are available.
 %
 \section{\calc{} statics}
 \label{sec:statics}
-In this section we turn to the calculus at the core of \HaskeLL{}, namely
+In this section we turn to the calculus at the core of \HaskeLL{},
+which we refer to as
 \calc{}, for which we provide a step-by-step account of its syntax and typing
 rules.
 
-In \calc{}, there are two classes of values: \emph{linear values},
-which must be used \emph{exactly once} on each code path, and
-\emph{unrestricted values}, which can be used an arbitrary number of
-times (including zero).
+As we discussed in \fref{sec:consumed}, our operational model for
+\calc{} is that of two heaps: the dynamic heap and the linear
+heap. Values in the linear heap are managed by the programmer hence \emph{must} be consumed \emph{exactly
+  once}, while values in the dynamic heap are managed by the garbage
+collector hence \emph{may} freely be consumed any number of times
+(including just one or none at all). The role of the type system of
+\calc{} is to enforce this very property.
 
-The best way to think of linear values is to see them as objects
-that need not be controlled by the garbage collector: \emph{e.g.}
-because they are scarce resources, because they are controlled by
-foreign code.
-The word \emph{need} matters here:
-because of polymorphism, it is possible for any given linear value to
-actually be controlled by the garbage collector, however, for most
-purposes, it must be treated as if it it were not.
-\improvement{MB: This paragraph is too imprecise as it stands.
-  I reread it several times but am non the wiser for it, meaning it
-  might as well be removed. Needs a rewrite.}
+Let us point out that closures (partial applications or lazy thunks)
+may reside in the linear heap. Indeed, as we explained in
+\fref{sec:consumed}, values from the dynamic heap do not point to
+values in the linear heap, so if any member of a closure resides in
+the linear heap, so must the closure itself.
 
-This framing drives the details of \calc{}. In particular, unrestricted
-values cannot contain linear values
-because the garbage collector needs to
-control transitively the deallocation of every sub-object: otherwise we may
-have dangling pointers or memory leaks. On the other hand, it is
-valid for linear values to refer to unrestricted ones: linear values act as GC roots.
-So any
-value containing a linear value must also be linear. Crucially this property
-applies to closures as well (both partial applications and lazy
-thunks): \emph{e.g.} a partial application of a function to a linear
-value is, itself, a linear value (which means that such
-a partial application must be applied exactly once).
-More generally, the application of a function
-to a linear value is linear, since it is, in general, a closure
-pointing to that linear value.
-
-\subsection{Typing}
-\label{sec:typing}
+\subsection{Syntax}
+\label{sec:syntax}
 
 The term syntax (\fref{fig:syntax}) is that of a type-annotated
-(\textit{à la} Church) simply typed $λ$-calculus with let-definitions.
+(\emph{à la} Church) simply typed $λ$-calculus with let-definitions.
 Binders in $λ$-abstractions and type definitions are annotated both
-with their type and their multiplicity (echoing the typing context
-from \fref{sec:typing-contexts}). Multiplicity abstraction and
+with their type and their multiplicity. Multiplicity abstraction and
 application are explicit.
 
 In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
-A\) has a non-standard reading: it asserts that the term $t$ builds \emph{exactly one} $A$, and consumes all
-of $Γ$.  This section precisely defines the syntax of types and the typing judgement.
+A\) has a non-standard reading: it asserts that the consuming the term
+$t : A$ \emph{exactly once}, will consume $Γ$ exactly once.
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -898,27 +879,29 @@ of $Γ$.  This section precisely defines the syntax of types and the typing judg
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
 arrows (albeit multiplicity-annotated ones), data types, and
 multiplicity polymorphism. The annotated function type is a
-generalization of the intuitionistic arrow and the linear arrow. We
+generalisation of the intuitionistic arrow and the linear arrow. We
 use the following notations:
 \(A → B ≝  A →_ω B\) and
 \(A ⊸ B ≝ A →_1 B\).
-The intuition behind the multiplicity-annotated arrow \(A →_q B\) is that you can
-get a \(B\) if you can provide an \(A\) with multiplicity \(q\). Note in
-particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
-$f x$ is well-typed. Therefore, the constraints imposed by multiplicities on
-arrow types are dual to those they impose on variables in the context:
-a function of type $A→B$ \emph{must} be applied to an argument of
-multiplicity $ω$, while a function of type $A⊸B$ \emph{may} be applied to an
-argument of multiplicity $1$ or $ω$.
 
-One might expect the type $A⊸B$ to be a subtype of $A→B$. This is
-however, not so: there is no notion of
-subtyping in \calc{}. This is a salient choice in our design. Our objective is to integrate with
-existing typed functional languages such as Haskell and the ML family, which are based on Hindley-Milner-style
-polymorphism, where subtyping and polymorphism do not mesh well.
-\improvement{Cite specific issues here (absence of principal types?).}
-\calc{} uses polymorphism where other systems use subtyping.
-\improvement{Can we cite prior art that falls in this category?}
+The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
+that consuming $f u : B$ exactly once will consume $u : A$ $q$
+times. Therefore, a function of type $A→B$ \emph{must} be applied to
+an argument residing in the dynamic heap, while a function of type
+$A⊸B$ \emph{may} be applied to an argument residing on either heap.
+%
+One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
+is however, not so as there is no notion of subtyping in \calc{}. This
+is a salient choice in our design. Our objective is to integrate with
+existing typed functional languages such as Haskell and the
+\textsc{ml} family, which are based on Hindley-Milner-style
+polymorphism. Hindley-Milner-style polymorphism, however, happens not
+mesh well with subtyping as the extensive exposition by
+\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
+multiplicity polymorphism for the purpose of reuse of higher-order
+function as we described in \fref{sec:lin-poly}.  \improvement{Can we
+  cite prior art that uses linearity subtyping? — [aspiwack] Clean
+  quite possibly}
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
@@ -928,14 +911,14 @@ The above declaration means that \(D\) has \(m\) constructors
 \(c_k\) (where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions:
 an argument of multiplicity $ω$ means that the data type can store,
-at that position, data which \emph{must} have multiplicity $ω$;
+at that position, data which \emph{must} reside in the dynamic heap;
 while a multiplicity of $1$ means that data at that position
-\emph{can} have multiplicity $1$ (or $ω$). A further requirement is
+\emph{can} reside in either heap. A further requirement is
 that the multiplicities $q_i$ must be concrete (\emph{i.e.} either
 $1$ or $ω$).
 
 For most purposes, $c_k$ behaves like a constant with the type
-$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$ \unsure{MB: Shouldn't these be lollipops?}. As the typing rules of
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
 \fref{fig:typing} make clear, this means in particular that from a
 value $d$ of type $D$ with multiplicity $ω$, pattern matching
 extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
@@ -951,18 +934,6 @@ dually, when pattern-matching on $c x$, $x$ \emph{must} be of
 multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
 on the other hand, then $x$ could be used either as having
 multiplicity $ω$ or $1$).
-
-It is perhaps more surprising that applications and cases are
-annotated by a multiplicity. This information is usually redundant,
-but we use it in \fref{sec:dynamics} to define a compositional
-dynamic semantics with prompt deallocation of data. We sometimes omit
-the multiplicities or type annotations when they are obvious from the
-context, especially in the case of applications.\unsure{[aspiwack]
-  Though, to be honest, we also need the type of the argument now (for
-  let-introduction), and we don't keep it. I'm tempted to drop these
-  annoying annotations and define the translation in the dynamics
-  section as acting on type derivations rather than terms which happen
-  to be well-typed}
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
@@ -1004,20 +975,23 @@ context, especially in the case of applications.\unsure{[aspiwack]
 
 \subsection{Contexts}
 \label{sec:typing-contexts}
-Most typing rules mutiply contexts by a multiplicity. In this
-subsection we explain what this means and in general discuss the
-structure of contexts.
+Many of the typing rules scale contexts by a multiplicity, or add
+contexts together. We will
+explain the why very soon in \fref{sec:typing-rules}, but first, let
+us focus on the how.
 
-In \calc{}, each variable in typing contexts is annotated with a
-multiplicity.
-Concrete multiplicities are either $1$ or $ω$ which stand for linear
-and unrestricted bindings, respectively. For the sake of
-polymorphism, multiplicities are extended with multiplicity
-\emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum.
+In \calc{}, each variable binding, in a typing context, is annotated with a
+multiplicity. These multiplicity annotations are the natural counterpart
+of the multiplicity annotation on abstractions and arrows.
 
-In addition, multiplicities are equipped with an equivalence relation,
-written $(=)$, and defined as follows:
+For multiplicities we need the concrete multiplicities $1$ and $ω$ as
+well as multiplicity variables (ranged over by the metasyntactic
+variables \(π\) and \(ρ\)) for the sake of polymorphism. However, we
+are going to need to add and multiply multiplicities together,
+therefore we also need formal sums and products of multiplicities.
+%
+Multiplicity expressions are quotiented by the following equivalence
+relation:
 \begin{definition}[equivalence of multiplicities]
   \label{def:equiv-multiplicity}
   The equivalence of multiplicities is the smallest transitive and
@@ -1061,35 +1035,29 @@ not the second or third rule applies.
   \end{align*}
 \end{lemma}
 
-The equivalence relation is lifted to contexts in the obvious way. In
-the typing rules contexts can always be substituted for other
-equivalent contexts.
-
 \subsection{Typing rules}
+\label{sec:typing-rules}
+
 We are now ready to understand the typing rules of
 \fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
-reads as: the term $t$ consumes $Γ$ and builds an $A$ with
-multiplicity $1$.  This is the only kind of judgement in \calc{}:
-there is no direct way to express ``the term $t$ consumes $Γ$ and
-builds an $A$ with multiplicity $p$''. The reason for this is the
-\emph{promotion principle}\footnote{The name \emph{promotion
-    principle} is a reference to the promotion rule of linear
-  logic. In \calc{}, however, promotion is implicit.}: to know how to
-create an unrestricted value it is sufficient (and, in fact,
-necessary) to know how to create a linear value. Thinking in terms of
-resources is the easiest way to shed light on this principle: a value
-which does not contain resources can safely be shared or dropped.
-
-The promotion principle is formalised through the use of context
-scaling in rules such as the application rule:
+reads as: consuming the term $t:A$ once consumes $Γ$ once. But what if
+we want to consume $t$ more than once? This is where context scaling
+comes into play, like in the application rule:
 $$\apprule$$
-The idea is that since $Δ ⊢ u : A$ means creating a $u$ with
-multiplicity $1$, scaling the context to $qΔ$ also (implicitly) scales
-the right-hand side of the judgement: that is it creates a $u$ with
-multiplicity $q$ (as required by the function). To get a better grasp
-of this rule, you may want to consider how it indeed renders the
+The idea is that if we consume $u$ an arbitrary number of time, we
+will consume $Δ$ an arbitrary number of time, equivalently, we will
+consume $ωΔ$ exactly once. We call this the \emph{promotion
+  principle}\footnote{The name \emph{promotion principle} is a
+  reference to the promotion rule of linear logic. In \calc{},
+  however, promotion is implicit.}: to know how to consume a
+value any number of times it is sufficient (and, in fact, necessary) to know
+how to consume said value exact once.
+
+To get a better grasp of the application rule and the promotion
+principle, you may want to consider how it indeed renders the
 following judgement well-typed. In this judgement, $π$ is a
-multiplicity variable, that is the judgement is multiplicity-polymorphic:
+multiplicity variable, that is the judgement is
+multiplicity-polymorphic:
 $$f:_ωA→_πB, x:_π A ⊢ f x$$
 
 This implicit use of the promotion principle in rules such as the
@@ -1111,12 +1079,12 @@ This latter fact is, in turn, why \HaskeLL{} is an extension of Haskell
 to have multiplicity $ω$).
 
 The variable rule, used in the above example, may require some
-clarification.
+clarification:
 $$\varrule$$
-The variable rule is the rule which implements weakening of
+The variable rule implements weakening of
 unrestricted variables: that is, it lets us ignore variables with
 multiplicity $ω$\footnote{Pushing weakening to the variable rule is
-  classic in many lambda calculi, and in the case of linear logic,
+  classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
   focusing~\cite{andreoli_logic_1992}.}. Note that the judgement
 $x :_ω A ⊢ x : A$ is an instance of the variable rule, because
@@ -1125,18 +1093,13 @@ $ωΓ$ context: it is necessary to support weakening at the level of
 constant constructors.
 
 Most of the other typing rules are straightforward, but let us linger
-for a moment on the case rule:
+for a moment on the case rule, and specifically on its multiplicity
+annotation:
 $$\caserule$$
-Like the application rule it is parametrized by a multiplicity
-$p$\improvement{[aspiwack] If I remove annotation on applications this
-will have to go}. But, while in the application rule only the argument is affected
-by $p$, in the case rule, not only the scrutinee but also the variable
-bindings in the branches are affected by $p$. What it means,
-concretely, is that the multiplicity of data is \emph{inherited} by
-its elements: if we have an $(A,B)$ with multiplicity $1$, then we have
-an $A$ with multiplicity $1$ and a $B$ with multiplicity $1$, and if
-we have an $(A,B)$ with multiplicity $ω$ then we have an $A$ with
-multiplicity $ω$ and a of $B$ with multiplicity $ω$. Therefore, the
+The interesting case is when $p=ω$, which reads as: if we can consume
+$t$ an arbitrary number of time, then so can we of its
+constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
+are its constituents (see \ref{sec:consumed}). As a consequence, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted).
@@ -1145,17 +1108,13 @@ must be~---~unrestricted).
   first      (a,b)  =  a                 snd      (a,b)  =  b
 \end{code}
 
-The reason why this inheritance of multiplicity is valid stems from
-our understanding of unrestricted values: an unrestricted value is
-owned by the garbage collector, which must also own its elements
-recursively. Phrased in terms of resources: if a value does not
-contain linear resources, neither do its elements.
-
-Inheritance of multiplicity is not necessary for the rest of the system
-to work. Yet, it is a design choice which makes it possible to consider
-data-type constructors as linear by default, while preserving the
-semantics of the intuitionistic $λ$-calculus (as we already alluded to
-in \fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
+This particular formulation of the case rule is not implied by the
+rest of the system: only the case $p=1$ is actually necessary. Yet,
+providing the case $p=ω$
+is a design choice which makes it possible to consider data-type
+constructors as linear by default, while preserving the semantics of
+the intuitionistic $λ$-calculus (as we already alluded to in
+\fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
 defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
@@ -2155,4 +2114,4 @@ on multiplicities.
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
 %  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
-%  LocalWords:  Finalisers effectful
+%  LocalWords:  Finalisers effectful subtyping
