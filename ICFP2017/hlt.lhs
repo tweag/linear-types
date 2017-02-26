@@ -1730,30 +1730,31 @@ merely by changing the arrow to a linear one:
 
 \subsection{Protocols}
 
-It is well known that concurrent programs can be conveniently encoded
-by using continuations~\cite{wand_continuation-based_1980}. By using types, we can additionally verify
-that the protocols match: namely, if a program $p$ implements a
-protocol $P$, then a program $p'$ intended to communicate with $p$ is given the
-dual type ($P^⊥$). In ML-family
-languages, the dual can be represented simply by an arrow to to $⊥$:
-$P^⊥ = P → ⊥$, where $⊥$ is a type of effects (which include
-communication on a channel).  All effectful programs must then use CPS
-so they eventually terminate with an effect. An issue of such encoding
-is that a continuation can be called several times, which can be
-problematic because the order of the protocol is not respected. Thanks
-to linear types, we can solve the problem simply by encoding the dual
-as a linear arrow: $P^⊥ = P ⊸ ⊥$. Then, the communication between $p$
-and $p'$ is guaranteed deadlock-free.
+\Citet{honda_session_1993} introduces the idea of using types to
+represent, and enforce, protocols. \Citet{wadler_propositions_2012}
+proved that \citeauthor{honda_session_1993}'s system is isomorphic to
+(classical) linear logic. The very high-level idea is that one end of
+a communication channel by typed with the protocol $P$ and the other
+end the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
+an A'', the dual $A^⊥$ denotes ``I will send an A''. Then protocol can
+be sequenced with pairs: the protocol $(A,B^⊥)$ means ``I expect an
+$A$, then I will send a $B$''.
 
-Some programming languages featuring session types have instead native
-support negation\cite{wadler_propositions_2012}. For each type constructor there is a dual:
-$(A⊕B)^⊥ = A^⊥ \& B^⊥$. Such an approach meshes well with languages
-modelled after classical logic.  Instead, the CPS approaches works
-better for languages bases on intuitionistic logic, such as
-Haskell. Hence we choose not to support duality specially.
+The question then becomes: how to represent the dual $P^⊥$ in our
+intuitionistic setting? The answer is rather standard: using (linear)
+continuation passing style: $P^⊥ = P⊸⊥$, where $⊥$ represents the type
+of effects (|⊥ = IO ()| would be a typical choice in Haskell). This
+amounts to the standard encoding of linear logic in intuitionistic
+linear logic using continuation. Using $P^⊥ = P→⊥$ would not be
+sufficient to enforce the protocol $P$ as a process can skip sending a
+required value or expect two value where one ought to be sent, causing
+deadlocks.
 
-The following example gives a glimpse of what linear CPS code may look
-like.
+This touches on the reason why \calc{} does not have a built-in way to
+construct the so-called additive product $A\&B$, the dual to (linear)
+sum: the definition of $A\&B$ depends on the choice of effects. The
+following example (an effectful \emph{if} combinator) gives a glimpse
+of linear \textsc{cps} code:
 \begin{code}
   data A⊕B  = Left :: A ⊸ A⊕B | Right :: B ⊸ A⊕B
   type A&B  = ((A⊸⊥)⊕(B⊸⊥))⊸⊥
@@ -2152,4 +2153,4 @@ on multiplicities.
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
 %  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
-%  LocalWords:  Finalisers
+%  LocalWords:  Finalisers effectful
