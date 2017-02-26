@@ -722,7 +722,7 @@ and then to the linear calling context of |send|, all by reference.
 \paragraph{Buffering data in memory}
 
 So what can our server do with the packets once they are retrieved
-from the network? To support software defined switch policies that
+from the network? To support software-defined switch policies that
 dictate what packet to forward when, we introduce a priority queue.
 \begin{code}
 data PQ a
@@ -755,8 +755,8 @@ list:
   empty = Empty
 
   insert p x q Empty = Cons p x q
-  insert p x (Cons p' x' q')  | p < p' = Cons p x (Cons p' x' q')
-                              | otherwise = Cons p' x' (insert p x q')
+  insert p x (Cons p' x' q')  | p < p'     = Cons p x (Cons p' x' q')
+                              | otherwise  = Cons p' x' (insert p x q')
 
   next Empty = Nothing
   next (Cons __ x q) = Just (x,q)
