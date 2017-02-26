@@ -1014,13 +1014,7 @@ Concrete multiplicities are either $1$ or $ω$ which stand for linear
 and unrestricted bindings, respectively. For the sake of
 polymorphism, multiplicities are extended with multiplicity
 \emph{expressions}, which contain variables (ranged over by the
-metasyntactic variables \(π\) and \(ρ\)), sum\resolved{We use sums
-  nowhere in the examples; shall we remove this? -- [Aspiwack] in the
-  case of $1$/$ω$ multiplicity $π+ρ$ is always (implicitly) $ω$, so
-  there may indeed be no benefit to formal sums in the scope of this
-  paper. JP: in the end it is somewhat ugly to remove sums, and we get to the situation that we can no longer extend to $0$ multiplicities. So let's keep them.},
-and product. The complete syntax of multiplicities and
-contexts can be found in \fref{fig:contexts}.
+metasyntactic variables \(π\) and \(ρ\)), sum.
 
 In addition, multiplicities are equipped with an equivalence relation,
 written $(=)$, and defined as follows:
