@@ -303,9 +303,8 @@ effect on programming practice}.  Few practical, full-scale languages are
 designed from the start with such features.  Rust is the major
 exception~\cite{matsakis_rust_2014}, and in Rust we see one of the attendant
 complications: adding advanced resource-tracking features puts a burden on
-language learners, who pass through
-an initiation period of ``fighting the borrow checker''
-\improvement{citation needed}.
+new users, who need to learn how to satisfy the ``borrow checker''.
+
 
 Could more languages be extended with linear or affine types?  Unfortunately, there has
 not been a clear path to augment preexisting type systems without (1) breaking
