@@ -605,7 +605,16 @@ as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
 We have repeatedly said that a linear function guarantees to ``consume'' its
 argument exactly once if the call is consumed exactly once.
 What precisely does ``consume'' mean?  We can now give a more precise operational
-intution:\unsure{This definition seems problematic, as it forgets that values can be returned.}
+intution:\unsure{This definition seems problematic, as it forgets that values can be returned.
+  Proposal:
+  To consume a value, it can either be returned; passed to a function whose result is consumed; or destroyed.
+ To destroy a function, call it, and consume its result.
+ To destroy a pair, evaluate it and consume each of its components once.
+ More generally, to destroy a value of an algebraic data type once, evaluate
+  it and consume all its linear components once.
+
+
+}
 \begin{itemize}
 \item To consume an atomic base type once, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function value once, call it once, and consume its result once.
