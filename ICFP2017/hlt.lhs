@@ -1737,8 +1737,8 @@ proved that \citeauthor{honda_session_1993}'s system is isomorphic to
 a communication channel by typed with the protocol $P$ and the other
 end the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
 an A'', the dual $A^⊥$ denotes ``I will send an A''. Then protocol can
-be sequenced with pairs: the protocol $(A,B^⊥)$ means ``I expect an
-$A$, then I will send a $B$''.
+be composed with pairs: the protocol $(A,B^⊥)$ means ``I expect an
+$A$, and I will send a $B$''.
 
 The question then becomes: how to represent the dual $P^⊥$ in our
 intuitionistic setting? The answer is rather standard: using (linear)
