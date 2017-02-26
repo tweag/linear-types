@@ -777,7 +777,7 @@ on the network once three packets are available.
   enqueue mb q =
     let
       !(p,mb')              = get mb
-      !(!(mkUnre prio),p')  = priority p
+      !(!(Unrestricted prio),p')  = priority p
     in ( mb' , insert prio p' q )
 
   main :: IO ()
