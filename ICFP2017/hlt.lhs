@@ -393,7 +393,7 @@ there is exactly one copy of the parameter to consume.
 
 \begin{code}
 f :: A ⊸ B
-f x = {- |x| has multiplicity $1$ here -}
+f x = {- |x| has multiplicity $1$ here -}
 \end{code}
 \noindent
 We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
@@ -440,6 +440,13 @@ consumed linearly by |k|.  In |g6|, |x| is still passed to the linear function
 |f|, but the call |(f x)| is in a non-linear context, so |x| too is
 used non-linearly and the code is ill-typed.
 
+In general, any sub-expression is type-checked as if it were to be
+consumed exactly once. However, an expression which does not contain
+resources, that is an expression whose free variables all have
+multiplicity $ω$, like |f y| in |g4|, can be consumed many times. Such
+an expression is said to be \emph{promoted}. We leave the specifics to
+\fref{sec:statics}.
+
 \subsection{Linear data types}
 \label{sec:linear-constructors}
 
@@ -454,7 +461,7 @@ not a new, linear list type: this \emph{is} \HaskeLL{}'s list type, and all
 Haskell functions will work over it perfectly well.  But we can
 \emph{also} use the very same list type to contain linear resources (such as
 file handles) without compromising safety; the type system will ensure
-that resources in |xs| will eventually be deallocated, and that they
+that resources in a list will eventually be deallocated, and that they
 will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
@@ -509,11 +516,12 @@ data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
 We will see in \fref{sec:non-linear-constructors} when it is useful
 to have contstructors with unrestricted arrows.
 
-\subsection{Linearity polymorphism} \label{sec:lin-poly}
+\subsection{Linearity polymorphism}
+\label{sec:lin-poly}
 
-As seen above, implicit conversions between multiplicities make
-first-order linear functions {\em more general}, but fails for higher-order
-functions. Consider the standard |map| function over
+As we have seen, implicit conversions between multiplicities make
+first-order linear functions {\em more general}. But the higher-order
+case thickens the plot. Consider that the standard |map| function over
 (linear) lists:
 \begin{code}
 map f []      = []
@@ -536,7 +544,7 @@ Likewise, function composition can be given the following general type:
 That is: two functions that accept arguments of arbitrary
 multiplicities ($ρ$ and $π$ respectively) can be composed to form a
 function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
-product of $ρ$ and $π$ --- see \fref{def:equiv-mutiplicity}).
+product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
 subscripts and binders for multiplicity polymorphism can be {\em
@@ -544,15 +552,18 @@ subscripts and binders for multiplicity polymorphism can be {\em
 linearity, all inputs will have multiplicity $ω$, and transitively all
 expressions can be promoted to $ω$. Thus in such a context the
 compiler, or indeed documentation tools, can even altogether hide
-linearity extensions from the programmer.
+linearity annotations from the programmer.
 
 \subsection{Operational intuitions}
-\label{sec:invariant} \label{sec:consumed}
+\label{sec:consumed}
 
 Suppose that a linear function takes as its argument a {\em resource},
 such as a file handle, channel, or memory block.  Then the function guarantees:
 \begin{itemize}
-\item that the resource will be consumed and destroyed by the time it returns;
+\item that the resource will be consumed and destroyed by the time it
+  returns;\improvement{[aspiwack] not exactly by the time the function returns: it could
+    pass the resource along. Proposal: ``when its return value is
+    consumed'' or ``when the call is consumed'' (as below).}
 \item that the resource can only be consumed once so will never be
   used after being destroyed.
 \end{itemize}
@@ -598,13 +609,6 @@ intution:
 \item More generally, to consume a value of an algebraic data type once, evaluate
   it and consume all its linear components once.
 \end{itemize}
-
-In general, any sub-expression is type-checked as if it were to be
-consumed exactly once. However, an expression which does not contain
-resources, that is an expression whose free variables all have
-multiplicity $ω$, can be consumed many times. Such an
-expression is said to be \emph{promoted}. We leave the specifics to
-\fref{sec:statics}.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:non-linear-constructors}
@@ -703,7 +707,7 @@ sending packets can likewise live outside of |IO|, and are ultimately part of th
   send  :: Packet ⊸ ()
 \end{code}
 
-|get| yields the next available packet, whereas |send| forwards it on the
+The next available packet is yielded by |get|, whereas |send| forwards it on the
 network.
 %
 In the simplest case, we can read a message and send it immediately --- without
@@ -1005,7 +1009,7 @@ contexts can be found in \fref{fig:contexts}.
 In addition, multiplicities are equipped with an equivalence relation,
 written $(=)$, and defined as follows:
 \begin{definition}[equivalence of multiplicities]
-  \label{def:equiv-mutiplicity}
+  \label{def:equiv-multiplicity}
   The equivalence of multiplicities is the smallest transitive and
   reflexive relation, which obeys the following laws:
 \begin{itemize}
