@@ -1277,10 +1277,14 @@ primitives are $η$-expanded by the translation.
   \begin{align*}
     (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
     x^*             &= x \\
-    (t_q  x )^*     &= (t)^*_q  x \\
-    (t_q  u )^*     &= \flet y :_q \_ = (u)^* \fin (t)^*  y \\
-    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} \_ = (t₁)^*,…, x_n :_{q_n} \_ = (t_n)^*
-                      \fin c_k x₁ … x_n
+    (t  x )^*     &= (t)^*  x \\
+    (t  u )^*     &= \flet y :_q A = (u)^* \fin (t)^*  y &
+    \text{with $Γ⊢ t : A →_q B$}
+  \end{align*}
+  \begin{align*}
+    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} A_1 = (t₁)^*,…, x_n :_{q_n} A_n = (t_n)^*
+                      \fin c_k x₁ … x_n & \text{with $c_k : A_1
+                                          →_{q_1}…A_n →_{q_n}D$}
   \end{align*}
   \begin{align*}
     (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
