@@ -408,14 +408,14 @@ consume its argument exactly once.
 However, a function of type |A ⊸ B|
 \emph{places no requirement on the caller};
 the latter is free to pass either a linear or non-linear value to the function.
-
+%
 For example, consider these definitions of a function |g|:
 \begin{code}
 g1,g2,g3 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 
 g1 k x y = k x y          -- Valid
-g2 k x y = k y x          -- Invalid: fails x's multiplicity guarantee
-g3 k x y = k x (k y y)    -- Valid: y can be passed to linear k
+g2 k x y = k y x          -- Invalid: fails |x|'s multiplicity guarantee
+g3 k x y = k x (k y y)    -- Valid: |y| can be passed to linear |k|
 \end{code}
 As in |g2|, a linear variable |x| cannot be passed to the non-linear
 function |(k y)|.  But the other way round is fine:
@@ -432,9 +432,9 @@ of the same function |g|:
 f :: a ⊸ a
 g4,g5,g6 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
 
-g4 k x y = k x (f y)      -- Valid: y can be passed to linear f
-g5 k x y = k (f x) y      -- Valid: k consumes (f x)'s result once
-g6 k x y = k y (f x)      -- Invalid: fails x's multiplicity guarantee
+g4 k x y = k x (f y)      -- Valid: |y| can be passed to linear |f|
+g5 k x y = k (f x) y      -- Valid: |k| consumes |f x|'s result once
+g6 k x y = k y (f x)      -- Invalid: fails |x|'s multiplicity guarantee
 \end{code}
 In |g5|, the linear |x| can be passed to |f| because the result of |(f x)| is
 consumed linearly by |k|.  In |g6|, |x| is still passed to the linear function
@@ -505,8 +505,7 @@ data (,) a b = (,) a b
 \end{code}
 would use linear arrows. This becomes explicit when defined in GADT syntax:
 \begin{code}
-data (a,b) where
-  (,) ::  a ⊸ b ⊸ (a,b)
+data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
 \end{code}
 We will see in \fref{sec:non-linear-constructors} when it is useful
 to have contstructors with unrestricted arrows.
@@ -533,7 +532,7 @@ can be given the two following incomparable types:
 In \HaskeLL{}, we can generalise over linear and unrestricted arrows
 using {\em multiplicity polymorphism}. This is written $A →_ρ B$. In
 the case at hand, |map| can be given the following most general type:
-| ∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
+|∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
 %
 Likewise, function composition can be given the following general type:
 \begin{code}
@@ -774,22 +773,18 @@ on the network once three packets are available.
   sendAll q | Nothing      <- next q = ()
 
   enqueue :: MB ⊸ PQ a ⊸ (PQ a,MB)
-  enqueue mb q =
-    let
-      !(p,mb')              = get mb
-      !(!(Unrestricted prio),p')  = priority p
-    in ( mb' , insert prio p' q )
+  enqueue mb q =  let  !(p,mb')                    = get mb
+                       !(!(Unrestricted prio),p')  = priority p
+                  in ( mb' , insert prio p' q )
 
   main :: IO ()
-  main = withMailbox $ \ mb0 ->
-    let
-      !(mb1,q1)  = enqueue mb0 empty
-      !(mb2,q2)  = enqueue mb1 q1
-      !(mb3,q3)  = enqueue mb2 q2
-      !()        = close mb3
-    in return $ sendAll q3
+  main = withMailbox $ \ mb0 ->  let  !(mb1,q1)  = enqueue mb0 empty
+                                      !(mb2,q2)  = enqueue mb1 q1
+                                      !(mb3,q3)  = enqueue mb2 q2
+                                      !()        = close mb3
+                                 in return $ sendAll q3
 \end{code}
-
+%
 \section{\calc{} statics}
 \label{sec:statics}
 In this section we turn to the calculus at the core of \HaskeLL{}, namely
@@ -891,10 +886,8 @@ arrows (albeit multiplicity-annotated ones), data types, and
 multiplicity polymorphism. The annotated function type is a
 generalization of the intuitionistic arrow and the linear arrow. We
 use the following notations:
-\begin{itemize}
-\item \(A → B ≝  A →_ω B\)
-\item \(A ⊸ B ≝ A →_1 B\)
-\end{itemize}
+\(A → B ≝  A →_ω B\) and
+\(A ⊸ B ≝ A →_1 B\).
 The intuition behind the multiplicity-annotated arrow \(A →_q B\) is that you can
 get a \(B\) if you can provide an \(A\) with multiplicity \(q\). Note in
 particular that when one has $x :_ω A$ and $f :_1 A ⊸ B$, the call
@@ -1851,7 +1844,7 @@ for fusion than in-place update (\textsc{ghc} has a cardinality
 analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
 wealth of literature detailing the applications of linear
 logic — see \fref{sec:applications}; 4. and desicively, linear type systems are
-conceptually simpler than uniqueness type systems, which gives a
+conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
 \subsection{Linearity as a property of types vs. a property of bindings}
