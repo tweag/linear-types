@@ -1033,9 +1033,7 @@ written $(=)$, and defined as follows:
 \item $1$ is the unit of $·$
 \item $·$ distributes over $+$
 \item $ω · ω = ω$
-\item $1 + ω = ω$
-\item $1 + 1 = ω$
-\item $ω + ω = ω$
+\item $1 + 1 = 1 + ω = ω + ω = ω$
 \end{itemize}
 \end{definition}
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
@@ -1061,10 +1059,10 @@ not the second or third rule applies.
 \begin{lemma}[Contexts form a module]
   The following laws hold:
   \begin{align*}
-    Γ + Δ &= Δ + Γ\\
+    Γ + Δ &= Δ + Γ &
     p (Γ+Δ) &= p Γ + p Δ\\
     (p+q) Γ &= p Γ+ q Γ \\
-    (pq) Γ &= p (q Γ)\\
+    (pq) Γ &= p (q Γ) &
     1 Γ &= Γ
   \end{align*}
 \end{lemma}
