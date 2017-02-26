@@ -512,27 +512,22 @@ to have contstructors with unrestricted arrows.
 
 \subsection{Linearity polymorphism} \label{sec:lin-poly}
 
-Higher-order code is more complex, so we
-introduce {\em multiplicity polymorphism} as a way to preserve
-effective code sharing of higher-order functions. For example, the
-standard |map| function over (linear) lists:
-
 As seen above, implicit conversions between multiplicities make
-first-order linear functions {\em more general}. But the higher-order
-case thickens the plot. Consider that the standard |map| function over
-(linear) lists,
+first-order linear functions {\em more general}, but fails for higher-order
+functions. Consider the standard |map| function over
+(linear) lists:
 \begin{code}
 map f []      = []
 map f (x:xs)  = f x : map f xs
 \end{code}
-can be given the two following incomparable types:
+It can be given the two following incomparable types:
   |(a ⊸ b) -> [a] ⊸ [b]|  and
   |(a -> b) -> [a] -> [b]|.
 %
 In \HaskeLL{}, we can generalise over linear and unrestricted arrows
 using {\em multiplicity polymorphism}. This is written $A →_ρ B$. In
 the case at hand, |map| can be given the following most general type:
-|∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|
+|∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|.
 %
 Likewise, function composition can be given the following general type:
 \begin{code}
