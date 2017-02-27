@@ -386,11 +386,8 @@ we propose an additional arrow type, standing for \emph{linear arrows}, written
 |A ⊸ B|. In the body of a linear function, the type system tracks that
 there is exactly one copy of the parameter to consume.
 \begin{code}
-f :: A ⊸ B
-f x = {- |x| has multiplicity $1$ here -}
-
-g :: A -> B
-g y = {- |y| has multiplicity $\omega$ here -}
+f :: A ⊸ B       bigSpace bigSpace         bigSpace   g :: A -> B
+f x = {- |x| has multiplicity $1$ here -}   bigSpace   g y = {- |y| has multiplicity $\omega$ here -}
 \end{code}
 \noindent
 We say that the \emph{multiplicity} of |y| is $1$ in the body of |g|. Similarly, we say
