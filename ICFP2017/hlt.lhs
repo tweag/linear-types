@@ -643,7 +643,7 @@ data type is used to indicate that when a value |(Unrestricted x)| is consumed
 once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
 consumed.
 With our primitive in hand, we can now use ordinary code to copy
-a linear list of |T| values into the dynamic heap (we Mark patterns with |!| as a reminder that \HaskeLL
+a linear list of |T| values into the dynamic heap (we mark patterns with |!| as a reminder that \HaskeLL{}
 does not support lazy pattern bindings for linear values):
 \begin{code}
   copy :: (a ⊸ Unrestricted a) -> [a] ⊸ Unrestricted [a]
@@ -699,18 +699,18 @@ network.
   send  :: Packet ⊸ ()
 \end{code}
 %
-In the simplest case, we can read a message and send it immediately
---- without any filtering or buffering.  When calling |get| and
-|send|, |Packet|s never need to be copied: they can be passed along
-from the network interface card to the mailbox and then to the linear
-calling context of |send|, all by reference.
+In the simplest case, we can read a message and send it
+immediately~—~without any filtering or buffering.  When calling |get|
+and |send|, |Packet|s never need to be copied: they can be passed
+along from the network interface card to the mailbox and then to the
+linear calling context of |send|, all by reference.
 
 The above API assumes that mailboxes are independent: the order of
 packets is ensured within a mailbox queue, but not accross mailboxes
 (and not even between the input and output queue of a given
 mailbox). While this assumption is in general incorrect, it applies
 for our packet switcher. Additionally it illustrates the ability of
-our type-system to finely track dependencies between various kinds of
+our type system to finely track dependencies between various kinds of
 effects: as precisely as required, but no more.
 
 \paragraph{Buffering data in memory}
