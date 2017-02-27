@@ -1785,7 +1785,7 @@ leak, where scarce resources may be rendered unavailable for a long time.
 
 A large chunk of the literature deals with linearity not by using linear types,
 but instead by using uniqueness (or ownership) types. The most prominent representatives of
-languages with such uniqueness types are perhaps Clean \todo{Cite Clean} and
+languages with such uniqueness types are perhaps Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
