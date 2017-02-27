@@ -1704,77 +1704,76 @@ if' False  p k = p (Right  k)
 
 \subsection{Regions}
 
-Haskell's |ST| monad~\cite{launchbury_st_1995} taught us a
-conceptually simple approach to lifetimes. By equipping |ST| with a
-region argument |s| and exposing as the only way to get out of |ST|
-the function:
+Haskell's |ST| monad~\cite{launchbury_st_1995} taught us
+a conceptually simple approach to lifetimes. The |ST| monad has
+a phantom type parameter |s| that is instantiated once at the
+beginning of the computation by a |runST| function of type:
 \begin{code}
   runST :: (forall s. ST s a) -> a
 \end{code}
-the type systems ensures that releasing every resource after |runST|
-is safe.
+In this way, resources that are allocated during the computation, such
+as mutable cell references, can't escape the dynamic scope of the call
+to |runST| because they are themselves tagged with the same phantom
+type parameter.
 
-The apparent simplicity (no need to modify the language) turns into a
-lot of complications when developed in practice beyond the |ST| monad.
+This apparent simplicity (one only needs rank-2 polymorphism) does
+come at the cost of strong limitations in practice:
 \begin{itemize}
-\item The region-based approach enforces a stack discipline for
-  allocation and deallocation. In our running example, if mailboxes
-  which are not used have to be kept until mailboxes open in there
-  scope has been closed, they would be monopolising precious resources
-  (typically a socket).
-\item It is not easy to mix data for different nested regions, even
-  though value from any region could in theory (and sometimes must)
-  interact with values from their parent region. For instance, storing
-  packets from two different mailboxes in a priority queue. To solve
-  this issue \citet{kiselyov_regions_2008} introduced a systematic way
-  to lift values from a region to their subregion. But while it solves
-  the issue in theory, it is rather hard to use in practice. The
-  HaskellR project~\cite{boespflug_project_2014} uses
-  \citeauthor{kiselyov_regions_2008}'s regions to safely synchronise values
-  shared between two different garbage collectors. The use of HaskellR
-  in an industrial setting demonstrated that the lifting to subregions
-  imposes an unreasonable burden on the programmer. By contrast, with
-  linear types, values in two regions (in our running example packets
-  from different mailboxes) have the same type hence can safely be
-  mixed: any data structure containing packet of a mailbox will be
-  forced to be consumed before the mailbox is closed.
+\item |ST|-like regions confine to a stack-like allocation discipline.
+  Scopes cannot intersect arbitrarily, limiting the applicability of
+  this technique. In our running example, if unused mailboxes have to
+  be kept until mailboxes open in there scope has been closed, they
+  would be monopolising precious resources (like file descriptors).
+\item \citet{kiselyov_regions_2008} show that it is possible to
+  promote resources in parent regions to resources in a subregion. But
+  this is an explicit and monadic operation, forcing an unnatural
+  imperative style of programming where order of evaluation is
+  explicit. Moreover, computations cannot live directly in |IO|, but
+  instead in a wrapper monad. The HaskellR
+  project~\cite{boespflug_project_2014} uses monadic regions in the
+  style of \citeauthor{kiselyov_regions_2008} to safely synchronise
+  values shared between two different garbage collectors for two
+  different languages. The authors report that custom monads make
+  writing code at an interactive prompt difficult, compromises code
+  reuse, force otherwise pure functions to be written monadically and
+  rule out useful syntactic facilities like view patterns. In
+  contrast, with linear types, values in two regions (in our running
+  example packets from different mailboxes) have the same type hence
+  can safely be mixed: any data structure containing packet of
+  a mailbox will be forced to be consumed before the mailbox is
+  closed.
 \end{itemize}
 
 \subsection{Finalisers}
 
-An alternate approach to memory safety of resources in
-garbage-collected language is to reify the resource as a \emph{proxy
-  object} on the \textsc{gc} heap and attach a finaliser to the
-proxy. That is, when the garbage collector frees the proxy it is
-instructed to perform an action which, in this case, will free the
-resource as well.
-
-This is not usually done in practice because, as argued by
-\citet{kiselyov_iteratees_2012}, the garbage collector gives no
-real-time guarantee for the deallocation of dead data (this is
-especially the case for an incremental garbage collector which is
-paramount in low-latency applications). This causes a form a resource
-leak, where scarce resources may be rendered unavailable for a long time.
+A garbage collected can be relied on for more than just cleaning up no
+longer extant memory. By registering finalizers (|IO| callbacks) with
+values, such as a file handle, one can make it the job of the garbage
+collector to make sure the file handle is eventually closed. But
+``eventually'' can mean a very long time. File descriptors and other
+system resources are particularly scarce: operating systems typically
+only allow a small number of descriptors to be open at any one time.
+\citet{kiselyov_iteratees_2012} argues that such system resources are
+too scarce for eventual deallocation. Prompt deallocation is key.
 
 \subsection{Uniqueness types}
 
-A large chunk of the literature deals with linearity not by using linear types,
-but instead by using uniqueness (or ownership) types. The most prominent representatives of
+The literature is awash with enforcing linearity not via linear types,
+but via uniqueness (or ownership) types. The most prominent representatives of
 languages with such uniqueness types are perhaps Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
 
+Linear types and uniqueness types are dual: whereas a linear type is
+a contract that a function uses its argument exactly once
+even if call's context can share a linear argument as many times as it
+pleases, a uniqueness type ensures that the argument of a function is
+not used anywhere else in the expressions context even if the function
+can work with the argument as it pleases.
 
-There is a form of duality between the two: linear typing ensures
-that linear functions use their argument once,
-while the context can share a linear argument as many times as it pleases; while uniqueness
-typing ensures that the argument of a function is not where with anywhere
-else in the context, but the function can use it as it pleases (with
-some caveat).
-
-From a compiler's perspective, uniqueness type provide a non-aliasing
-analysis while linear types provides a cardinality analysis. The
+From a compiler's perspective, uniqueness type provide a {\em non-aliasing
+analysis} while linear types provides a {\em cardinality analysis}. The
 former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
