@@ -305,6 +305,11 @@ attendant complications: adding advanced resource-tracking features
 puts a burden on new users, who need to learn how to satisfy the
 ``borrow checker''.
 
+\improvement{add something along the lines ``In this paper we present the first linear type system
+  that we believe has a good chance of influencing programming
+  practice. Based on our experience of industrial practice''. Overview
+of why}
+
 
 Could more languages be extended with linear or affine types?  Unfortunately, there has
 not been a clear path to augment preexisting type systems without (1) breaking
@@ -366,7 +371,9 @@ We make the following contributions:
   including some popular extensions (the kind system, constraints, GADTs, and even dependent types).
   A distinctive feature of \calc{} is that linearity appears only in bindings
   and function arrows, rather than pervasively in all types.  Also unusually, we can readily
-  support linearity polymorphism (\fref{sec:lin-poly}).
+  support linearity polymorphism
+  (\fref{sec:lin-poly}).\improvement{Explain how the list of features
+    we have is unique for backwards compatibility}
 
 \item We provide a dynamic semantics for \calc{},
   combining laziness with explicit deallocation of linear data (\fref{sec:dynamics}).
@@ -1073,6 +1080,8 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$. The constructor rule has a similar
 $ωΓ$ context: it is necessary to support weakening at the level of
 constant constructors.
 
+\improvement{Make clear that $case_q$ is a distinct contribution of
+  the article}
 Most of the other typing rules are straightforward, but let us linger
 for a moment on the case rule, and specifically on its multiplicity
 annotation:
