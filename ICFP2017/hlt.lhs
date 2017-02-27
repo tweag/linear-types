@@ -654,8 +654,7 @@ does not support lazy pattern bindings for linear values):
 \subsection{Running example: zero-copy packets}
 \label{sec:packet}
 
-Crucially, our proposal has allowed the authors to solve latency
-issues and improve throughput in a real-world application. Imagine
+Imagine
 a server application which receives data and then
 stores it for a while before sending it out to receivers, perhaps in
 a different order. This general pattern characterizes a large class of
@@ -1044,10 +1043,10 @@ $$
 {()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
 $$
 This latter fact is, in turn, why \HaskeLL{} is an extension of Haskell
-(provided unannotated variables are understood
-to have multiplicity $ω$).
-
-The variable rule, used in the above example, may require some
+(provided unannotated bindings are understood
+as having multiplicity $ω$).
+%
+The variable rule, as used above, may require some
 clarification:
 $$\varrule$$
 The variable rule implements weakening of
@@ -1239,9 +1238,8 @@ the new rules
   $send$ simply frees its argument: the packet is stored in
   a linear variable, so it is removed from the heap with the linear
   variable rule; then the send rule drops it.
-\item[Close] The $close$ primitive consumes the mailbox. Like $send$
-  $send$, for the purpose of this semantics, $close$ simply frees the
-  mailbox.
+\item[Close] The $close$ primitive consumes the mailbox. Like $send$,
+  for the purpose of this semantics, $close$ simply frees the mailbox.
 \end{description}
 
 \subsection{Type safety}
@@ -1461,7 +1459,7 @@ in the garbage-collected heap. In other words, when an expression $e :
 \varid{Unrestricted} A$ is forced to the form $\varid{Unrestricted} x$, it will have consumed all the
 pointers to the linear heap (the correctness of this argument is
 proved in \fref[plain]{lem:type-safety} below).
-
+%
 The crucial safety property of the strengthened relation is that it
 preserves well-typing of states.
 
