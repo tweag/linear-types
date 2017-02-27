@@ -276,7 +276,7 @@
 
 Can we {\em safely} use Haskell to implement a low-latency server that caches
 a large dataset in-memory? Today, the answer is
-``no''\footnote{https://blog.pusher.com/latency-working-set-ghc-gc-pick-two/},
+``no''\cite{pusher_latency_2016},
 because pauses incurred by garbage collection (GC), observed in the
 order of 50ms or more, are unacceptable. Pauses are in general
 proportional to the size of the heap. Even if the GC is incremental,
@@ -1595,13 +1595,9 @@ interface.
 \subsection{Lowering the \textsc{gc} pressure}
 \label{sec:lower-gc}
 
-\improvement{Explain why lower the gc pressure matters. Give evidence
-  that people do keep data off-heap. And give some benchmarking
-  numbers to explain why}
-
 In a practical implementation of the zero-copy packet example of
 \fref{sec:packet}, the priority queue can easily become a bottleneck,
-because it will frequently stay large. We can start by having a less
+because it will frequently stay large~\cite{pusher_latency_2016}. We can start by having a less
 obnoxiously naive implementation of queues, but this optimisation would not solve
 the issue with which we are concerned with in this section: garbage
 collection latency. Indeed, the variance in latency incurred by
@@ -1612,10 +1608,20 @@ Consequently, waiting on a large number of processes is slowed down (by the
 slowest of them) much more often than a sequential application. This
 phenomenon is known as Little's law~\cite{little_proof_1961}.
 
-One solution to this problem is to allocate the priority queue with
-|malloc| instead of using the garbage collector's allocator. Of
+A radical solution to this problem, yet one that is effectively used
+in practice, is to allocate the priority queue with
+|malloc| instead of using the garbage collector's
+allocator~\cite[Section IV.C]{marcu_flink_2016}. Our own benchmarks
+indicate that peak latencies encountered with large data-structures
+kept in \textsc{ghc}'s \textsc{gc} heap are two order of magnitude
+higher than using foreign function binding to an identical
+data-structure allocated with |malloc|; furthermore the latency
+distribution of \textsc{gc} latency consistently degrades with the
+size of the heap, while |malloc| has a much flatter distribution. Of
 course, using |malloc| leaves memory safety in the hand of the
-programmer. Fortunately, it turns out that the same arguments that we used
+programmer.
+
+Fortunately, it turns out that the same arguments that we used
 to justify proper deallocation of mailboxes in \fref{sec:dynamics} can
 be used to show that, with linear typing, we can allocate a priority
 queue with |malloc| safely (in effect considering the priority queue
