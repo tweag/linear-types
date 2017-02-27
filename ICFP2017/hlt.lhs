@@ -386,7 +386,8 @@ We make the following contributions:
   it is deallocated.
 
 \item The \HaskeLL{} design is being implemented in a prototype
-  extension of the \textsc{ghc} compiler. This prototype shows that
+  extension of the \textsc{ghc} compiler\footnote{The prototype will
+    be available and linked to after the blind review}. This prototype shows that
   the implementation can be kept lean, and that the \HaskeLL{} design
   scales to type inference, even though \calcl{} is only a
   type-checked system.\unsure{[aspiwack] This is a first attempt}
