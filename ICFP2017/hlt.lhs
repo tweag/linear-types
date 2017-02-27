@@ -166,9 +166,7 @@
 % RRN: I don't think it's safe to highlight ``Systems Programming'' since we
 % don't actually get to the point of demonstrating it (e.g. a working system +
 % real systems programming in Hask-LL.)
-\title{\HaskeLL: Backwards-Compatible Linear Types}
-\def\shorttitle{Backwards-Compatible Linear Types}
-
+\title{Retrofitting Linear Types}
 
 \author{Jean-Philippe Bernardy}
 \affiliation{%
