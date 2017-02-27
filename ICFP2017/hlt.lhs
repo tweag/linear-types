@@ -274,28 +274,33 @@
 
 \section{Introduction}
 
-Can we use Haskell to implement a low-latency server that caches
+Can we {\em safely} use Haskell to implement a low-latency server that caches
 a large dataset in-memory? Today, the answer is
-a clear
 ``no''\footnote{https://blog.pusher.com/latency-working-set-ghc-gc-pick-two/},
 because pauses incurred by garbage collection (GC), observed in the
 order of 50ms or more, are unacceptable. Pauses are in general
 proportional to the size of the heap. Even if the GC is incremental,
 the pauses are unpredicable, difficult to control by the programmer
 and induce furthermore for this particular use case a tax on overall
-throughput. Typically, programmers therefore allocate these large,
+throughput. The problem is: the GC is not {\em resource efficient},
+meaning that resources aren't always freed as soon as they could be.
+Typically, programmers therefore allocate these large,
 long-lived data structures in manually-managed off-heap memory,
 accessing it through FFI calls. Unfortunately this common technique
-poses safety risks: not enforcing prompt deallocation, space leaks (by
+poses safety risks: space leaks (by
 failure to deallocate at all), as well use-after-free or double-free
-errors as when programming in plain C.
-It would be much better to rule out such problems via a type system.
+errors just like programming in plain C. The programmer has then
+bought resource efficiency but at the steep price of giving up on
+resource safety.
+If the type system was {\em resource-aware}, a programmer wouldn't
+have to choose.
 
-It is well known that type systems can be useful for controlling
+It is well known that type systems {\em can} be useful for controlling
 resource usage, not just ensuring correctness. Affine types~\cite{tov_practical_2011}, linear
-types~\cite{lafont_linear_1988}, permission types~\cite{westbrook_permissions_2012} and capabilities
-\cite{chargueraud_functional_2008,balabonski_mezzo_2016} enable safe manual memory
-management as well as safe handling of scarce resources such as
+types~\cite{lafont_linear_1988,wakeling_linearity_1991}, permission types~\cite{westbrook_permissions_2012} and capabilities
+\cite{chargueraud_functional_2008,balabonski_mezzo_2016} enable
+  resource safe as well resource efficient
+handling of scarce resources such as
 sockets and file handles.  All these approaches have been extensively
 studied, \emph{yet these ideas have had relatively little effect on
   programming practice}.  Few practical, full-scale languages are
@@ -305,13 +310,24 @@ attendant complications: adding advanced resource-tracking features
 puts a burden on new users, who need to learn how to satisfy the
 ``borrow checker''.
 
-In this paper we present the first linear type system that we believe
-has a good chance of influencing programming practice.  We do this
-through a \emph{backward-compatible extension} of Haskell's type system: existing
+Whereas in Rust new users and casual programmers have to buy the whole
+enchilada, we seek to devise a language that is resource safe always
+and resource efficient sometimes, only when and where the programmer
+chooses to accept that the extra burden of proof is worth the better
+performance. Whereas other languages make resource efficiency {\em
+  opt-out}, we seek to make it {\em opt-in}.
+
+We present in this paper the first type system that we believe has
+a good chance of influencing existing functional programs and
+libraries to become more resource efficient. We do this
+by retrofitting a \emph{backward-compatible extension} to
+a Haskell-like language. Existing
 functions continue to work, although they may now have more refined types
-that express their linearity; existing data structures continue to work, and
-can additionally track linear values.  Programmers who do not need linearity
-should not be tripped up by it. We make the following specific contributions:
+that enable resource efficiency; existing data structures continue to work, and
+can additionally track resource usage.  Programmers who do not need
+razor sharp resource efficiency
+should not be tripped up by it. They need not even know about our type
+system extension. We make the following specific contributions:
 
 \begin{itemize}
 \item We present a design for \HaskeLL{}, which offers linear typing in Haskell
