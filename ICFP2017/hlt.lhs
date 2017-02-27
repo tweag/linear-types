@@ -372,8 +372,11 @@ We make the following contributions:
   A distinctive feature of \calc{} is that linearity appears only in bindings
   and function arrows, rather than pervasively in all types.  Also unusually, we can readily
   support linearity polymorphism
-  (\fref{sec:lin-poly}).\improvement{Explain how the list of features
-    we have is unique for backwards compatibility}
+  (\fref{sec:lin-poly}). The type system of \calc{} is a unique mix of
+  systems from the literature (~\fref{sec:related-type-systems}), the
+  typing rule for $\textsf{case}$ (~\fref{sec:typing-rules}) in
+  particular is a crucial ingredient for the backwards compatibility
+  of \HaskeLL{} with Haskell.
 
 \item We provide a dynamic semantics for \calc{},
   combining laziness with explicit deallocation of linear data (\fref{sec:dynamics}).
@@ -1892,6 +1895,7 @@ regular non-linear expressions are the norm yet gracefully scaling up
 to latency-sensitive and resource starved programs is still possible.
 
 \subsection{Related type systems}
+\label{sec:related-type-systems}
 
 The \calc{} type system is heavily inspired from the work of
 \citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
