@@ -1186,13 +1186,13 @@ In addition to the abstract types $\varid{World}$, $Packet$ and $\varid{MB}$, an
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives (see also \fref{sec:packet}):
 \begin{itemize}
-\item |withMailbox :: (MB ⊸ IO a) ⊸ IO a|
-\item |get :: MB ⊸ (Packet , MB)|
-\item |send :: Packet ⊸ ()|
+\item $withMailbox : (\varid{MB} ⊸ \varid{IO} a) ⊸ \varid{IO} a$
+\item $close : \varid{MB} ⊸ ()$
+\item $get : \varid{MB} ⊸ (\varid{Packet} , \varid{MB})$
+\item $send : \varid{Packet} ⊸ ()$
 \end{itemize}
-Packets $p^j_i$ are considered
-constant.\improvement{reference to primitives which are dropped for
-  the sake of simplicity}
+Packets $p^j_i$ are considered as constants. We will not model
+priority in the semantics for simplicity.
 
 \subsection{Operational semantics}
 
@@ -1240,7 +1240,7 @@ the new rules
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
   represents deallocation of packets.
-\item[WithMailbox] A new $\varid{MB}$ is created with a fresh name ($j$). Because it
+\item[WithMailbox] A new $\varid{MB}$ is created with a fresh name $j$. Because it
   has not received any message yet, the mailbox token is $⟨j,0⟩$, and the
   world token is incremented. The body $k$ is an $IO$ action, so it takes
   the incremented world as an argument and returns a new one, which is then
@@ -1254,6 +1254,9 @@ the new rules
   $send$ simply frees its argument: the packet is stored in
   a linear variable, so it is removed from the heap with the linear
   variable rule; then the send rule drops it.
+\item[Close] The $close$ primitive consumes the mailbox. Like $send$
+  $send$, for the purpose of this semantics, $close$ simply frees the
+  mailbox.
 \end{description}
 
 \subsection{Type safety}
@@ -1296,17 +1299,18 @@ the new rules
 
     \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailbox k w ⇓ Δ:z}\text{withMailbox}
 
+    \inferrule{Γ:x ⇓ Δ:⟨j,i⟩}{Γ:close x ⇓ Δ:()}\text{close}
+
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
       {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i : (y,z)}\text{get}
 
-    \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
+      \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
 
   \caption{Dynamic semantics}
   \label{fig:dynamics}
 \end{figure}
-\todo{add `close : MB ⊸ ()` in the semantcs}
 
 While the semantics of \fref{fig:dynamics} describes quite closely
 what our plans for implementation in the \textsc{ghc}, it is not
@@ -1438,6 +1442,10 @@ introduces the states of the strengthened evaluation relation.
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
   {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i || (y,z)) :_1 (Packet,\varid{MB}),Σ}\text{get}
+
+\inferrule
+  {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
+  {Ξ ⊢ (Γ||close x ⇓ Δ||()) :_1 (),Σ}\text{close}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 Packet,Σ}
