@@ -586,16 +586,17 @@ then |freeT| might be given either a value on the linear heap or the dynamic hea
 It can only free the former, so it must make a dynamic test to tell which is the case.
 
 A consequence of the above design is that unrestricted values never
-contain (point to) linear values. (But the converse is possible.)
-One can make sense of this rule by appealing to
-garbage collection: when an unrestricted object is reclaimed by GC,
-it would leave all resources that it points to unaccounted
-for. Conversely, a pointer from a resource to the heap can simply act
-as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
+contain (point to) linear values (but the converse is possible). This
+makes sense: after all, if the GC deallocates a value in the dynamic
+heap that points off-heap, then the off-heap data will be left
+dangling (being off-heap, the GC can't touch it) with no means to free
+it manually. Conversely, a pointer from a resource to the heap can
+simply act as a new programmer-controlled GC root. We prove this
+invariant in \fref{sec:dynamics}.
 
-We have repeatedly said that a linear function guarantees to
-``consume'' its argument exactly once if the call is consumed exactly
-once.  What does ``consume'' mean?  We can now give a more
+We have said repeatedly that a linear function guarantees
+``consuming'' its argument exactly once if the call is consumed
+exactly once. But what does ``consume'' mean? We can now give a more
 precise operational intution: a value is said to be consumed if it
 either returned, passed to a (linear) function (or constructor) whose
 result is itself consumed, or directly consumed:
