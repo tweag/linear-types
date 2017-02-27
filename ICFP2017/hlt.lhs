@@ -389,7 +389,7 @@ We make the following contributions:
   extension of the \textsc{ghc} compiler\footnote{The prototype will
     be available and linked to after the blind review}. This prototype shows that
   the implementation can be kept lean, and that the \HaskeLL{} design
-  scales to type inference, even though \calcl{} is only a
+  scales to type inference, even though \calc{} is only a
   type-checked system.\unsure{[aspiwack] This is a first attempt}
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
@@ -718,6 +718,7 @@ and |send|, |Packet|s never need to be copied: they can be passed
 along from the network interface card to the mailbox and then to the
 linear calling context of |send|, all by reference.
 
+\improvement{``in reality … should be sequence with IO but too much complication''}
 The above API assumes that mailboxes are independent: the order of
 packets is ensured within a mailbox queue, but not accross mailboxes
 (and not even between the input and output queue of a given
