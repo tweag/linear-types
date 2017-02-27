@@ -1247,9 +1247,6 @@ the new rules
 
 \subsection{Type safety}
 
-\unsure{move the statements of the theorem to the beginning of the
-  section}
-
 \begin{figure}
   \begin{mathpar}
     \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{m.abs}
@@ -1299,7 +1296,7 @@ the new rules
 \end{figure}
 
 While the semantics of \fref{fig:dynamics} describes quite closely
-what our plans for implementation in the \textsc{ghc}, it is not
+our plans for implementation in \textsc{ghc}, it is not
 convenient for proving properties. There are two reasons to that fact:
 first the semantics follows a different structure than the type system and, also,
 there are pointers from the garbage-collected heap to the linear
@@ -1320,8 +1317,8 @@ strengthened semantics differs from \fref{fig:dynamics} in two
 aspects: the evaluation states are typed, and values with statically
 tracked lifetimes (linear values) are put on the linear
 heap.
-%
-In order to define the typed semantics, we introduce a few
+
+In order to define the strengthened semantics, we introduce a few
 notations. First we need a notion of product annotated with the
 multiplicity of its first component.
 \begin{definition}[Weighted tensors]
