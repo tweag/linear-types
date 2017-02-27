@@ -387,7 +387,7 @@ The literature is dense with related work, which we dicuss in \fref{sec:related}
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
 We begin with an overview of
-\HaskeLL, our proposed extension of Haskell with linear types. All claims made in this section will be substantiated later.
+\HaskeLL, our proposed extension of Haskell with linear types. All claims made in this section are substantiated later on.
 %
 First, along with the usual arrow type |A -> B|,
 we propose an additional arrow type, standing for \emph{linear arrows}, written
@@ -463,7 +463,7 @@ That is, we give a linear type to the |(:)| data constructor.  This is
 not a new, linear list type: this \emph{is} \HaskeLL{}'s list type, and all
 Haskell functions will work over it perfectly well.  But we can
 \emph{also} use the very same list type to contain linear resources (such as
-file handles) without compromising safety; the type system will ensure
+file handles) without compromising safety; the type system ensures
 that resources in a list will eventually be deallocated, and that they
 will not be used after that.
 
@@ -726,7 +726,7 @@ next    :: PQ a ⊸ Maybe (a, PQ a)
 \end{code}
 The interface is familiar, except that since the priority queue must
 accept packets it must have linear arrows. In this way, the type
-system will \emph{guarantee} that despite being stored in a data
+system \emph{guarantees} that despite being stored in a data
 structure, every packet will eventually be sent.
 
 In a packet switch, priorities could represent deadlines associated to
@@ -871,8 +871,8 @@ use the following notations:
 \(A ⊸ B ≝ A →_1 B\).
 
 The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
-that consuming $f u : B$ exactly once will consume $u : A$ $q$
-times. Therefore, a function of type $A→B$ \emph{must} be applied to
+that consuming $f u : B$ exactly once will consume  $q$
+times $u : A$. Therefore, a function of type $A→B$ \emph{must} be applied to
 an argument residing in the dynamic heap, while a function of type
 $A⊸B$ \emph{may} be applied to an argument residing on either heap.
 %
@@ -1028,8 +1028,8 @@ reads as: consuming the term $t:A$ once consumes $Γ$ once. But what if
 we want to consume $t$ more than once? This is where context scaling
 comes into play, like in the application rule:
 $$\apprule$$
-The idea is that if we consume $u$ an arbitrary number of time, we
-will consume $Δ$ an arbitrary number of time, equivalently, we will
+The idea is that if we consume $u$ an arbitrary number of times, we
+in turn consume $Δ$ an arbitrary number of times, or equivalently, we
 consume $ωΔ$ exactly once. We call this the \emph{promotion
   principle}\footnote{The name \emph{promotion principle} is a
   reference to the promotion rule of linear logic. In \calc{},
@@ -1161,7 +1161,7 @@ knowledge.
 
 Because the only interaction in the world which we need to model in
 order to give a semantics to the packet example of \fref{sec:packet}
-is to obtain a packet, it will be sufficient for this section to
+is to obtain a packet, it is sufficient for this section to
 consider all the packets. Because there are several mailboxes and each
 can get their own streams of packets, we suppose implicitly a
 given collection of packets $(p^j_i)_{j,i∈ℕ}$. Where the packet
@@ -1169,12 +1169,12 @@ $p^j_i$ represents the $i$-th package which will be received by the
 $j$-th mailbox.
 
 Instead of using the world token as a proxy for an abstract world, we
-are going to use it to keep track of how many mailboxes have been
-opened. So the (unique) world token in the stack will hold this number.
-Similarly, the mailbox tokens will be pairs $⟨j,i⟩$ of
+are using it to keep track of how many mailboxes have been
+opened. So the (unique) world token in the stack holds this number.
+Similarly, the mailbox tokens are pairs $⟨j,i⟩$ of
 integers where $j$ is the mailbox number and $i$ the number of packets
 the mailbox has received. In effect, the world and mailbox tokens are
-pointers into the infinite matrix of potential packets. We will define
+pointers into the infinite matrix of potential packets. We define
 these constants as having the same typing rules as zero-ary constructors
 (but without the pattern-matching rule):
 \emph{e.g.}:
@@ -1318,7 +1318,7 @@ heap. Such pointers occur, for instance, in the priority queue from
 collected heap while packets are kept in the linear heap.
 
 This is not a problem in and on itself: pointers to packets may be seen
-as opaque by the garbage collector which will not collect them, so
+as opaque by the garbage collector, which does not collect them, so
 that their lifetime is still managed explicitly by the
 programmer. However, in order to prevent use-after-free bugs, we must
 be sure that by the time a packet is sent (hence freed), every extant object in the
@@ -1457,7 +1457,7 @@ reason for this behaviour is promotion: an ostensibly linear value can
 be used in an unrestricted context. In this case the ownership of $x$
 must be given to the garbage collector: there is no static knowledge
 of $x$'s lifetime. For the same reason, the linear variable case
-requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} will prove
+requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} proves
 this restriction to be safe).
 
 The other important rule is the |alloc| rule: it requires a result of
@@ -1673,9 +1673,9 @@ showed that \citeauthor{honda_session_1993}'s system is isomorphic to
 (classical) linear logic. The high-level idea is that one end of
 a communication channel is typed with the protocol $P$ and the other
 end with the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
-an A'', the dual $A^⊥$ denotes ``I will send an A''. Then, protocols can
+an A'', the dual $A^⊥$ denotes ``I shall send an A''. Then, protocols can
 be composed using pairs: the protocol $(A,B^⊥)$ means ``I expect an
-$A$, and I will send a $B$''.
+$A$, and I shall send a $B$''.
 
 In our intuitionistic setting, we can represent the dual $P^⊥$ by using
 continuation passing style: $P^⊥ = P⊸⊥$, where $⊥$ represents a type
