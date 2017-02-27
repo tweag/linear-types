@@ -305,47 +305,6 @@ attendant complications: adding advanced resource-tracking features
 puts a burden on new users, who need to learn how to satisfy the
 ``borrow checker''.
 
-\improvement{add something along the lines ``In this paper we present the first linear type system
-  that we believe has a good chance of influencing programming
-  practice. Based on our experience of industrial practice''. Overview
-of why}
-
-% 
-% Could more languages be extended with linear or affine types?  Unfortunately, there has
-% not been a clear path to augment preexisting type systems without (1) breaking
-% existing code, and (2) forcing the feature on users who do not need it, as in the
-% case of Rust.
-% % 
-% Recent work~\cite{morris_best_2016} has come closer to unifying linear and
-% unrestricted code, avoiding the need to {\em duplicate} basic library functions
-% like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
-% Yet this approach still divides all types into unrestricted and linear, and adds
-% (non-)linearity constraints to the types of standard
-% combinators, including type-class constraints and complications that newcomers cannot easily
-% ignore.
-% 
-% We propose another design, which leaves most \emph{types} unmodified, and
-% instead associates linearity with {\em binders}, such as ``$\flet x \!:_{1}\! T =
-% \dots$'', indicating that $x$ must be used exactly once in the body.
-% %
-% We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
-% {\em type}.
-% %
-% Only function types change to include (optional) linearity constraints on their
-% arguments.  However, these new linear functions are \emph{backward-compatible}:
-% they can be applied to non-linear values as well as linear ones.
-% 
-% We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic.
-% With it we can enrich the types of standard Haskell Prelude functions, such as |map| and |++|,
-% by adding (but not requiring) the possibility of linear uses of those functions.
-% Existing function applications, such as |xs ++ ys|, continue to typecheck as
-% before, {\em unless} the inputs happen to be linear values.
-% % 
-% With this approach, a programmer does not need to worry about linearity
-% to use linear functions, and in fact may not even have to
-% {\em see} linearity information
-% unless the appropriate language extension is enabled.
-
 In this paper we present the first linear type system that we believe
 has a good chance of influencing programming practice.  We do this
 through a \emph{backward-compatible extension} of Haskell's type system: existing
