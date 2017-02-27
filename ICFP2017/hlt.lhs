@@ -1920,8 +1920,8 @@ In that respect, our system is closer to
 \citeauthor{ghica_bounded_2014}'s. What we keep from
 \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
 \fref{sec:statics}), which can be phrased in terms of linear logic as
-making the natural arrow $!A⊗!B ⟹ !(A⊗B)$\unsure{Should we use the
-  notations from the article here? |Unrestricted| and |(,)|} invertible. This choice is
+making the natural arrow $!A⊗!B ⟹ !(A⊗B)$ \resolved{Should we use the
+  notations from the article here? |Unrestricted| and |(,)| JP: No. the real difficulty is to understand what ``invertible'' means. Notation is the lesser concern, given that we have a proper citation to Girard.}invertible. This choice is
 unusual from a linear logic perspective, but it is the key to be able
 to use types both linearly an unrestrictedly without intrusive
 multiplicity polymorphic annotation on all the relevant types.
