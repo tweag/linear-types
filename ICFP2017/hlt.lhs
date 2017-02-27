@@ -601,12 +601,12 @@ We have repeatedly said that a linear function guarantees to
 once.  What does ``consume'' mean?  We can now give a more
 precise operational intution: a value is said to be consumed if it
 either returned, passed to a (linear) function (or constructor) whose
-result is itself consumed, or directly destroyed.
+result is itself consumed, or directly consumed:
 \begin{itemize}
-\item To destroy a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
-\item To destroy a function, call it, and consume its result.
-\item To destroy a pair, evaluate it and consume each of its components.
-\item More generally, to destroy a value of an algebraic data type, evaluate
+\item To directly consume a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
+\item To directly consume a function, call it, and consume its result.
+\item To directly consume a pair, evaluate it and consume each of its components.
+\item More generally, to directly consume a value of an algebraic data type, evaluate
   it and consume all its linear components.
 \end{itemize}
 
