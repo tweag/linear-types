@@ -1587,9 +1587,9 @@ over a completely formal argument for progress.
 
 In conjunction with Corollary~\ref{cor:linear-variable},
 \fref{lem:liveness} shows that well-typed programs do not get
-blocked, in particular that garbage-collected objects \Red{which point to the
+blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
-freed:} \calc{} is safe from use-after-free errors.
+freed: \calc{} is safe from use-after-free errors.
 
 \section{Applications}
 \label{sec:applications}
