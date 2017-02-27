@@ -1060,10 +1060,8 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$. The constructor rule has a similar
 $ωΓ$ context: it is necessary to support weakening at the level of
 constant constructors.
 
-\improvement{Make clear that $case_q$ is a distinct contribution of
-  the article}
 Most of the other typing rules are straightforward, but let us linger
-for a moment on the case rule, and specifically on its multiplicity
+for a moment on the unusual, yet central to our design, case rule, and specifically on its multiplicity
 annotation:
 $$\caserule$$
 The interesting case is when $p=ω$, which reads as: if we can consume
