@@ -699,13 +699,10 @@ Assume that the user can acquire a linear handle on a {\em
   withMailbox  :: (MB ⊸ IO a) ⊸ IO a
   close        :: MB ⊸ ()
 \end{code}
-The mailbox handle must be passed to |close| eventually in order to
+The mailbox handle must be eventually passed to |close| in order to
 release it.
 %
-|close| could be in the |IO| monad, but need not be --- linearity ensures
-proper sequencing within the computation.  This is because |close|'s result must be
-consumed with |case|, i.e. |case close mb of () -> e1| before we can |return| any result.
-For each maibox, the next available packet is yielded by |get|, whereas |send| forwards it on the
+For each mailbox, the next available packet is yielded by |get|, whereas |send| forwards packet on the
 network.
 \begin{code}
   get   :: MB ⊸ (Packet , MB)
@@ -718,14 +715,11 @@ and |send|, |Packet|s never need to be copied: they can be passed
 along from the network interface card to the mailbox and then to the
 linear calling context of |send|, all by reference.
 
-\improvement{``in reality … should be sequence with IO but too much complication''}
-The above API assumes that mailboxes are independent: the order of
-packets is ensured within a mailbox queue, but not accross mailboxes
-(and not even between the input and output queue of a given
-mailbox). While this assumption is in general incorrect, it applies
-for our packet switcher. Additionally it illustrates the ability of
-our type system to finely track dependencies between various kinds of
-effects: as precisely as required, but no more.
+In reality, because |send| (resp. |get| and |close|) has a visible
+effect on the outside world, it ought to be ordered with respect to
+|IO| action, that is |send| should return an |IO|. However, it would
+add unnecessary complication to this example, so we will allow for
+this simplification.
 
 \paragraph{Buffering data in memory}
 
