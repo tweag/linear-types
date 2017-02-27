@@ -560,14 +560,8 @@ linearity annotations from the programmer.
 Suppose that a linear function takes as its argument a {\em resource},
 such as a file handle, channel, or memory block.  Then the function guarantees:
 \begin{itemize}
-\item that the resource will be consumed and destroyed by the time it
-  returns;\improvement{[aspiwack] not exactly by the time the function returns: it could
-    pass the resource along. Proposal: ``when its return value is
-    consumed'' or ``when the call is consumed'' (as below). Other proposal:
-    %
-    that by the time it returns the resource is either consumed and
-    destroyed or return (perhaps indirectly) in the returned value.
-  Even better proposal: adjust the definition of ``consume'' at the end of the subsection; which at the time of writing is incorrect.}
+\item that the resource will be consumed by the time it
+  returns;
 \item that the resource can only be consumed once so will never be
   used after being destroyed.
 \end{itemize}
@@ -602,25 +596,18 @@ it would leave all resources that it points to unaccounted
 for. Conversely, a pointer from a resource to the heap can simply act
 as a new GC root.  We prove this invariant in \fref{sec:dynamics}.
 
-We have repeatedly said that a linear function guarantees to ``consume'' its
-argument exactly once if the call is consumed exactly once.
-What precisely does ``consume'' mean?  We can now give a more precise operational
-intution:\unsure{This definition seems problematic, as it forgets that values can be returned.
-  Proposal:
-  To consume a value, it can either be returned; passed to a function whose result is consumed; or destroyed.
- To destroy a function, call it, and consume its result.
- To destroy a pair, evaluate it and consume each of its components once.
- More generally, to destroy a value of an algebraic data type once, evaluate
-  it and consume all its linear components once.
-
-
-}
+We have repeatedly said that a linear function guarantees to
+``consume'' its argument exactly once if the call is consumed exactly
+once.  What does ``consume'' mean?  We can now give a more
+precise operational intution: a value is said to be consumed if it
+either returned, passed to a (linear) function (or constructor) whose
+result is itself consumed, or directly destroyed.
 \begin{itemize}
-\item To consume an atomic base type once, like |Int| or |Ptr|, just evaluate it.
-\item To consume a function value once, call it once, and consume its result once.
-\item To consume a pair once, evaluate it and consume each of its components once.
-\item More generally, to consume a value of an algebraic data type once, evaluate
-  it and consume all its linear components once.
+\item To destroy a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
+\item To destroy a function, call it, and consume its result.
+\item To destroy a pair, evaluate it and consume each of its components.
+\item More generally, to destroy a value of an algebraic data type, evaluate
+  it and consume all its linear components.
 \end{itemize}
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
