@@ -349,24 +349,27 @@ system extension. We make the following specific contributions:
   The type system of \calc{} has a number of unusual features, which together support
   backward compatibility with Haskell: linearity appears only in bindings
   and function arrows, rather than pervasively in all types; we easily support linearity polymorphism
-  (\fref{sec:lin-poly}); the typing rule for $\textsf{case}$ is crucial (\fref{sec:typing-rules}).
+  (\fref{sec:lin-poly}); and the typing rule for $\textsf{case}$ is novel (\fref{sec:typing-rules}).
   No individual aspect is entirely new (\fref{sec:related-type-systems}), but collectively
-  they add up to a system that can be used in practice.
+  they add up to an unintrusize system that can be used in practice and scales up
+  to a full programming language implementation with a large type system.
 
 \item We provide a dynamic semantics for \calc{},
   combining laziness with explicit deallocation of linear data (\fref{sec:dynamics}).
   We prove type safety, of course.  But we also prove that the type system guarantees
   the key memory-management properties that we seek: that every
-  linear value is eventually deallocated, and is never referenced after
+  linear value is eventually deallocated by the programmer, and is never referenced after
   it is deallocated.
 
-\item We do not cover type inference, which takes use from the implicitly-typed
-  source language, \HaskeLL{}, to the explicitly-typed intermediate language \calc{}.
+\item Type inference, which takes us from the implicitly-typed
+  source language, \HaskeLL{}, to the explicitly-typed intermediate
+  language \calc{}, is not covered this paper.
   However, we have implemented a proof of concept, by modifying the leading
   Haskell compiler \textsc{ghc} to infer linear types.  The prototype is freely
   available\footnote{URL suppressed for blind review, but available on request}, and
-  suggests that it is not hard to extend \textsc{ghc}'s type inference algorithm
-  (despite its complexity) to support linear types.
+  provides strong evidence that it is not hard to extend
+  \textsc{ghc}'s full type inference algorithm as currently
+  implemented (despite its complexity) with linear types.
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
@@ -382,13 +385,15 @@ First, along with the usual arrow type |A -> B|,
 we propose an additional arrow type, standing for \emph{linear arrows}, written
 |A ⊸ B|. In the body of a linear function, the type system tracks that
 there is exactly one copy of the parameter to consume.
-
 \begin{code}
 f :: A ⊸ B
 f x = {- |x| has multiplicity $1$ here -}
+
+g :: A -> B
+g y = {- |y| has multiplicity $\omega$ here -}
 \end{code}
 \noindent
-We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|. Similarly, we say
+We say that the \emph{multiplicity} of |y| is $1$ in the body of |g|. Similarly, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
 any number of times, including zero). We call
 a function \emph{linear} if it has type |A ⊸ B| and \emph{unrestricted} if it has
@@ -396,9 +401,9 @@ type |A -> B|.
 
 The linear arrow type |A ⊸ B| guarantees that any function with that type will
 consume its argument exactly once.
-However, a function of type |A ⊸ B|
-\emph{places no requirement on the caller};
-the latter is free to pass either a linear or non-linear value to the function.
+Note, however, that the type
+\emph{places no requirement on the caller} of these functions.
+The latter is free to pass either a linear or non-linear value to the function.
 %
 For example, consider these definitions of a function |g|:
 \begin{code}
@@ -411,12 +416,13 @@ g3 k x y = k x (k y y)    -- Valid: |y| can be passed to linear |k|
 As in |g2|, a linear variable |x| cannot be passed to the non-linear
 function |(k y)|.  But the other way round is fine:
 |g3| illustrates that the non-linear variable |y| can be passed
-to the linear function |k|.
+to the linear function |k|. Linearity is a strong contract for the
+implementation of a function, not its caller.
 
 \subsection{Calling contexts and promotion}
 \label{sec:calling-contexts}
 
-The call of a linear function consumes its argument once only if the
+A call to a linear function consumes its argument once only if the
 call itself is consumed once.  For example, consider these definitions
 of the same function |g|:
 \begin{code}
@@ -434,7 +440,7 @@ used non-linearly and the code is ill-typed.
 
 In general, any sub-expression is type-checked as if it were to be
 consumed exactly once. However, an expression which does not contain
-resources, that is an expression whose free variables all have
+linear resources, that is an expression whose free variables all have
 multiplicity $ω$, like |f y| in |g4|, can be consumed many times. Such
 an expression is said to be \emph{promoted}. We leave the specifics to
 \fref{sec:statics}.
@@ -448,9 +454,10 @@ data [a] where
   []   :: a
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
-That is, we give a linear type to the |(:)| data constructor.  This is
+That is, we give a linear type to the |(:)| data constructor.
+Crucially, this is
 not a new, linear list type: this \emph{is} \HaskeLL{}'s list type, and all
-Haskell functions will work over it perfectly well.  But we can
+existing Haskell functions will work over it perfectly well.  But we can
 \emph{also} use the very same list type to contain linear resources (such as
 file handles) without compromising safety; the type system ensures
 that resources in a list will eventually be deallocated, and that they
@@ -479,7 +486,7 @@ Giving a more precise type to |(++)| only
   f xs ys = sum (xs ++ ys) + sum ys
 \end{code}
 Here the two arguments to |(++)| have different multiplicities, but
-the function |f| guarantees to consume |xs| precisely once.
+the function |f| guarantees that it will consume |xs| precisely once.
 
 For an existing language, being able to strengthen |(++)|, and similar functions, in a {\em
   backwards-compatible} way is a huge boon.
@@ -490,9 +497,9 @@ For example, the function |f| above consumed |ys| twice, and so |ys| must
 have multiplicity $\omega$, and |f| needs an unrestricted arrow for that argument.
 
 Generalising from lists to arbitrary algebraic data types,
-we designed \HaskeLL{} so that linear constructors
-correspond to regular Haskell data types when restricted to the
-traditional (non-linear) Haskell fragment. Thus our radical position
+we designed \HaskeLL{} so that when in a traditional Haskell
+(non-linear) calling context, linear constructors
+degrade to regular Haskell data types. Thus our radical position
 is that data types in \HaskeLL{} should have {\em linear fields by default},
 including all standard definitions, such as pairs, tuples, |Maybe|, lists, and so on.
 More precisely, when defined in old-style Haskell-98 syntax, all fields are
@@ -505,7 +512,7 @@ would use linear arrows. This becomes explicit when defined in GADT syntax:
 \begin{code}
 data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
 \end{code}
-We will see in \fref{sec:non-linear-constructors} when it is useful
+We will see in \fref{sec:non-linear-constructors} when it is also useful
 to have contstructors with unrestricted arrows.
 
 \subsection{Linearity polymorphism}
@@ -544,7 +551,8 @@ subscripts and binders for multiplicity polymorphism can be {\em
 linearity, all inputs will have multiplicity $ω$, and transitively all
 expressions can be promoted to $ω$. Thus in such a context the
 compiler, or indeed documentation tools, can even altogether hide
-linearity annotations from the programmer.
+linearity annotations from the programmer when this language
+extension is not turned on.
 
 \subsection{Operational intuitions}
 \label{sec:consumed}
