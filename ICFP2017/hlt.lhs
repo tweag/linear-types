@@ -1636,8 +1636,8 @@ which is in fact implied by the typing rules for |Unrestricted|.
 \subsection{Safe streaming}
 
 The standard for writing streaming applications (\emph{e.g.} reading
-from a file) in Haskell is to use a combinator library such as Conduit
-or Machines. Such libraries have many advantages: they are fast, they
+from a file) in Haskell is to use a combinator library such as Conduits~\cite{snoyman_conduit_2015}
+or Machines~\cite{kmett_machines_2015}. Such libraries have many advantages: they are fast, they
 release resources promptly, and they are safe.
 
 However, they come at a significant cost: they are rather difficult to
