@@ -323,13 +323,7 @@ should not be tripped up by it. We make the following specific contributions:
   Interestingly, our design is fully compatible with laziness, which has
   typically been challenging for linear systems because of the unpredictable
   evaluation order of laziness
-  \cite{wakeling_linearity_1991}.\resolved{Though, for full disclosure, we
-    don't run into problems because we don't have a lazy
-    pattern-matching on linear data. Though I [aspiwack] don't think
-    it's a useful feature for linear data: W\&R want to use it to make
-    an infinite stream, but the stream must be consumed in its
-    entirety so the program would just loop if it had some infinite
-    linear data.}
+  \cite{wakeling_linearity_1991}.
 
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
   $λ$-calculus with data types (\fref{sec:statics}). (Rust has no such formalism.)
