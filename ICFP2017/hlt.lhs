@@ -839,8 +839,8 @@ use the following notations:
 \(A ⊸ B ≝ A →_1 B\).
 
 The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
-that consuming $f u : B$ exactly once will consume  $q$
-times $u : A$. Therefore, a function of type $A→B$ \emph{must} be applied to
+that consuming $f u : B$ exactly once will consume $u{:}A$ $q$
+times. Therefore, a function of type $A→B$ \emph{must} be applied to
 an argument residing in the dynamic heap, while a function of type
 $A⊸B$ \emph{may} be applied to an argument residing on either heap.
 %
@@ -996,14 +996,14 @@ reads as: consuming the term $t:A$ once consumes $Γ$ once. But what if
 we want to consume $t$ more than once? This is where context scaling
 comes into play, like in the application rule:
 $$\apprule$$
-The idea is that if we consume $u$ an arbitrary number of times, we
-in turn consume $Δ$ an arbitrary number of times, or equivalently, we
-consume $ωΔ$ exactly once. We call this the \emph{promotion
+The idea is that consuming $u$ an arbitrary number of times also
+consumes $Δ$ an arbitrary number of times, or equivalently, consumes
+$ωΔ$ exactly once. We call this the \emph{promotion
   principle}\footnote{The name \emph{promotion principle} is a
   reference to the promotion rule of linear logic. In \calc{},
-  however, promotion is implicit.}: to know how to consume a
-value any number of times it is sufficient (and, in fact, necessary) to know
-how to consume said value exact once.
+  however, promotion is implicit.}: to know how to consume a value any
+number of times it is sufficient (and, in fact, necessary) to know how
+to consume said value exact once.
 
 To get a better grasp of the application rule and the promotion
 principle, you may want to consider how it indeed renders the
