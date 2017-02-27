@@ -387,9 +387,9 @@ We make the following contributions:
 
 \item The \HaskeLL{} design is being implemented in a prototype
   extension of the \textsc{ghc} compiler. This prototype shows that
-  the implementation can be kept lean, and that the presentation
-  scales to type inference, even if the presentation in this article
-  only does type checking.\unsure{[aspiwack] This is a first attempt}
+  the implementation can be kept lean, and that the \HaskeLL{} design
+  scales to type inference, even though \calcl{} is only a
+  type-checked system.\unsure{[aspiwack] This is a first attempt}
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
