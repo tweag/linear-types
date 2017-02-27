@@ -1596,7 +1596,7 @@ freed: \calc{} is safe from use-after-free errors.
 
 There is a wealth of literature regarding the application of linear typing to
 many practical problems, for instance: explicit memory
-management~\cite{lafont_linear_1988,hofmann_in-place_,ahmed_l3_2007},
+management~\cite{lafont_linear_1988,hofmann_in-place_2000,ahmed_l3_2007},
 array
 computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
 protocol specification~\cite{honda_session_1993}, privacy
