@@ -1624,6 +1624,10 @@ interface.
 \subsection{Lowering the \textsc{gc} pressure}
 \label{sec:lower-gc}
 
+\improvement{Explain why lower the gc pressure matters. Give evidence
+  that people do keep data off-heap. And give some benchmarking
+  numbers to explain why}
+
 In a practical implementation of the zero-copy packet example of
 \fref{sec:packet}, the priority queue can easily become a bottleneck,
 because it will frequently stay large. We can start by having a less
