@@ -292,10 +292,9 @@ errors as when programming in plain C.
 It would be much better to rule out such problems via a type system.
 
 It is well known that type systems can be useful for controlling
-resource usage, not just ensuring correctness. \critical{Fix
-  references} Affine types~\cite{tov_practical_2011}, linear
-types~\cite{lafont_linear_1988}, permission types~\cite{mezzo} and capabilities
-\cite{chargueraud_functional_2008} enable safe manual memory
+resource usage, not just ensuring correctness. Affine types~\cite{tov_practical_2011}, linear
+types~\cite{lafont_linear_1988}, permission types~\cite{westbrook_permissions_2012} and capabilities
+\cite{chargueraud_functional_2008,balabonski_mezzo_2016} enable safe manual memory
 management as well as safe handling of scarce resources such as
 sockets and file handles.  All these approaches have been extensively
 studied, \emph{yet these ideas have had relatively little effect on
