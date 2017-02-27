@@ -293,17 +293,20 @@ failure to deallocate at all), as well use-after-free or double-free
 errors as when programming in plain C.
 It would be much better to rule out such problems via a type system.
 
-It is well known that type systems can be useful for controlling resource usage, not just
-ensuring correctness. \critical{Fix references}  Affine types~\cite{finishme}, linear
-types~\cite{finishme}, permission types \cite{finishme}, and fractional
-permissions \cite{finishme} enable safe manual memory management as well as safe
-handling of scarce resources such as sockets and file handles.  All these
-approaches have been extensively studied, \emph{yet these ideas have had relatively little
-effect on programming practice}.  Few practical, full-scale languages are
+It is well known that type systems can be useful for controlling
+resource usage, not just ensuring correctness. \critical{Fix
+  references} Affine types~\cite{tov_practical_2011}, linear
+types~\cite{lafont_linear_1988}, permission types~\cite{mezzo} and capabilities
+\cite{chargueraud_functional_2008} enable safe manual memory
+management as well as safe handling of scarce resources such as
+sockets and file handles.  All these approaches have been extensively
+studied, \emph{yet these ideas have had relatively little effect on
+  programming practice}.  Few practical, full-scale languages are
 designed from the start with such features.  Rust is the major
-exception~\cite{matsakis_rust_2014}, and in Rust we see one of the attendant
-complications: adding advanced resource-tracking features puts a burden on
-new users, who need to learn how to satisfy the ``borrow checker''.
+exception~\cite{matsakis_rust_2014}, and in Rust we see one of the
+attendant complications: adding advanced resource-tracking features
+puts a burden on new users, who need to learn how to satisfy the
+``borrow checker''.
 
 
 Could more languages be extended with linear or affine types?  Unfortunately, there has
@@ -352,7 +355,7 @@ We make the following contributions:
   Interestingly, our design is fully compatible with laziness, which has
   typically been challenging for linear systems because of the unpredictable
   evaluation order of laziness
-  \cite[p9]{wakeling_linearity_1991}.\unsure{Though, to be honest, we
+  \cite{wakeling_linearity_1991}.\resolved{Though, for full disclosure, we
     don't run into problems because we don't have a lazy
     pattern-matching on linear data. Though I [aspiwack] don't think
     it's a useful feature for linear data: W\&R want to use it to make
@@ -669,7 +672,7 @@ low-latency servers of in-memory data, such as
 Memcached~\cite{memcached} or burst
 buffers~\cite{liu_burstbuffer_2012}.
 
-As an example, consider a software-defined\unsure{what is the -defined supposed to mean?} packet switch. First, we
+As an example, consider a software packet switch. First, we
 need to read packets from, and send them to network interfaces.
 Linearity can help with {\em copy-free} hand-off of packets between
 network interfaces and in-memory data structures.
@@ -886,9 +889,7 @@ polymorphism. Hindley-Milner-style polymorphism, however, happens not
 mesh well with subtyping as the extensive exposition by
 \citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
 multiplicity polymorphism for the purpose of reuse of higher-order
-function as we described in \fref{sec:lin-poly}.  \improvement{Can we
-  cite prior art that uses linearity subtyping? — [aspiwack] Clean
-  quite possibly}
+function as we described in \fref{sec:lin-poly}.
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
@@ -1215,9 +1216,6 @@ constrained $λ$-calculus syntax which we remind in
 \fref{fig:launchbury:syntax}. We assume, in addition, that the
 primitives are $η$-expanded by the translation.
 
-\improvement{in the translation, add rules for the multiplicity abstraction
-  and application}
-
 \begin{figure}
   \figuresection{Translation of typed terms}
   \begin{align*}
@@ -1241,11 +1239,6 @@ primitives are $η$-expanded by the translation.
   \label{fig:launchbury:syntax}
 \end{figure}
 
-\unsure{Should we use handles with a separate heap for Packets, with
-  handle in the linear heap? It makes the semantics significantly more
-  verbose, but at least you don't have packets jumping to and from the
-  linear heap. — [aspiwack] I feel that adding heap and handles would
-  make the proofs much more tedious}
 The dynamic semantics is given in \fref{fig:dynamics}. Let us review
 the new rules
 \begin{description}
@@ -1270,7 +1263,7 @@ the new rules
 
 \subsection{Type safety}
 
-\todo{move the statements of the theorem to the beginning of the
+\unsure{move the statements of the theorem to the beginning of the
   section}
 
 \begin{figure}
@@ -1825,7 +1818,7 @@ becomes costly. So language designer try to create languages with some
 kind of kind polymorphism to overcome this limitation. This usually
 involves a subkinding relation and bounded polymorphism. This kind
 polymorphic designs are rather complex. See \citet{morris_best_2016}
-for a recent example. By contrast, the type system of \calc{} is quite
+for a recent example \unsure{say that they use subtyping?}. By contrast, the type system of \calc{} is quite
 straightforward.
 
 Another point, rather specific to \textsc{ghc}, is that the kind
