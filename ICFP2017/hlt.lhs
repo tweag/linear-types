@@ -1182,7 +1182,7 @@ $$
 \inferrule{ }{ωΓ ⊢ j : \varid{World}}\text{world}
 $$
 
-In addition to the abstract types $\varid{World}$, $Packet$ and $\varid{MB}$, and the
+In addition to the abstract types $\varid{World}$, $\varid{Packet}$ and $\varid{MB}$, and the
 concrete types $IO_0$, $IO$, $(,)$, and $()$, \calc{} is extended with
 three primitives (see also \fref{sec:packet}):
 \begin{itemize}
@@ -1303,7 +1303,7 @@ the new rules
 
     \inferrule
       {Γ:x ⇓ Δ:⟨j,i⟩}
-      {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i : (y,z)}\text{get}
+      {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i : (y,z)}\text{get}
 
       \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
@@ -1441,14 +1441,14 @@ introduces the states of the strengthened evaluation relation.
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
-  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 Packet = p^j_i || (y,z)) :_1 (Packet,\varid{MB}),Σ}\text{get}
+  {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i || (y,z)) :_1 (\varid{Packet},\varid{MB}),Σ}\text{get}
 
 \inferrule
   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
   {Ξ ⊢ (Γ||close x ⇓ Δ||()) :_1 (),Σ}\text{close}
 
 \inferrule
-  {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 Packet,Σ}
+  {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 \varid{Packet},Σ}
   {Ξ ⊢ (Γ||send x ⇓ Δ||()) :_1 (),Σ}\text{send}
   \end{mathpar}
   \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
