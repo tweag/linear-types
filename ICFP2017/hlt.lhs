@@ -310,42 +310,49 @@ puts a burden on new users, who need to learn how to satisfy the
   practice. Based on our experience of industrial practice''. Overview
 of why}
 
-
-Could more languages be extended with linear or affine types?  Unfortunately, there has
-not been a clear path to augment preexisting type systems without (1) breaking
-existing code, and (2) forcing the feature on users who do not need it, as in the
-case of Rust.
 % 
-Recent work~\cite{morris_best_2016} has come closer to unifying linear and
-unrestricted code, avoiding the need to {\em duplicate} basic library functions
-like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
-Yet this approach still divides all types into unrestricted and linear, and adds
-(non-)linearity constraints to the types of standard
-combinators, including type-class constraints and complications that newcomers cannot easily
-ignore.
-
-We propose another design, which leaves most \emph{types} unmodified, and
-instead associates linearity with {\em binders}, such as ``$\flet x \!:_{1}\! T =
-\dots$'', indicating that $x$ must be used exactly once in the body.
-%
-We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
-{\em type}.
-%
-Only function types change to include (optional) linearity constraints on their
-arguments.  However, these new linear functions are \emph{backward-compatible}:
-they can be applied to non-linear values as well as linear ones.
-
-We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic.
-With it we can enrich the types of standard Haskell Prelude functions, such as |map| and |++|,
-by adding (but not requiring) the possibility of linear uses of those functions.
-Existing function applications, such as |xs ++ ys|, continue to typecheck as
-before, {\em unless} the inputs happen to be linear values.
+% Could more languages be extended with linear or affine types?  Unfortunately, there has
+% not been a clear path to augment preexisting type systems without (1) breaking
+% existing code, and (2) forcing the feature on users who do not need it, as in the
+% case of Rust.
+% % 
+% Recent work~\cite{morris_best_2016} has come closer to unifying linear and
+% unrestricted code, avoiding the need to {\em duplicate} basic library functions
+% like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
+% Yet this approach still divides all types into unrestricted and linear, and adds
+% (non-)linearity constraints to the types of standard
+% combinators, including type-class constraints and complications that newcomers cannot easily
+% ignore.
 % 
-With this approach, a programmer does not need to worry about linearity
-to use linear functions, and in fact may not even have to
-{\em see} linearity information
-unless the appropriate language extension is enabled.
-We make the following contributions:
+% We propose another design, which leaves most \emph{types} unmodified, and
+% instead associates linearity with {\em binders}, such as ``$\flet x \!:_{1}\! T =
+% \dots$'', indicating that $x$ must be used exactly once in the body.
+% %
+% We say that |x| is bound to a {\em linear value}, but |x| does not have a linear
+% {\em type}.
+% %
+% Only function types change to include (optional) linearity constraints on their
+% arguments.  However, these new linear functions are \emph{backward-compatible}:
+% they can be applied to non-linear values as well as linear ones.
+% 
+% We call the extended type system \HaskeLL{} --- Haskell meets Linear Logic.
+% With it we can enrich the types of standard Haskell Prelude functions, such as |map| and |++|,
+% by adding (but not requiring) the possibility of linear uses of those functions.
+% Existing function applications, such as |xs ++ ys|, continue to typecheck as
+% before, {\em unless} the inputs happen to be linear values.
+% % 
+% With this approach, a programmer does not need to worry about linearity
+% to use linear functions, and in fact may not even have to
+% {\em see} linearity information
+% unless the appropriate language extension is enabled.
+
+In this paper we present the first linear type system that we believe
+has a good chance of influencing programming practice.  We do this
+through a \emph{backward-compatible extension} of Haskell's type system: existing
+functions continue to work, although they may now have more refined types
+that express their linearity; existing data structures continue to work, and
+can additionally track linear values.  Programmers who do not need linearity
+should not be tripped up by it. We make the following specific contributions:
 
 \begin{itemize}
 \item We present a design for \HaskeLL{}, which offers linear typing in Haskell
@@ -366,17 +373,18 @@ We make the following contributions:
     linear data.}
 
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
-  $λ$-calculus with data types (\fref{sec:statics}). We provide its type system,
+  $λ$-calculus with data types (\fref{sec:statics}). (Rust has no such formalism.)
+  We provide its type system,
   highlighting how it is compatible with existing Haskell features,
   including some popular extensions (the kind system, constraints, GADTs, and even dependent types).
-  A distinctive feature of \calc{} is that linearity appears only in bindings
-  and function arrows, rather than pervasively in all types.  Also unusually, we can readily
-  support linearity polymorphism
-  (\fref{sec:lin-poly}). The type system of \calc{} is a unique mix of
-  systems from the literature (~\fref{sec:related-type-systems}), the
-  typing rule for $\textsf{case}$ (~\fref{sec:typing-rules}) in
-  particular is a crucial ingredient for the backwards compatibility
-  of \HaskeLL{} with Haskell.
+  \simon{Do we really highlight how linearity interacts with kinds, constraints, GADTs?  What is
+  the forward reference to this discussion?}
+  The type system of \calc{} has a number of unusual features, which together support
+  backward compatibility with Haskell: linearity appears only in bindings
+  and function arrows, rather than pervasively in all types; we easily support linearity polymorphism
+  (\fref{sec:lin-poly}); the typing rule for $\textsf{case}$ is crucial (\fref{sec:typing-rules}).
+  No individual aspect is entirely new (\fref{sec:related-type-systems}), but collectively
+  they add up to a system that can be used in practice.
 
 \item We provide a dynamic semantics for \calc{},
   combining laziness with explicit deallocation of linear data (\fref{sec:dynamics}).
@@ -385,11 +393,13 @@ We make the following contributions:
   linear value is eventually deallocated, and is never referenced after
   it is deallocated.
 
-\item The \HaskeLL{} design is being implemented in a prototype
-  extension of the \textsc{ghc} compiler. This prototype shows that
-  the implementation can be kept lean, and that the \HaskeLL{} design
-  scales to type inference, even though \calcl{} is only a
-  type-checked system.\unsure{[aspiwack] This is a first attempt}
+\item We do not cover type inference, which takes use from the implicitly-typed
+  source language, \HaskeLL{}, to the explicitly-typed intermediate language \calc{}.
+  However, we have implemented a proof of concept, by modifying the leading
+  Haskell compiler \textsc{ghc} to infer linear types.  The prototype is freely
+  available\footnote{URL suppressed for blind review, but available on request}, and
+  suggests that it is not hard to extend \textsc{ghc}'s type inference algorithm
+  (despite its complexity) to support linear types.
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
