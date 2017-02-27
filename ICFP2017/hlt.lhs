@@ -1773,7 +1773,7 @@ Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
 
-Linear types and uniqueness types are dual: whereas a linear type is
+Linear types and uniqueness types are, at their core, dual: whereas a linear type is
 a contract that a function uses its argument exactly once
 even if call's context can share a linear argument as many times as it
 pleases, a uniqueness type ensures that the argument of a function is
@@ -1789,12 +1789,14 @@ of linear types in relation with fusion can be found
 in~\citet{bernardy_composable_2015}, see also the discussion in
 \fref{sec:fusion}.
 
-Several points guided our choice of designing \HaskeLL{} around linear
-logic rather than uniqueness types: 1. functional languages have more use
-for fusion than in-place update (\textsc{ghc} has a cardinality
-analysis, but it does not perform a non-aliasing analysis); 2 with modern computer architectures in-place update is no longer crucial for performance (accessing RAM requires making copies anyway); 3. there is a
+Because of this weak duality, we perhaps could as well have
+retrofitted uniqueness types to Haskell. But several points
+guided our choice of designing \HaskeLL{} around linear
+logic rather than uniqueness types: (a) functional languages have more use
+for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
+analysis but no non-aliasing analysis is any indication); (b) there is a
 wealth of literature detailing the applications of linear
-logic — see \fref{sec:applications}; 4. and desicively, linear type systems are
+logic — see \fref{sec:applications}; (c) and desicively, linear type systems are
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
@@ -1807,7 +1809,7 @@ or unrestricted.
 
 In effect, this imposes a clean separation between the linear world
 and the unrestricted world. An advantage of this approach is that it
-instantiate both to linear types and to uniqueness types depending on
+instantiates both to linear types and to uniqueness types depending on
 how they the two worlds relate, and even have characteristics of
 both\cite{devries_linearity_2017}.
 
@@ -1818,15 +1820,16 @@ the line of work on so-called \emph{mixed linear and non-linear logic}
 code duplication between the linear an unrestricted worlds quickly
 becomes costly. So language designer try to create languages with some
 kind of kind polymorphism to overcome this limitation. This usually
-involves a subkinding relation and bounded polymorphism. This kind
-polymorphic designs are rather complex. See \citet{morris_best_2016}
-for a recent example \unsure{say that they use subtyping?}. By contrast, the type system of \calc{} is quite
-straightforward.
+involves a subkinding relation and bounded polymorphism. These kind
+polymorphic designs are complex. See \citet{morris_best_2016}
+for a recent example \unsure{say that they use subtyping?}. We argue
+that by contrast, the type system of \calc{} is simpler.
 
-Another point, rather specific to \textsc{ghc}, is that the kind
-system of \textsc{ghc} is quite rich, with support for impredicative
-dependent types, and a wealth of unboxed or otherwise primitive types
-which can't be substituted for polymorphic type arguments. It is not
+The complexity introduced by kind polymorphism and subtyping relations
+makes retrofitting a rich core language such as \textsc{ghc}'s an
+arduous endeavour. \textsc{ghc} already supports impredicative
+dependent types and a wealth of unboxed or otherwise primitive types
+that can't be substituted for polymorphic type arguments. It is not
 clear how to support linearity in \textsc{ghc} by extending its kind system.
 In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
 including its compatibility with dependent types, and
@@ -1838,7 +1841,7 @@ of linear types where values can be used \emph{at most} once). It is
 uses the kinds to separate affine from unrestricted arguments.
 
 It is a case in point for kind-based systems being more complex: for
-the sake of polymorphism, Alms deploys an elaborate dependent kind
+the sake polymorphism, Alms deploys an elaborate dependent kind
 system. Even if such a kind system could be added to an existing
 language implementation, Alms does not attempt to be backwards
 compatible with an \textsc{ml} dialect. In fact
@@ -1852,31 +1855,30 @@ compatible with an \textsc{ml} dialect. In fact
   function arguments.
 \end{quote}
 
-\subsection{Rust}
+\subsection{Ownership typing à la Rust}
 
-Already mentioned above is the language
-Rust~\cite{matsakis_rust_2014}, based on ownership types. This
-distinction notwithstanding, Rust's type system resembles the original
-presentation of linear logic where every type $A$ represent linear
-values, unrestricted values at type $A$ have a special type $!A$, and
-duplication is explicit.
+Rust \cite{matsakis_rust_2014} features ownership (aka uniqueness)
+types. But like the original formulation of linear logic, in Rust $A$
+stands for linear values, unrestricted values at type $A$ are denoted
+$!A$, and duplication is explicit.
 
-In a sense, Rust quite beautifully solves the problem of being mindful
-about memory, resources, and latency. But this comes at a heavy price:
-Rust, as a programming language, is specifically optimised for writing
+Rust quite beautifully addresses the problem of being mindful about
+memory, resources, and latency. But this comes at a heavy price: Rust,
+as a programming language, is specifically optimised for writing
 programs that are structured using the RAII
 pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
 (where resource lifetimes are tied directly or indirectly to stack
 allocated objects that are freed when the control flow exits the
 current lexical scope). Ordinary functional programs seldom fit this
 particular resource acquisition pattern so end up being second class
-citizens. For instance, tail recursions, so dear to the functional
-programmer's heart, can usually not be eliminated, as resource
-liberation must be triggered when the tail call returns.
+citizens. For instance, tail-call optimization, crucial to the
+operational behaviour of many functional programs, is not usually
+sound. This is because resource liberation must be triggered when the
+tail call returns.
 
 \HaskeLL{} aims to hit a different point in the design space where
-regular Haskell programs are the norm, hence are optimised for, and we
-can, at the cost of extra effort, be mindful about memory and latency.
+regular non-linear expressions are the norm yet gracefully scaling up
+to latency-sensitive and resource starved programs is still possible.
 
 \subsection{Related type systems}
 
@@ -1931,17 +1933,19 @@ possible in the linear heap, as modelled by the strengthened
 semantics. However, \citeauthor{wakeling_linearity_1991} did not
 manage to obtain consistent performance gains. On the other hand, they
 still manage to reduce \textsc{gc} usage, which may be critical in
-distributed and real-time environments. Thus the trade-off is
-beneficial is certain situations.
+distributed and real-time environments. It is latency that matters to
+us more than throughput.
 
-Regarding absolute performance increase,
-\citeauthor{wakeling_linearity_1991} propose not attempt prompt free
-of thunks, and instead take advantage of linear arrays. In this paper,
-we go further and leave the management of external (linear) data to
-external code, only accessing it via an API. Yet, our language
-supports an implementation where each individual constructor with
-multiplicity 1 can be allocated on a linear heap, and deallocated when
-it is pattern matched. Implementing this behaviour is left for future work.
+\citeauthor{wakeling_linearity_1991} propose to not attempt prompt
+free of thunks and only taking advantage of linearity for managing the
+lifetimes of large arrays. Our approach is similar: we advocate
+exploiting linearity for operational gains on large data structures
+(but not just arrays) stored off-heap. we go further and leave the
+management of external (linear) data to external code, only accessing
+it via an API. Yet, our language supports an implementation where each
+individual constructor with multiplicity 1 can be allocated on
+a linear heap, and deallocated when it is pattern matched.
+Implementing this behaviour is left for future work.
 
 \section{Conclusion and future work}
 
@@ -1949,31 +1953,32 @@ This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
 the language, in the sense that:
 \begin{itemize}
-\item Existing programs are valid in the extended language
-  \emph{without modification}.
-\item Such programs retain the same semantics.
-\item The performance of existing programs is not affected.
+\item existing programs are valid in the extended language
+  \emph{without modification},
+\item such programs retain the same semantics, and
+\item the performance of existing programs is not affected.
 \end{itemize}
 In other words: regular Haskell comes first. Additionally, first-order
 linearly typed functions and data structures are usable directly from
 regular Haskell code. In such a situation their semantics is that of
 the same code with linearity erased.
 
-Furthermore \calc{} has a particularly non-invasive design, and thus
-it is possible to integrate with an existing mature compiler. We are
+\calc{} was engineered as an unintrusive design, making the
+integration to an existing, mature compiler with a large ecosystem
+tractable. We are
 developing a prototype implementation extending \textsc{ghc} with
 multiplicities. The main difference between the implementation and
-\calc, is that the implementation adopts some level of
-bidirectionality: typing contexts go in, actual multiplicities come
+\calc is that the implementation is adapted to
+bidirectionality: typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
 design integrates very well in \textsc{ghc}.
 
 It is worth stressing that, in order to implement foreign data
-structures like we have advocated, in this article, as a means to
+structures like we advocate as a means to
 provide safe access to resources or reduce \textsc{gc} pressure and
 latency, we only need to modify the type system: primitives to
 manipulate foreign data can be implemented in libraries using the
-foreign function interface. This helps make the prototype quite lean.
+foreign function interface. This helps keep the prototype lean.
 
 \subsection{Dealing with exceptions}
 Exceptions run afoul of linearity. Consider for instance the
@@ -1986,17 +1991,17 @@ pure code~\cite{peyton_jones_exceptions_1999}, so we have to take it
 into account in order to demonstrate the eventual deallocation of
 resources. Both \citet{thrippleton_memory_2007} and
 \citet{tov_theory_2011} develop solutions, but they rely on effect
-type systems which probably require too much change to an existing
+type systems, which probably require too much change to an existing
 compiler. Additionally, effect type systems would not be compatible
 with Haskell's asynchronous exception
 mechanism~\cite{marlow_async_exceptions_2001}.
 
 Because we are using explicit allocators for resources such as
-|withMailbox :: (MB ⊸ IO a) ⊸ IO a|. These allocators can be
+|withMailbox :: (MB ⊸ IO a) ⊸ IO a|, these allocators can be
 responsible for safe deallocation in response to exceptions,
 internally making use of the bracket operation~\cite[Section
-7.1]{marlow_async_exceptions_2001}. A full justification of this fact
-is left for future work.
+  7.1]{marlow_async_exceptions_2001}. A full justification of this
+hypothesis is left for future work.
 
 \subsection{Fusion}
 \label{sec:fusion}
@@ -2027,15 +2032,14 @@ gives confidence in the fact that multiplicity annotation can serve as
 cardinality \emph{declarations}.
 
 Formalising and implementing the integration of multiplicity
-annotation in the cardinality analysis is left as future work, as it
-requires a significant effort.
+annotation in the cardinality analysis is left as future work.
 
 \subsection{Extending multiplicities}
 
 For the sake of this article, we use only $1$ and $ω$ as
 possibilities.  In fact, \calc{} can readily be extended to more
 multiplicities: we can follow \citet{ghica_bounded_2014} and
-\citet{mcbride_rig_2016} which work with abstract sets of
+\citet{mcbride_rig_2016}, which work with abstract sets of
 multiplicities.  In particular, in order to support dependent types,
 we additionally need a $0$ multiplicity.
 
@@ -2046,10 +2050,9 @@ multiplicities to represent real time annotations, and
 \citet{petricek_coeffects_2013} show how to use multiplicities to
 track either implicit parameters (\emph{i.e.} dynamically scoped
 variables) or the size of the history that a dataflow program needs to
-remember. Of these, only the implicit parameters may be of relevance
-to Haskell, but even so, it is probably not desirable.
+remember.
 
-Nevertheless, more multiplicities may prove useful. For instance we
+To go further still, more multiplicities may prove useful. For instance we
 may want to consider a multiplicity for affine arguments (\emph{i.e.}
 arguments which can be used \emph{at most once}).
 
