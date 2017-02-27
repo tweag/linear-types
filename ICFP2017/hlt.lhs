@@ -691,36 +691,26 @@ release it.
 |close| could be in the |IO| monad, but need not be --- linearity ensures
 proper sequencing within the computation.  This is because |close|'s result must be
 consumed with |case|, i.e. |case close mb of () -> e1| before we can |return| any result.
-Receiving and
-sending packets can likewise live outside of |IO|, and are ultimately part of the
-|IO| action created with |withMailbox|:\improvement{[aspiwack] Simon
-  convinced me that this was not actually the case if we consider that
-  |get| and |send| have an effect on the rest of the |IO| action so
-  they must not only be ordered between them, but also with respect to
-  the |IO| action (separation logic analogy: mailboxes are not
-  isolated regions) so |get| and |send| should be in |IO|, possibly
-  |close| too (if it causes packets to bounce back for another
-  process). None of this matters in the semantics of
-  \fref{sec:dynamics}, so we may decide either to say: ``they should,
-  in actuality, be in |IO| but for the sake of simplicity we forget
-  about that'' or put these actions in |IO|. The latter's better, but
-  then the semantics will be all annoying for little gain.
-  [jp] better yet state that we assume that mailboxes are
-  independent. It's a feature of the system to be able to express
-  independence of bits of IO. (As you write: separation logic!) }
+For each maibox, the next available packet is yielded by |get|, whereas |send| forwards it on the
+network.
 \begin{code}
   get   :: MB ⊸ (Packet , MB)
   send  :: Packet ⊸ ()
 \end{code}
-
-The next available packet is yielded by |get|, whereas |send| forwards it on the
-network.
 %
-In the simplest case, we can read a message and send it immediately --- without
-any filtering or buffering.
-When calling |get| and |send|, |Packet|s never need to be copied:
-they can be passed along from the network interface card to the mailbox
-and then to the linear calling context of |send|, all by reference.
+In the simplest case, we can read a message and send it immediately
+--- without any filtering or buffering.  When calling |get| and
+|send|, |Packet|s never need to be copied: they can be passed along
+from the network interface card to the mailbox and then to the linear
+calling context of |send|, all by reference.
+
+The above API assumes that mailboxes are independent: the order of
+packets is ensured within a mailbox queue, but not accross mailboxes
+(and not even between the input and output queue of a given
+mailbox). While this assumption is in general incorrect, it applies
+for our packet switcher. Additionally it illustrates the ability of
+our type-system to finely track dependencies between various kinds of
+effects: as precisely as required, but no more.
 
 \paragraph{Buffering data in memory}
 
