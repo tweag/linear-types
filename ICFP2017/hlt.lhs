@@ -322,7 +322,7 @@ Yet this approach still divides all types into unrestricted and linear, and adds
 combinators, including type-class constraints and complications that newcomers cannot easily
 ignore.
 
-We propose a new design that leaves most \emph{types} unmodified, and
+We propose another design, which leaves most \emph{types} unmodified, and
 instead associates linearity with {\em binders}, such as ``$\flet x \!:_{1}\! T =
 \dots$'', indicating that $x$ must be used exactly once in the body.
 %
@@ -413,7 +413,7 @@ the latter is free to pass either a linear or non-linear value to the function.
 %
 For example, consider these definitions of a function |g|:
 \begin{code}
-g1,g2,g3 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
+g1,g2,g3 :: (a ⊸ a -> r) -> a ⊸ a -> r
 
 g1 k x y = k x y          -- Valid
 g2 k x y = k y x          -- Invalid: fails |x|'s multiplicity guarantee
@@ -432,7 +432,7 @@ call itself is consumed once.  For example, consider these definitions
 of the same function |g|:
 \begin{code}
 f :: a ⊸ a
-g4,g5,g6 :: (Int ⊸ Int -> r) -> Int ⊸ Int -> r
+g4,g5,g6 :: (a ⊸ a -> r) -> a ⊸ a -> r
 
 g4 k x y = k x (f y)      -- Valid: |y| can be passed to linear |f|
 g5 k x y = k (f x) y      -- Valid: |k| consumes |f x|'s result once
