@@ -643,11 +643,12 @@ data type is used to indicate that when a value |(Unrestricted x)| is consumed
 once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
 consumed.
 With our primitive in hand, we can now use ordinary code to copy
-a linear list of |T| values into the dynamic heap:
+a linear list of |T| values into the dynamic heap (we Mark patterns with |!| as a reminder that \HaskeLL
+does not support lazy pattern bindings for linear values):
 \begin{code}
   copy :: (a ⊸ Unrestricted a) -> [a] ⊸ Unrestricted [a]
-  copy copyElt (x:xs) = Unrestricted (x':xs')  where  Unrestricted xs'  = copy xs
-                                                      Unrestricted x'   = copyElt x
+  copy copyElt (x:xs) = Unrestricted (x':xs')  where  !(Unrestricted xs')  = copy xs
+                                                      !(Unrestricted x')   = copyElt x
 \end{code}
 % We stress that the above does not reduce to the linear identity
 % function, |id :: [a] ⊸ [a]|. Indeed, with the |copy| function
