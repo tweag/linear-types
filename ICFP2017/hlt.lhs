@@ -314,7 +314,7 @@ not been a clear path to augment preexisting type systems without (1) breaking
 existing code, and (2) forcing the feature on users who do not need it, as in the
 case of Rust.
 % 
-Recent work~\cite{best-of-both-worlds} has come closer to unifying linear and
+Recent work~\cite{morris_best_2016} has come closer to unifying linear and
 unrestricted code, avoiding the need to {\em duplicate} basic library functions
 like compose ($\circ$) or append (|++|) by adding incompatible linear versions.
 Yet this approach still divides all types into unrestricted and linear, and adds
