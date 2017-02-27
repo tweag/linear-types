@@ -779,6 +779,10 @@ on the network once three packets are available.
                                       !()        = close mb3
                                  in return $ sendAll q3
 \end{code}
+Note that the various packets \emph{do not have nested lifetimes}, which
+rules out region-based approaches. The ability to deal with de-allocation
+in a different order to allocation, which ican be very important in practice,
+is a crucial feature of approaches based on linear types.
 %
 \section{\calc{} statics}
 \label{sec:statics}
@@ -812,7 +816,8 @@ application are explicit.
 
 In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
 A\) has a non-standard reading: it asserts that the consuming the term
-$t : A$ \emph{exactly once}, will consume $Γ$ exactly once.
+$t : A$ \emph{exactly once}, will consume $Γ$ exactly once
+(see \fref{sec:consumed}).
 
 \begin{figure}
   \figuresection{Multiplicities}
