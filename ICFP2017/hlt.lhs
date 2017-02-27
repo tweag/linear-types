@@ -1641,9 +1641,9 @@ or Machines~\cite{kmett_machines_2015}. Such libraries have many advantages: the
 release resources promptly, and they are safe.
 
 However, they come at a significant cost: they are rather difficult to
-use. As a result we have observed companies walking back from this
-type of library to use the simpler, but unsafe Streaming library.
-
+use. As a result we have observed industrial users walking back from this
+type of library to use the simpler, but unsafe Streaming~\cite{thompson_streaming_2015} library.
+%
 The lack of safety of the stream library stems from the |uncons| function (in
 |Streaming.Prelude|):
 \begin{code}
