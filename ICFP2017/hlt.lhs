@@ -1127,12 +1127,11 @@ programmer to use |IO| via its monadic interface.
 Linear typing gives a much more direct solution to the problem: if the
 |World| is kept linear, then there is no way to observe two different
 |World|s. Namely, it is enough to define |IO| as
-\improvement{Write definition of |IO| in \calc{} syntax}
-\begin{code}
-  data IO0  a where IO0 : World ⊸ a -> IO0 a
-  type IO   a = World ⊸ IO0 a
-\end{code}
-Notice that the |a| of |IO a| is always unrestricted, so that |IO| has
+\begin{align*}
+  \data &\varid{IO}_0 a \where \varid{IO}_0 : \varid{World} ⊸ a → \varid{IO}_0 a\\
+        &\varid{IO} a = \varid{World} ⊸ \varid{IO}_0 a
+\end{align*}
+Notice that the $a$ of $\varid{IO} a$ is always unrestricted, so that |IO| has
 the same semantics as in Haskell (it is also the semantics which we
 need to ensure that |withMailbox| is safe).
 
