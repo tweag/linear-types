@@ -389,7 +389,7 @@ We make the following contributions:
   extension of the \textsc{ghc} compiler\footnote{The prototype will
     be available and linked to after the blind review}. This prototype shows that
   the implementation can be kept lean, and that the \HaskeLL{} design
-  scales to type inference, even though \calc{} is only a
+  scales to type inference, even though \calcl{} is only a
   type-checked system.\unsure{[aspiwack] This is a first attempt}
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
