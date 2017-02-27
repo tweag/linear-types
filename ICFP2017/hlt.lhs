@@ -1741,7 +1741,7 @@ lot of complications when developed in practice beyond the |ST| monad.
   this issue \citet{kiselyov_regions_2008} introduced a systematic way
   to lift values from a region to their subregion. But while it solves
   the issue in theory, it is rather hard to use in practice. The
-  HaskellR project \todo{cite HaskellR} uses
+  HaskellR project~\cite{boespflug_project_2014} uses
   \citeauthor{kiselyov_regions_2008}'s regions to safely synchronise values
   shared between two different garbage collectors. The use of HaskellR
   in an industrial setting demonstrated that the lifting to subregions
