@@ -617,21 +617,16 @@ unrestricted arguments?  Yes, we do.
 
 Using the type |T| of \fref{sec:consumed}, suppose we wanted a primitive
 to copy a |T| from the linear heap to the dynamic heap. We could define it
-in CPS style like this
+in CPS style but a direct style is more convenient:
 \begin{code}
-  copyT :: (T -> r) ⊸ T ⊸ r
+  copyT :: (T -> r) ⊸ T ⊸ r bigSpace vs. bigSpace copyT :: T ⊸ Unrestricted a
 \end{code}
-But a direct-style interface is more convenient:
-\begin{code}
-  copyT :: T ⊸ Unrestricted a
-\end{code}
-where |Unrestricted| is a data type with
+|Unrestricted| is a data type with
 a non-linear constructor\footnote{The type constructor
   |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
   modality written ${!}$ in linear logic.}:
 \begin{code}
-  newtype Unrestricted a where
-    Unrestricted :: a → Unrestricted a
+  newtype Unrestricted a where Unrestricted :: a → Unrestricted a
 \end{code}
 The |Unrestricted|
 data type is used to indicate that when a value |(Unrestricted x)| is consumed
