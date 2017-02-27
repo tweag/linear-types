@@ -329,9 +329,7 @@ should not be tripped up by it. We make the following specific contributions:
   $λ$-calculus with data types (\fref{sec:statics}). (Rust has no such formalism.)
   We provide its type system,
   highlighting how it is compatible with existing Haskell features,
-  including some popular extensions (the kind system, constraints, GADTs, and even dependent types).
-  \simon{Do we really highlight how linearity interacts with kinds, constraints, GADTs?  What is
-  the forward reference to this discussion?}
+  including some popular extensions.
   The type system of \calc{} has a number of unusual features, which together support
   backward compatibility with Haskell: linearity appears only in bindings
   and function arrows, rather than pervasively in all types; we easily support linearity polymorphism
