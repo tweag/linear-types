@@ -1821,7 +1821,7 @@ becomes costly. So language designer try to create languages with some
 kind of kind polymorphism to overcome this limitation. This usually
 involves a subkinding relation and bounded polymorphism. These kind
 polymorphic designs are complex. See \citet{morris_best_2016}
-for a recent example \unsure{say that they use subtyping?}. We argue
+for a recent example. We argue
 that by contrast, the type system of \calc{} is simpler.
 
 The complexity introduced by kind polymorphism and subtyping relations
