@@ -1963,19 +1963,21 @@ the language, in the sense that:
 \item existing programs are valid in the extended language
   \emph{without modification},
 \item such programs retain the same semantics, and
-\item the performance of existing programs is not affected.
+\item the performance of existing programs is not affected,
+\item yet existing library functions can be reused to serve the
+  objectives of resource sensitive programs with simple changes to
+  their types without being duplicated.
 \end{itemize}
 In other words: regular Haskell comes first. Additionally, first-order
 linearly typed functions and data structures are usable directly from
-regular Haskell code. In such a situation their semantics is that of
+regular Haskell code. In such a setting their semantics is that of
 the same code with linearity erased.
 
 \calc{} was engineered as an unintrusive design, making the
-integration to an existing, mature compiler with a large ecosystem
-tractable. We are
-developing a prototype implementation extending \textsc{ghc} with
-multiplicities. The main difference between the implementation and
-\calc is that the implementation is adapted to
+integration to an existing, mature compiler with a large ecosystem...
+tractable. We have developed a prototype implementation extending
+\textsc{ghc} with multiplicities. The main difference between the
+implementation and \calc is that the implementation is adapted to
 bidirectionality: typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
 design integrates very well in \textsc{ghc}.
@@ -1984,8 +1986,9 @@ It is worth stressing that, in order to implement foreign data
 structures like we advocate as a means to
 provide safe access to resources or reduce \textsc{gc} pressure and
 latency, we only need to modify the type system: primitives to
-manipulate foreign data can be implemented in libraries using the
-foreign function interface. This helps keeping the prototype lean.
+manipulate foreign data can be implemented in user libraries using the
+foreign function interface. This helps keeping the prototype lean,
+since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 
 \subsection{Dealing with exceptions}
 Exceptions run afoul of linearity. Consider for instance the
@@ -1998,8 +2001,8 @@ pure code~\cite{peyton_jones_exceptions_1999}, so we have to take it
 into account in order to demonstrate the eventual deallocation of
 resources. Both \citet{thrippleton_memory_2007} and
 \citet{tov_theory_2011} develop solutions, but they rely on effect
-type systems, which probably require too much change to an existing
-compiler. Additionally, effect type systems would not be compatible
+type systems, which are intrusive changes to make to an existing
+compiler. Moreover, effect type systems would not be compatible
 with Haskell's asynchronous exception
 mechanism~\cite{marlow_async_exceptions_2001}.
 
@@ -2029,7 +2032,7 @@ a critical inlining opportunity and have rippling effects throughout
 the program. Hunting down such a performance regression proves
 painful in practice.
 
-Linear types can address this issue and serve as a programmer-facing
+Linear types address this issue and serve as a programmer-facing
 interface to inlining: because it is always safe to inline a linear
 function, we can make it part of the \emph{semantics} of linear
 functions that they are always inlined. In fact, the system of
