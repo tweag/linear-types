@@ -671,7 +671,8 @@ low-latency servers of in-memory data, such as
 Memcached~\cite{memcached} or burst
 buffers~\cite{liu_burstbuffer_2012}.
 
-As an example, consider a software packet switch. First, we
+As an example, consider a network router with software defined forwarding policies.
+First, we
 need to read packets from, and send them to network interfaces.
 Linearity can help with {\em copy-free} hand-off of packets between
 network interfaces and in-memory data structures.
@@ -687,7 +688,7 @@ Assume that the user can acquire a linear handle on a {\em
 The mailbox handle must be eventually passed to |close| in order to
 release it.
 %
-For each mailbox, the next available packet is yielded by |get|, whereas |send| forwards packet on the
+For each mailbox, |get| yields the next available packet, whereas |send| forwards packet on the
 network.
 \begin{code}
   get   :: MB ⊸ (Packet , MB)
@@ -702,16 +703,16 @@ linear calling context of |send|, all by reference.
 
 The above API assumes that mailboxes are independent: the order of
 packets is ensured within a mailbox queue, but not accross mailboxes
-(and not even between the input and output queue of a given
-mailbox). While this assumption is in general incorrect, it applies
-for our packet switch. Additionally it illustrates the ability of
-our type system to finely track dependencies between various kinds of
-effects: in this case effects related to separate mailboxes can commute.
+(and not even between the input and output queue of a given mailbox).
+This assumption enables us to illustrate the ability of our type
+system to finely track dependencies between various kinds of effects:
+in this case effects (|get| and |send|) related to separate mailboxes
+commute.
 
 \paragraph{Buffering data in memory}
 
 So what can our server do with the packets once they are retrieved
-from the network? To support software-defined switch policies that
+from the network? To support software-defined routing policies that
 dictate what packet to forward when, we introduce a priority queue.
 \begin{code}
 data PQ a
@@ -724,7 +725,7 @@ store packets it must have linear arrows. In this way, the type
 system \emph{guarantees} that despite being stored in a data
 structure, every packet is eventually sent.
 
-In a packet switch, priorities could represent deadlines associated to
+In a router, priorities could represent deadlines associated to
 each packet\footnote{whereas in a caching application, the server may
   be trying to evict the bigger packets first in order to leave more
   room for incoming packets}. So we give ourselves a function to infer
@@ -755,7 +756,7 @@ In \fref{sec:lower-gc}, we return to the implementation of the
 priority queue and discuss the implications for garbage collection
 overheads.
 
-Finally, here is a tiny packet switch that forwards all packets
+Finally, here is a tiny router that forwards all packets
 on the network once three packets are available.
 \begin{code}
   sendAll :: PQ Packet ⊸ ()
@@ -774,9 +775,9 @@ on the network once three packets are available.
                                       !()        = close mb3
                                  in return $ sendAll q3
 \end{code}
-Note that the various packets \emph{do not have nested lifetimes}, which
-rules out region-based approaches. The ability to deal with de-allocation
-in a different order to allocation, which ican be very important in practice,
+Note that lifetimes of two packets {\em can intersect arbitrarily},
+ruling out region-based approaches. The ability to deal with deallocation
+in a different order to allocation, which can be very important in practice,
 is a crucial feature of approaches based on linear types.
 %
 \section{\calc{} statics}
