@@ -530,9 +530,8 @@ It can be given the two following incomparable types:
   |(a ⊸ b) -> [a] ⊸ [b]|  and
   |(a -> b) -> [a] -> [b]|.
 %
-In \HaskeLL{}, we can generalise over linear and unrestricted arrows
-using {\em multiplicity polymorphism}. This is written $A →_ρ B$. In
-the case at hand, |map| can be given the following most general type:
+Thus, \HaskeLL{} features quantification over multiplicities and parameterised arrows (|A → _ q B|).
+Using these, |map| can be given the following most general type:
 |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ [b]|.
 %
 Likewise, function composition can be given the following general type:
