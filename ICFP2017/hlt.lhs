@@ -610,6 +610,9 @@ We can now give a more precise operational intuition:
 \item More generally, to consume exactly once a value of an algebraic data type, evaluate
   it and consume all its linear components exactly once.
 \end{itemize}
+A salient point of this definition is that ``linear'' emphatically
+does not imply ``strict''. Our linear function space behaves as
+Haskell programmers expect.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:non-linear-constructors}
