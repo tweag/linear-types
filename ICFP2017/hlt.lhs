@@ -280,16 +280,16 @@
 Can we {\em safely} use Haskell to implement a low-latency server that caches
 a large dataset in-memory? Today, the answer is
 ``no''\cite{pusher_latency_2016},
-because pauses incurred by garbage collection (GC), observed in the
+because pauses incurred by garbage collection (\textsc{gc}), observed in the
 order of 50ms or more, are unacceptable. Pauses are in general
-proportional to the size of the heap. Even if the GC is incremental,
+proportional to the size of the heap. Even if the \textsc{gc} is incremental,
 the pauses are unpredicable, difficult to control by the programmer
 and induce furthermore for this particular use case a tax on overall
-throughput. The problem is: the GC is not {\em resource efficient},
+throughput. The problem is: the \textsc{gc} is not {\em resource efficient},
 meaning that resources aren't always freed as soon as they could be.
 Programmers can allocate such large,
 long-lived data structures in manually-managed off-heap memory,
-accessing it through FFI calls. Unfortunately this common technique
+accessing it through \textsc{ffi} calls. Unfortunately this common technique
 poses safety risks: space leaks (by
 failure to deallocate at all), as well use-after-free or double-free
 errors just like programming in plain C. The programmer has then
@@ -594,11 +594,11 @@ It can only free the former, so it must make a dynamic test to tell which is the
 
 A consequence of the above design is that unrestricted values never
 contain (point to) linear values (but the converse is possible). This
-makes sense: after all, if the GC deallocates a value in the dynamic
+makes sense: after all, if the \textsc{gc} deallocates a value in the dynamic
 heap that points off-heap, then the off-heap data will be left
-dangling (being off-heap, the GC cannot touch it) with no means to free
+dangling (being off-heap, the \textsc{gc} cannot touch it) with no means to free
 it manually. Conversely, a pointer from a resource to the heap can
-simply act as a new programmer-controlled GC root. We prove this
+simply act as a new programmer-controlled \textsc{gc} root. We prove this
 invariant in \fref{sec:dynamics}.
 
 We have said repeatedly that ``a linear function guarantees
@@ -703,7 +703,7 @@ and |send|, |Packet|s never need to be copied: they can be passed
 along from the network interface card to the mailbox and then to the
 linear calling context of |send|, all by reference.
 
-The above API assumes that mailboxes are independent: the order of
+The above \textsc{api} assumes that mailboxes are independent: the order of
 packets is ensured within a mailbox queue, but not accross mailboxes
 (and not even between the input and output queue of a given mailbox).
 This assumption enables us to illustrate the ability of our type
@@ -1949,7 +1949,7 @@ lifetimes of large arrays. Our approach is similar: we advocate
 exploiting linearity for operational gains on large data structures
 (but not just arrays) stored off-heap. we go further and leave the
 management of external (linear) data to external code, only accessing
-it via an API. Yet, our language supports an implementation where each
+it via an \textsc{api}. Yet, our language supports an implementation where each
 individual constructor with multiplicity 1 can be allocated on
 a linear heap, and deallocated when it is pattern matched.
 Implementing this behaviour is left for future work.
@@ -2084,13 +2084,13 @@ on multiplicities.
 % ispell-local-dictionary: "british"
 % End:
 
-%  LocalWords:  FHPC Lippmeier al honda pq th FFI monadic runLowLevel
+%  LocalWords:  FHPC Lippmeier al honda pq th ffi monadic runLowLevel
 %  LocalWords:  forkIO initialContext runtime doneWithContext Primops
-%  LocalWords:  deallocation Launchbury launchbury GC scrutinee dup
+%  LocalWords:  deallocation Launchbury launchbury gc scrutinee dup
 %  LocalWords:  centric polymorphism modality intuitionistic typable
 %  LocalWords:  compositional Andreoli's openfile myfile ReadMore ys
-%  LocalWords:  hClose xs GC'ed deallocated linearities mcbride snd
-%  LocalWords:  unboxed Haskellian APIs newByteArray MutableByteArray
+%  LocalWords:  hClose xs deallocated linearities mcbride snd
+%  LocalWords:  unboxed Haskellian api newByteArray MutableByteArray
 %  LocalWords:  updateByteArray freeByteArray indexMutByteArray et ss
 %  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
 %  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
