@@ -601,11 +601,8 @@ invariant in \fref{sec:dynamics}.
 
 We have said repeatedly that ``a linear function guarantees
 to consume its argument exactly once if the call is consumed
-exactly once''. But what does \emph{``consume exactly once''} mean?
-We can now give a more precise operational intution:
-a value is said to be consumed if it
-either returned, passed to a (linear) function (or constructor) whose
-result is itself consumed, or consumed by forcing it:
+exactly once''. But what does \emph{``consuming a value exactly once''} mean?
+We can now give a more precise operational intuition:
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
