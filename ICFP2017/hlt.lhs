@@ -781,10 +781,10 @@ rules.
 
 As we discussed in \fref{sec:consumed}, our operational model for
 \calc{} is that of two heaps: the dynamic heap and the linear
-heap. Values in the linear heap are managed by the programmer hence \emph{must} be consumed \emph{exactly
+heap. Values in the linear heap are managed by the programmer, hence \emph{must} be consumed \emph{exactly
   once}, while values in the dynamic heap are managed by the garbage
 collector hence \emph{may} freely be consumed any number of times
-(including just one or none at all). The role of the type system of
+(including just once or none at all). The role of the type system of
 \calc{} is to enforce this very property.
 
 Let us point out that closures (partial applications or lazy thunks)
@@ -803,8 +803,8 @@ with their type and their multiplicity. Multiplicity abstraction and
 application are explicit.
 
 In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
-A\) has a non-standard reading: it asserts that the consuming the term
-$t : A$ \emph{exactly once}, will consume $Γ$ exactly once
+A\) has a non-standard reading: it asserts that consuming the term
+$t : A$ \emph{exactly once} will consume $Γ$ exactly once
 (see \fref{sec:consumed}).
 
 \begin{figure}
@@ -859,13 +859,13 @@ use the following notations:
 \(A ⊸ B ≝ A →_1 B\).
 
 The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
-that consuming $f u : B$ exactly once will consume $u{:}A$ $q$
-times. Therefore, a function of type $A→B$ \emph{must} be applied to
+that consuming $f u : B$ exactly once will consume  $q$
+times $u{:}A$. Therefore, a function of type $A→B$ \emph{must} be applied to
 an argument residing in the dynamic heap, while a function of type
 $A⊸B$ \emph{may} be applied to an argument residing on either heap.
 %
 One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
-is however, not so as there is no notion of subtyping in \calc{}. This
+is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
 existing typed functional languages such as Haskell and the
 \textsc{ml} family, which are based on Hindley-Milner-style
@@ -900,9 +900,9 @@ with multiplicity $ω$.
 Note that, as discussed in \fref{sec:linear-constructors},
 constructors with arguments of multiplicity $1$ are not more general
 than constructors with arguments of multiplicity $ω$, because if, when
-constructing $c u$, with the argument of $c$ of multiplicity $1$, $u$
-\emph{may} be either of multiplicity $1$ or of multiplicity $ω$,
-dually, when pattern-matching on $c x$, $x$ \emph{must} be of
+constructing $c u$ with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$;
+dually when pattern-matching on $c x$, $x$ \emph{must} be of
 multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
 on the other hand, then $x$ could be used either as having
 multiplicity $ω$ or $1$).
@@ -1026,9 +1026,9 @@ number of times it is sufficient (and, in fact, necessary) to know how
 to consume said value exact once.
 
 To get a better grasp of the application rule and the promotion
-principle, you may want to consider how it indeed renders the
-following judgement well-typed. In this judgement, $π$ is a
-multiplicity variable, that is the judgement is
+principle, you may want to consider how it indeed validates
+following judgement. In this judgement, $π$ is a
+multiplicity variable; that is, the judgement is
 multiplicity-polymorphic:
 $$f:_ωA→_πB, x:_π A ⊢ f x$$
 
@@ -1085,7 +1085,7 @@ rest of the system: only the case $p=1$ is actually necessary. Yet,
 providing the case $p=ω$
 is a design choice which makes it possible to consider data-type
 constructors as linear by default, while preserving the semantics of
-the intuitionistic $λ$-calculus (as we already alluded to in
+the intuitionistic $λ$-calculus (as we already stated in
 \fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
 defined in libraries which are not aware of linear type (\emph{i.e.}
 libraries in pure Haskell) can nevertheless be immediately useful in a
