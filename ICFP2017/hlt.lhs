@@ -227,11 +227,10 @@
   types can receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
 
-  We formalise the proposed type-system in a core calculus; we provide a dynamic
-  semantics as well as a proof of type safety.  Further, we show that every
-  linear value is eventually deallocated, and not referenced thereafter.  We
-  explore the applicability of linear typing in Haskell with a case study of a
-  large, in-memory data structures that must serve responses with low latency.
+  Linear types are an enabling tool for safe and resource efficient
+  systems programming. We explore the power of linear types with
+  a case study of a large, in-memory data structures that must serve
+  responses with low latency.
 \end{abstract}
 
 %
