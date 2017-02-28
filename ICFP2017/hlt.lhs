@@ -1607,7 +1607,7 @@ obnoxiously naive implementation of queues, but this optimisation would not solv
 the issue which we are concerned with in this section: garbage
 collection latency. Indeed, the variance in latency incurred by
 \textsc{gc} pauses can be very costly in a distributed application. Indeed,
-having a large number of processes which may decide to run a long
+having a large number of processes that may decide to run a long
 pause increases the probability that at least one is running a pause.
 Consequently, waiting on a large number of processes is slowed down (by the
 slowest of them) much more often than a sequential application. This
@@ -1617,6 +1617,8 @@ A radical solution to this problem, yet one that is effectively used
 in practice, is to allocate the priority queue with
 |malloc| instead of using the garbage collector's
 allocator~\cite[Section IV.C]{marcu_flink_2016}. Our own benchmarks
+\footnote{URL suppressed for blind review, but available on request},
+consistent with Pusher's findings,
 indicate that peak latencies encountered with large data-structures
 kept in \textsc{ghc}'s \textsc{gc} heap are two orders of magnitude
 higher than using foreign function binding to an identical
@@ -1649,9 +1651,9 @@ from a file) in Haskell is to use a combinator library such as Conduits~\cite{sn
 or Machines~\cite{kmett_machines_2015}. Such libraries have many advantages: they are fast, they
 release resources promptly, and they are safe.
 
-However, they come at a significant cost: they are rather difficult to
-use. As a result we have observed industrial users walking back from this
-type of library to use the simpler, but unsafe Streaming~\cite{thompson_streaming_2015} library.
+However, they come at a significant cost: they are difficult to
+use. As a result the authors have observed industrial users walking back from this
+type of library to use the simpler, but unsafe \texttt{streaming}~\cite{thompson_streaming_2015} library.
 %
 The lack of safety of the stream library stems from the |uncons| function (in
 |Streaming.Prelude|):
@@ -1660,11 +1662,11 @@ The lack of safety of the stream library stems from the |uncons| function (in
 \end{code}
 Note the similarity with the |IO| monad: a stream is consumed and a
 new one is returned. Just like the |World| of the |IO| monad, the
-initial stream does not make sense anymore and reading from it will
+initial stream does not make sense anymore and reusing it will
 result in incorrect behaviour. We have observed this very mistake in
-actual industrial code, and it proved quite costly to hunt
+our own code in industrial projects, and it proved quite costly to hunt
 down. \Citet[Section 2.2]{lippmeier_parallel_2016} describe a very
-similar example of unsafety in the library Repa-flow.
+similar example of unsafety in the \texttt{repa-flow}.
 
 Provided a sufficiently linear notion of monad (see
 \citet[Section 3.3 (Monads)]{morris_best_2016} for a discussion on the
