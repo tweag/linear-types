@@ -1721,14 +1721,14 @@ as mutable cell references, cannot escape the dynamic scope of the call
 to |runST| because they are themselves tagged with the same phantom
 type parameter.
 
-This apparent simplicity (one only needs rank-2 polymorphism) does
-come at the cost of strong limitations in practice:
+This apparent simplicity (one only needs rank-2 polymorphism)
+comes at the cost of strong limitations in practice:
 \begin{itemize}
 \item |ST|-like regions confine to a stack-like allocation discipline.
   Scopes cannot intersect arbitrarily, limiting the applicability of
   this technique. In our running example, if unused mailboxes have to
-  be kept until mailboxes open in there scope has been closed, they
-  would be monopolising precious resources (like file descriptors).
+  be kept until all mailboxes opened in their scope have been closed, they
+  would be hoarding precious resources (like file descriptors).
 \item \citet{kiselyov_regions_2008} show that it is possible to
   promote resources in parent regions to resources in a subregion. But
   this is an explicit and monadic operation, forcing an unnatural
@@ -1738,7 +1738,7 @@ come at the cost of strong limitations in practice:
   project~\cite{boespflug_project_2014} uses monadic regions in the
   style of \citeauthor{kiselyov_regions_2008} to safely synchronise
   values shared between two different garbage collectors for two
-  different languages. The authors report that custom monads make
+  different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
   writing code at an interactive prompt difficult, compromises code
   reuse, force otherwise pure functions to be written monadically and
   rule out useful syntactic facilities like view patterns. In
@@ -1751,7 +1751,7 @@ come at the cost of strong limitations in practice:
 
 \subsection{Finalisers}
 
-A garbage collected can be relied on for more than just cleaning up no
+A garbage collector can be relied on for more than just cleaning up no
 longer extant memory. By registering finalizers (|IO| callbacks) with
 values, such as a file handle, one can make it the job of the garbage
 collector to make sure the file handle is eventually closed. But
@@ -1772,7 +1772,7 @@ logic~\cite{girard_linear_1987}.
 
 Linear types and uniqueness types are, at their core, dual: whereas a linear type is
 a contract that a function uses its argument exactly once
-even if call's context can share a linear argument as many times as it
+even if the call's context can share a linear argument as many times as it
 pleases, a uniqueness type ensures that the argument of a function is
 not used anywhere else in the expressions context even if the function
 can work with the argument as it pleases.
@@ -1804,20 +1804,20 @@ programming languages incorporate
 linearity by dividing types into two kinds. A type is either linear
 or unrestricted.
 
-In effect, this imposes a clean separation between the linear world
+In effect, this distinction imposes a clean separation between the linear world
 and the unrestricted world. An advantage of this approach is that it
 instantiates both to linear types and to uniqueness types depending on
 how they the two worlds relate, and even have characteristics of
-both\cite{devries_linearity_2017}.
+both~\cite{devries_linearity_2017}.
 
 Such approaches have been very successful for theory: see for instance
 the line of work on so-called \emph{mixed linear and non-linear logic}
 (usually abbreviated \textsc{lnl}) started by
 \citet{benton_mixed_1995}. However, for practical language design,
 code duplication between the linear an unrestricted worlds quickly
-becomes costly. So language designer try to create languages with some
+becomes costly. So language designers try to create languages with some
 kind of kind polymorphism to overcome this limitation. This usually
-involves a subkinding relation and bounded polymorphism. These kind
+involves a subkinding relation and bounded polymorphism, and these kind
 polymorphic designs are complex. See \citet{morris_best_2016}
 for a recent example. We argue
 that by contrast, the type system of \calc{} is simpler.
@@ -1913,7 +1913,7 @@ coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
 uses type systems similar to \citeauthor{ghica_bounded_2014}, but
 with a linear arrow and multiplicities carried by the exponential
 modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
-develops a Krivine realisability model for such a calculus. We are not
+develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
 it is not directly applicable to \calc.
 
@@ -1931,8 +1931,8 @@ possible in the linear heap, as modelled by the strengthened
 semantics. However, \citeauthor{wakeling_linearity_1991} did not
 manage to obtain consistent performance gains. On the other hand, they
 still manage to reduce \textsc{gc} usage, which may be critical in
-distributed and real-time environments. It is latency that matters to
-us more than throughput.
+distributed and real-time environments, where latency that matters
+more than throughput.
 
 \citeauthor{wakeling_linearity_1991} propose to not attempt prompt
 free of thunks and only taking advantage of linearity for managing the
@@ -1976,7 +1976,7 @@ structures like we advocate as a means to
 provide safe access to resources or reduce \textsc{gc} pressure and
 latency, we only need to modify the type system: primitives to
 manipulate foreign data can be implemented in libraries using the
-foreign function interface. This helps keep the prototype lean.
+foreign function interface. This helps keeping the prototype lean.
 
 \subsection{Dealing with exceptions}
 Exceptions run afoul of linearity. Consider for instance the
@@ -2004,20 +2004,20 @@ hypothesis is left for future work.
 \subsection{Fusion}
 \label{sec:fusion}
 
-Inlining is a staple of program optimisation exposing opportunities
+Inlining is a staple of program optimisation, exposing opportunities
 for many program transformation including fusion. Not every function
-can be inline without negative effects on performance: inlining a
+can be inlined without negative effects on performance: inlining a
 function with two use sites of the argument may result in duplicating
 a computation.
 
 In order to discover inlining opportunities \textsc{ghc} deploys a
 cardinality analysis~\cite{sergey_cardinality_2014} which determines
-how many times function uses their arguments. The limitation of such
+how many times functions use their arguments. The limitation of such
 an analysis is that it is necessarily heuristic (the problem is
 undecidable). Consequently, it can be hard for the programmer to rely
 on such optimisations: a small, seemingly innocuous change can prevent
 a critical inlining opportunity and have rippling effects throughout
-the program. Hunting down such a performance regression proves very
+the program. Hunting down such a performance regression proves
 painful in practice.
 
 Linear types can address this issue and serve as a programmer-facing
@@ -2035,7 +2035,7 @@ annotation in the cardinality analysis is left as future work.
 \subsection{Extending multiplicities}
 
 For the sake of this article, we use only $1$ and $ω$ as
-possibilities.  In fact, \calc{} can readily be extended to more
+possibilities.  But in fact \calc{} can readily be extended to more
 multiplicities: we can follow \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}, which work with abstract sets of
 multiplicities.  In particular, in order to support dependent types,
