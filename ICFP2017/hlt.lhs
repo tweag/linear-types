@@ -1970,9 +1970,9 @@ linearly typed functions and data structures are usable directly from
 regular Haskell code. In such a setting their semantics is that of
 the same code with linearity erased.
 
-\calc{} was engineered as an unintrusive design, making the
-integration to an existing, mature compiler with a large ecosystem...
-tractable. We have developed a prototype implementation extending
+\HaskeLL{} was engineered as an unintrusive design, making it tractable
+to integrate to an existing, mature compiler with a large ecosystem.
+We have developed a prototype implementation extending
 \textsc{ghc} with multiplicities. The main difference between the
 implementation and \calc is that the implementation is adapted to
 bidirectionality: typing contexts go in, inferred multiplicities come
