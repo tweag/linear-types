@@ -382,10 +382,10 @@ The literature is dense with related work, which we dicuss in \fref{sec:related}
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
 We begin with an overview of
-\HaskeLL, our proposed extension of Haskell with linear types. All claims made in this section are substantiated later on.
+\HaskeLL, our proposed extension of Haskell with linear types. All informal claims made in this section are substantiated later on.
 %
 First, along with the usual arrow type |A -> B|,
-we propose an additional arrow type, standing for \emph{linear arrows}, written
+we propose an additional arrow type, standing for \emph{linear functions}, written
 |A ⊸ B|. In the body of a linear function, the type system tracks that
 there is exactly one copy of the parameter to consume.
 \begin{code}
@@ -393,7 +393,7 @@ f :: A ⊸ B       bigSpace bigSpace         bigSpace   g :: A -> B
 f x = {- |x| has multiplicity $1$ here -}   bigSpace   g y = {- |y| has multiplicity $\omega$ here -}
 \end{code}
 \noindent
-We say that the \emph{multiplicity} of |y| is $1$ in the body of |g|. Similarly, we say
+We say that the \emph{multiplicity} of |x| is $1$ in the body of |f|; and that of |y| is $ω$ in |g|. Similarly, we say
 that unrestricted (non-linear) parameters have multiplicity $ω$ (usable
 any number of times, including zero). We call
 a function \emph{linear} if it has type |A ⊸ B| and \emph{unrestricted} if it has
