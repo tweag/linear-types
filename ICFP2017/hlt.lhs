@@ -1107,7 +1107,7 @@ We wish to give a dynamic semantics for \calc{} which accounts for the
 packet forwarding example of \fref{sec:packet} where packets are
 kept out of the garbage collected heap, and freed immediately upon
 send. To that effect we follow \citet{launchbury_natural_1993} who
-defines a semantics for lazy computation. We will need also to account
+defines a semantics for lazy computation. We will need also need to account
 for the |IO| monad, which occurs in the \textsc{api} for packets.
 
 \subsection{The IO monad}
@@ -1155,7 +1155,7 @@ consider the semantics as a Laplace demon: the entirety of the events
 past and future are pre-ordained, and the semantics has access to this
 knowledge.
 
-Because the only interaction in the world which we need to model in
+Because the only interaction with the world which we need to model in
 order to give a semantics to the packet example of \fref{sec:packet}
 is to obtain a packet, it is sufficient for this section to
 consider all the packets. Because there are several mailboxes and each
