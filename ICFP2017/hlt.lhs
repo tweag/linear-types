@@ -216,7 +216,8 @@
 
 \begin{abstract}
   Linear and affine type systems have a long and storied history, but not a
-  clear path forward to integrate with existing languages such as Haskell.
+  clear path forward to integrate with existing languages such as
+  Ocaml or Haskell.
   In this paper, we introduce and study a linear type system designed with two
   crucial properties in mind:
   backwards-compatibility and code reuse across linear and non-linear users of
