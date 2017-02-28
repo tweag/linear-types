@@ -303,10 +303,10 @@ types~\cite{lafont_linear_1988,wakeling_linearity_1991}, permission types~\cite{
 handling of scarce resources such as
 sockets and file handles.  All these approaches have been extensively
 studied, \emph{yet these ideas have had relatively little effect on
-  programming practice}.  Few practical, full-scale languages are
+  programming practice}.  Few full-scale languages are
 designed from the start with such features.  Rust is the major
 exception~\cite{matsakis_rust_2014}, and in Rust we see one of the
-attendant complications: adding advanced resource-tracking features
+attendant complications: advanced resource-tracking features
 puts a burden on new users, who need to learn how to satisfy the
 ``borrow checker''.
 
@@ -328,7 +328,7 @@ a Haskell-like language. Existing
 functions continue to work, although they may now have more refined types
 that enable resource efficiency; existing data structures continue to work, and
 can additionally track resource usage.  Programmers who do not need
-razor sharp resource efficiency
+resource efficiency
 should not be tripped up by it. They need not even know about our type
 system extension. We make the following specific contributions:
 
@@ -374,8 +374,7 @@ system extension. We make the following specific contributions:
   Haskell compiler \textsc{ghc} to infer linear types.  The prototype is freely
   available\footnote{URL suppressed for blind review, but available on request}, and
   provides strong evidence that it is not hard to extend
-  \textsc{ghc}'s full type inference algorithm as currently
-  implemented (despite its complexity) with linear types.
+  \textsc{ghc}'s full type inference algorithm (despite its complexity) with linear types.
 \end{itemize}
 Our work is directly motivated by the needs of large-scale low-latency applications in industrial
 practice. In \fref{sec:applications} we show how \HaskeLL{} meets those needs.
