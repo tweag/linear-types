@@ -703,7 +703,7 @@ packets is ensured within a mailbox queue, but not accross mailboxes
 mailbox). While this assumption is in general incorrect, it applies
 for our packet switch. Additionally it illustrates the ability of
 our type system to finely track dependencies between various kinds of
-effects: as precisely as required, but no more.
+effects: in this case effects related to separate mailboxes can commute.
 
 \paragraph{Buffering data in memory}
 
