@@ -163,9 +163,6 @@
 % \title{\HaskeLL: Linear types with Backwards Compatibility}
 % \title{\HaskeLL: Systems Programming with \\ Backwards-Compatible Linear Types}
 
-% RRN: I don't think it's safe to highlight ``Systems Programming'' since we
-% don't actually get to the point of demonstrating it (e.g. a working system +
-% real systems programming in Hask-LL.)
 \title{Retrofitting Linear Types}
 
 \author{Jean-Philippe Bernardy}
