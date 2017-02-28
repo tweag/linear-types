@@ -1111,7 +1111,7 @@ entire world. The idea is that every time some |IO| action is
 undertaken, the world has possibly changed so we \emph{consume} the
 current view of the world and return the new version.
 
-The above gives a pure interface to \textsc{i/o}. However, it leaves the possibility
+The above technique gives a pure interface to \textsc{i/o}. However, it leaves the possibility
 for the programmer to access and old version of the world, as well as the current
 one, which is expensive to implement. In practice, one does not want to perform such a duplication,
 and thus Haskell solves the issue by forcing the
@@ -1179,8 +1179,8 @@ three primitives (see also \fref{sec:packet}):
 \item $get : \varid{MB} ⊸ (\varid{Packet} , \varid{MB})$
 \item $send : \varid{Packet} ⊸ ()$
 \end{itemize}
-Packets $p^j_i$ are considered as constants. We will not model
-priority in the semantics for simplicity.
+Packets $p^j_i$ are considered as constants. We do not model
+packet priorities in the semantics, for concision.
 
 \subsection{Operational semantics}
 
@@ -1223,7 +1223,7 @@ primitives are $η$-expanded by the translation.
 \end{figure}
 
 The dynamic semantics is given in \fref{fig:dynamics}. Let us review
-the new rules
+the new rules:
 \begin{description}
 \item[Linear variable] In the linear variable rule, the binding in the
   linear heap is removed. In conjunction with the rule for $send$, it
@@ -1580,8 +1580,8 @@ management~\cite{lafont_linear_1988,hofmann_in-place_2000,ahmed_l3_2007},
 array
 computations~\cite{bernardy_duality_2015,lippmeier_parallel_2016},
 protocol specification~\cite{honda_session_1993}, privacy
-guarantees\cite{gaboardi_linear_2013}, graphical
-interfaces\cite{krishnaswami_gui_2011}.
+guarantees~\cite{gaboardi_linear_2013} and graphical
+interfaces~\cite{krishnaswami_gui_2011}.
 
 This section develops a few examples which are directly usable in
 \HaskeLL{}, that is simply by changing Haskell's type system, and
@@ -1597,7 +1597,7 @@ In a practical implementation of the zero-copy packet example of
 \fref{sec:packet}, the priority queue can easily become a bottleneck,
 because it will frequently stay large~\cite{pusher_latency_2016}. We can start by having a less
 obnoxiously naive implementation of queues, but this optimisation would not solve
-the issue with which we are concerned with in this section: garbage
+the issue which we are concerned with in this section: garbage
 collection latency. Indeed, the variance in latency incurred by
 \textsc{gc} pauses can be very costly in a distributed application. Indeed,
 having a large number of processes which may decide to run a long
@@ -1611,15 +1611,15 @@ in practice, is to allocate the priority queue with
 |malloc| instead of using the garbage collector's
 allocator~\cite[Section IV.C]{marcu_flink_2016}. Our own benchmarks
 indicate that peak latencies encountered with large data-structures
-kept in \textsc{ghc}'s \textsc{gc} heap are two order of magnitude
+kept in \textsc{ghc}'s \textsc{gc} heap are two orders of magnitude
 higher than using foreign function binding to an identical
 data-structure allocated with |malloc|; furthermore the latency
 distribution of \textsc{gc} latency consistently degrades with the
-size of the heap, while |malloc| has a much flatter distribution. Of
+size of the heap, while |malloc| has a much less flat distribution. Of
 course, using |malloc| leaves memory safety in the hand of the
 programmer.
 
-Fortunately, it turns out that the same arguments that we used
+Fortunately, it turns out that the same arguments that we use
 to justify proper deallocation of mailboxes in \fref{sec:dynamics} can
 be used to show that, with linear typing, we can allocate a priority
 queue with |malloc| safely (in effect considering the priority queue
@@ -1631,7 +1631,7 @@ We can go even further and allow |malloc|'d queues to build pure values:
 it is enough to replace the type of |withQueue| as |withQueue :: (PQ a
 ⊸ Unrestricted a) ⊸ Unrestricted a)|. Justifying the safety of this
 type requires additional arguments as the result of |withQueue| may be
-promoted (|IO| action are never promoted because of their |World| parameter),
+promoted (|IO| actions are never promoted because of their |World| parameter),
 hence one must make sure that the linear heap is properly emptied,
 which is in fact implied by the typing rules for |Unrestricted|.
 
