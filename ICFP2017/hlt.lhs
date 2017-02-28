@@ -868,7 +868,7 @@ use the following notations:
 
 The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
 that consuming $f u : B$ exactly once will consume  $q$
-times $u{:}A$. Therefore, a function of type $A→B$ \emph{must} be applied to
+times the value $u{:}A$. Therefore, a function of type $A→B$ \emph{must} be applied to
 an argument residing in the dynamic heap, while a function of type
 $A⊸B$ \emph{may} be applied to an argument residing on either heap.
 %
@@ -967,7 +967,7 @@ of the multiplicity annotation on abstractions and arrows.
 For multiplicities we need the concrete multiplicities $1$ and $ω$ as
 well as multiplicity variables (ranged over by the metasyntactic
 variables \(π\) and \(ρ\)) for the sake of polymorphism. However, we
-are going to need to add and multiply multiplicities together,
+are going to need to multiply and add multiplicities together,
 therefore we also need formal sums and products of multiplicities.
 %
 Multiplicity expressions are quotiented by the following equivalence
@@ -1031,7 +1031,7 @@ $ωΔ$ exactly once. We call this the \emph{promotion
   reference to the promotion rule of linear logic. In \calc{},
   however, promotion is implicit.}: to know how to consume a value any
 number of times it is sufficient (and, in fact, necessary) to know how
-to consume said value exact once.
+to consume said value exactly once.
 
 To get a better grasp of the application rule and the promotion
 principle, you may want to consider how it indeed validates
@@ -1091,7 +1091,7 @@ must be~---~unrestricted).
 This particular formulation of the case rule is not implied by the
 rest of the system: only the case $p=1$ is actually necessary. Yet,
 providing the case $p=ω$
-is a design choice which makes it possible to consider data-type
+is the design choice which makes it possible to consider data-type
 constructors as linear by default, while preserving the semantics of
 the intuitionistic $λ$-calculus (as we already stated in
 \fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
