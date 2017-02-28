@@ -599,18 +599,19 @@ it manually. Conversely, a pointer from a resource to the heap can
 simply act as a new programmer-controlled GC root. We prove this
 invariant in \fref{sec:dynamics}.
 
-We have said repeatedly that a linear function guarantees
-``consuming'' its argument exactly once if the call is consumed
-exactly once. But what does ``consume'' mean? We can now give a more
-precise operational intution: a value is said to be consumed if it
-either returned, passed to a (linear) function (or constructor) whose
-result is itself consumed, or directly consumed:
+We have said repeatedly that ``a linear function guarantees
+to consume its argument exactly once if the call is consumed
+exactly once''. But what does \emph{``consume exactly once''} mean?
+We can now give a more precise operational intution:
+% a value is said to be consumed if it
+% either returned, passed to a (linear) function (or constructor) whose
+%result is itself consumed, or directly consumed:
 \begin{itemize}
-\item To directly consume a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
-\item To directly consume a function, call it, and consume its result.
-\item To directly consume a pair, evaluate it and consume each of its components.
-\item More generally, to directly consume a value of an algebraic data type, evaluate
-  it and consume all its linear components.
+\item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
+\item To consume a function exactly once, call it, and consume its result exactly once.
+\item To consume a pair exactly once, evaluate it and consume each of its components excatly once.
+\item More generally, to consume exactly once a value of an algebraic data type, evaluate
+  it and consume all its linear components exactly once.
 \end{itemize}
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
