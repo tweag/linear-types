@@ -561,7 +561,7 @@ such as a file handle, channel, or memory block.  Then the function guarantees:
 \begin{itemize}
 \item that the resource will be consumed by the time it
   returns;
-\item that the resource can only be consumed once so will never be
+\item that the resource can only be consumed once; so it will never be
   used after being destroyed.
 \end{itemize}
 In this way, the linear type system of \HaskeLL{} ensures both that
@@ -591,7 +591,7 @@ A consequence of the above design is that unrestricted values never
 contain (point to) linear values (but the converse is possible). This
 makes sense: after all, if the GC deallocates a value in the dynamic
 heap that points off-heap, then the off-heap data will be left
-dangling (being off-heap, the GC can't touch it) with no means to free
+dangling (being off-heap, the GC cannot touch it) with no means to free
 it manually. Conversely, a pointer from a resource to the heap can
 simply act as a new programmer-controlled GC root. We prove this
 invariant in \fref{sec:dynamics}.
@@ -623,12 +623,12 @@ in CPS style but a direct style is more convenient:
 \begin{code}
   copyT :: (T -> r) ⊸ T ⊸ r bigSpace vs. bigSpace copyT :: T ⊸ Unrestricted a
 \end{code}
-|Unrestricted| is a data type with
+where |Unrestricted| is a data type with
 a non-linear constructor\footnote{The type constructor
   |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
   modality written ${!}$ in linear logic.}:
 \begin{code}
-  newtype Unrestricted a where Unrestricted :: a → Unrestricted a
+  data Unrestricted a where Unrestricted :: a → Unrestricted a
 \end{code}
 The |Unrestricted|
 data type is used to indicate that when a value |(Unrestricted x)| is consumed
@@ -1712,7 +1712,7 @@ beginning of the computation by a |runST| function of type:
   runST :: (forall s. ST s a) -> a
 \end{code}
 In this way, resources that are allocated during the computation, such
-as mutable cell references, can't escape the dynamic scope of the call
+as mutable cell references, cannot escape the dynamic scope of the call
 to |runST| because they are themselves tagged with the same phantom
 type parameter.
 
@@ -1821,7 +1821,7 @@ The complexity introduced by kind polymorphism and subtyping relations
 makes retrofitting a rich core language such as \textsc{ghc}'s an
 arduous endeavour. \textsc{ghc} already supports impredicative
 dependent types and a wealth of unboxed or otherwise primitive types
-that can't be substituted for polymorphic type arguments. It is not
+that cannot be substituted for polymorphic type arguments. It is not
 clear how to support linearity in \textsc{ghc} by extending its kind system.
 In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
 including its compatibility with dependent types, and
