@@ -877,7 +877,7 @@ is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
 existing typed functional languages such as Haskell and the
 \textsc{ml} family, which are based on Hindley-Milner-style
-polymorphism. Hindley-Milner-style polymorphism, however, happens not
+polymorphism. Hindley-Milner-style polymorphism, however, does not
 mesh well with subtyping as the extensive exposition by
 \citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
 multiplicity polymorphism for the purpose of reuse of higher-order
