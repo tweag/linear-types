@@ -217,9 +217,12 @@
 \begin{abstract}
   Linear and affine type systems have a long and storied history, but not a
   clear path forward to integrate with existing languages such as Haskell.
-  In this paper, we introduce a linear type system designed to enable
-  backwards-compatibility and code reuse across linear and non-linear clients of
-  a library.  Rather than bifurcate data types into linear and non-linear
+  In this paper, we introduce and study a linear type system designed with two
+  crucial properties in mind:
+  backwards-compatibility and code reuse across linear and non-linear users of
+  a library. Only then can the benefits of linear types permeate
+  conventional functional programming.
+  Rather than bifurcate data types into linear and non-linear
   counterparts, we instead attach linearity to {\em binders}.  Linear function
   types can receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
