@@ -342,16 +342,19 @@ system extension. We make the following specific contributions:
   \cite{wakeling_linearity_1991}.
 
 \item We formalise \HaskeLL{} as \calc{}, a linearly-typed extension of the
-  $λ$-calculus with data types (\fref{sec:statics}). (Rust has no such formalism.)
+  $λ$-calculus with data types (\fref{sec:statics}).
+  % (Rust has no such formalism.): of course not; and it's not based on
+  % lambda-calculus anyway. Seems like we're running out of arguments,
+  % so I remove this.
   We provide its type system,
   highlighting how it is compatible with existing Haskell features,
   including some popular extensions.
   The type system of \calc{} has a number of unusual features, which together support
   backward compatibility with Haskell: linearity appears only in bindings
-  and function arrows, rather than pervasively in all types; we easily support linearity polymorphism
+  and function arrows, rather than pervasively in all types; we support linearity polymorphism
   (\fref{sec:lin-poly}); and the typing rule for $\textsf{case}$ is novel (\fref{sec:typing-rules}).
   No individual aspect is entirely new (\fref{sec:related-type-systems}), but collectively
-  they add up to an unintrusize system that can be used in practice and scales up
+  they add up to an unintrusive system that can be used in practice and scales up
   to a full programming language implementation with a large type system.
 
 \item We provide a dynamic semantics for \calc{},
