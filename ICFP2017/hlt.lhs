@@ -1802,7 +1802,7 @@ logic rather than uniqueness types: (a) functional languages have more use
 for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
 analysis but no non-aliasing analysis is any indication); (b) there is a
 wealth of literature detailing the applications of linear
-logic — see \fref{sec:applications}; (c) and desicively, linear type systems are
+logic — see \fref{sec:applications}; (c) and decisively, linear type systems are
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
@@ -1956,7 +1956,7 @@ Implementing this behaviour is left for future work.
 
 \section{Conclusion and future work}
 
-This article demonstrates how an existing lazy language, such
+This article demonstrated how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
 the language, in the sense that:
 \begin{itemize}
