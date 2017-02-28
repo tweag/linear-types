@@ -284,7 +284,7 @@ the pauses are unpredicable, difficult to control by the programmer
 and induce furthermore for this particular use case a tax on overall
 throughput. The problem is: the GC is not {\em resource efficient},
 meaning that resources aren't always freed as soon as they could be.
-Typically, programmers therefore allocate these large,
+Programmers can allocate such large,
 long-lived data structures in manually-managed off-heap memory,
 accessing it through FFI calls. Unfortunately this common technique
 poses safety risks: space leaks (by
@@ -310,16 +310,19 @@ attendant complications: adding advanced resource-tracking features
 puts a burden on new users, who need to learn how to satisfy the
 ``borrow checker''.
 
+
+We present in this paper the first type system that we believe has
+a good chance of influencing existing functional programs and
+libraries to become more resource efficient.
+%
 Whereas in Rust new users and casual programmers have to buy the whole
 enchilada, we seek to devise a language that is resource safe always
 and resource efficient sometimes, only when and where the programmer
 chooses to accept that the extra burden of proof is worth the better
 performance. Whereas other languages make resource efficiency {\em
   opt-out}, we seek to make it {\em opt-in}.
-
-We present in this paper the first type system that we believe has
-a good chance of influencing existing functional programs and
-libraries to become more resource efficient. We do this
+%
+We do this
 by retrofitting a \emph{backward-compatible extension} to
 a Haskell-like language. Existing
 functions continue to work, although they may now have more refined types
