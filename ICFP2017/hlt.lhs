@@ -385,7 +385,7 @@ The literature is dense with related work, which we dicuss in \fref{sec:related}
 \section{A taste of \HaskeLL}
 \label{sec:programming-intro}
 We begin with an overview of
-\HaskeLL, our proposed extension of Haskell with linear types. All informal claims made in this section are substantiated later on.
+\HaskeLL, our proposed extension of Haskell with linear types. All the claims made in this section are substantiated later on.
 %
 First, along with the usual arrow type |A -> B|,
 we propose an additional arrow type, standing for \emph{linear functions}, written
@@ -404,7 +404,7 @@ type |A -> B|.
 
 The linear arrow type |A ⊸ B| guarantees that any function with that type will
 consume its argument exactly once.
-Note, however, that the type
+However, the type
 \emph{places no requirement on the caller} of these functions.
 The latter is free to pass either a linear or non-linear value to the function.
 %
@@ -463,7 +463,7 @@ not a new, linear list type: this \emph{is} \HaskeLL{}'s list type, and all
 existing Haskell functions will work over it perfectly well.  But we can
 \emph{also} use the very same list type to contain linear resources (such as
 file handles) without compromising safety; the type system ensures
-that resources in a list will eventually be deallocated, and that they
+that resources in a list will eventually be deallocated by the programmer, and that they
 will not be used after that.
 
 Many list-based functions conserve the multiplicity of data, and thus can
@@ -568,7 +568,7 @@ such as a file handle, channel, or memory block.  Then the function guarantees:
   used after being destroyed.
 \end{itemize}
 In this way, the linear type system of \HaskeLL{} ensures both that
-resource deallocation happens, and that no use-after-free error
+prompt resource deallocation happens, and that no use-after-free error
 occurs.
 
 But wait! We said earlier that a non-linear value can be passed to a linear
@@ -639,8 +639,11 @@ data type is used to indicate that when a value |(Unrestricted x)| is consumed
 once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
 consumed.
 With our primitive in hand, we can now use ordinary code to copy
-a linear list of |T| values into the dynamic heap (we mark patterns with |!| as a reminder that \HaskeLL{}
-does not support lazy pattern bindings for linear values):
+a linear list of |T| values into the dynamic heap (we mark patterns in
+|let| and |where|
+with |!|, Haskell's syntax for strict pattern bindings: \HaskeLL{}
+does not support lazy pattern bindings of linear values, |case| on the
+other hand, is always strict):
 \begin{code}
   copy :: (a ⊸ Unrestricted a) -> [a] ⊸ Unrestricted [a]
   copy copyElt (x:xs) = Unrestricted (x':xs')  where  !(Unrestricted xs')  = copy xs
@@ -2098,4 +2101,4 @@ on multiplicities.
 %  LocalWords:  splitArray arraySize Storable byteArraySize natively
 %  LocalWords:  unannotated tuple subkinding invertible coeffects
 %  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
-%  LocalWords:  Finalisers effectful subtyping
+%  LocalWords:  Finalisers effectful subtyping parameterised
