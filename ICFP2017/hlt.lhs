@@ -693,11 +693,13 @@ and |send|, |Packet|s never need to be copied: they can be passed
 along from the network interface card to the mailbox and then to the
 linear calling context of |send|, all by reference.
 
-In reality, because |send| (resp. |get| and |close|) has a visible
-effect on the outside world, it ought to be ordered with respect to
-|IO| action, that is |send| should return an |IO|. However, it would
-add unnecessary complication to this example, so we will allow for
-this simplification.
+The above API assumes that mailboxes are independent: the order of
+packets is ensured within a mailbox queue, but not accross mailboxes
+(and not even between the input and output queue of a given
+mailbox). While this assumption is in general incorrect, it applies
+for our packet switch. Additionally it illustrates the ability of
+our type system to finely track dependencies between various kinds of
+effects: as precisely as required, but no more.
 
 \paragraph{Buffering data in memory}
 
@@ -711,9 +713,9 @@ insert  :: Int -> a ⊸ PQ a ⊸ PQ a
 next    :: PQ a ⊸ Maybe (a, PQ a)
 \end{code}
 The interface is familiar, except that since the priority queue must
-accept packets it must have linear arrows. In this way, the type
+store packets it must have linear arrows. In this way, the type
 system \emph{guarantees} that despite being stored in a data
-structure, every packet will eventually be sent.
+structure, every packet is eventually sent.
 
 In a packet switch, priorities could represent deadlines associated to
 each packet\footnote{whereas in a caching application, the server may
@@ -724,7 +726,7 @@ a priority for a packet:
   priority :: Packet ⊸ (Unrestricted Int,Packet)
 \end{code}
 
-The takeaway is that the priority queue can be implemented as
+The take-home message is that the priority queue can be implemented as
 a \HaskeLL{} data type. Here is a naive implementation as a sorted
 list:
 \begin{code}
@@ -742,7 +744,7 @@ list:
   next (Cons __ x q) = Just (x,q)
 \end{code}
 %
-In \fref{sec:lower-gc}, we will return to the implementation of the
+In \fref{sec:lower-gc}, we return to the implementation of the
 priority queue and discuss the implications for garbage collection
 overheads.
 
@@ -774,7 +776,7 @@ is a crucial feature of approaches based on linear types.
 \label{sec:statics}
 In this section we turn to the calculus at the core of \HaskeLL{},
 which we refer to as
-\calc{}, for which we provide a step-by-step account of its syntax and typing
+\calc{}, and for which we provide a step-by-step account of its syntax and typing
 rules.
 
 As we discussed in \fref{sec:consumed}, our operational model for
