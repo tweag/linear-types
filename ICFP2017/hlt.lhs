@@ -1462,17 +1462,14 @@ of $x$'s lifetime. For the same reason, the linear variable case
 requires $ρ$ to be $1$ (Corollary~\ref{cor:linear-variable} proves
 this restriction to be safe).
 
-The other important rule is the |alloc| rule: it requires a result of
-the form $\varid{Unrestricted} x$ of multiplicity $1$ while returning a
-result of multiplicity $ω$. This constraint is crucial, because the |alloc| rule is the
-only rule which makes it possible to use of a linear value in order to produce a
-garbage collected value, which in turn justifies that in the ordinary
-semantics, queues can be allocated in the linear heap. The reason why
-it is possible is that, by definition, in $\varid{Unrestricted} x$, $x$ \emph{must} be
-in the garbage-collected heap. In other words, when an expression $e :
-\varid{Unrestricted} A$ is forced to the form $\varid{Unrestricted} x$, it will have consumed all the
-pointers to the linear heap (the correctness of this argument is
-proved in \fref[plain]{lem:type-safety} below).
+The other important rule is the |withMailbox| rule: it requires a
+result of the form $\varid{IO}_0 x w$. This constraint is crucial,
+because the |withMailbox| rule must ensure that the allocated mailbox
+is deallocated (with $close$) before it scope returns. The reason why
+it is possible is that, by definition, in $\varid{IO}_0 x w$, $x$
+\emph{must} be in the dynamic heap. In other words, when an expression
+$e : \varid{IO}_0 A$ is forced to the form $\varid{IO}_0 x w$, it will
+have consumed all the pointers to the linear heap (except $w$).
 %
 The crucial safety property of the strengthened relation is that it
 preserves well-typing of states.
