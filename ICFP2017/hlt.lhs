@@ -1,7 +1,7 @@
 % -*- latex -*-
 
 % (1) Horrible, terrible, 1 column format.  111 characters in a line; bad on the eyes.
-\documentclass[acmlarge,dvipsnames,natbib,anonymous,review]{acmart}
+\documentclass[acmlarge,dvipsnames,natbib,review]{acmart}
 
 % (2) More or less the good old lovable format.  For use while writing/printing.
 % \documentclass[sigplan,dvipsnames,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
@@ -412,7 +412,7 @@ The latter is free to pass either a linear or non-linear value to the function.
 %
 For example, consider these definitions of a function |g|:
 \begin{code}
-g1,g2,g3 :: (a ⊸ a -> r) -> a ⊸ a -> r
+g1,g2,g3 :: (a ⊸ a -> a) -> a ⊸ a -> a
 
 g1 k x y = k x y          -- Valid
 g2 k x y = k y x          -- Invalid: fails |x|'s multiplicity guarantee
@@ -456,7 +456,7 @@ an expression is said to be \emph{promoted}. We leave the specifics to
 Using the new linear arrow, we can (re-)define Haskell's list type as follows:
 \begin{code}
 data [a] where
-  []   :: a
+  []   :: [a]
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
 That is, we give a linear type to the |(:)| data constructor.
