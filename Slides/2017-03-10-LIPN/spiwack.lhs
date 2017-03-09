@@ -245,7 +245,7 @@
 
   \begin{block}{Constructors}
     $$
-      \data D \where \left(C_k :: a_1 ⊸_{p_1} … a_n ⊸ _{p_n} b\right)^m_{k=1}
+      \data D \where \left(C_k :: a_1 →_{p_1} … a_n →_{p_n} b\right)^m_{k=1}
     $$
   \end{block}
 
@@ -295,7 +295,7 @@
 
   \begin{block}{Exponential ($!$) modality as a data type:}
     \begin{code}
-      data Bang a = Bang :: a → Bang a
+      data Bang a = Bang :: a → _ ω Bang a
     \end{code}
   \end{block}
 
@@ -402,8 +402,8 @@
 
   Built-in bidirectionality:
   \begin{itemize}
-  \item Typing context come in
-  \item Multiplicity goes out
+  \item Typing context go in
+  \item Multiplicities come out
   \end{itemize}
 
   \hfill
