@@ -72,9 +72,10 @@
 \newcommand\HaskeLL{HaskeLL}
 \newcommand\calc{{\ensuremath{λ^q}}}
 
-\author{Jean-Philippe Bernardy, Arnaud Spiwack}
+\author{Jean-Philippe Bernardy, Mathieu Boespflug, Ryan Newton, Simon
+  Peyton Jones, Arnaud Spiwack}
 \title{Retrofitting linear types}
-\date{January 10, 2017}
+\date{March 10, 2017}
 \hypersetup{pdflang={English}}
 
 \begin{document}
@@ -263,6 +264,30 @@
     \end{itemize}
 
   \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Why}
+
+  \begin{block}{Well-typed}
+    $$
+    π_1 p = \mathsf{case}_ω~p~\mathsf{of}~(x,\_) → x
+    $$
+  \end{block}
+
+  \begin{alertblock}{Rejected}
+    $$
+    \mathsf{case}_1~p~\mathsf{of}~(x,\_) → x
+    $$
+  \end{alertblock}
+
+  \hfill
+
+  Yet they are the same type: data types linear by default.
+
+  \hfill
+
+  Adds: $!(A⊗B) ⟺ {!}A⊗{!}B$
 \end{frame}
 
 \begin{frame}
