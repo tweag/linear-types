@@ -1,7 +1,7 @@
 % -*- latex -*-
 
 % (1) Horrible, terrible, 1 column format.  111 characters in a line; bad on the eyes.
-\documentclass[acmlarge,dvipsnames,natbib,review]{acmart}
+\documentclass[acmlarge,dvipsnames,natbib]{acmart}
 
 % (2) More or less the good old lovable format.  For use while writing/printing.
 % \documentclass[sigplan,dvipsnames,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
