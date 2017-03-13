@@ -203,11 +203,12 @@
 \affiliation{
   \institution{Tweag I/O}
 }
-\affiliation{
-  \institution{\textsc{Irif}, Université Paris Diderot}
-  \city{Paris}
-  \country{France}
-}
+% [aspiwack] probably shouldn't have partner labs which do not pay for my research.
+% \affiliation{
+%   \institution{\textsc{Irif}, Université Paris Diderot}
+%   \city{Paris}
+%   \country{France}
+% }
 
 % The default list of authors is too long for headers
 \renewcommand{\shortauthors}{J.-P. Bernardy, M. Boespflug, R. Newton,
