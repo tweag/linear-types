@@ -609,7 +609,7 @@ We can now give a more precise operational intuition:
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
-\item To consume a pair exactly once, evaluate it and consume each of its components excatly once.
+\item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
 \item More generally, to consume exactly once a value of an algebraic data type, evaluate
   it and consume all its linear components exactly once.
 \end{itemize}
