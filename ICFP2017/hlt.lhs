@@ -1316,7 +1316,7 @@ heap. Such pointers occur, for instance, in the priority queue from
 \fref{sec:packet}: the queue itself is allocated on the garbage
 collected heap while packets are kept in the linear heap.
 
-This is not a problem in and on itself: pointers to packets may be seen
+This is not a problem in and of itself: pointers to packets may be seen
 as opaque by the garbage collector, which does not collect them, so
 that their lifetime is still managed explicitly by the
 programmer. However, in order to prevent use-after-free bugs, we must
@@ -1467,7 +1467,7 @@ The other important rule is the |withMailbox| rule: it requires a
 result of the form $\varid{IO}_0 x w$. This constraint is crucial,
 because the |withMailbox| rule must ensure that the allocated mailbox
 is deallocated (with $close$) before it scope returns. The reason why
-it is possible is that, by definition, in $\varid{IO}_0 x w$, $x$
+it is possible is that, by definition, in $\varid{IO}_0 x w$, $x$
 \emph{must} be in the dynamic heap. In other words, when an expression
 $e : \varid{IO}_0 A$ is forced to the form $\varid{IO}_0 x w$, it will
 have consumed all the pointers to the linear heap (except $w$).
