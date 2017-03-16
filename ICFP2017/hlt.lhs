@@ -170,7 +170,7 @@
 
 \author{Jean-Philippe Bernardy}
 \affiliation{%
-  \institution{Gothenburg University}
+  \institution{University of Gothenburg}
   \department{Department of Philosophy, Linguistics and Theory of Science}
   \streetaddress{Olof Wijksgatan 6}
   \city{Gothenburg}
