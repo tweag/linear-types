@@ -231,7 +231,7 @@
 
   Linear types are an enabling tool for safe and resource efficient
   systems programming. We explore the power of linear types with
-  a case study of a large, in-memory data structures that must serve
+  a case study of a large, in-memory data structure that must serve
   responses with low latency.
 \end{abstract}
 
