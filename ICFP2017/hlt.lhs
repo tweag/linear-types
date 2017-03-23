@@ -284,7 +284,7 @@ because pauses incurred by garbage collection (GC), observed in the
 order of 50ms or more, are unacceptable. Pauses are in general
 proportional to the size of the heap. Even if the GC is incremental,
 the pauses are unpredicable, difficult to control by the programmer
-and induce furthermore for this particular use case a tax on overall
+and induce furthermore, for this particular use case, a tax on overall
 throughput. Typically, programmers therefore allocate these large,
 long-lived data structures in manually-managed off-heap memory,
 accessing it through FFI calls. Unfortunately this common technique
