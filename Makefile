@@ -1,4 +1,4 @@
-all: HaskeLL.pdf intro.pdf why.pdf Slides/2017-01-10-IRIF/spiwack.pdf
+all: HaskeLL.pdf intro.pdf why.pdf Slides/2017-01-10-IRIF/spiwack.pdf Slides/2017-03-10-LIPN/spiwack.pdf
 
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules:"
