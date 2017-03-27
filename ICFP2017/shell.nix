@@ -14,6 +14,7 @@ in stdenv.mkDerivation {
                     inherit (texlive)
                       # collection-fontutils
                       # tex-gyre tex-gyre-math
+                      libertine inconsolata # fonts for acmart in some configs
                       latexmk
                       lm
                       comment
