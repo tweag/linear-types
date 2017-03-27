@@ -14,10 +14,11 @@ in stdenv.mkDerivation {
                     inherit (texlive)
                       # collection-fontutils
                       # tex-gyre tex-gyre-math
-                      libertine inconsolata # fonts for acmart in some configs
+                      newtxsf newtxtt boondox libertine inconsolata # fonts for acmart in some configs
                       latexmk
                       lm
                       comment
+                      collection-fontsrecommended
                       algorithm2e
                       relsize
                       environ
