@@ -1680,9 +1680,9 @@ merely by changing the arrow to a linear one:
 \subsection{Protocols}
 
 \Citet{honda_session_1993} introduces the idea of using types to
-represent and enforce protocols. \Citet{wadler_propositions_2012}
-showed that \citeauthor{honda_session_1993}'s system is isomorphic to
-(classical) linear logic. The high-level idea is that one end of
+represent and enforce protocols. \Citet{wadler_propositions_2012,parente_logical_2015}
+show that \citeauthor{honda_session_1993}'s system is isomorphic to
+linear logic. The high-level idea is that one end of
 a communication channel is typed with the protocol $P$ and the other
 end with the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
 an A'', the dual $A^⊥$ denotes ``I shall send an A''. Then, protocols can
