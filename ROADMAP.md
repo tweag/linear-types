@@ -35,7 +35,7 @@ monomorphic multiplicities
          (Unicode has `⊸` which is the standard notation for the
          linear arrow)? Many proposals seen so far:
         - Currently illegal: `-o`
-        - Currently legal: `-.`, `-*`, `-:`
+        - Currently legal (but wrong precedence): `-.`, `-*`, `-:`
 - [ ] Turn into proper extension
 
 Stage 2: multiplicity polymorphism
