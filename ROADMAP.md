@@ -22,6 +22,9 @@ monomorphic multiplicities
 - [x] Constructors are linear by default
 - [x] Wildcard patterns rejected in the linear case
 - [ ] Constructors support unrestricted argument (`Unrestricted`)
+- [ ] Disallow lazy pattern matching of linear data
+- [ ] Make linear let/where-bindings available
+- [ ] Handle linearity in pattern synonyms
 - [ ] Full justification for memory-safety in presence of exceptions
 - [ ] Syntax
     - [ ] Syntax for multiplicity-annotated arrows. Options:
