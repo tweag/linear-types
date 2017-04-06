@@ -1680,9 +1680,9 @@ merely by changing the arrow to a linear one:
 \subsection{Protocols}
 
 \Citet{honda_session_1993} introduces the idea of using types to
-represent and enforce protocols. \Citet{wadler_propositions_2012}
-showed that \citeauthor{honda_session_1993}'s system is isomorphic to
-(classical) linear logic. The high-level idea is that one end of
+represent and enforce protocols. \Citet{wadler_propositions_2012,parente_logical_2015}
+show that \citeauthor{honda_session_1993}'s system is isomorphic to
+linear logic. The high-level idea is that one end of
 a communication channel is typed with the protocol $P$ and the other
 end with the dual protocol $P^⊥$; for instance: if $A$ denotes ``I expect
 an A'', the dual $A^⊥$ denotes ``I shall send an A''. Then, protocols can
@@ -1842,22 +1842,13 @@ such compatibility is pretty much necessary to accommodate the dependently-typed
 \subsection{Alms}
 Alms~\cite{tov_practical_2011} is an \textsc{ml}-like language based on affine types (a variant
 of linear types where values can be used \emph{at most} once). It is
-uses the kinds to separate affine from unrestricted arguments.
+uses kinds to separate affine from unrestricted arguments.
 
 It is a case in point for kind-based systems being more complex: for
 the sake polymorphism, Alms deploys an elaborate dependent kind
 system. Even if such a kind system could be added to an existing
 language implementation, Alms does not attempt to be backwards
-compatible with an \textsc{ml} dialect. In fact
-\citeauthor{morris_best_2016} notes:
-\begin{quote}
-  Despite the (not insignificant) complexity of [Alms], it is still
-  not clear that it fully supports the expressiveness of traditional
-  functional programming languages. For example, [Alms] has distinct
-  composition operators with distinct types. These types are not
-  related by the subtyping relation, as subtyping is contravariant in
-  function arguments.
-\end{quote}
+compatible with an \textsc{ml} dialect.
 
 \subsection{Ownership typing à la Rust}
 
