@@ -73,7 +73,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 %% Deactivated for submission period
-%\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \setlength{\marginparwidth}{2.5cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 %% Deactivated for submission perdiod
@@ -82,7 +82,7 @@
 % \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
 % \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
 % \newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
-% \newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
 % \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 % \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
 
@@ -1578,6 +1578,11 @@ In conjunction with Corollary~\ref{cor:linear-variable},
 blocked, in particular that garbage-collected objects which point to the
 linear objects are not dereferenced after the linear object has been
 freed: \calc{} is safe from use-after-free errors.
+
+\improvement{Add a theorem which shows that a mailBox will be closed
+  exactly once (dynamically). [Supposedly straightforward to prove:
+  there is exactly one instance of the mailbox in the heap; with
+  multiplicity one.]}
 
 \section{Applications}
 \label{sec:applications}
