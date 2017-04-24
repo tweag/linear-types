@@ -747,7 +747,7 @@ list:
 
   empty = Empty
 
-  insert p x q Empty = Cons p x q
+  insert p x Empty = Cons p x Empty
   insert p x (Cons p' x' q')  | p < p'     = Cons p x (Cons p' x' q')
                               | otherwise  = Cons p' x' (insert p x q')
 
