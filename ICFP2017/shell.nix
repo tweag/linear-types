@@ -11,30 +11,40 @@ in stdenv.mkDerivation {
                   haskellPackages.lhs2tex
                   biber
                   (texlive.combine {
-                    inherit (texlive)
-                      # collection-fontutils
-                      # tex-gyre tex-gyre-math
-                      newtxsf newtxtt boondox libertine inconsolata # fonts for acmart in some configs
-                      latexmk
-                      lm
-                      comment
-                      collection-fontsrecommended
-                      algorithm2e
-                      relsize
-                      environ
-                      trimspaces
-                      ncctools
-                      ncclatex
-                      todonotes
-                      totpages
-                      stmaryrd lazylist polytable # for lhs2tex
-                      xargs
-                      biblatex
-                      logreq
-                      scheme-small wrapfig marvosym wasysym wasy cm-super unicode-math filehook lm-math capt-of
-                      ucs
-                      cmll
-                      xstring ucharcat;
-                  })
+                       inherit (texlive)
+                       algorithm2e
+                       biblatex
+                       boondox
+                       cmll
+                       collection-fontsrecommended
+                       comment
+                       environ
+                       fontaxes
+                       inconsolata
+                       kastrup
+                       latexmk
+                       libertine
+                       listings
+                       lm
+                       logreq
+                       mweights
+                       ncclatex
+                       ncctools
+                       newtx
+                       newtxsf
+                       newtxtt
+                       newunicodechar
+                       prftree
+                       relsize
+                       scheme-small wrapfig marvosym wasysym
+                       stmaryrd lazylist polytable
+                       todonotes
+                       totpages
+                       trimspaces
+                       ucs
+                       wasy cm-super unicode-math filehook lm-math capt-of
+                       xargs
+                       xstring ucharcat;
+                     })
                 ];
 }
