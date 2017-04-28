@@ -18,10 +18,11 @@ The first iteration implements implements linear types purely in the
 type inference (no modification to core or its linter), and has
 monomorphic multiplicities
 
+- [x] Expand the representation of types to accommodate linearity.
 - [x] Keep track of linearity in equation binders
 - [x] Constructors are linear by default
 - [x] Wildcard patterns rejected in the linear case
-- [ ] Constructors support unrestricted argument (`Unrestricted`)
+- [x] Constructors support unrestricted argument (`Unrestricted`)
 - [ ] Disallow lazy pattern matching of linear data
 - [ ] Make linear let/where-bindings available
 - [ ] Handle linearity in pattern synonyms
