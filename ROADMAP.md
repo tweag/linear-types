@@ -225,6 +225,24 @@ Remarks
       enforce the intended semantics of the `NFData` class (except for
       types with unrestricted arguments, such as `Unrestricted`, but
       maybe it is ok).
+- Scoped continuation vs source of linearity: there are two ways to
+  introduce a linear variables. Either one can use a scoped
+  continuation. This is the way which has been used the most in the
+  writings in this repository:
+  ```haskell
+  withFile :: Path -> (FD ⊸ IO a) ⊸ IO a
+  ```
+  It delimits the scope of linear variables, but it also imposes to
+  leave return addresses on the stack, so we can have only so many of
+  these opened at the same time.
+
+  An alternative, possibly more Haskellian, is to use a source of
+  linearity: if I already have a linear variable (say `World`) I can
+  produce new linear variables from it:
+  ```haskell
+  withFile :: World ⊸ Path -> (World, FD)
+  ```
+  It may end up being the better strategy.
 
 [best-of-both-worlds]: http://doi.acm.org/10.1145/2951913.2951925
 [DeepSeq]: https://www.stackage.org/haddock/lts-8.6/deepseq-1.4.2.0/Control-DeepSeq.html
