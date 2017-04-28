@@ -102,6 +102,32 @@ linear types.
   shape of the ill-typed `u` to the typed `u`. That is, GHC
   optimisation go in the direction of increased typability. So this
   should not be a problem.
+- [ ] How would
+  ```haskell
+  newtype Unrestricted a where a -> Unrestricted a
+  ```
+  be typed in Core?
+
+  Specifically
+  ```haskell
+  case v of Unrestricted x -> f x
+  ```
+  would be translated, in core, as:
+  ```haskell
+  let x = v in f (x |> g @a)
+  g a :: a ~ Unrestricted a
+  ```
+  In the core form, it is not clear how to keep track of linearity. In
+  this example, the coercion changes the linearity of `x`, which is
+  linear when `v` is linear, while `(x |> g @a)` must be
+  unrestricted. Operationally, we are allowed to return an
+  `Unrestricted a` (when defined as a `newtype`) only if we can be
+  sure that there are no linear variable in its thunk (if there are
+  linear variables, then we need a `data` version, so that forcing
+  with a case will consume the variables in the thunk). So,
+  effectively any linear variable of type `Unrestricted a` can be
+  promoted to being unrestricted. Do we need a special type of
+  coercion to do that?
 
 Miscellaneous
 -------------
