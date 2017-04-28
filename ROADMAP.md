@@ -262,7 +262,7 @@ Remarks
   leave return addresses on the stack, so we can have only so many of
   these opened at the same time.
 
-  An alternative, possibly more Haskellian, is to use a source of
+  An alternative, possibly more idiomatic, is to use a source of
   linearity: if I already have a linear variable (say `World`) I can
   produce new linear variables from it:
   ```haskell
