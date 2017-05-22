@@ -6,6 +6,7 @@
 %format forall a         = "∀" a
 %format _ (a)         = "_{" a "}"
 %format ω = "\omega"
+%format β = "\beta"
 %format π = "\pi"
 %format ρ = "\rho"
 %subst keyword a = "\mathsf{" a "}"
@@ -207,6 +208,7 @@ construction\unsure{Arnaud: I don't think this is quite possible with
 \end{code}
 
 \subsection{Fork-join algorithms on arrays}
+\label{sec:fork-join-algorithms}
 
 The typical example of fork-join, in-place, algorithms on array is
 quick-sort, where the array is split around the pivot and
@@ -231,7 +233,10 @@ explicit scope in which the halves are valid:
 \end{code}
 Note that in |split_at array scope|, |array| is not available in
 |scope| or in the continuation of |split_at|, the original, modified,
-array must be returned at the end of the call.
+array must be returned at the end of the call. Like with scoped
+introduction (see \ref{sec:preambl-intr-line}), |scope| returns an
+|Unrestricted b| to ensure that no the halves don't escape their
+scope.
 
 \subsection{Arrays of linear values}
 \label{sec:arrays-linear-values}
@@ -255,9 +260,40 @@ to be frozen first\unsure{Arnaud: it's not terribly important, but,
 \section{Borrowing}
 \label{sec:borrowing}
 
-β multiplicity. Scoping.
+When the purpose is simply to scope the usage of an immutable value
+that needs to be explicitly deallocated (such as an immutable value in
+a foreign heap, such as \fref{sec:prot-inline-java}), using linear
+types and state-passing style of values may be too heavyweight for
+practical applications.
 
-\section{Exception}
+It is in part for this reason that Rust introduces borrowing. Borrowing a
+value gives a reference with a scoped life-time to a value without
+relinquishing ownership.
+
+While we cannot seem to recover all of Rust syntactic convenience, we
+can extend \HaskeLL{} with a notion of borrowing. Remember that,
+contrary to Rust, the \HaskeLL{} programmer does not need to track
+ownership in types for every value. So we expect that the
+less convenient syntax will be perfectly acceptable in practice.
+
+To implement borrowing, we can introduce a new multiplicity: $β$ (for
+\emph{borrowed}). Variables of multiplicity $β$ would support
+contraction and weakening, like with $ω$. However, $β<ω$\footnote{Also
+  $β$ becomes the new least upper bound of $0$ and $1$ and $1+1=β$}.
+
+Borrowed variables are introduced with scoped introduction (see
+\fref{sec:preambl-intr-line}) with a function:
+\begin{code}
+  borrow :: a ⊸ (a -> _ β Unrestricted b) ⊸ (a, Unrestricted b)
+\end{code}
+The |borrow| function is similar to the |split_at| function from
+\fref{sec:fork-join-algorithms}, except that the introduced value has
+multiplicity $β$, hence can be used any number of times in the scope
+(including $0$). The borrowed value cannot escape its scope since
+$β<ω$ hence no borrowed value can be referred to in a value of type
+|Unrestricted b|.
+
+\section{Exceptions}
 
 \subsection{Terminators}
 
@@ -286,6 +322,7 @@ Safer |ResourceT|
 \emph{To be done}
 
 \section{Protocols: Inline-Java}
+\label{sec:prot-inline-java}
 
 \emph{To be done}
 
