@@ -291,21 +291,159 @@ The |borrow| function is similar to the |split_at| function from
 multiplicity $β$, hence can be used any number of times in the scope
 (including $0$). The borrowed value cannot escape its scope since
 $β<ω$ hence no borrowed value can be referred to in a value of type
-|Unrestricted b|.
+|Unrestricted b|.\unsure{Arnaud: I'm not sure that we can implement
+  a generic |borrow| without breaking some abstractions. It may be
+  preferable to use a type class |Borrowable|.}
+
+The correctness of this proposal has yet to be verified.
 
 \section{Exceptions}
 
+Haskell exceptions are of three kinds:
+\begin{description}
+\item[Imprecise exceptions] typically represent programming errors
+  (such as division by zero). They are really rare. They can be
+  recovered from, but this is meant mostly for clean-up.
+\item[Precise exceptions] thrown by I/O operations. Typically failures
+  from outside of Haskell, such as ``too many handles'' on a
+  database. We usually want to handle such exceptions properly as part
+  of the program logic.
+\item[Asynchronous exceptions] thrown by another thread in order to
+  kill the current thread (\emph{e.g.} to cancel an |Async|). These
+  are rather frequent in some programs.\unsure{I don't know whether we
+  usually want to catch such exceptions. Probably just for clean up
+  like imprecise exceptions?}
+\end{description}
+
+Mixing exceptions and linear types poses two kinds of problems:
+\begin{itemize}
+\item Since computations are interrupted, linear variables which
+  should be consumed once may end up not being consumed at all. When
+  memory safety depends on linear variables being properly consumed
+  (such as a file handle which must be closed), memory safety must be
+  ensured in presence of exceptions.
+\item Catching and handling exceptions in presence of linear value is
+  significantly harder. Let us delay this discussion until
+  \fref{sec:catching-exceptions}.
+\end{itemize}
+
 \subsection{Terminators}
+
+One possible solution to keeping memory safety in presence of
+exceptions is to attach a terminator to each resource that needs to be
+freed when they are left dangling due to an exception.
+
+The resources will still be freed promptly by the programmer, but in
+case of exception, they will become orphan and the terminator will
+eventually kick in.
+
+Relying on the GC to free scarce resources can be very wasteful if
+many exceptions happen: if the program does not allocate much in the
+GC, then it may take seconds, or more, for the scarce resource to be
+freed during which the number of open resources may very well reach
+the maximum allowed.
+
+The gain is that this works out of the box with both allocation styles
+from \ref{sec:preambl-intr-line}.
 
 \subsection{Scoped resources}
 
+If we restrict our attention to scoped introduction. Then we don't
+need terminators at all: upon leaving the scope where the resource was
+introduced, we can deallocate any stray resources.
+
+That is the function responsible of allocating the resource (like
+|scoped| in \fref{sec:preambl-intr-line}) also installs a resource
+handler responsible with deallocating the resource in case of
+exception.
+
+\subsection{Advantage of linearity over simple scopes}
+
+Haskell already features a function
+\begin{code}
+  withFile :: FilePath -> (FileHandle -> IO a) -> IO a
+\end{code}
+
+If all of our allocations are to be scoped, then why bother with
+linearity at all, we could just use functions such as |withFile|. It
+is worth noting that |withFile| is not actually safe in that
+\begin{code}
+  withFile path (fun h -> h)
+\end{code}
+is type-correct, but the file handle survives beyond being closed.
+
+Of course, this example is blatantly wrong and the conscious
+programmer is unlikely to make such a mistake. It is much easier,
+however, to inadvertently let |h| survive in a closure. Running such a
+closure would result in a use-after-free error. Linearity prevents
+such a mistake from happening.
+
+\subsection{Advantage of linearity over affinity}
+
+One may, then, wonder what the point of using linear types, rather than
+affine types, is: indeed, we may just let the |scoped| function do the
+deallocation in every case, not only in exceptional cases.
+
+The advantage of linear types is that it makes it easier to have early
+deallocation. It means that scope can be long lived without risk of
+resource leaks. There are also other kinds of protocol where the final
+consumption of a value is not, typically, a mere deallocation (see
+\fref{sec:prot-cloud-hask}).
+
+Linear types are slightly more general, but if the need for affine
+types is pressing, it is just a matter of adding an affine
+multiplicity in \HaskeLL{}.
+
 \subsection{Advantage of linear types over ST-style regions}
 
-Todo: best region system = rust.
+There is an instance, in Haskell, of a safe scoped computation: the
+|ST| monad. Could we use it instead of linearity for scoped
+introduction? We could, but at a significant cost: if |withFile| had
+type\footnote{Note that, just like in the case of |ST| we need to tag
+  the ambient monad with the region type, otherwise there is nothing
+  preventing an escaping closure to be run in another environment. We
+  need not actually modify |IO| though.}
+\begin{code}
+  withFile :: FilePath -> (forall s. FileHandle s -> IO s a) -> IO t a
+\end{code}
+then writing a code with two files becomes impossible. So we need to
+have functions to transfer files to sub-regions. This is quickly very
+tedious.
 
-Safer |ResourceT|
+At least it is in current Haskell. But maybe we could change the type
+system to handle regions better. What would it look like? It would
+probably look a lot like Rust: in Rust every reference is tagged with
+a life-time and an elaborate life-time analysis decides which scope to
+attach references to. The scope is then elaborated to deallocate the
+reference when required. In the case of Haskell we would only need to
+tag variables that have to be scoped, but the order induced by
+sub-regions would force adding a sort of sub-typing discipline in the
+type inference. It is more complex than adding linear types, even
+without taking the elaboration into account.
+
+With linear types, we could also design a safer |ResourceT|. The
+|runResourceT| function is subject to the same safety issue as
+|withFile|. It differs in that |runResourceT| doesn't introduce
+resources, instead allocating resources allocates a terminator to the
+scope of |runResourceT| and resources are deallocated in bulk when the
+scope is exiting.
+
+From the point of view of linearity, |runResourceT| can be seen as
+introducing a source of linearity, in the form of the terminator
+table. Allocating resources as linear variable would make it
+impossible for values to escape the scope. It would also be possible
+to allocate resources as borrowed variables (see \fref{sec:borrowing})
+depending on the usage.
+
+This is harder to do with life-times as it would require that any
+potential resource has a life-time parameter. Whereas with \HaskeLL,
+it can be just an abstraction provided on top of a regular,
+memory-unsafe, \textsc{api}
 
 \subsection{Catching exceptions}
+\label{sec:catching-exceptions}
+
+Example with cloud-haskell+file
 
 \section{|Unrestricted| as a |newtype|}
 
@@ -328,4 +466,5 @@ Safer |ResourceT|
 
 \end{document}
 
-%  LocalWords:  aliasable
+%  LocalWords:  aliasable deallocate deallocating GC deallocation
+%  LocalWords:  affine monad
