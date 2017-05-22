@@ -361,7 +361,7 @@ exception.
 
 Haskell already features a function
 \begin{code}
-  withFile :: FilePath -> (FileHandle -> IO a) -> IO a
+  withFile :: FilePath -> (Handle -> IO a) -> IO a
 \end{code}
 
 If all of our allocations are to be scoped, then why bother with
@@ -404,7 +404,7 @@ type\footnote{Note that, just like in the case of |ST| we need to tag
   preventing an escaping closure to be run in another environment. We
   need not actually modify |IO| though.}
 \begin{code}
-  withFile :: FilePath -> (forall s. FileHandle s -> IO s a) -> IO t a
+  withFile :: FilePath -> (forall s. Handle s -> IO s a) -> IO t a
 \end{code}
 then writing a code with two files becomes impossible. So we need to
 have functions to transfer files to sub-regions. This is quickly very
@@ -443,16 +443,123 @@ memory-unsafe, \textsc{api}
 \subsection{Catching exceptions}
 \label{sec:catching-exceptions}
 
+The best type we can give to the |catch| function is:
+\begin{code}
+  catch :: Exception e => IO a ⊸ (e -> IO a) -> IO a
+\end{code}
+Specifically the handler is unrestricted: it cannot contain references
+to a linear value. The reason is rather clear: the handler will
+typically not be run, so it will not be able to consume any of its
+linear variables.
+
+To see how it can be a problem consider the following
+cloud-haskell-like \textsc{api}, in source-of-linearity style:
+
+\begin{code}
+  sendChan     :: SendPort a ⊸ a ⊸ IO ()
+  receiveChan  :: ReceivePort a ⊸ IO_l a
+\end{code}
+
+In other words, a |ReceivePort| yields exactly one value, and a
+|SendPort| sends exactly one value (see \ref{sec:prot-cloud-hask} for
+more on protocols).
+
+We can write the following program. It read:
+\begin{code}
+  do
+    (path,replyPort) <- receiveChan port
+    h <- openFile
+    writeFile h ``lorem ipsum''
+    sendChan replyPort Ack
+\end{code}
+
+The disk if full and the |writeFile| operation fail, in which we may want to return a |DiskFull| message
+to the |replyPort| rather than crashing:
+
+\begin{code}
+  do
+    (path,replyPort) <- receiveChan port
+    h <- openFile
+    write `catch` handleDiskFull
+  where
+    write = do
+      writeFile h ``lorem ipsum''
+      sendChan replyPort Ack
+    handleDiskFull _exception = do
+      sendChan replyPort DiskFull
+\end{code}
+
+However, this is not well-typed because |handleDiskFull| mentions
+|replyPort|, which is linear. There does not seem to be a way around
+this limitation so we will need to push the error handling closer to
+the source of failure and use an explicit |Either| type\footnote{For
+  the sake of comparison, Rust has no equivalent to precise exception,
+  potentially failing functions will return a value of type
+  \verb+Result+ which is similar to |Either|.}
+\begin{code}
+  do
+    (path,replyPort) <- receiveChan port
+    h <- openFile
+    res <- write `catch` handleDiskFull
+    case res of
+      Left () -> sendChan replyPort Ack
+      Right _exception -> sendChan replyPort DiskFull
+  where
+    write = do
+      writeFile h "lorem ipsum"
+      return (Left ())
+    handleDiskFull exception = return (Right Exception)
+\end{code}
+
 Example with cloud-haskell+file
 
 \section{|Unrestricted| as a |newtype|}
+
+\begin{code}
+  newtype Unrestricted a = Unrestricted :: a -> Unrestricted a
+\end{code}
+
+Is unsafe because pattern-matching on an |Unrestricted a| is lazy in
+Haskell. Because the projection is unrestricted, the entire thunk may
+be dropped, which violates the condition that linear values must be
+consumed (if there is a linear value in the closure).
+
+It is ok to use in conjunction with |IO_l| on the other hand because
+we can make sure as part of the abstraction that everything that needs
+forcing is forced before the |Unrestricted a| value is returned.
+
+\emph{To expand}
 
 \section{Linear IO}
 \label{sec:linear-io}
 
 \subsection{Monomorphic linear IO}
 
+\begin{code}
+  type IO_l  a  = World ⊸ (World, a)
+  type IO    a  = IO_l (Unrestricted a)
+\end{code}
+
+Two bind functions:
+\begin{code}
+  (>>=)   :: IO a    ⊸ (a -> IO_l b) ⊸ IO_l b
+  (>>==)  :: IO_l a  ⊸ (a ⊸ IO_l b) ⊸ IO_l b
+\end{code}
+(the former is definable in terms of the former)
+
+\emph{To be expanded}
+
 \subsection{Multiplicity-polymorphic IO}
+
+\begin{code}
+  type Multiplicity p a = Multiplicity :: a -> _ p Multiplicity p a
+  type IO p a = IO_l (Multiplicity p a)
+
+  return  :: a -> _ p IO p a
+  (>>=)   :: IO p a ⊸ (a -> _ p IO q a) ⊸ IO q a
+\end{code}
+
+\emph{To be expanded}
 
 \section{Protocols: Cloud Haskell}
 \label{sec:prot-cloud-hask}
