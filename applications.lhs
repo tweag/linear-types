@@ -584,7 +584,89 @@ Two bind functions:
 \section{Protocols: Cloud Haskell}
 \label{sec:prot-cloud-hask}
 
-\emph{To be done}
+Consider the following API where channel ports can always be used
+exactly once.
+
+\begin{code}
+  -- For simplicity, we ignore type-class constraint on sending things
+
+  type SendPort a
+  type ReceivePort a
+
+  newChan :: IO_l (SendPort a, ReceivePort a)
+  send :: SendPort a ⊸ a -> IO ()
+  receiveChan :: Receiveport a ⊸ IO_l a
+\end{code}
+
+Then we can encode protocols. First we need a polarity-changing type
+\begin{code}
+  type N a = SendPort a
+\end{code}
+Each change of polarity reflects a switch regarding who is responsible for a
+particular action.
+
+For instance, a server performing a multiplication (uses a linear
+version of |async|):
+\begin{code}
+  type P = (Int,Int,N Int)
+
+  server :: IO_l (N P, Async ())
+  server = do
+    (sendPort,receivePort) <- newChan
+    ack <- async $ do
+      (n,p,r) <- receive receivePort
+      send r (n*p)
+    return (sendPort,ack)
+
+  client :: N P ⊸ IO_l Int
+  client server = do
+    (sendPort,receivePort) <- newChan
+    res <- async $ receive receivePort
+    send server (42,57,sendPort)
+    wait res
+
+  main :: IO ()
+  main = do
+    (s,done) <- server
+    res <- client s
+    wait done
+    putStrLn (show res)
+\end{code} % $ (work-around syntax highlighting bug)
+
+Here is an example with more polarity changes\footnote{See \url{http://www.tweag.io/posts/2017-03-13-linear-types.html}}:
+\begin{code}
+data Number = Singular | Plural
+type P = (Int, N (Number, N (String, N String)))
+
+server :: IO_l (N P)
+server = do
+    (sendPort,ReceivePort) <- newChan
+    ack <- async $ do
+      (n, k) <- receive receivePort
+      (s, r) <- newChan
+      ack' <- async $ do
+        (apples, k') <- receive r
+        send k' ("I have " ++ show n ++ apples)
+      send k (num, s)
+      wait ack'
+
+      where
+       num = if n == 1 then Singular else Plural
+
+client :: N P ⊸ IO_l String
+client k = do
+    (s, r) <- newChan
+    rest <- async $ do
+      (num, k') <- receive r
+      (s', r') <- newChan
+      rest <- async $ receive r'
+      let apples
+           | Singular <- num = "apple"
+           | Plural <- num = "apples"
+      send k' (apples, s')
+      send k (42,send s)
+      wait rest
+\end{code} % $ (work-around syntax highlighting bug)
 
 \section{Protocols: Inline-Java}
 \label{sec:prot-inline-java}
