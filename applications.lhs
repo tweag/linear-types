@@ -524,11 +524,31 @@ Haskell. Because the projection is unrestricted, the entire thunk may
 be dropped, which violates the condition that linear values must be
 consumed (if there is a linear value in the closure).
 
-It is ok to use in conjunction with |IO_l| on the other hand because
-we can make sure as part of the abstraction that everything that needs
-forcing is forced before the |Unrestricted a| value is returned.
+Example:
+\begin{code}
+  type Resource -- some kind of resource
+  move :: Resource ⊸ Unrestricted Resource  -- moves the resource into
+                                             -- the GC heap
 
-\emph{To expand}
+  faulty :: Resource ⊸ ()
+  faulty r =
+    case move r of
+      Unrestricted _ -> ()
+\end{code}
+In this example, if the |case| is strict, then |move| is actually run
+and the resource is copied from the linear heap to the GC heap. But if
+the case is transformed into a lazy cast, then the resource will be
+left, inaccessible, in the linear heap (memory leak).
+
+It may be that laziness prevents use-after-free errors, though.
+
+It is ok to return an |Unrestricted| in sufficiently strict
+contexts. For instance, the primitives of type |World ⊸
+(World,Unrestricted a)| can be correct because the |IO| runner will
+always run the action. As long as the action makes sure that it never
+returns a thunk.
+
+The story needs to be polished with such types.
 
 \section{Linear IO}
 \label{sec:linear-io}
