@@ -572,7 +572,7 @@ Two bind functions:
 \subsection{Multiplicity-polymorphic IO}
 
 \begin{code}
-  type Multiplicity p a = Multiplicity :: a -> _ p Multiplicity p a
+  newtype Multiplicity p a where Multiplicity :: a -> _ p Multiplicity p a
   type IO p a = IO_l (Multiplicity p a)
 
   return  :: a -> _ p IO p a
