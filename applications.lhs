@@ -671,7 +671,72 @@ client k = do
 \section{Protocols: Inline-Java}
 \label{sec:prot-inline-java}
 
-\emph{To be done}
+\texttt{inline-java} is a project that aims to achieve seamless
+interoperation between Haskell and the JVM. Haskell objects live in
+the Haskell heap, Java objects live in the JVM heap. But both heaps
+live in the same address space and objects in either heap is permitted
+to hold references to objects in the other heap.
+
+Interaction with the JVM is done via the JVM's equivalent of the FFI,
+called the JNI. The JNI makes it possible for foreign languages to
+create two types of references to Java objects:
+\begin{description}
+\item[global references] a global reference is like a regular |Ptr| to
+  a C struct: it can be used from any thread and its lifetime is
+  managed entirely manually (need to call |DeleteGlobalRef()|
+  explicitly eventually).
+\item[local references] a local reference is meant to be short-lived.
+  It only survives the scope of the current native call. As soon as
+  the Haskell function at the top of the call stack returns to a Java
+  function that called it, all local references created in that call
+  frame are automatically disposed of. Local references are only valid
+  in the current thread. They cannot be shared.
+\end{description}
+Our strategy in \texttt{inline-java} is to leave managing global
+references to the Haskell GC. That way, there is a good chance global
+references will eventually be disposed of it they become unreachable.
+
+Local references are a lot harder. We can't have the GC manage them,
+because these references are only valid in the thread that created
+them. Furthermore, we {\em do} need to free them manually sometimes,
+because holding onto an object until the end of the current call frame
+has been observed in real world applications time and time again to be
+far too long.
+
+Yet programmers will want to create {\em local} references wherever
+possible, instead of global ones, because local references are cheaper
+to create. Moreover, since the Haskell GC is unaware of the GC
+pressure on the JVM heap, it's hard to ensure a timely release of
+stale references held Haskell side to JVM objects (without any GC
+pressure Haskell side, the Haskell GC might not run at all for a very
+long time even as the JVM heap is filling up to the brim).
+
+The central question is:
+\begin{quote}
+  \em How can we free local references early yet guarantee memory safety?
+\end{quote}
+
+This is where linear types can help. We could organise things as
+follows:
+
+\begin{enumerate}
+\item local references are always linear. Being handed a local
+  reference comes with the obligation to dispose of it eventually.
+\item global references are never linear. They are entirely managed by
+  the GC, via finalizers that deletes the global reference when it
+  becomes unreachable, just like any other Haskell object.
+\end{enumerate}
+
+Now, the issue is that we do want to leverage borrowing. Plain linear
+types are too cumbersome. A common pattern is to {\em hide} local
+references behind newtype wrappers, so that Java objects look like an
+abstract ADT's on the Haskell side. We want to pass these ADT's to
+functions and have the functions manipulate them with little fuss.
+With plain linear types, any access to a Java object via a local
+reference requires producing a new one. These references then have to
+be threaded explictly through computations (aka state-passing style).
+With borrowing, one would be able freely query objects through the
+same local reference within a single static scope.
 
 \end{document}
 
