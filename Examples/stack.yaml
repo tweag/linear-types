@@ -1,0 +1,12 @@
+packages:
+- ./
+
+resolver: ghc-8.1
+compiler: ghc-8.1
+system-ghc: true
+
+# Trying intero:
+# skip-ghc-check: true
+# extra-deps:
+# - ghc-paths-0.1.0.9
+# - syb-0.7
