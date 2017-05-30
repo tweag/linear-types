@@ -291,11 +291,33 @@ The |borrow| function is similar to the |split_at| function from
 multiplicity $β$, hence can be used any number of times in the scope
 (including $0$). The borrowed value cannot escape its scope since
 $β<ω$ hence no borrowed value can be referred to in a value of type
-|Unrestricted b|.\unsure{Arnaud: I'm not sure that we can implement
-  a generic |borrow| without breaking some abstractions. It may be
-  preferable to use a type class |Borrowable|.}
+|Unrestricted b|.
 
 The correctness of this proposal has yet to be verified.
+
+This type is a bit too general. With a generic |borrow| function it
+would be hard to give a meaning to |close f| for a borrowed file
+|f|. Plus, there is no way to prevent |freeze a| for a borrowed
+(mutable) array |a| (which is unsound).
+
+The proper way would probably be to have a typeclass:
+\begin{code}
+  class Borrow a where
+    type Borrowed a
+    borrow :: a ⊸ (Borrowed a -> _ β Unrestricted b) ⊸ (a, Unrestricted b)
+\end{code}
+We may want to provide a default implementation with an abstract type
+\begin{code}
+  newtype StdBorrowed a = StdBorrowed a
+\end{code}
+So that it can be automatically derived with |DeriveAnyClass| (or an
+empty instance)
+
+But it's not clear how to give a \textsc{api} such that it can be used
+to limit the power of borrowed object (a |StdBorrowed Handle| can't be
+closed, and a |StdBorrowed Array| can't be frozen) but allow library
+writers to define functions which consume |StdBorrowed| without
+depending on some |unsafeUnborrow| projection.
 
 \section{Exceptions}
 
