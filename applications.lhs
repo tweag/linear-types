@@ -807,6 +807,53 @@ be threaded explictly through computations (aka state-passing style).
 With borrowing, one would be able freely query objects through the
 same local reference within a single static scope.
 
+\section{Miscellaneous examples}
+
+\subsection{Counting with branches}
+
+Linear types can also help write correct pure programs, in a
+way similar to parametric polymorphism
+
+Suppose:
+\begin{code}
+  class Sized a where
+    size :: a -> Int
+
+  data Tree a = Bin (Tree a) (Tree a) | Leaf a
+\end{code}
+
+We want:
+\begin{code}
+  sizeTree :: Size a => Int -> a -> Int
+  sizeTree i (Bin l r) = sizeTree (sizeTree i r) l
+  sizeTree i (Leaf x) = i + size x
+\end{code}
+
+If we forget |i| somewhere, like |sizeTree i (Leaf x) = size x| we
+would get a warning.
+
+However:
+\begin{code}
+  data Tree' a = Bin (Tree a) (Tree a) | Leaf (Maybe a)
+
+  sizeTree :: Size a => Int -> a -> Int
+  sizeTree i (Bin l r) = sizeTree (sizeTree i r) l
+  sizeTree i (Leaf x) =
+    case x with
+      Just x -> i + size x
+      Nothing -> i
+\end{code}
+
+If we write |Just x -> size x| instead. Then no warning is triggered.
+
+If we choose
+\begin{code}
+  sizeTree :: Size a => Int ⊸ a -> Int
+\end{code}
+Then such an error would be rejected.
+
+Remark: supposing that |+| has a linear type.
+
 \end{document}
 
 %  LocalWords:  aliasable deallocate deallocating GC deallocation
