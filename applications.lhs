@@ -308,16 +308,54 @@ The proper way would probably be to have a typeclass:
 \end{code}
 We may want to provide a default implementation with an abstract type
 \begin{code}
-  newtype StdBorrowed a = StdBorrowed a
+  newtype StdBorrowed a -- abstracted: = StdBorrowed a
 \end{code}
 So that it can be automatically derived with |DeriveAnyClass| (or an
 empty instance)
+
+\subsection{Exploring a generic API}
 
 But it's not clear how to give a \textsc{api} such that it can be used
 to limit the power of borrowed object (a |StdBorrowed Handle| can't be
 closed, and a |StdBorrowed Array| can't be frozen) but allow library
 writers to define functions which consume |StdBorrowed| without
 depending on some |unsafeUnborrow| projection.
+
+A fundamental difference between this flavour of borrowing and Rust's
+is that our borrowed values are \emph{easier} to use than linear
+values (in that everywhere a linear value may be used, a borrowed
+value of the same type may too). Whereas in Rust, it is, in a sense,
+the opposite.
+
+As a result, Rust marks borrowed value as type \verb+&a+ and
+unrestricted values with the type \verb|RC<a>|. We may want to do the
+opposite: we may want to let the unrestricted type be unmarked and
+mark the type that can't be unrestricted:
+\begin{code}
+  -- It is a contract violation to produce a value of type |Owned a|
+  -- with multiplicity different from 1
+  newtype Owned a = unsafeOwned { unOwn :: a }
+  -- It is a contract violation to produce a value of type |Borrowed
+  -- a| with multiplicity different from 1
+  newtype Borrowed a = unsafeBorrowed { unBorrow :: a }
+\end{code}
+None of the two types above are abstract. It's just conventional to
+use them this way, so that library owners can use |unsafeOwn| when
+they guarantee that a value will not be aliased. For instance. We can
+use an instance (or default implementation, whichever is found to be
+best):
+
+\begin{code}
+  instance Borrow (Owned a) where
+    type Borrowed a = Borrowed a -- uhm, two |Borrowed|, but aspiwack
+                                 -- is too lazy to think of a second
+                                 -- one.
+    borrow (Owned a) scope =
+      -- It may be unsafe not to be strict because, otherwise, |a| may be
+      -- deallocated before the closure |scope (unsafeBorrow a)| is forced.
+      case scope (unsafeBorrow a) of
+        Unrestricted b -> (unsafeOwn a, Unrestricted b)
+\end{code}
 
 \section{Exceptions}
 
@@ -348,6 +386,15 @@ Mixing exceptions and linear types poses two kinds of problems:
   significantly harder. Let us delay this discussion until
   \fref{sec:catching-exceptions}.
 \end{itemize}
+
+On the other hand, we will have sometimes types which can be inhabited
+both with unrestricted and non-unrestricted values such as the type of
+Java references in \fref{sec:prot-inline-java} (in this case it would
+typically be borrowed or unrestricted). The same functions are
+applicable to both multiplicity, and thanks to promotion, will return
+unrestricted values if their argument is unrestricted, so that such
+values \emph{can} escape the scope of a borrowed function, which is
+exactly the desired behaviour.
 
 \subsection{Terminators}
 
