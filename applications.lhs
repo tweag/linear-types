@@ -854,6 +854,57 @@ Then such an error would be rejected.
 
 Remark: supposing that |+| has a linear type.
 
+\section{Towards article-worthy examples}
+
+\subsection{Removing |ST|}
+
+Summary:
+\begin{itemize}
+\item Thread linear value instead of using the |ST| monad
+\item Better than |ST| in that computation concerning different pieces
+  of state are not sequenced between then: less sequencing means more
+  optimisation options.
+\item Handles nested scope better than |ST| (things of different
+  scopes mix together naturally).
+\item Makes it possible to simulate type-states.
+  \begin{itemize}
+  \item Possible with an indexed-monad variant of |ST|, but when several
+    type-state object must interact, then this becomes extremely
+    painful as all their type-states must be represented in the
+    monad's type.
+  \end{itemize}
+
+\end{itemize}
+\subsubsection{Freeze vectors}
+
+\begin{itemize}
+\item Makes library code (implementation of |create|) safe
+\item May be tied to the |IO| as it makes creating a
+  vector more general. Indeed, we can do
+  \begin{code}
+    type T = … -- Some type
+
+    fillWithFile :: Handle -> MVector T ⊸ IO (MVector T)
+    fillWithFile = -- Some processing of the file
+
+    vectOfFile :: FilePath -> IO (Vector T)
+    vectOfFile path =
+      withFile path $ \ h -> do
+      mvect <- new 42
+      mvect <- fillWithFile h mvect
+      freeze mvect
+  \end{code} % $ -- work around syntax highlighting limitation
+\item Con: Doesn't illustrate type-states all that well, as
+  |create|-in-|ST| is almost as good.
+\item Pro: based on a familiar library
+\end{itemize}
+
+
+
+\subsection{|IO| protocols}
+
+\emph{TODO}
+
 \end{document}
 
 %  LocalWords:  aliasable deallocate deallocating GC deallocation
