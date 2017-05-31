@@ -894,6 +894,9 @@ Summary:
       mvect <- fillWithFile h mvect
       freeze mvect
   \end{code} % $ -- work around syntax highlighting limitation
+  Today, this would be possible, but with the |freeze| primitive that
+  does an ($O(n)$) copy of the vector. There is no safe way to use an
+  $O(1)$ freeze in current Haskell.
 \item Con: Doesn't illustrate type-states all that well, as
   |create|-in-|ST| is almost as good.
 \item Pro: based on a familiar library
