@@ -335,8 +335,8 @@ mark the type that can't be unrestricted:
   -- It is a contract violation to produce a value of type |Owned a|
   -- with multiplicity different from 1
   newtype Owned a = unsafeOwned { unOwn :: a }
-  -- It is a contract violation to produce a value of type |Borrowed
-  -- a| with multiplicity different from 1
+  -- It is a contract violation to produce a value of type |Borrowed a|
+  -- with multiplicity different from β
   newtype Borrowed a = unsafeBorrowed { unBorrow :: a }
 \end{code}
 None of the two types above are abstract. It's just conventional to
