@@ -270,16 +270,17 @@ It is in part for this reason that Rust introduces borrowing. Borrowing a
 value gives a reference with a scoped life-time to a value without
 relinquishing ownership.
 
-While we cannot seem to recover all of Rust syntactic convenience, we
-can extend \HaskeLL{} with a notion of borrowing. Remember that,
-contrary to Rust, the \HaskeLL{} programmer does not need to track
-ownership in types for every value. So we expect that the
-less convenient syntax will be perfectly acceptable in practice.
+While we do not propose to recover all of Rust syntactic convenience,
+we can extend \HaskeLL{} with a simple notion of borrowing. Remember
+that, contrary to Rust, the \HaskeLL{} programmer does not need to
+track ownership in types for every value. So we expect that the less
+convenient syntax will be perfectly acceptable in practice.
+\todo{Show a concrete example of relevant Rust syntax.}
 
 To implement borrowing, we can introduce a new multiplicity: $β$ (for
-\emph{borrowed}). Variables of multiplicity $β$ would support
-contraction and weakening, like with $ω$. However, $β<ω$\footnote{Also
-  $β$ becomes the new least upper bound of $0$ and $1$ and $1+1=β$}.
+\emph{borrowed}). Variables of multiplicity $β$ support contraction
+and weakening, like with $ω$. But $β<ω$\footnote{Also $β$ becomes the
+  new least upper bound of $0$ and $1$ and $1+1=β$}.
 
 Borrowed variables are introduced with scoped introduction (see
 \fref{sec:preambl-intr-line}) with a function:
@@ -303,8 +304,8 @@ would be hard to give a meaning to |close f| for a borrowed file
 The proper way would probably be to have a typeclass:
 \begin{code}
   class Borrow a where
-    type Borrowed a
-    borrow :: a ⊸ (Borrowed a -> _ β Unrestricted b) ⊸ (a, Unrestricted b)
+    type Borrowed' a
+    borrow :: a ⊸ (Borrowed' a -> _ β Unrestricted b) ⊸ (a, Unrestricted b)
 \end{code}
 We may want to provide a default implementation with an abstract type
 \begin{code}
@@ -347,9 +348,7 @@ best):
 
 \begin{code}
   instance Borrow (Owned a) where
-    type Borrowed a = Borrowed a -- uhm, two |Borrowed|, but aspiwack
-                                 -- is too lazy to think of a second
-                                 -- one.
+    type Borrowed' a = Borrowed a
     borrow (Owned a) scope =
       -- It may be unsafe not to be strict because, otherwise, |a| may be
       -- deallocated before the closure |scope (unsafeBorrow a)| is forced.
