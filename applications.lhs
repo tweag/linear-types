@@ -901,7 +901,92 @@ Summary:
 \item Pro: based on a familiar library
 \end{itemize}
 
+(Simplified) current implementation of |create|:
+\begin{code}
+  unsafeFreeze :: MVector s a -> ST s (Vector a)
 
+  create :: (forall s. ST (MVector s a)) -> Vector a
+  create m = runST (m >>= unsafeFreeze)
+\end{code}
+
+The Vector library also provides a safe |freeze| primitive, but it
+must copy the vector into a fresh immutable vector
+\begin{code}
+  freeze :: MVector s a -> ST s (Vector a)
+\end{code}
+
+With linear types, we can make |unsafeFreeze| safe, hence not relying
+on unsafe primitives to write |create| in the library.
+
+\begin{code}
+  withMVector :: Int -> (MVector a ⊸ Unrestricted a) ⊸ Unrestricted a
+  freeze :: MVector a ⊸ Unrestricted (Vector a)
+\end{code}
+
+Two differences: we don't have |ST| anymore (in particular, no region
+arguments to |MVector|), |freeze| is safe despite being $O(1)$.
+
+\subsection{Initialisation}
+
+\begin{itemize}
+\item Pro: complex typestate, would be quite painful to do in |ST| or
+  similar
+\item Con: less grounded in common Haskell programer's experience
+  (destination-passing style would be a good argument)
+\item Ostensibly a variant of the vector-freezing example but
+  enforcing a write-once policy
+\item The |IO| argument (see vectors above) is still relevant: we can
+  initialise with the content of a file.
+\end{itemize}
+
+Initialising pairs:
+\begin{code}
+  type Dest a
+  fill :: a ⊸ Dest a ⊸ ()
+
+  initPair   :: (Dest (a,b) ⊸ ()) ⊸ (a,b)
+  splitDest  :: Dest (a,b) ⊸ (Dest a, Dest b)
+\end{code}
+
+More complex example:
+\begin{code}
+  data Tree a b = Node (Tree a b) a (Tree a b) | Leaf b
+
+  initTree  :: (Dest (Tree a b) ⊸ ()) ⊸ (a,b)
+  leafDest  :: Dest (Tree a b) ⊸ Dest b
+  nodeDest  :: Dest (Tree a b) ⊸ (Dest (Tree a b), Dest a, Dest (Tree a b))
+\end{code}
+
+\subsubsection{Tail-recursive map}
+
+\emph{Remark: such a tail-recursive map is more useful (or, rather,
+  only useful) for strict lists}
+
+As an illustration of the destination-passing style above, here is
+tail-recursive implementation of map.
+
+Destination \textsc{api} for lists:
+\begin{code}
+  initList :: (Dest [a] ⊸ ()) ⊸ [a]
+
+  nilDest :: Dest [a] ⊸ ()
+  nilDest = fill
+
+  consDest :: Dest [a] ⊸ (Dest a, Dest [a])
+\end{code}
+
+Tail-recursive map:
+\begin{code}
+  trmap :: (a->b) -> [a] -> [b]
+  trmap f l = initList (\k -> loop f l k)
+    where
+      loop :: (a->b) -> [a] -> Dest [b] ⊸ ()
+      loop f [] k = nilDest k
+      loop f (a:l) k =
+        let !(ka,ktail) = consDest k in
+          case fill (f a) ka of
+            () -> trmap f l ktail
+\end{code}
 
 \subsection{|IO| protocols}
 
