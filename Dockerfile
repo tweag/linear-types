@@ -42,23 +42,30 @@ ENV STACKURL https://github.com/commercialhaskell/stack/releases/download/v1.4.0
 RUN cd /tmp/ && \
     wget --progress=dot:giga --no-clobber --no-check-certificate $STACKURL && \
     tar xzvf stack-1.4.0-linux-x86_64-static.tar.gz && mv stack-*-linux-x86_64-static/stack /usr/bin/
-RUN stack --version && stack --install-ghc --resolver=lts-7.24 --local-bin-path=/usr/bin/ install happy alex
+
+# Happy problems without these:
+ENV LANG     C.UTF-8
+ENV LC_ALL   C.UTF-8
+ENV LANGUAGE C.UTF-8
+
 ENV GHCBOOTSTRAP /root/.stack/programs/x86_64-linux/ghc-8.0.1/bin
+ENV GHCBUILD /tmp/ghc_linear
 
-RUN git clone --recursive git://git.haskell.org/ghc.git /tmp/ghc_linear
+# Clone and build, but don't store the build dir OR the extra version of GHC.
+RUN stack --version && stack --install-ghc --resolver=lts-7.24 --local-bin-path=/usr/bin/ install happy alex 
 
-# Check out branch "linear-types"
-RUN cd /tmp/ghc_linear && git remote add tweag https://github.com/tweag/ghc.git && \
+RUN git clone --recursive git://git.haskell.org/ghc.git $GHCBUILD && \
+    cd $GHCBUILD && git remote add tweag https://github.com/tweag/ghc.git && \
     git fetch --all && \
     git checkout 36666a9db79adeb27dffebbfb5dbe2939d0f0972 && \
-    git submodule update --init --recursive
+    git submodule update --init --recursive && \
+    echo "BuildFlavour = quick" > $GHCBUILD/mk/build.mk && \
+    cat $GHCBUILD/mk/build.mk.sample >> $GHCBUILD/mk/build.mk 
 
 RUN export PATH=$GHCBOOTSTRAP:$PATH && \
-    cd /tmp/ghc_linear && ./boot && ./configure
-
+    cd $GHCBUILD && ./boot && ./configure 
+    
 RUN export PATH=$GHCBOOTSTRAP:$PATH && \
-    cd /tmp/ghc_linear make -j4 && make install
-
-# TODO: collapse these steps:
-RUN rm -rf /tmp/ghc /tmp/ghc_linear
+    cd $GHCBUILD make -j4 && make install && \
+    rm -rf $GHCBUILD /root/.stack/programs/x86_64-linux/ghc-8.0.1
 # --------------------------------------------------------------------
