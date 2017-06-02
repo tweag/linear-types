@@ -736,6 +736,38 @@ client k = do
       wait rest
 \end{code} % $ (work-around syntax highlighting bug)
 
+\section{Protocols: ResourceT}
+\label{sec:protocols:-resourcet}
+
+|ResourceT|\footnote{\url{https://www.stackage.org/lts-8.16/package/resourcet-1.1.9}}
+is a monad transformer. It works with any |IOMonad| which can catch
+exceptions. For the purpose of this example, however, we consider a
+simplified version |Resource| which assumes that the base monad is
+|IO| itself (we're abandoning, so-doing the ability to stack several
+|ResourceT| scopes).
+
+Basic |ResourceT| \textsc{api}:
+\begin{code}
+  runResource :: Resource a -> IO a
+  allocate :: IO a -> (a -> IO ()) -> Resource a
+\end{code}
+|allocate| takes allocation and deallocation functions and returns a
+resource. The deallocation function is registered so that the resource
+is deallocated when exiting the |runResource| block (either on
+completion or because of an exception).
+
+Simplified implementation:
+\begin{code}
+  newtype Resource a = Resource (IORef [IO ()] -> IO a)
+  deriving (Functor, Applicative, Monad)
+
+  runResource (Resource m) = do
+    release <- newIORef []
+    m release
+    releaseActions <- readIORef
+    sequence releaseActions
+\end{code}
+
 \section{Protocols: Inline-Java}
 \label{sec:prot-inline-java}
 
