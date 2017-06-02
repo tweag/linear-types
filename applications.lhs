@@ -907,6 +907,26 @@ be threaded explictly through computations (aka state-passing style).
 With borrowing, one would be able freely query objects through the
 same local reference within a single static scope.
 
+\subsection{A mock-up API}
+
+\emph{In order to avoid any complication due to Java-specific
+  concerns, we will use the |Storable| class as a way to mean that a
+  value can be transferred between the Java world and the Haskell
+  world.}
+
+\begin{code}
+  type JavaRef a
+
+  readJavaRef :: JavaRef a -> _ β IO ω a
+  writeJavaRef :: JavarRef a -> _ β IO ω ()
+
+  -- Installs a terminator on the |JavaRef|
+  newGlobalRef :: IO ω (JavaRef a)
+
+  localRefScope :: (Scope -> _ β IO ω a) ⊸ IO ω a
+  newLocalRef :: Scope -> _ β IO β (JavaRef a)
+\end{code}
+
 \section{Miscellaneous examples}
 
 \subsection{Counting with branches}
