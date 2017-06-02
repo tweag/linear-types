@@ -134,6 +134,17 @@ data Even = O Odd
 evenPlusOne :: Even ⊸ Odd
 evenPlusOne e = E e
 
+incorrectLet :: a ⊸ ()
+incorrectLet a = let x = a in ()
+
+incorrectLazyMatch :: (a,b) ⊸ b
+incorrectLazyMatch x = let (a,b) = x in b
+
+incorrectCasePromotion :: (a,b) ⊸ b
+incorrectCasePromotion x = case x of (a,b) -> b
+
+-- Inference-related behaviour. Slightly sub-optimal still.
+
 bind1 :: (d ⊸ (a ⊸ b) ⊸ c) ⊸ d ⊸ (a⊸b) ⊸ c
 bind1 b x f = b x (\a -> f a)
 
