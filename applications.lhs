@@ -756,17 +756,86 @@ resource. The deallocation function is registered so that the resource
 is deallocated when exiting the |runResource| block (either on
 completion or because of an exception).
 
-Simplified implementation:
+Simplified implementation:\improvement{Make |runRessource| below
+  resistant to exceptions}
 \begin{code}
   newtype Resource a = Resource (IORef [IO ()] -> IO a)
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
   runResource (Resource m) = do
     release <- newIORef []
     m release
-    releaseActions <- readIORef
+    releaseActions <- readIORef release
     sequence releaseActions
+
+  allocate alloc dealloc = Resource $ release -> do
+    r <- alloc r
+    modifyIORef (dealloc r :)
+    return r
+\end{code} % $ -- works around a limitation in syntax highlighting
+
+The limit of the |Ressource| monad is that it is easy to make a
+resource escape its scope:
+\begin{code}
+  do
+    x <- runResource (alloc …)
+    doSomethingWithX
 \end{code}
+
+Of course, one would typically not write code which is so blatantly
+incorrect. A less conspicuous way to let a resource escape is to let
+a closure escape, whose type is unrelated to the resource type.
+
+With linear types we already know how to prevent linear values from
+exiting their scopes: make the scope return an unrestricted
+value. Since linear values ``infect'' any value they are part of, we
+know that the value will not escape.
+
+\begin{code}
+  newtype Resource p a = Resource (IORef [IO ()] -> IO p a)
+
+  runResource :: Resource ω a ⊸ IO ω a
+  allocate :: IO p a ⊸ (a ->_p IO 1 ()) ⊸ Resource 1 a
+
+  -- The definitions are identical to the non-linear version. We
+  -- simply changed the type to ensure well-scoping.
+\end{code}
+
+Remark: the deallocation function may be called after the resource has
+been deallocated by the programmer. So it is the responsibility of the
+caller of |allocate| to write a deallocation function which resists to
+such situation.
+
+\subsection{Relation with borrowing}
+
+See \fref{sec:borrowing}.
+
+|ResourceT| is a place where a borrowing multiplicity may come in
+handy. Instead of the linear type above, which forces the programmer
+to thread the resources we could use a borrowed type in allocate:
+
+
+
+\begin{code}
+  newtype Resource p a = Resource (IORef [IO ()] -> IO p a)
+
+  runResource :: Resource ω a ⊸ IO ω a
+  allocate :: IO p a ⊸ (a ->_p IO 1 ()) ⊸ Resource β a
+
+  -- The definitions are identical to the non-linear version.
+\end{code}
+
+We lose the ability to deallocate the resource (\emph{e.g.} for files
+|close| becomes unsafe, outside of the deallocation function). In
+exchange, we can use resources as much as we wish, as long as they
+don't escape their scope: in this case the type checker complains.
+
+In this model, all the resources allocated in a given scope are
+deallocated in that scope.
+
+The inline-java example (~\fref{sec:prot-inline-java}) is a variation
+on this idea. Which, in addition, mixes resources and non-resources in
+the same type.
 
 \section{Protocols: Inline-Java}
 \label{sec:prot-inline-java}
