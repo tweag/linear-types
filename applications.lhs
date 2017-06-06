@@ -1091,7 +1091,7 @@ Destination \textsc{api} for lists:
   initList :: (Dest [a] ⊸ ()) ⊸ [a]
 
   nilDest :: Dest [a] ⊸ ()
-  nilDest = fill
+  nilDest = fill []
 
   consDest :: Dest [a] ⊸ (Dest a, Dest [a])
 \end{code}
