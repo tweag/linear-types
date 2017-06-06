@@ -1065,15 +1065,20 @@ Initialising pairs:
   type Dest a
   fill :: a ⊸ Dest a ⊸ ()
 
-  initPair   :: (Dest (a,b) ⊸ ()) ⊸ (a,b)
+  initPair   :: (Dest (a,b) ⊸ ()) ⊸ Unrestricted (a,b)
   splitDest  :: Dest (a,b) ⊸ (Dest a, Dest b)
 \end{code}
+
+Basically, we should read |splitDest| as \verb+malloc+ing the space
+for a pair. This space ought to be filled with a value for an |a| and
+a value for a |b|, both sub-spaces are returned. These can be, in
+turned, filled up by |splitDest|, or directly with |fill|.
 
 More complex example:
 \begin{code}
   data Tree a b = Node (Tree a b) a (Tree a b) | Leaf b
 
-  initTree  :: (Dest (Tree a b) ⊸ ()) ⊸ (a,b)
+  initTree  :: (Dest (Tree a b) ⊸ ()) ⊸ Unrestricted (Tree a b)
   leafDest  :: Dest (Tree a b) ⊸ Dest b
   nodeDest  :: Dest (Tree a b) ⊸ (Dest (Tree a b), Dest a, Dest (Tree a b))
 \end{code}
@@ -1108,6 +1113,48 @@ Tail-recursive map:
           case fill (f a) ka of
             () -> trmap f l ktail
 \end{code}
+
+\subsubsection{Difference lists}
+
+Standard style: |[a]->[a]|: build a tree of closures, then turn it
+into a list.
+
+How intermediate allocation be avoided? Doing \verb+malloc+s as in C!
+That is, with |Dest|. Well, we need a little more, let's define:
+\begin{code}
+  type Hole a b -- Hole is the type of values of type |b| with one unititialised hole.
+
+  composeHole :: Hole a b ⊸ Hole b c ⊸ Hole a c
+  fillHole :: Hole a b ⊸ (Dest a ⊸ ()) ⊸ Unrestricted b
+  initHole :: (Hole a a ⊸ Unrestricted b) ⊸ Unrestricted b
+  -- Note that it is really important that the function on destinations is
+  -- taken to be an unrestricted argument. It means that it cannot
+  -- access any other destination than the argument. It is an
+  -- invariant of the |Dest| \textsc{api} that the new destination
+  -- must then be reachable from the old one.
+  comapHole :: (Dest a ⊸ Dest b) -> Hole b c ⊸ Hole a c
+  mapHole :: (a->b) -> Hole c a -> Hole c b
+\end{code}
+
+We can then define difference lists:
+\begin{code}
+  type DList a = Hole [a] [a]
+
+  (++) :: DList a ⊸ DList a ⊸ DList a
+  (++) = composeHole
+
+  cons :: a ⊸ DList a ⊸ DList a
+  cons a = mapHole (a:)
+
+  snoc :: DList a ⊸ a ⊸ DList a
+  snoc l a =
+  comapHole
+    (\d -> case splitDest d of
+      (da,dl) -> case fill
+        da a of () -> dl)
+    l
+\end{code}
+
 
 \subsection{|IO| protocols}
 
