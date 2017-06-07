@@ -1149,9 +1149,9 @@ We can then define difference lists:
   snoc :: DList a ⊸ a ⊸ DList a
   snoc l a =
   comapHole
-    (\d -> case splitDest d of
-      (da,dl) -> case fill
-        da a of () -> dl)
+    (\d -> case consDest d of
+      (da,dl) -> case fill da a of
+        () -> dl)
     l
 \end{code}
 
