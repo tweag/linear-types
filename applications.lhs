@@ -1047,7 +1047,7 @@ on unsafe primitives to write |create| in the library.
 Two differences: we don't have |ST| anymore (in particular, no region
 arguments to |MVector|), |freeze| is safe despite being $O(1)$.
 
-\subsection{Initialisation}
+\subsubsection{Initialisation}
 
 \begin{itemize}
 \item Pro: complex typestate, would be quite painful to do in |ST| or
@@ -1083,7 +1083,7 @@ More complex example:
   nodeDest  :: Dest (Tree a b) ⊸ (Dest (Tree a b), Dest a, Dest (Tree a b))
 \end{code}
 
-\subsubsection{Tail-recursive map}
+\paragraph{Tail-recursive map}
 
 \emph{Remark: such a tail-recursive map is more useful (or, rather,
   only useful) for strict lists}
@@ -1114,7 +1114,7 @@ Tail-recursive map:
             () -> trmap f l ktail
 \end{code}
 
-\subsubsection{Difference lists}
+\paragraph{Difference lists}
 
 Standard style: |[a]->[a]|: build a tree of closures, then turn it
 into a list.
@@ -1155,12 +1155,91 @@ We can then define difference lists:
     l
 \end{code}
 
-
 \subsection{|IO| protocols}
 
-\emph{TODO}
+\subsubsection{ResourceT}
+
+See \fref{sec:protocols:-resourcet}
+
+\subsubsection{File functors}
+
+Say you want to see a file as a disk-backed collection of lines (it's
+not particular to files or to lines, we could consider any collection
+where reading elements may require |IO|, such as a database, or a
+network socket).
+
+\begin{code}
+  withFile :: FilePath -> (File Bytestring -> b) -> b
+  readLine :: File a -> IO ω a
+\end{code}
+
+You will want to make this collection a functor. It can be done by
+keeping the ``mapped'' function on the side. This way, every time a
+line is pulled, some |a| is returned.
+\begin{code}
+  data File a = File Handle (Bytestring -> a) -- abstract
+  mapFile :: (a->b) -> File a -> File b
+  mapFile f (File h g) = File h (f . g)
+\end{code}
+
+But then, the following is probably not intended:
+\begin{code}
+  withFile path $ \file -> do
+    let coll = map someParsingFun file
+    string <- readLine file
+    value <- readLine coll
+\end{code} % $ -- works around a syntax highlighting limitation
+
+You wanted to see the file as a collection of some |a| but you ended
+up pulling two different things from the file in two independent
+location.
+
+The situation gets worse when you could parse lines two by two:
+\begin{code}
+  -- each call to |readLine| on the result returns (and consumes) two
+  consecutive lines instead of one.
+  zipLine :: File a -> File (a,a)
+\end{code}
+
+Then
+\begin{code}
+  withFile path $ \file -> do
+    let coll = map someParsingFunOnTwoLines $ zipLine file
+    string <- readLine file
+    value <- readLine coll
+\end{code} % $ -- works around a syntax highlighting limitation
+Is almost guaranteed to return a nonsensical result (probably a
+failure).
+
+Maybe the \textsc{api} allows |file| to be closed early.
+\begin{code}
+  close :: File a -> IO ω ()
+\end{code}
+In which case
+\begin{code}
+  withFile path $ \file -> do
+    let coll = map someParsingFun file
+    close file
+    value <- readLine coll
+\end{code} % $ -- works around a syntax highlighting limitation
+Raises a use-after-free error.
+
+The problem is that, in general, it is not obvious that |file| and
+|coll| are related by an underlying resource. So it's fairly easy to
+introduce one of these mistakes. It is the intention that when a |File a|
+has been transformed by |mapFile|, the original file is not used
+anymore. A job for linear types!
+\begin{code}
+  data File a = File Handle (Bytestring -> a) -- abstract
+  withFile :: FilePath -> (File Bytestring ⊸ Unrestricted b) ⊸ Unrestricted b
+  readLine :: File a ⊸ IO 1 (File a, Unrestricted a)
+  mapFile :: (a->b) -> File a ⊸ File b
+  zipLine :: File a ⊸ File (a,a)
+  close :: File a ⊸ IO ω ()
+\end{code}
+With this \textsc{api} non of the above faulty example type-check.
 
 \end{document}
 
 %  LocalWords:  aliasable deallocate deallocating GC deallocation
-%  LocalWords:  affine monad
+%  LocalWords:  affine monad functor functors
