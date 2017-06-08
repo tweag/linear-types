@@ -293,7 +293,7 @@
 
 Imagine you want to write some function in destination-passing
 style~\cite[Section 3.2]{larus_destination_1998}. Destination-passing
-is a standard trick, for instance in C-programming, where the caller
+is a standard trick, for instance in C programming, where the caller
 of a function is responsible for allocating memory for the function,
 rather than the function itself. That is, instead of
 \begin{code}
