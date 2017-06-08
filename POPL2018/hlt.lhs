@@ -454,7 +454,159 @@ the loop, all of these desination will be filled exactly once.
 
 \subsection{I/O protocols}
 
+In the previous section, we got rid of the |ST| monad
+entirely. Instead linear values must be threaded explicitly. This is
+not really a cost in our example, as we would have to thread
+destinations one way or another. However there is a gain: actions on
+distinct destinations are not sequentialised. This means that the
+compiler is free to reorder such actions in order to find more
+optimisation opportunities.
 
+On the other hand, in other cases, we may need actions to be fully
+sequentialised, because they are interacting with the real world. This
+is the world of |IO| action. In this case, linearity will not serve to
+make the program less sequentialised~---~it must not be~---~but will
+help make sure that a sequence of action obey a certain discipline. We
+think of such disciplines as protocols\footnote{Such protocol can be
+  imposed on actual network communications, in which case they are
+  actual communication protocols. See
+  \citet{wadler_propositions_2012,parente_logical_2015}, for a formal
+  treatment of such communication protocols.}.
+
+A common example of such protocol is network- or storage-based
+collection. For example databases: the common feature is that getting
+(or setting) an element of this collection requires I/O, hence, in
+Haskell, happens in the |IO| monad.
+
+For the purpose of this example, let us view files as collections of
+lines. So that we have:
+\begin{code}
+  type File a
+
+  openFile :: FilePath -> IO (File ByteString)
+  readLine :: File a -> IO a
+  closeFile :: File a -> IO ()
+\end{code}
+In this \textsc{api} we see |File a| as a cursor in a file. Each call
+to |readLine| returns an |a| (the line) and moves the cursor one line
+forward.
+
+We will want that |File| behaves as much as possible as an ordinary
+collection. In particular we would like to |File| to be a functor:
+this is how we will parse lines.
+\begin{code}
+  mapFile :: (a->b) -> File a -> File b
+\end{code}
+We may also want ways to compose |File|s. For instance a way to zip to
+files:
+\begin{code}
+  zipFile :: File a -> File b -> File (a,b)
+\end{code}
+Such a programing idiom can be found in the
+\texttt{streaming}~\cite{thompson_streaming_2015} library.
+
+The problem is that it makes a number of unintended things
+possible. We have observed such mistakes in our own code in industrial
+projects, and it proved quite costly to hunt down.
+\begin{code}
+  bad1 path = do
+    file <- openFile path
+    let coll = map someParsingFun file
+    string <- readLine file
+    value <- readLine coll
+    closeFile coll
+
+  bad2 path = do
+    file <- openFile path
+    let coll = map someParsingFun file
+    closeFile file
+    value <- readLine coll
+    closeFile coll
+
+  bad3 path1 path2 = do
+    file1 <- openFile path
+    file2 <- openFile path
+    coll <- zipFile file1 file2
+    string <- readLine file1
+    value <- readLine coll
+    closeFile coll
+
+  bad4 path1 path2 = do
+    file1 <- openFile path
+    file2 <- openFile path
+    coll <- zipFile file1 file2
+    closeFile file1
+    closeFile coll
+
+\end{code}
+In |bad1|, the process reads from both handlers to the same file,
+reads from |file| will cause the cursor in |line| to progress. The
+matter gets worse in |bad3| where the |file1| and |file2| are supposed
+to be read in lockstep, but they get desynchronised by the call to
+|readLine file1|. In |bad2|, |file1| is closed before |coll| is read,
+and in |bad4|, |file1| is closed twice, once directly, and a second
+time via |closeFile coll|.
+
+The issue is that the intention behind |mapFile| and |zipFile| is that
+the handle is transformed, not shared. It is a crucial difference with
+immutable collections which can be shared freely.
+
+Before we can apply linear types to the problem, we need to generalise
+|IO| to be able to return both linear and non-linear values. To that
+effect, we will make |IO| multiplicity polymorhic:
+\begin{code}
+  type IO p a
+  return  :: a -> _ p IO p a
+  (>>=)   :: IO p a ⊸ (a -> _ p IO q b) ⊸ IO q b
+\end{code}
+We will continue using the |do| notation even though |return| and
+|(>>=)| are not quite the right type to form a monad.
+
+The following \textsc{api} for |File| makes all the examples above
+ill-typed, ensuring that we don't use the same handle under two
+different guises at the same time. It ensures, in particular, that
+every file is closed exactly once.
+\begin{code}
+  type File a
+
+  openFile :: FilePath -> IO 1 (File ByteString)
+  readLine :: File a ⊸ IO 1 (Unrestricted a, File a)
+  closeFile :: File a -> IO ω ()
+  mapFile :: (a->b) -> File a ⊸ File b
+  zipFile :: File a ⊸ File b ⊸ File (a,b)
+\end{code}
+
+There is a price to pay in that we have to thread files at every use,
+even for |readLine|. Note, however, that the \texttt{streaming}
+library's \textsc{api} shares this characteristic, despite not using
+linear types. What we gain for this price is a guarantee that files
+will be closed exactly once and that we are not using two versions of
+a file.\unsure{If we talk about borrowing, we can even alleviate that
+  cost by having |readLine :: File a -> _ β IO ω a|.}
+
+Sometimes, however, you may want to have two versions of the same
+file. There are two possible semantics: any-cast~---~the two versions of
+the file read from the same cursor, and each line is read by only
+one of the two versions~---~and multi-cast where lines are read by
+both versions. Thanks to linear types you must specify when you want
+to versions of a file, at which point you can choose between any-cast
+and multi-cast.
+\begin{code}
+  dupFileAny    :: File a ⊸ (File a, File a)
+  dupFileMulti  :: File a ⊸ (File a, File a)
+\end{code}
+
+We have willfully ignored, so far, the fact that files are finite, and
+that |readLine| may reach the end of the file. The real type of
+|readLine| should be:
+\begin{code}
+  readLine :: File a ⊸ IO 1 (Maybe (Unrestricted a, File a))
+\end{code}
+Which is like pattern matching a list, except in |IO|. Note that if
+we reach the end of the file, no new |File a| is returned, which means
+that |readLine| will close the file handle in that case. So
+|closeFile| only needs to be called when we do not want to consume the
+entire file.
 
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
