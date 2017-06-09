@@ -3,9 +3,9 @@
 %% For double-blind review submission
 % \documentclass[acmsmall,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
 %% For single-blind review submission
-\documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
+% \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
 %% For final camera-ready submission
-%\documentclass[acmsmall10pt,]{acmart}\settopmatter{}
+\documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
 %% SIGPLAN proceedings format should change 'acmsmall' to
