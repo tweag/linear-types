@@ -102,6 +102,7 @@
 % \newtheorem{lemma}{Lemma}
 \newtheorem{remark}{Remark}
 
+\newcommand\HaskeLL{Hask-LL}
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
 %%%%%%%%%%%%%%%%% Author's configuration %%%%%%%%%%%%%%%%%
@@ -288,6 +289,8 @@
 
 
 \section{Introduction}
+
+\subsection{A taste of \HaskeLL{}}
 
 \subsection{Freezing arrays}
 
