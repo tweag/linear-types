@@ -31,8 +31,13 @@ RUN apt-get update -y && \
 #
 # RUN apt-get install -y ghc happy alex && ghc --version
 
+
 # Option 3: Stack install of GHC.  LTS 7.24 is GHC 8.0.1
 # ---------
+# ENV RESOLVER lts-7.24
+# Newer gives us GHC 8.0.2:
+ENV RESOLVER lts-8.18
+
 #RUN apt-get install -y haskell-stack && \
 #    stack --version
 # This is the latest version:
@@ -51,21 +56,22 @@ ENV LANGUAGE C.UTF-8
 ENV GHCBOOTSTRAP /root/.stack/programs/x86_64-linux/ghc-8.0.1/bin
 ENV GHCBUILD /tmp/ghc_linear
 
-# Clone and build, but don't store the build dir OR the extra version of GHC.
-RUN stack --version && stack --install-ghc --resolver=lts-7.24 --local-bin-path=/usr/bin/ install happy alex 
+# Bootstrapped with ghc 8.0.1:
+# ENV LINEAR_SHA 36666a9db79adeb27dffebbfb5dbe2939d0f0972
+# Bootstrapped with ghc 8.0.2, rebased with some new stuff:
+ENV LINEAR_SHA 50cae7b435403a7058c17ab3f17f271d8d8db30a
 
-RUN git clone --recursive git://git.haskell.org/ghc.git $GHCBUILD && \
+# Clone and build, but don't store the build dir OR the extra version of GHC.
+RUN stack --version && stack --install-ghc --resolver=$RESOLVER --local-bin-path=/usr/bin/ install happy alex && \
+    git clone --recursive git://git.haskell.org/ghc.git $GHCBUILD && \
     cd $GHCBUILD && git remote add tweag https://github.com/tweag/ghc.git && \
     git fetch --all && \
-    git checkout 36666a9db79adeb27dffebbfb5dbe2939d0f0972 && \
+    git checkout $LINEAR_SHA && \
     git submodule update --init --recursive && \
     echo "BuildFlavour = quick" > $GHCBUILD/mk/build.mk && \
-    cat $GHCBUILD/mk/build.mk.sample >> $GHCBUILD/mk/build.mk 
-
-RUN export PATH=$GHCBOOTSTRAP:$PATH && \
-    cd $GHCBUILD && ./boot && ./configure 
-    
-RUN export PATH=$GHCBOOTSTRAP:$PATH && \
+    cat $GHCBUILD/mk/build.mk.sample >> $GHCBUILD/mk/build.mk && \
+    export PATH=$GHCBOOTSTRAP:$PATH && \
+    cd $GHCBUILD && ./boot && ./configure && \
     cd $GHCBUILD make -j4 && make install && \
-    rm -rf $GHCBUILD /root/.stack/programs/x86_64-linux/ghc-8.0.1
+    rm -rf $GHCBUILD /root/.stack/programs/x86_64-linux/ghc-8.0.*
 # --------------------------------------------------------------------
