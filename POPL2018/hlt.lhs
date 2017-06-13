@@ -294,7 +294,27 @@
 
 \subsection{Freezing arrays}
 
+\begin{code}
+  type MArray a
+  type Array a
 
+  newMArray :: Int -> a -> (MArray a ⊸ Unrestricted b) ⊸ Unrestricted b
+  write :: MArray a ⊸ Int -> a -> MArray a
+  read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
+  freeze :: MArray a ⊸ Unrestricted (Array a)
+  index :: Array a -> Int -> a
+\end{code}
+
+\begin{code}
+  type WArray a
+  type Array a
+
+  initArray :: Int -> (WArray a ⊸ Unrestricted b) ⊸ Unrestricted (Array a, b)
+  split :: WArray a -> Int ⊸ (WArray a, WArray a)
+  fill :: (Int -> a) -> WArray a ⊸ ()
+
+  index :: Array a -> Int -> a
+\end{code}
 
 \subsection{I/O protocols}
 
