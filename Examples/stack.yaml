@@ -6,11 +6,20 @@ resolver: ghc-8.2
 compiler: ghc-8.2
 system-ghc: true
 
-# Trying intero, no luck yet.
+# # Trying intero-0.1.20, no luck yet.
 # skip-ghc-check: true
+# allow-newer: true
 # extra-deps:
 # - ghc-paths-0.1.0.9
 # - syb-0.7
+#    # /tmp/stack1/intero-0.1.20/src/GhciMonad.hs:302:52: error:
+#    #      Not in scope: type constructor or class ‘GHC.RunResult’
+#    #      A data constructor of that name is in scope; did you mean DataKinds?
+#    #      Module ‘GHC’ does not export ‘RunResult’.
+#    #      |
+#    #  302 | runStmt :: String -> GHC.SingleStep -> GHCi (Maybe GHC.RunResult)
+#    #      |                                                    ^^^^^^^^^^^^^
+
 
 docker:
   enable: true
@@ -18,10 +27,3 @@ docker:
 #  image: parfunc/linear-types:0.0.2
   # GHC 8.2.X rebase
   image: parfunc/linear-types:0.1.1
-
-# allow-newer: true
-
-# Trying to include intero, but it errors in bulid:
-# extra-deps:
-# - ghc-paths-0.1.0.9
-# - syb-0.7

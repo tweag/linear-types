@@ -24,6 +24,8 @@ import Data.Binary (get, put, Binary, encode, decode, getWord8)
 import Data.Binary.Get (runGetOrFail, Get)
 import Data.Binary.Put (execPut)
 
+import Unsafe.Coerce (unsafeCoerce)
+    
 -- Prereqs
 --------------------------------------------------------------------------------
 
@@ -43,7 +45,11 @@ flipT (Tensor a b) = Tensor b a
 data Unrestricted a where
     Unrestricted :: a -> Unrestricted a 
   deriving (Show,Eq)
-                    
+
+
+-- Scratch: experiments and tests
+------------------------------------------------------------
+           
 -- unrTest :: Unrestricted a -> (Unrestricted a, Unrestricted a)
 -- unrTest (Unrestricted x) = (Unrestricted x, Unrestricted x)
 -- unrTest x = (x, x)
@@ -55,6 +61,9 @@ data Unrestricted a where
 f' :: Int -> Unrestricted Int
 f' n = Unrestricted n
 
+freeInt :: Int ⊸ ()
+freeInt = undefined
+       
 g :: Int ⊸ Int
 g n = n
  -- No linear let atm:
@@ -62,6 +71,9 @@ g n = n
  -- This won't work:
  -- (\_ -> 3) n
 --   case n of _ -> 3
+
+-- This is ok:
+-- foo (freeInt n) where foo :: () ⊸ Int; foo () = 3
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -84,20 +96,16 @@ newtype Packed a = Packed ByteString
 --------------------------------------------------------------------------------
 
 app :: Builder ⊸ Builder ⊸ Builder
-app = error "linear mapppend - finishme " -- mappend -- HACK
+app = unsafeCoerce bapp -- HACK
+ where
+  bapp :: Builder -> Builder -> Builder      
+  bapp = mappend
 
--- write :: Needs (a ': b) t ⊸ a -> Needs b t
--- write (Needs bs) a = case bs of _ -> undefined
-
--- write :: a ⊸ Needs (a ': b) t ⊸ Needs b t
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Binary a => a -> Needs (a ': rst) t ⊸ Needs rst t
-writeC a (Needs bld1) =
-    Needs (bld1 `app`
-           execPut (put a))
+writeC a (Needs bld1) = Needs (bld1 `app` execPut (put a))
 
-{-
 -- unsafeCoerceNeeds :: Needs a t -> Needs b t
                   
 -- | Reading from a cursor scrolls past the read item and gives a
@@ -115,14 +123,13 @@ fromHas (Has b) = Packed b
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
-         
--- | "Cast" a fully-initialized write cursor into a read one.
-finish :: Needs '[] a ⊸ Has '[a]
-finish (Needs bs) = Has (toBS bs)
-
 toBS :: Builder ⊸ ByteString
 toBS = B.toLazyByteString -- Why is this allowed?  Bug?
 -- toBS x = B.toLazyByteString x -- This isn't.
+
+-- | "Cast" a fully-initialized write cursor into a read one.
+finish :: Needs '[] a ⊸ Has '[a]
+finish (Needs bs) = Has (toBS bs)
 
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) -> b
@@ -133,19 +140,25 @@ withOutput fn =
 -- Tests:
 --------------------------------------------------------------------------------
 
--- foo :: Needs '[Int, Bool] Double
--- foo = undefined
+foo :: Needs '[Int, Bool] Double
+foo = undefined
 
--- bar :: Needs '[Bool] Double
--- bar = write foo 3
+bar :: Needs '[Bool] Double
+bar = writeC 3 foo
 
--- test :: Needs '[Int] a ⊸ Needs '[] a
--- test x = let y = write 3 x in case y of _ -> y
+test01 :: Needs '[Int] a ⊸ Needs '[] a
+test01 x = writeC 3 x
 
--- test2 :: Int ⊸ Int
--- test2 x = case x of _ -> x
+test02 :: Needs '[] Double
+test02 = writeC True bar
 
+test03 :: Double
+test03 = fst (readC (finish test02))
+         
 
+         
+{-
+-- Example
 ----------------------------------------
 
 data Tree = Leaf Int
