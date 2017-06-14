@@ -9,7 +9,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Examples.Cursors
+module Cursors
     ( Needs, Has
 --    , readC, writeC
     )
