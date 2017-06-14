@@ -714,19 +714,36 @@ be filled. In order.
   -- Remark: |read| is linear, but a value of type |Has| need not be
   -- in general. These are read-only arrays. Linearity is just an
   -- additional property of the |read| function in this case.
-  read :: Has (a:r) ⊸ (a, Has r)
+  read :: Storable a => Has (a:r) ⊸ (a, Has r)
   caseTree :: Has (Tree a:r) ⊸ Either (Has (Tree a:Tree a:r)) (Has (a:r))
-
 
   -- Write API
   type Need :: [*] -> * -> *
 
-  finish :: Need [] t -> Has [t]
-  fill :: Storable a => Need (a:r) t ⊸ Dest r t
-  leaf :: Need (Tree a:r) ⊸ Need (a:r)
-  node :: Need (Tree a:r) ⊸ Need (Tree a:Tree a:r)
-  allocTree :: (Need [Tree a] ⊸ Unrestricted b) ⊸ Unrestricted b
+  finish :: Need [] t ⊸ Unrestricted (Has [t])
+  write :: Storable a => Need (a:r) t ⊸ Dest r t
+  leaf :: Need (Tree a:r) t ⊸ Need (a:r) t
+  node :: Need (Tree a:r) t ⊸ Need (Tree a:Tree a:r) t
+  allocTree :: (Need [Tree a] (Tree a) ⊸ Unrestricted b) ⊸ Unrestricted b
 \end{code}
+
+Direct version of map:
+\begin{code}
+  mapTree :: (a->b) -> Has[Tree a] -> Has[Tree b]
+  mapTree t = getUnrestricted $
+      allocTree (\n ->
+        case mapDest t of
+          (Unrestricted _,n') -> finish n')
+    where
+      mapDest :: Has[Tree a:r] -> Need[Tree a:r] t ⊸ (Has r, Need r t)
+      mapDest h n =
+        case caseTree h of
+          Left h' -> (Unrestricted h', node n)
+          Right h' ->
+            case read h' of
+              (a,h'') -> go h'' (write a (leaf n))
+\end{code} % $ -- works around a syntax highlighting limitation
+
 \section{Linear IO}
 \label{sec:linear-io}
 
