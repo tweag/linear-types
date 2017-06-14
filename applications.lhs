@@ -735,7 +735,7 @@ Direct version of map:
         case mapDest t of
           (Unrestricted _,n') -> finish n')
     where
-      mapDest :: Has[Tree a:r] -> Need[Tree a:r] t ⊸ (Has r, Need r t)
+      mapDest :: Has(Tree a:r) -> Need(Tree a:r) t ⊸ (Has r, Need r t)
       mapDest h n =
         case caseTree h of
           Left h' -> (Unrestricted h', node n)
