@@ -154,10 +154,7 @@ test02 = writeC True bar
 
 test03 :: Double
 test03 = fst (readC (finish test02))
-         
 
-         
-{-
 -- Example
 ----------------------------------------
 
@@ -178,6 +175,7 @@ instance Binary Tree where
                             r <- get
                             return (Branch l r)
 
+
 caseTree :: Has (Tree ': b)
          -> (Has (Int ': b) -> a)
          -> (Has (Tree ': Tree ': b) -> a)
@@ -190,22 +188,28 @@ caseTree (Has bs) f1 f2 =
         0 -> f1 (Has (BS.drop 1 bs))
         1 -> f2 (Has (BS.drop 1 bs))
 
-
-caseTree' :: Has (Tree ': b)
-          ⊸  Either (Has (Int ': b))
-                    (Has (Tree ': Tree ': b))
-caseTree' (Has bs) = 
-  case runGetLin bs of
-    Left (_,_,err)  -> error $ "internal error: "++err
-    Right (remain,num,i) ->
-      case i of
-        0 -> Left  (Has remain)
-        1 -> Right (Has remain)
-
 -- Another Hack:
 runGetLin :: ByteString ⊸ Either (ByteString,Int64,String) (ByteString,Int64,Word8)
 runGetLin = runGetOrFail getWord8
 
+{-            
+-- | Testing a version on a linear read cursor.
+-- It should consume the first byte of its input, which could in principle
+-- be freed immediately.
+caseTree' :: forall b . Has (Tree ': b)
+          ⊸  Either (Has (Int ': b))
+                    (Has (Tree ': Tree ': b))
+caseTree' (Has bs) = f (runGetLin bs)
+  where
+   f :: Either (ByteString,Int64,String) (ByteString,Int64,Word8) ⊸
+        Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
+--   f (Left (b,n,err)) = error $ "internal error: "++err
+   f (Right (remain,num,0)) = Left  (Has remain)
+   f (Right (remain,num,0)) = Right (Has remain)
+-}
+
+
+{-
 -- | Write a complete Leaf node to the output cursor.
 writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
 writeLeaf n (Needs b) = 
