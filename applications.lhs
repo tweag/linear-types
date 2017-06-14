@@ -735,13 +735,16 @@ Direct version of map:
         case mapDest t of
           (Unrestricted _,n') -> finish n')
     where
-      mapDest :: Has(Tree a:r) -> Need(Tree a:r) t ⊸ (Has r, Need r t)
+      mapDest :: Has(Tree a:r) -> Need(Tree a:r) t ⊸ (Unrestricted (Has r), Need r t)
       mapDest h n =
         case caseTree h of
-          Left h' -> (Unrestricted h', node n)
+          Left h' ->
+            let (h'',n') = go h' (node n)
+            in
+              go h'' n'
           Right h' ->
             case read h' of
-              (a,h'') -> go h'' (write a (leaf n))
+              (a,h'') -> (h'', write a (leaf n))
 \end{code} % $ -- works around a syntax highlighting limitation
 
 Fold:
@@ -765,7 +768,7 @@ Fold:
 
 Iteration can also be written
 \begin{code}
-  foldTree :: (a->b->b) -> b -> Has[Tree a] -> b
+  iterTree :: (a->b->b) -> b -> Has[Tree a] -> b
 \end{code}
 
 \section{Linear IO}
