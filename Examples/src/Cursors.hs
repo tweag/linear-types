@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 
 module Cursors
     ( Needs, Has
@@ -62,7 +63,10 @@ f' :: Int -> Unrestricted Int
 f' n = Unrestricted n
 
 freeInt :: Int ⊸ ()
-freeInt = undefined
+freeInt = unsafeCastLinear (\_->())
+
+freeHas :: Has a ⊸ ()
+freeHas = unsafeCastLinear (\_->())
        
 g :: Int ⊸ Int
 g n = n
@@ -74,6 +78,21 @@ g n = n
 
 -- This is ok:
 -- foo (freeInt n) where foo :: () ⊸ Int; foo () = 3
+
+-- Hacks and cheats:           
+--------------------------------------------------------------------------------
+
+unsafeCastLinear2 :: (a -> b -> c) -> (a ⊸ b ⊸ c)
+unsafeCastLinear2 = unsafeCoerce
+
+unsafeCastLinear :: (a -> b) -> (a ⊸ b)
+unsafeCastLinear = unsafeCoerce
+                    
+app :: Builder ⊸ Builder ⊸ Builder
+app = unsafeCastLinear2 bapp -- HACK
+ where
+  bapp :: Builder -> Builder -> Builder      
+  bapp = mappend
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -93,14 +112,10 @@ newtype Has (l :: [*]) = Has ByteString
 newtype Packed a = Packed ByteString
   deriving (Show,Eq)
 
+
+-- Cursor interface
 --------------------------------------------------------------------------------
-
-app :: Builder ⊸ Builder ⊸ Builder
-app = unsafeCoerce bapp -- HACK
- where
-  bapp :: Builder -> Builder -> Builder      
-  bapp = mappend
-
+         
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Binary a => a -> Needs (a ': rst) t ⊸ Needs rst t
@@ -131,6 +146,10 @@ toBS = B.toLazyByteString -- Why is this allowed?  Bug?
 finish :: Needs '[] a ⊸ Has '[a]
 finish (Needs bs) = Has (toBS bs)
 
+finish2 :: Needs '[] a ⊸ Unrestricted (Has '[a])
+finish2 = undefined    
+-- finish2 (Needs bs) = Unrestricted (Has (toBS bs))
+                    
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) -> b
 withOutput fn =
@@ -190,15 +209,17 @@ caseTree (Has bs) f1 f2 =
 
 -- Another Hack:
 runGetLin :: ByteString ⊸ Either (ByteString,Int64,String) (ByteString,Int64,Word8)
-runGetLin = runGetOrFail getWord8
+runGetLin = unsafeCastLinear (runGetOrFail getWord8)
 
-{-            
+
 -- | Testing a version on a linear read cursor.
 -- It should consume the first byte of its input, which could in principle
 -- be freed immediately.
 caseTree' :: forall b . Has (Tree ': b)
           ⊸  Either (Has (Int ': b))
                     (Has (Tree ': Tree ': b))
+caseTree' = undefined
+{-            
 caseTree' (Has bs) = f (runGetLin bs)
   where
    f :: Either (ByteString,Int64,String) (ByteString,Int64,Word8) ⊸
@@ -208,8 +229,6 @@ caseTree' (Has bs) = f (runGetLin bs)
    f (Right (remain,num,0)) = Right (Has remain)
 -}
 
-
-{-
 -- | Write a complete Leaf node to the output cursor.
 writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
 writeLeaf n (Needs b) = 
@@ -223,9 +242,8 @@ writeBranch :: Needs (Tree ': b) t
             ⊸ c
 -- writeBranch :: Needs '[Tree] t ⊸ (Needs '[Tree, Tree] t ⊸ Unrestricted b) -> b
 writeBranch (Needs bs) fn =
-  let n2 = Needs (bs `app` execPut (put (1::Word8))) in  
-  fn n2
---  case fn n2 of Unrestricted b -> b
+  fn (Needs (bs `app` execPut (put (1::Word8))))
+
 
 packTree :: Tree -> Packed Tree
 packTree t = Packed (encode t)
@@ -233,6 +251,59 @@ packTree t = Packed (encode t)
 unpackTree :: Packed Tree -> Tree
 unpackTree (Packed t) = decode t
 
+
+----------------------------------------
+-- Type-safe interface below here:
+----------------------------------------
+
+-- Here we manually write functions agains the packed representation.
+
+sumTree :: Packed Tree -> Int
+sumTree pt = fin
+ where
+  (fin,_) = go (toHas pt)
+
+  go :: forall b . Has (Tree ': b) -> (Int, Has b)
+  go cur = caseTree cur
+            (\c -> readC c)
+            (\c -> let (x,c') = go c
+                       (y,c'')  = go c'
+                   in (x+y, c''))
+           
+add1 :: Packed Tree -> Packed Tree
+add1 pt = fromHas fin
+ where
+  fin :: Has '[Tree]
+  fin = withOutput f1
+
+  f1 :: Needs '[Tree] Tree ⊸ Unrestricted (Has '[Tree])
+  f1 oc = f2 (go (toHas pt) oc)
+
+  f2 :: (Unrestricted (Has '[]) ⊗ Needs '[] Tree) ⊸ Unrestricted (Has '[Tree])
+  f2 (Tensor (Unrestricted _) oc2) = finish2 oc2
+
+  -- This version uses ω-weight read pointers but linear write cursors.
+  go :: forall b t . Has (Tree ': b) -> Needs (Tree ': b) t ⊸
+                     (Unrestricted (Has b) ⊗ Needs b t)
+  go = undefined
+
+  -- This version uses linear read and write cursors.
+{- 
+  -- Polymorphic version that works with anything following the Tree in the buffer.
+  go :: forall b t . Has (Tree ': b) ⊸ Needs (Tree ': b) t ⊸
+                     (Has b ⊗ Needs b t)
+  go inC outC =
+       case caseTree' inC of
+         Left  c2 -> let (n,c3) = readC c2 in
+                     Tensor c3 (writeLeaf (n+1) outC)
+         Right c2 ->           
+            writeBranch outC (\oc2 ->
+              let Tensor c3 oc3 = go c2 oc2
+                  Tensor c4 oc4 = go c3 oc3 -- Bug? c4 etc should be weight 1
+              in Tensor c4 oc4)
+-}
+
+{-
 -- Tree tests:
 ----------------------------------------
         
@@ -267,42 +338,4 @@ tr8 = add1 tr6
 
 tr9 = unpackTree tr8      
 
-----------------------------------------
--- Type-safe interface below here:
-----------------------------------------
-
--- Here we manually write functions agains the packed representation.
-
-sumTree :: Packed Tree -> Int
-sumTree pt = fin
- where
-  (fin,_) = go (toHas pt)
-
-  go :: forall b . Has (Tree ': b) -> (Int, Has b)
-  go cur = caseTree cur
-            (\c -> readC c)
-            (\c -> let (x,c') = go c
-                       (y,c'')  = go c'
-                   in (x+y, c''))
-           
-add1 :: Packed Tree -> Packed Tree
-add1 pt = fromHas fin
- where
-  fin :: Has '[Tree]
-  fin = withOutput (\oc ->
-                    let Tensor c oc2 = go (toHas pt) oc in
-                    case c of
-                      _ -> Unrestricted (finish oc2))
-
-  go :: forall b t . Has (Tree ': b) ⊸ Needs (Tree ': b) t ⊸
-                     (Has b ⊗ Needs b t)
-  go inC outC =
-       case caseTree' inC of
-         Left  c2 -> let (n,c3) = readC c2 in
-                     Tensor c3 (writeLeaf (n+1) outC)
-         Right c2 ->           
-            writeBranch outC (\oc2 ->
-              let Tensor c3 oc3 = go c2 oc2
-                  Tensor c4 oc4 = go c3 oc3 -- Bug? c4 etc should be weight 1
-              in Tensor c4 oc4)
 -}
