@@ -618,6 +618,61 @@ returns a thunk.
 
 The story needs to be polished with such types.
 
+\section{Turning mutable APIs into pure ones}
+
+Distillation of \url{http://www.cse.unsw.edu.au/~chak/papers/spritekit.pdf}
+
+\begin{code}
+  type MTree a
+  instance Eq (MTree a)
+
+  data TreeView a = VLeaf | VNode (MTree a) a (MTree a)
+  readTree :: MTree a -> IO (TreeView a)
+  writeTree :: MTree a -> TreeView a -> IO ()
+  newTree :: Treeview a -> IO ()
+\end{code}
+
+\begin{code}
+  data Tree a
+    = Leaf (MTree a)
+    | Node (Tree a) (Unrestricted a) (Tree a) (Maybe (MTree a))
+
+  maybeWriteTree :: Maybe (MTree a) -> TreeView a -> IO ()
+  maybeWriteTree (Just mtree) = writeTree mtree
+  maybeWriteTree Nothing = newTree
+
+  unsafeUpdateTree :: Tree a -> Tree a -> IO (MTree a)
+  unsafeUpdateTree (Node l1 a1 r1 _) (Node l2 a2 r2 mmtree) = do
+    ml2 <- unsafeUpdateTree l1 l2
+    mr2 <- unsafeUpdateTree r1 r2
+    mtree <- maybeWriteTree mmtree (VNode ml2 a2 mr2)
+    return mmtree
+  unsafeUpdateTree _ newTree = unsafeAllocTree newTree
+
+  unsafeAllocTree (Leaf mmtree) =
+    mtree <- maybeWriteTree mmtree VLeaf
+    return mtree
+  unsafeAllocTree (Node l a r mmtree) = do
+    ml <- unsafeAllocTree l
+    mr <- unsafeAllocTree r
+    mtree <- maybeWriteTree mmtree (VNode ml a mr)
+    return mtree
+
+  unmarshallMTree :: MTree a -> IO (Tree a)
+  unmarshallMTree mtree =
+    readTree >>= \case
+      VLeaf -> Leaf (Just mtree)
+      VNode ml a mr -> do
+        l <- unmarshallMTree ml
+        r <- unmarshallMTree mr
+        return $ Node l a r (Just mtree)
+
+  updateTree :: MTree a -> (Tree a ⊸ Tree a) -> IO (MTree a)
+  updateTree mtree upd = do
+    tree <- umarshallMTree mtree
+    return $ unsafeUpdateTree tree (upd tree)
+\end{code} % $ -- works around a syntax highlighting limitation
+
 \section{Linear IO}
 \label{sec:linear-io}
 
