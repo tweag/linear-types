@@ -16,6 +16,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
+  hs-source-dirs:     src
   exposed-modules:
                        Cursors
 -- Protocol, InPlaceArrays, HaskellR, StorageServer, Network, ByteArrays, PtrArray, Queues.QueueRefImpl, Queues.Queue1_fromPaper
