@@ -1,12 +1,27 @@
 packages:
 - ./
 
-resolver: ghc-8.1
-compiler: ghc-8.1
+# Docker image 0.1.1 brings it up to 8.2 instead of 8.1:
+resolver: ghc-8.2
+compiler: ghc-8.2
 system-ghc: true
 
-# Trying intero:
+# Trying intero, no luck yet.
 # skip-ghc-check: true
+# extra-deps:
+# - ghc-paths-0.1.0.9
+# - syb-0.7
+
+docker:
+  enable: true
+  # GHC 8.1 
+#  image: parfunc/linear-types:0.0.2
+  # GHC 8.2.X rebase
+  image: parfunc/linear-types:0.1.1
+
+# allow-newer: true
+
+# Trying to include intero, but it errors in bulid:
 # extra-deps:
 # - ghc-paths-0.1.0.9
 # - syb-0.7

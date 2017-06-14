@@ -11,7 +11,7 @@
 
 module Examples.Cursors
     ( Needs, Has
-    , readC, writeC
+--    , readC, writeC
     )
     where
 
@@ -51,9 +51,14 @@ f :: Int ⊸ Unrestricted Int
 f n = Unrestricted n
 
 g :: Int ⊸ Int
-g n = let _ = n in 3 
+g n = n
+ -- No linear let atm:
+ -- let _ = n in 3
+ -- This won't work:
+ -- (\_ -> 3) n
+--   case n of _ -> 3
 
--- Cursor Tyeps:              
+-- Cursor Types:
 --------------------------------------------------------------------------------
 
 -- | A "needs" cursor requires a list of fields be written to the
@@ -70,7 +75,7 @@ newtype Has (l :: [*]) = Has ByteString
 -- represents a dense encoding of a single value of the type `a`.
 newtype Packed a = Packed ByteString
   deriving (Show,Eq)
-                    
+{-                    
 --------------------------------------------------------------------------------
                     
 -- write :: Needs (a ': b) t ⊸ a -> Needs b t
@@ -278,3 +283,4 @@ add1 pt = fromHas fin
               let Tensor c3 oc3 = go c2 oc2
                   Tensor c4 oc4 = go c3 oc3 -- Bug? c4 etc should be weight 1
               in Tensor c4 oc4)
+-}
