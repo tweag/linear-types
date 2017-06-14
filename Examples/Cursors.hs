@@ -40,20 +40,25 @@ flipT (Tensor a b) = Tensor b a
 
 --------------------------------------------------------------------------------
 
-data Unrestricted a = Unrestricted a
+data Unrestricted a where
+    Unrestricted :: a -> Unrestricted a 
   deriving (Show,Eq)
                     
 -- unrTest :: Unrestricted a -> (Unrestricted a, Unrestricted a)
 -- unrTest (Unrestricted x) = (Unrestricted x, Unrestricted x)
 -- unrTest x = (x, x)
 
-f :: Int ⊸ Unrestricted Int
-f n = Unrestricted n
+-- Will fail:
+-- f :: Int ⊸ Unrestricted Int
+-- f n = Unrestricted n
+
+f' :: Int -> Unrestricted Int
+f' n = Unrestricted n
 
 g :: Int ⊸ Int
-g n = n
+g n = n+n
  -- No linear let atm:
- -- let _ = n in 3
+ -- g n = let _ = n in 3
  -- This won't work:
  -- (\_ -> 3) n
 --   case n of _ -> 3
