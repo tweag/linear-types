@@ -744,6 +744,30 @@ Direct version of map:
               (a,h'') -> go h'' (write a (leaf n))
 \end{code} % $ -- works around a syntax highlighting limitation
 
+Fold:
+\begin{code}
+  foldTree :: (a->b) -> (b->b->b) -> Has[Tree a] -> b
+  foldTree leaf node = go
+    where
+      go :: Has(Tree a:r) -> (Has r, b)
+      go h =
+        case caseTree h often
+          Left h' ->
+            let
+              (h'',b1) = go h''
+              (h''',b2) = go h'''
+            in
+              (h''', node b1 b2)
+          Right h' ->
+            case read h' of
+              (a,h'') -> (h'', leave a)
+\end{code}
+
+Iteration can also be written
+\begin{code}
+  foldTree :: (a->b->b) -> b -> Has[Tree a] -> b
+\end{code}
+
 \section{Linear IO}
 \label{sec:linear-io}
 
@@ -1369,3 +1393,4 @@ With this \textsc{api} non of the above faulty example type-check.
 
 %  LocalWords:  aliasable deallocate deallocating GC deallocation
 %  LocalWords:  affine monad functor functors
+)
