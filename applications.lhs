@@ -673,6 +673,60 @@ Distillation of \url{http://www.cse.unsw.edu.au/~chak/papers/spritekit.pdf}
     return $ unsafeUpdateTree tree (upd tree)
 \end{code} % $ -- works around a syntax highlighting limitation
 
+\section{Serialised traversals}
+
+\url{https://www.cs.indiana.edu/~rrnewton/papers/gibbon_working_draft.pdf}
+explores traversal of tree-structures represented as their pre-order
+traversal stored in an array structure. They use a compiler to produce
+the code, but can we instead program on such a structure using a
+linear \textsc{api}?
+
+Like them, let's consider trees of the form
+\begin{code}
+  data Tree a = Node (Tree a) (Tree a) | Leaf a
+\end{code}
+
+
+One fun bit is that contrary to full trees (like in merge sort), we cannot access the
+right-child of a node with arithmetic: we don't know how long the
+left-child is. So we are forced to traverse the array from left to
+right.
+
+Code, in this style, is written in continuation-passing style but,
+because of this rigid traversal, we cannot have
+\begin{code}
+  Node :: Dest (Tree a) ⊸ (Dest (Tree a), Dest (Tree a))
+\end{code}
+Because the destination for the right-child is not determined until
+the left-child has been filled!
+
+Similarly, when reading, we cannot break a tree into its two subtrees. We have to
+consider a stack of trees still to be traversed (|Has| below).
+
+So we need to parametrise |Dest| by a list of things that will have to
+be filled. In order.
+
+\begin{code}
+  type Tree a
+
+  -- Read API
+  type Has :: [*] -> *
+  -- Remark: |read| is linear, but a value of type |Has| need not be
+  -- in general. These are read-only arrays. Linearity is just an
+  -- additional property of the |read| function in this case.
+  read :: Has (a:r) ⊸ (a, Has r)
+  caseTree :: Has (Tree a:r) ⊸ Either (Has (Tree a:Tree a:r)) (Has (a:r))
+
+
+  -- Write API
+  type Need :: [*] -> * -> *
+
+  finish :: Need [] t -> Has [t]
+  fill :: Storable a => Need (a:r) t ⊸ Dest r t
+  leaf :: Need (Tree a:r) ⊸ Need (a:r)
+  node :: Need (Tree a:r) ⊸ Need (Tree a:Tree a:r)
+  allocTree :: (Need [Tree a] ⊸ Unrestricted b) ⊸ Unrestricted b
+\end{code}
 \section{Linear IO}
 \label{sec:linear-io}
 
