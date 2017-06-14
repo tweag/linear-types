@@ -56,7 +56,7 @@ f' :: Int -> Unrestricted Int
 f' n = Unrestricted n
 
 g :: Int ⊸ Int
-g n = n+n
+g n = n
  -- No linear let atm:
  -- g n = let _ = n in 3
  -- This won't work:
@@ -80,9 +80,12 @@ newtype Has (l :: [*]) = Has ByteString
 -- represents a dense encoding of a single value of the type `a`.
 newtype Packed a = Packed ByteString
   deriving (Show,Eq)
-{-                    
+
 --------------------------------------------------------------------------------
-                    
+
+app :: Builder ⊸ Builder ⊸ Builder
+app = error "linear mapppend - finishme " -- mappend -- HACK
+
 -- write :: Needs (a ': b) t ⊸ a -> Needs b t
 -- write (Needs bs) a = case bs of _ -> undefined
 
@@ -90,11 +93,11 @@ newtype Packed a = Packed ByteString
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Binary a => a -> Needs (a ': rst) t ⊸ Needs rst t
-writeC a nds =
-  case nds of
-    Needs bld1 -> Needs (bld1 `mappend`
-                         execPut (put a))
+writeC a (Needs bld1) =
+    Needs (bld1 `app`
+           execPut (put a))
 
+{-
 -- unsafeCoerceNeeds :: Needs a t -> Needs b t
                   
 -- | Reading from a cursor scrolls past the read item and gives a
@@ -194,9 +197,6 @@ runGetLin = runGetOrFail getWord8
 writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
 writeLeaf n (Needs b) = 
   Needs (b `app` execPut (put (Leaf n)))
-
-app :: Builder ⊸ Builder ⊸ Builder
-app = mappend -- HACK
 
 -- | Write a complete Branch node to the output cursor.
 --   First, write the tag.  Second, use the provided function to
