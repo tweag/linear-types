@@ -294,6 +294,36 @@
 
 \subsection{Freezing arrays}
 
+Let us consider immutable arrays. It is quite clear how to write an
+\textsc{api} for consuming such arrays: we can retrieve the value at a
+given index, map a function, pair-up values of two different arrays of
+the same length. But all of these combinators assume that an array
+already exists. How can we create an array? In the Haskell ecosystem,
+the preferred solution is usually to create a mutable array, let the
+programmer fill it the way he wants, and eventually ``freeze'' the
+mutable array into a mutable array.\improvement{cite vector library}
+\begin{code}
+  type MArray s a
+  type Array a
+
+  newMArray :: Int -> a -> ST s (MArray s a)
+  write :: MArray s a -> Int -> a -> ST s ()
+  read :: MArray s a -> Int -> ST s a
+  unsafeFreeze :: MArray s a -> ST s (Array a)
+  index :: Array a -> Int -> a
+\end{code}
+
+Note that the freezing primitive is called |unsafeFreeze| because it
+is, indeed, unsafe: after calling |unsafeArray marray| we get a new
+array |array|, but in order to avoid an unnecessary copy, |array| and
+|marray| are actually \emph{the same array}. But |array| is assumed to
+be immutable, so any mutation to |marray| will break that
+guarantee. As a consequence it is required of the caller of
+|unsafeFreeze| that he will not use |marray| again after that. But
+this is not enforced by the type system. Wouldn't it be better if we
+could tell the type system that |marray| ought to be cons
+
+
 \begin{code}
   type MArray a
   type Array a
