@@ -294,6 +294,43 @@
 
 \subsection{Freezing arrays}
 
+Let us consider immutable arrays. It is quite clear how to write an
+\textsc{api} for consuming such arrays: we can retrieve the value at a
+given index, map a function, pair-up values of two different arrays of
+the same length. But all of these combinators assume that an array
+already exists. How can we create an array? In the Haskell ecosystem,
+the preferred solution is usually to create a mutable array, let the
+programmer fill it the way he wants, and eventually ``freeze'' the
+mutable array into a mutable array.\improvement{cite vector
+  library}\improvement{Maybe explain that we need the |a| argument to
+  |newMArray| in order to initialise the array}
+\begin{code}
+  type MArray s a
+  type Array a
+
+  newMArray :: Int -> a -> ST s (MArray s a)
+  write :: MArray s a -> Int -> a -> ST s ()
+  read :: MArray s a -> Int -> ST s a
+  unsafeFreeze :: MArray s a -> ST s (Array a)
+  index :: Array a -> Int -> a
+\end{code}
+
+Note that the freezing primitive is called |unsafeFreeze| because it
+is, indeed, unsafe: after calling |unsafeArray marray| we get a new
+immutable array |array|, but in order to avoid an unnecessary copy,
+|array| and |marray| are actually \emph{the same array}. But any
+mutation to |marray| will break the immutability of |array|. As a
+consequence it is required of the caller of |unsafeFreeze| that he
+will not use |marray| again after that. But this is not enforced by
+the type system. Wouldn't it be better if we could tell the type
+system that |marray| ought to be \emph{consumed} by the |unsafeFreeze|
+call so that |marray| is not accessible to the programmer when |array|
+is? This way |unsafeFreeze| would not be unsafe anymore.
+
+\HaskeLL{} introduces a new kind of function type: the \emph{linear
+  arrow} |a⊸b|. In a linear function the argument |a| must be consumed
+\emph{exactly once}. This new arrow makes it possible to express the
+array \textsc{api} as follows:
 \begin{code}
   type MArray a
   type Array a
@@ -304,6 +341,29 @@
   freeze :: MArray a ⊸ Unrestricted (Array a)
   index :: Array a -> Int -> a
 \end{code}
+There are a few things to remark. First, and foremost, |freeze| is not
+|unsafe| any more. The second thing is that |write| and |Read| consume
+the |MArray|, then return the |MArray| again: this is necessary as if
+we were allowed to use the same |MArray| in several places, then it
+would not be possible to prevent its use after |freeze| has been
+effected. It means that we have to thread the |MArray| throughout the
+computation, on the other hand, none of the functions use the |ST|
+monad anymore. Notice that |read| also returns an |Unrestricted a|:
+you should read it as ``despite |read| being a linear function, the
+|a| need not be used in a linear''.
+
+The last thing of notice is the funny type of
+|newMArray|. Specifically it does not return an array, but it asks for
+a function |k| that consumes an array. The reason is that the type
+system of \HaskeLL{} can express that |k| consumes its argument
+exactly once. But it does not provide a direct way to return a value
+which must be consumed exactly once. Also note that |k| must return an
+unrestricted result, this is a common pattern in \HaskeLL{}: this make
+sure that the |MArray| argument has been consumed prior to |k|
+returning. If the |MArray| argument leaked, either by being directly
+returned, or hidden in a closure, then its linearity would be
+compromised and the \textsc{api} would be unsafe.\improvement{These
+  two last paragraphs are not very tight. Improve prose.}
 
 \begin{code}
   type WArray a
