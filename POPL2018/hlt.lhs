@@ -1113,6 +1113,21 @@ logic maybe?}
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 
+\begin{itemize}
+\item monomorphic multiplicity only
+\item only modifies the type inference mechanism
+\item modify the type of arrow to accept multiplicity
+\item arrow type used a lot in \textsc{ghc}, therefore quite a bit of
+  menial tasks
+\item Types are input, multiplicities are output
+\item Lattice-ordered semi-ring
+\item diff currently affects 1122, adds 436 net lines
+\item 3 files account for almost half of the changes: a file dedicated
+  to multiplicity operations, the file responsible of type
+  environment, and the file responsible for type-checking patterns.
+\item smaller changes all over the type-checker (113 files changed)
+\item Not compatible with all \textsc{ghc} syntax extensions.
+\end{itemize}
 \section{Related work}
 \label{sec:related}
 \subsection{Region-types}
