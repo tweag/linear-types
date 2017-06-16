@@ -24,6 +24,7 @@
 %format ρ = "\rho"
 %format ⅋ = "\parr"
 %subst keyword a = "\mathsf{" a "}"
+%format mediumSpace = "\hspace{0.6cm}"
 %format bigSpace = "\hspace{2cm}"
 %format allocT = "alloc_T"
 %format freeT = "free_T"
@@ -294,6 +295,7 @@
 \label{sec:programming-intro}
 
 \subsection{Freezing arrays}
+\label{sec:freezing-arrays}
 
 \subsubsection{Mutable arrays}
 
@@ -628,13 +630,20 @@ That is, we give a linear type to the |(:)| data constructor.
 Crucially, this is not a new, linear list type: this \emph{is}
 \HaskeLL{}'s list type, and all existing Haskell functions will work
 over it perfectly well.  But we can \emph{also} use the very same list
-type to contain linear resources (such as file handles) without
+type to contain linear values (such as file handles) without
 compromising safety; the type system ensures that resources in a list
-will eventually be deallocated by the programmer, and that they will
-not be used after that.
+will eventually be consumed by the programmer, and that they will not
+be used after that.
 
-Many list-based functions conserve the multiplicity of data, and thus can
-be given a more precise type. For example we can write |(++)| as follows:
+Let us introduce a piece of terminology: variables can be either
+linear or unrestricted depending on what kind of function introduced
+them, we call this dichotomy the \emph{multiplicity} of the
+variable. Furthermore we say that linear variables have multiplicity
+$1$ and unrestricted variables have multiplicity $ω$.
+
+Many list-based functions preserve the multiplicity of data, and thus
+can be given a more precise type. For example we can write |(++)| as
+follows:
 \begin{code}
 (++) :: [a] ⊸ [a] ⊸ [a]
 []      ++ ys = ys
@@ -657,7 +666,8 @@ contract that |(++)| offers to its callers; \emph{it does not restrict
   f xs ys = sum (xs ++ ys) + sum ys
 \end{code}
 Here the two arguments to |(++)| have different multiplicities, but
-the function |f| guarantees that it will consume |xs| precisely once.
+the function |f| guarantees that it will consume |xs| exactly once if
+|f xs ys| is consumed exactly once.
 
 For an existing language, being able to strengthen |(++)|, and similar
 functions, in a {\em backwards-compatible} way is a huge boon.  Of
@@ -684,6 +694,81 @@ data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
 \end{code}
 We will see in \fref{sec:non-linear-constructors} when it is also
 useful to have contstructors with unrestricted arrows.
+
+\subsection{Linearity polymorphism}
+\label{sec:lin-poly}
+
+As we have seen, implicit conversions between multiplicities make
+first-order linear functions {\em more general}. But the higher-order
+case thickens the plot. Consider that the standard |map| function over
+(linear) lists:
+\begin{code}
+map f []      = []
+map f (x:xs)  = f x : map f xs
+\end{code}
+It can be given the two following incomparable types:
+  |(a ⊸ b) -> [a] ⊸ [b]|  and
+  |(a -> b) -> [a] -> [b]|.
+%
+  Thus, \HaskeLL{} features quantification over multiplicities and
+  parameterised arrows (|A → _ q B|).  Using these, |map| can be given
+  the following most general type: |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ
+  [b]|.
+%
+Likewise, function composition can be given the following general type:
+\begin{code}
+(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(f ∘ g) x = f (g x)
+\end{code}
+That is: two functions that accept arguments of arbitrary
+multiplicities ($ρ$ and $π$ respectively) can be composed to form a
+function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
+product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
+%
+Finally, from a backwards-compatibility perspective, all of these
+subscripts and binders for multiplicity polymorphism can be {\em
+  ignored}. Indeed, in a context where client code does not use
+linearity, all inputs will have multiplicity $ω$, and transitively all
+expressions can be promoted to $ω$. Thus in such a context the
+compiler, or indeed documentation tools, can even altogether hide
+linearity annotations from the programmer when this language
+extension is not turned on.
+
+\subsection{Linearity of constructors: the usefulness of unrestricted constructors}
+\label{sec:non-linear-constructors}
+
+We saw in \fref{sec:linear-constructors} that data types in \HaskeLL{} have
+linear arguments by default. Do we ever need data constructors
+unrestricted arguments?  Yes, we do.
+
+Using the type |T| of \fref{sec:consumed}, consider the |freeze|
+function from \fref{sec:freezing-arrays}. We could define it in
+\textsc{cps} style but a direct style is more convenient: %
+\begin{code}
+  freeze :: (Array a -> r) ⊸ MArray a ⊸ r mediumSpace vs. mediumSpace copy :: MArray a ⊸ Unrestricted (Array a)
+\end{code}
+where |Unrestricted| is a data type with
+a non-linear constructor\footnote{The type constructor
+  |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
+  modality written ${!}$ in linear logic.}:
+\begin{code}
+  data Unrestricted a where Unrestricted :: a → Unrestricted a
+\end{code}
+The |Unrestricted|
+data type is used to indicate that when a value |(Unrestricted x)| is consumed
+once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
+consumed.
+With our primitive in hand, we can now use ordinary code to freeze
+a list of |Marray| values into a list of arrays (we mark patterns in
+|let| and |where|
+with |!|, Haskell's syntax for strict pattern bindings: \HaskeLL{}
+does not support lazy pattern bindings of linear values, |case| on the
+other hand, is always strict):
+\begin{code}
+  freezeList :: [MArray a] ⊸ Unrestricted [Array a]
+  freezeList (x:xs) = Unrestricted (x':xs')  where  !(Unrestricted xs')  = freezeList xs
+                                                    !(Unrestricted x')   = freeze x
+\end{code}
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
