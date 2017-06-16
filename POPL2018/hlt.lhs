@@ -1347,6 +1347,113 @@ Implementing this behaviour is left for future work.
 
 \section{Conclusion and future work}
 
+This article demonstrated how an existing lazy language, such
+as Haskell, can be extended with linear types, without compromising
+the language, in the sense that:
+\begin{itemize}
+\item existing programs are valid in the extended language
+  \emph{without modification},
+\item such programs retain the same semantics, and
+\item the performance of existing programs is not affected,
+\item yet existing library functions can be reused to serve the
+  objectives of resource sensitive programs with simple changes to
+  their types without being duplicated.\unsure{Do we still speak of
+    resource sensitivity all that much?}
+\end{itemize}
+In other words: regular Haskell comes first. Additionally, first-order
+linearly typed functions and data structures are usable directly from
+regular Haskell code. In such a setting their semantics is that of
+the same code with linearity erased.
+
+\HaskeLL{} was engineered as an unintrusive design, making it tractable
+to integrate to an existing, mature compiler with a large ecosystem.
+We have developed a prototype implementation extending
+\textsc{ghc} with multiplicities. The main difference between the
+implementation and \calc is that the implementation is adapted to
+bidirectionality: typing contexts go in, inferred multiplicities come
+out (and are compared to their expected values). As we hoped, this
+design integrates very well in \textsc{ghc}.
+
+\improvement{We don't talk about the ffi all that much in this version
+I think. This paragraph ought to be adapted to match the content of
+the evaluation section.}
+It is worth stressing that, in order to implement foreign data
+structures like we advocate as a means to
+provide safe access to resources or reduce \textsc{gc} pressure and
+latency, we only need to modify the type system: primitives to
+manipulate foreign data can be implemented in user libraries using the
+foreign function interface. This helps keeping the prototype lean,
+since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
+
+\todo{Section on the |newtype Unrestricted| problem. I guess?}
+
+\subsection{Fusion}
+\label{sec:fusion}
+
+\improvement{This section seems to be unclear. Either too long or too short.}
+Inlining is a staple of program optimisation, exposing opportunities
+for many program transformation including fusion. Not every function
+can be inlined without negative effects on performance: inlining a
+function with two use sites of the argument may result in duplicating
+a computation.
+
+In order to discover inlining opportunities \textsc{ghc} deploys a
+cardinality analysis~\cite{sergey_cardinality_2014} which determines
+how many times functions use their arguments. The limitation of such
+an analysis is that it is necessarily heuristic (the problem is
+undecidable). Consequently, it can be hard for the programmer to rely
+on such optimisations: a small, seemingly innocuous change can prevent
+a critical inlining opportunity and have rippling effects throughout
+the program. Hunting down such a performance regression proves
+painful in practice.
+
+Linear types address this issue and serve as a programmer-facing
+interface to inlining: because it is always safe to inline a linear
+function, we can make it part of the \emph{semantics} of linear
+functions that they are always inlined. In fact, the system of
+multiplicity annotation of \calc{} can be faithfully embedded the
+abstract domain presented by \citet{sergey_cardinality_2014}. This
+gives confidence in the fact that multiplicity annotation can serve as
+cardinality \emph{declarations}.
+
+Formalising and implementing the integration of multiplicity
+annotation in the cardinality analysis is left as future work.
+
+\subsection{Extending multiplicities}
+
+\improvement{This section could speak about the borrowing multiplicity.}
+For the sake of this article, we use only $1$ and $ω$ as
+possibilities.  But in fact \calc{} can readily be extended to more
+multiplicities: we can follow \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016}, which work with abstract sets of
+multiplicities.  In particular, in order to support dependent types,
+we additionally need a $0$ multiplicity.
+
+Applications of multiplicities beyond linear logic seem to often have
+too narrow a focus to have their place in a general purpose language
+such as Haskell. \Citet{ghica_bounded_2014} propose to use
+multiplicities to represent real time annotations, and
+\citet{petricek_coeffects_2013} show how to use multiplicities to
+track either implicit parameters (\emph{i.e.} dynamically scoped
+variables) or the size of the history that a dataflow program needs to
+remember.
+
+To go further still, more multiplicities may prove useful. For instance we
+may want to consider a multiplicity for affine arguments (\emph{i.e.}
+arguments which can be used \emph{at most once}).
+
+The general setting for \calc{} is an ordered-semiring of
+multiplicities (with a join operation for type inference). The rules
+are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
+must exclude $q=0$ (in particular we see that we cannot
+substitute multiplicity variables by $0$). The variable rule is
+modified as:
+$$
+\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
+$$
+Where the order on contexts is the point-wise extension of the order
+on multiplicities.
+
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
                                         %% contents suppressed with 'anonymous'
