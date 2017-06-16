@@ -290,9 +290,11 @@
 
 \section{Introduction}
 
-\subsection{A taste of \HaskeLL{}}
+\section{A taste of \HaskeLL{}}
 
 \subsection{Freezing arrays}
+
+\subsubsection{Mutable arrays}
 
 Let us consider immutable arrays. It is quite clear how to write an
 \textsc{api} for consuming such arrays: we can retrieve the value at a
@@ -376,32 +378,54 @@ program.\improvement{Maybe more about the comparison to |ST|
   here. Though it would probably be better to have a dedicated section
   in the related work section.}
 
+\subsubsection{Initialisation of byte-arrays}
+
+Emboldened by our success, we may try to do something which is, in
+regular Haskell, even more unsafe. Something that used improperly
+would yield the dreaded \verb+segfault+. Indeed, |newMArray|
+initialises all of its cells with some initial value. It is needed for
+three reasons: we can read the mutable array, if we would access
+uninitialised memory cells the program would \verb+segfault+; even if
+we refrain from reading from the mutable array, we will read from the
+frozen array, so it must be fully initialised; and the garbage
+collector will traverse the array and cannot handle uninitialised
+memory.
+
+But if we are considering an array a binary data, \emph{i.e.} which
+contains no pointer to garbage collected objects, like a |ByteArray|
+in Haskell, then we know that the garbage collector will not traverse
+the array. Therefore, as long as we don't access uninitialised data, a
+pre-initialisation of the entire array is a waste.
+
+With linear types, we can make sure that uninitialised data is never
+accessed. There is more than one way to approach this problem. Let us
+focus on the cache-friendly left-to-right initialisation: that is, we
+will start with an uninitialised byte-array and fill the leftmost
+byte, when we are finished, we will freeze the byte-array leaving any
+remaining data uninitialised, but also inaccessible.\improvement{Say
+  that |WByteArray| is write-only}
 \begin{code}
-  type WArray a
-  type Array a
+  type WByteArray
+  type ByteArray
 
-  initArray :: Int -> (WArray a ⊸ Unrestricted b) ⊸ Unrestricted (Array a, b)
-  split :: WArray a -> Int ⊸ (WArray a, WArray a)
-  fill :: (Int -> a) -> WArray a ⊸ ()
-
-  index :: Array a -> Int -> a
+  allocByteArray :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
+  writeByte :: World8 -> WByteArray ⊸ ()
+  freezeByteArray :: WByteArray ⊸ Unrestricted ByteArray
+  index :: ByteArray -> Worl8 -> a
 \end{code}
 
 \subsection{I/O protocols}
 
-In the previous section, we got rid of the |ST| monad
-entirely. Instead linear values must be threaded explicitly. This is
-not really a cost in our example, as we would have to thread
-destinations one way or another. However there is a gain: actions on
-distinct destinations are not sequentialised. This means that the
-compiler is free to reorder such actions in order to find more
-optimisation opportunities.
+In the previous section, we got rid of the |ST| monad entirely. There
+is a gain: actions on distinct arrays are not
+sequentialised. This means that the compiler is free to reorder such
+actions in order to find more optimisation opportunities.
 
-On the other hand, in other cases, we may need actions to be fully
+On the other hand, in other cases, we need actions to be fully
 sequentialised, because they are interacting with the real world. This
 is the world of |IO| action. In this case, linearity will not serve to
 make the program less sequentialised~---~it must not be~---~but will
-help make sure that a sequence of action obey a certain discipline. We
+help make sure that a sequence of actions obey a certain discipline. We
 think of such disciplines as protocols\footnote{Such protocol can be
   imposed on actual network communications, in which case they are
   actual communication protocols. See
