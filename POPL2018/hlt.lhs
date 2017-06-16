@@ -291,6 +291,7 @@
 \section{Introduction}
 
 \section{A taste of \HaskeLL{}}
+\label{sec:programming-intro}
 
 \subsection{Freezing arrays}
 
@@ -299,13 +300,14 @@
 Let us consider immutable arrays. It is quite clear how to write an
 \textsc{api} for consuming such arrays: we can retrieve the value at a
 given index, map a function, pair-up values of two different arrays of
-the same length. But all of these combinators assume that an array
-already exists. How can we create an array? In the Haskell ecosystem,
-the preferred solution is usually to create a mutable array, let the
-programmer fill it the way he wants, and eventually ``freeze'' the
-mutable array into a mutable array.\improvement{cite vector
-  library}\improvement{Maybe explain that we need the |a| argument to
-  |newMArray| in order to initialise the array}
+the same length, etc… But all of these combinators assume that an
+array already exists. How can we create a brand new array? In the
+Haskell ecosystem, the preferred solution is usually to create a
+mutable array, let the programmer fill it the way he wants, and
+eventually ``freeze'' the mutable array into a mutable
+array.\improvement{cite vector library}\improvement{Maybe explain that
+  we need the |a| argument to |newMArray| in order to initialise the
+  array}
 \begin{code}
   type MArray s a
   type Array a
@@ -317,7 +319,7 @@ mutable array into a mutable array.\improvement{cite vector
   index :: Array a -> Int -> a
 \end{code}
 
-Note that the freezing primitive is called |unsafeFreeze| because it
+The freezing primitive is called |unsafeFreeze| because it
 is, indeed, unsafe: after calling |unsafeArray marray| we get a new
 immutable array |array|, but in order to avoid an unnecessary copy,
 |array| and |marray| are actually \emph{the same array}. But any
@@ -330,7 +332,7 @@ call so that |marray| is not accessible to the programmer when |array|
 is? This way |unsafeFreeze| would not be unsafe anymore.
 
 \HaskeLL{} introduces a new kind of function type: the \emph{linear
-  arrow} |a⊸b|. In a linear function the argument |a| must be consumed
+  arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
 \emph{exactly once}. This new arrow makes it possible to express the
 array \textsc{api} as follows:
 \begin{code}
@@ -567,6 +569,20 @@ that |readLine| will close the file handle in that case. So
 |closeFile| only needs to be called when we do not want to consume the
 entire file.
 
+\section{\calc{}: a core calculus for \HaskeLL}
+\label{sec:statics}
+
+\section{Evaluation}
+\label{sec:evaluation}
+
+\section{Implementing \HaskeLL}
+\label{sec:implementation}
+
+\section{Related work}
+\label{sec:related}
+
+\section{Conclusion and future work}
+
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
                                         %% contents suppressed with 'anonymous'
@@ -577,7 +593,6 @@ entire file.
   This work has received funding from the European Commission
   through the SAGE project (grant agreement no. 671500).
 \end{acks}
-
 
 %% Bibliography
 \bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
