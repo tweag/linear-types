@@ -363,7 +363,18 @@ sure that the |MArray| argument has been consumed prior to |k|
 returning. If the |MArray| argument leaked, either by being directly
 returned, or hidden in a closure, then its linearity would be
 compromised and the \textsc{api} would be unsafe.\improvement{These
-  two last paragraphs are not very tight. Improve prose.}
+  two last paragraphs are not very tight. Improve prose. In
+  particular, I don't even mention that freeze returns an
+  |Unrestricted| array.}
+
+We replaced the |ST| monad by manually threading individual mutable
+arrays. The single-threadedness of each array is ensured by the type
+system. Compared to |ST|, it is interesting that actions on
+two independent arrays are \emph{not} sequentialised. Yielding more
+opportunities for the compiler to reorder and optimise a
+program.\improvement{Maybe more about the comparison to |ST|
+  here. Though it would probably be better to have a dedicated section
+  in the related work section.}
 
 \begin{code}
   type WArray a
@@ -555,3 +566,5 @@ entire file.
 Text of appendix \ldots
 
 \end{document}
+
+%  LocalWords:  sequentialised
