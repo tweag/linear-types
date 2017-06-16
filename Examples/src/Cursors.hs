@@ -24,29 +24,8 @@ import Data.ByteString.Builder as B
 import Data.Binary (get, put, Binary, encode, decode, getWord8)
 import Data.Binary.Get (runGetOrFail, Get)
 import Data.Binary.Put (execPut)
-
-import Unsafe.Coerce (unsafeCoerce)
-    
--- Prereqs
---------------------------------------------------------------------------------
-
-data a ⊗ b where
- Tensor :: a ⊸ b ⊸ a ⊗ b
-  deriving Show
-
--- Fails, as it should:
--- flip' :: a ⊗ a ⊸ a ⊗ a
--- flip' (Tensor a b) = Tensor b b
- 
-flipT :: a ⊗ b ⊸ b ⊗ a
-flipT (Tensor a b) = Tensor b a
-
---------------------------------------------------------------------------------
-
-data Unrestricted a where
-    Unrestricted :: a -> Unrestricted a 
-  deriving (Show,Eq)
-
+import Linear.Std
+import Linear.Unsafe
 
 -- Scratch: experiments and tests
 ------------------------------------------------------------
@@ -62,9 +41,6 @@ data Unrestricted a where
 f' :: Int -> Unrestricted Int
 f' n = Unrestricted n
 
-freeInt :: Int ⊸ ()
-freeInt = unsafeCastLinear (\_->())
-
 freeHas :: Has a ⊸ ()
 freeHas = unsafeCastLinear (\_->())
        
@@ -77,17 +53,9 @@ g n = n
 --   case n of _ -> 3
 
 -- This is ok:
--- foo (freeInt n) where foo :: () ⊸ Int; foo () = 3
+-- foo (drop n) where foo :: () ⊸ Int; foo () = 3
 
--- Hacks and cheats:           
---------------------------------------------------------------------------------
 
-unsafeCastLinear2 :: (a -> b -> c) -> (a ⊸ b ⊸ c)
-unsafeCastLinear2 = unsafeCoerce
-
-unsafeCastLinear :: (a -> b) -> (a ⊸ b)
-unsafeCastLinear = unsafeCoerce
-                    
 app :: Builder ⊸ Builder ⊸ Builder
 app = unsafeCastLinear2 bapp -- HACK
  where
@@ -279,12 +247,12 @@ add1 pt = fromHas fin
   f1 :: Needs '[Tree] Tree ⊸ Unrestricted (Has '[Tree])
   f1 oc = f2 (go (toHas pt) oc)
 
-  f2 :: (Unrestricted (Has '[]) ⊗ Needs '[] Tree) ⊸ Unrestricted (Has '[Tree])
-  f2 (Tensor (Unrestricted _) oc2) = finish2 oc2
+  f2 :: (Unrestricted (Has '[]), Needs '[] Tree) ⊸ Unrestricted (Has '[Tree])
+  f2 (Unrestricted _, oc2) = finish2 oc2
 
   -- This version uses ω-weight read pointers but linear write cursors.
   go :: forall b t . Has (Tree ': b) -> Needs (Tree ': b) t ⊸
-                     (Unrestricted (Has b) ⊗ Needs b t)
+                     (Unrestricted (Has b), Needs b t)
   go = undefined
 
   -- This version uses linear read and write cursors.
