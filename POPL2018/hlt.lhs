@@ -1113,21 +1113,60 @@ logic maybe?}
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 
-\begin{itemize}
-\item monomorphic multiplicity only
-\item only modifies the type inference mechanism
-\item modify the type of arrow to accept multiplicity
-\item arrow type used a lot in \textsc{ghc}, therefore quite a bit of
-  menial tasks
-\item Types are input, multiplicities are output
-\item Lattice-ordered semi-ring
-\item diff currently affects 1122, adds 436 net lines
-\item 3 files account for almost half of the changes: a file dedicated
-  to multiplicity operations, the file responsible of type
-  environment, and the file responsible for type-checking patterns.
-\item smaller changes all over the type-checker (113 files changed)
-\item Not compatible with all \textsc{ghc} syntax extensions.
-\end{itemize}
+We are implementing \HaskeLL{} as a branch over the 8.2 version
+\textsc{ghc}, the leading Haskell compiler. At time of writing this
+branch only modifies the type inference of the compiler, neither the
+intermediate language (Core\improvement{citation for Core}) nor the
+run-time system are affected. We have only implemented monomorphic
+multiplicities so far. Our \HaskeLL{} implementation is not compatible
+with every \textsc{ghc} extension yet, but is compatible with
+standardised Haskell\unsure{This ought to be checked} as well as many
+extensions.
+
+In order to implement the linear arrow, we followed the design of
+\calc{} and added a multiplicity annotation to arrows, as an
+additional argument of the type constructor for arrows of
+\textsc{ghc}'s type checker. The constructor for arrow types is
+constructed and destructed a lot in \textsc{ghc}'s type checker, this
+accounts for most of the modifications to existing code.
+
+Where the implementation defers from \calc{} is the way multiplicity
+are computed: whereas in the \calc{} multiplicities are inputs of the
+type-checking algorithm, in the implementation multiplicities are
+outputs of type inference. The main reason for this choice is that it
+makes prevents us from having to split the context along
+multiplicities (for instance in the application rule), which would
+have been achieved, in practice, by extending the semi-ring structure
+with partial operations for subtraction and division.
+
+Instead, in the application rule, we get the multiplicities of the
+variables in each of the operands as inputs and we can add them
+together. We still need to require more than just a semi-ring though:
+we need an ordering of the multiplicity semi-ring (such that
+$1\leqslant ω$) in order to check that the computed multiplicity is
+correct with respect to multiplicity annotations. In addition to the
+ordering, we need to be able to join the multiplicity computed in the
+branches of a |case|. To that effect, we need a supremum
+operation. Therefore the multiplicities need to form a
+join-semi-lattice-ordered semi-ring.
+
+Implementing this branch affects 1122 lines of \textsc{ghc} (for
+comparison the parts of the compiler that were affected by \HaskeLL{}
+total about 100000 lines of code), including 436 net extra lines. A new
+file responsible for multiplicity operations as well the files
+responsible for type environment manipulation and type inference of
+patterns account for almost half of the affected lines. The rest spans
+over a 100 files most of which have 2 or 3 lines modified to account
+for the extra multiplicity argument of the arrow constructor. This
+required roughly 1 man-month to implement.
+
+These figures vindicate our claim that \HaskeLL{} is easy to integrate
+into an existing implementation: despite \textsc{ghc} being 25 years
+old, we could implement a first version of \HaskeLL{} with relatively
+low effort.
+
+\improvement{Our branch has been used to implement…}
+
 \section{Related work}
 \label{sec:related}
 \subsection{Region-types}
@@ -1492,4 +1531,4 @@ Text of appendix \ldots
 
 \end{document}
 
-%  LocalWords:  sequentialised
+%  LocalWords:  sequentialised supremum
