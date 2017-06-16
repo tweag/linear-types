@@ -15,6 +15,8 @@
 
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
+\DeclareUnicodeCharacter{8797}{\ensuremath{\stackrel{\scriptscriptstyle {\mathrm{def}}}{=}}}
+\DeclareUnicodeCharacter{183}{\ensuremath{\cdot}} % ·
 %include polycode.fmt
 %format .         = ". "
 %format forall a         = "∀" a
@@ -617,6 +619,11 @@ of |x|:
   for the details.
 \end{itemize}
 
+In the same spirit, an unrestricted value |u| can never point to a
+linear value |v|: if |u| is never consumed (which is a correct use of
+an unrestricted value), then |v| will never be consumed either, which
+is incorrect of a linear value.
+
 \subsection{Linear data types}
 \label{sec:linear-constructors}
 
@@ -770,8 +777,335 @@ other hand, is always strict):
                                                     !(Unrestricted x')   = freeze x
 \end{code}
 
+Note that according to the definition of \fref{sec:consumed},
+consuming a value of type |Unrestricted a| means evaluating it, the
+|a| inside need not be consumed, or can be consumed any number of
+time. Therefore a function of type |a ⊸ Unrestricted b| is a function
+that will consume its argument exactly once if its result is ever
+evaluated. This is why |Unrestricted| appears in many abstractions in
+order to ensure that values have been consumed at a given point in the
+program.
+
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
+
+In this section we turn to the calculus at the core of \HaskeLL{},
+which we refer to as
+\calc{}, and for which we provide a step-by-step account of its syntax and typing
+rules.
+
+As we discussed in \fref{sec:consumed}, the meaning of linear
+functions is that they will consume their argument \emph{exactly once}
+if their result is consumed exactly once. The role of the type system
+of \calc{} is to enforce this very property.
+
+Let us point out that closures (partial applications or lazy thunks)
+may need to be consumed exactly once. Indeed, as we explained in
+\fref{sec:consumed}, unrestricted values do not point to linear
+values, so if any member of a closure is linear, so must the closure
+itself.
+
+\subsection{Syntax}
+\label{sec:syntax}
+
+The term syntax (\fref{fig:syntax}) is that of a type-annotated
+(\emph{à la} Church) simply typed $λ$-calculus with let-definitions.
+Binders in $λ$-abstractions and type definitions are annotated both
+with their type and their multiplicity. Multiplicity abstraction and
+application are explicit.
+
+In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
+A\) has a non-standard reading: it asserts that consuming the term
+$t : A$ \emph{exactly once} will consume $Γ$ exactly once
+(see \fref{sec:consumed}).
+
+\begin{figure}
+  \figuresection{Multiplicities}
+  \begin{align*}
+    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
+  \end{align*}
+  \figuresection{Contexts}
+  \begin{align*}
+    Γ,Δ & ::=\\
+        & ||  x :_q A, Γ & \text{multiplicity-annotated binder} \\
+        & ||     & \text {empty context}
+  \end{align*}
+
+  \figuresection{Type declarations}
+  \begin{align*}
+    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \end{align*}
+
+  \figuresection{Types}
+  \begin{align*}
+  A,B &::=\\
+      & ||  A →_q B &\text{function type}\\
+      & ||  ∀ρ. A &\text{multiplicity-dependent type}\\
+      & ||  D &\text{data type}
+  \end{align*}
+
+  \figuresection{Terms}
+  \begin{align*}
+    e,s,t,u & ::= \\
+            & ||  x & \text{variable} \\
+            & ||  λ(x:_qA). t & \text{abstraction} \\
+            & ||  t s & \text{application} \\
+            & ||  λπ. t & \text{multiplicity abstraction} \\
+            & ||  t p & \text{multiplicity application} \\
+            & ||  c t₁ … t_n & \text{data construction} \\
+            & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & ||  \flet x_1 :_{q₁}A₁ = t₁ … x_n :_{q_n}A_n = t_n \fin u & \text{let}
+  \end{align*}
+
+  \caption{Syntax of the linear calculus}
+  \label{fig:syntax}
+  \label{fig:contexts}
+\end{figure}
+
+The types of \calc{} (see \fref{fig:syntax}) are simple types with
+arrows (albeit multiplicity-annotated ones), data types, and
+multiplicity polymorphism. The annotated function type is a
+generalisation of the intuitionistic arrow and the linear arrow. We
+use the following notations:
+\(A → B ≝  A →_ω B\) and
+\(A ⊸ B ≝ A →_1 B\).
+
+The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
+that consuming $f u : B$ exactly once will consume $q$ times the value
+$u{:}A$. Therefore, a function of type $A→B$ \emph{must} be applied to
+an unrestricted argument, while a function of type $A⊸B$ \emph{may} be
+applied to any argument, linear or not.
+%
+One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
+is however, not so, because there is no notion of subtyping in \calc{}. This
+is a salient choice in our design. Our objective is to integrate with
+existing typed functional languages such as Haskell and the
+\textsc{ml} family, which are based on Hindley-Milner-style
+polymorphism. Hindley-Milner-style polymorphism, however, does not
+mesh well with subtyping as the extensive exposition by
+\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
+multiplicity polymorphism for the purpose of reuse of higher-order
+function as we described in \fref{sec:lin-poly}.
+
+Data type declarations (see \fref{fig:syntax}) are of the following form:
+\begin{align*}
+  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+\end{align*}
+The above declaration means that \(D\) has \(m\) constructors \(c_k\)
+(where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
+constructors have a multiplicity, just like arguments of functions: an
+argument of multiplicity $ω$ means that the data type can store, at
+that position, data which \emph{must} reside in the dynamic heap;
+while a multiplicity of $1$ means that data at that position
+\emph{can} reside in either heap. For simplicity's sake, we assume
+that the multiplicities $q_i$ must be concrete (\emph{i.e.} either $1$
+or $ω$) even though \HaskeLL{} has multiplicity-polymorphic data
+types.
+
+For most purposes, $c_k$ behaves like a constant with the type
+$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+\fref{fig:typing} make clear, this means in particular that from a
+value $d$ of type $D$ with multiplicity $ω$, pattern matching
+extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
+the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
+with multiplicity $ω$.
+
+Note that, as discussed in \fref{sec:linear-constructors},
+constructors with arguments of multiplicity $1$ are not more general
+than constructors with arguments of multiplicity $ω$, because if, when
+constructing $c u$ with the argument of $c$ of multiplicity $1$, $u$
+\emph{may} be either of multiplicity $1$ or of multiplicity $ω$;
+dually when pattern-matching on $c x$, $x$ \emph{must} be of
+multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
+on the other hand, then $x$ could be used either as having
+multiplicity $ω$ or $1$).
+
+%%% typing rule macros %%%
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
+\newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
+      x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
+    {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
+%%% /macros %%%
+
+\begin{figure}
+  \begin{mathpar}
+    \varrule
+
+    \inferrule{Γ, x :_{q} A  ⊢   t : B}
+    {Γ ⊢ λ(x:_q A). t  :  A  →_q  B}\text{abs}
+
+    \apprule
+
+    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
+        A_n →_{q_n} D$ constructor}}
+    {ωΓ+\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n : D}\text{con}
+
+    \caserule
+
+    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
+    { Δ+\sum_i q_iΓ_i ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
+
+    \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
+    {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
+
+    \inferrule{Γ ⊢ t :  ∀π. A}
+    {Γ ⊢ t p  :  A[p/π]}\text{m.app}
+  \end{mathpar}
+
+  \caption{Typing rules}
+  \label{fig:typing}
+\end{figure}
+
+\subsection{Contexts}
+\label{sec:typing-contexts}
+Many of the typing rules scale contexts by a multiplicity, or add
+contexts together. We will
+explain the why very soon in \fref{sec:typing-rules}, but first, let
+us focus on the how.
+
+In \calc{}, each variable binding, in a typing context, is annotated with a
+multiplicity. These multiplicity annotations are the natural counterpart
+of the multiplicity annotations on abstractions and arrows.
+
+For multiplicities we need the concrete multiplicities $1$ and $ω$ as
+well as multiplicity variables (ranged over by the metasyntactic
+variables \(π\) and \(ρ\)) for the sake of polymorphism. However, we
+are going to need to multiply and add multiplicities together,
+therefore we also need formal sums and products of multiplicities.
+%
+Multiplicity expressions are quotiented by the following equivalence
+relation:
+\begin{definition}[equivalence of multiplicities]
+  \label{def:equiv-multiplicity}
+  The equivalence of multiplicities is the smallest transitive and
+  reflexive relation, which obeys the following laws:
+\begin{itemize}
+\item $+$ and $·$ are associative and commutative
+\item $1$ is the unit of $·$
+\item $·$ distributes over $+$
+\item $ω · ω = ω$
+\item $1 + 1 = 1 + ω = ω + ω = ω$
+\end{itemize}
+\end{definition}
+Thus, multiplicities form a semi-ring (without a zero), which extends to a
+module structure on typing contexts as follows.
+
+\begin{definition}[Context addition]~
+  \begin{align*}
+    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
+    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
+    () + Δ &= Δ
+  \end{align*}
+\end{definition}
+Context addition is total: if a variable occurs in both operands the
+first rule applies (with possible re-ordering of bindings in $Δ$), if
+not the second or third rule applies.
+
+\begin{definition}[Context scaling]
+  \begin{displaymath}
+    p(x :_q A, Γ) =  x :_{pq} A, pΓ
+  \end{displaymath}
+\end{definition}
+
+\begin{lemma}[Contexts form a module]
+  The following laws hold:
+  \begin{align*}
+    Γ + Δ &= Δ + Γ &
+    p (Γ+Δ) &= p Γ + p Δ\\
+    (p+q) Γ &= p Γ+ q Γ \\
+    (pq) Γ &= p (q Γ) &
+    1 Γ &= Γ
+  \end{align*}
+\end{lemma}
+
+\subsection{Typing rules}
+\label{sec:typing-rules}
+
+We are now ready to understand the typing rules of
+\fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
+reads as: consuming the term $t:A$ once consumes $Γ$ once. But what if
+we want to consume $t$ more than once? This is where context scaling
+comes into play, like in the application rule:
+$$\apprule$$
+The idea is that consuming $u$ an arbitrary number of times also
+consumes $Δ$ an arbitrary number of times, or equivalently, consumes
+$ωΔ$ exactly once. We call this the \emph{promotion
+  principle}\footnote{The name \emph{promotion principle} is a
+  reference to the promotion rule of linear logic. In \calc{},
+  however, promotion is implicit.}: to know how to consume a value any
+number of times it is sufficient (and, in fact, necessary) to know how
+to consume said value exactly once.
+
+To get a better grasp of the application rule and the promotion
+principle, you may want to consider how it indeed validates
+following judgement. In this judgement, $π$ is a
+multiplicity variable; that is, the judgement is
+multiplicity-polymorphic:
+$$f:_ωA→_πB, x:_π A ⊢ f x$$
+
+This implicit use of the promotion principle in rules such as the
+application rule is the technical device
+which makes the intuitionistic $λ$-calculus a subset of
+\calc{}. Specifically the subset where all variables are annotated
+with the multiplicity $ω$:
+$$
+\inferrule
+{\inferrule
+  {\inferrule
+    {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
+    {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
+  {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
+{()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
+$$
+This latter fact is, in turn, why \HaskeLL{} is an extension of Haskell
+(provided unannotated bindings are understood
+as having multiplicity $ω$).
+%
+The variable rule, as used above, may require some
+clarification:
+$$\varrule$$
+The variable rule implements weakening of
+unrestricted variables: that is, it lets us ignore variables with
+multiplicity $ω$\footnote{Pushing weakening to the variable rule is
+  classic in many $λ$-calculi, and in the case of linear logic,
+  dates back at least to Andreoli's work on
+  focusing~\cite{andreoli_logic_1992}.}. Note that the judgement
+$x :_ω A ⊢ x : A$ is an instance of the variable rule, because
+$(x :_ω A)+(x :_1 A) = x:_ω A$. The constructor rule has a similar
+$ωΓ$ context: it is necessary to support weakening at the level of
+constant constructors.
+
+Most of the other typing rules are straightforward, but let us linger
+for a moment on the unusual, yet central to our design, case rule, and specifically on its multiplicity
+annotation:
+$$\caserule$$
+The interesting case is when $p=ω$, which reads as: if we can consume
+$t$ an arbitrary number of time, then so can we of its
+constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
+are its constituents (see \ref{sec:consumed}). As a consequence, the
+following program, which asserts the existence of projections, is
+well-typed (note that, both in |first| and |snd|, the arrow is~---~and
+must be~---~unrestricted).
+\begin{code}
+  first  ::  (a,b) →   a     bigSpace    snd  ::  (a,b) →   b
+  first      (a,b)  =  a                 snd      (a,b)  =  b
+\end{code}
+
+This particular formulation of the case rule is not implied by the
+rest of the system: only the case $p=1$ is actually necessary. Yet,
+providing the case $p=ω$
+is the design choice which makes it possible to consider data-type
+constructors as linear by default, while preserving the semantics of
+the intuitionistic $λ$-calculus (as we already stated in
+\fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
+defined in libraries which are not aware of linear type (\emph{i.e.}
+libraries in pure Haskell) can nevertheless be immediately useful in a
+linear context. Inheritance of multiplicity is thus crucial for
+backwards compatibility, which is a design goal of
+\HaskeLL{}.\improvement{Announce here what it means in terms of linear
+logic maybe?}
 
 \section{Evaluation}
 \label{sec:evaluation}
