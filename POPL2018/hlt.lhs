@@ -415,9 +415,9 @@ remaining data uninitialised, but also inaccessible.\improvement{Say
   type ByteArray
 
   allocByteArray :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
-  writeByte :: World8 -> WByteArray ⊸ ()
+  writeByte :: Word8 -> WByteArray ⊸ ()
   freezeByteArray :: WByteArray ⊸ Unrestricted ByteArray
-  index :: ByteArray -> Worl8 -> a
+  index :: ByteArray -> Word8 -> a
 \end{code}
 
 \subsection{I/O protocols}
