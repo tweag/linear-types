@@ -569,6 +569,122 @@ that |readLine| will close the file handle in that case. So
 |closeFile| only needs to be called when we do not want to consume the
 entire file.
 
+\subsection{Operational intuitions}
+\label{sec:consumed}
+
+We have said repeatedly spoken loosely of \emph{``consuming a value
+  exactly once''}. But what does ``consuming a value exactly once''
+mean? Let us give a more precise operational intuition:
+\begin{itemize}
+\item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
+\item To consume a function exactly once, call it, and consume its result exactly once.
+\item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
+\item More generally, to consume exactly once a value of an algebraic data type, evaluate
+  it and consume all its linear components exactly once.
+\end{itemize}
+
+We can now give a more precise definition of what a linear function |f
+:: a ⊸ b| means: |f| guarantees that \emph{if |f u| is consumed
+  exactly once}, then |u| is consumed exactly once. A salient point of
+this definition is that ``linear'' emphatically does not imply
+``strict''. Our linear function space behaves as Haskell programmers
+expect.
+
+A consequence of this definition is that an \emph{unrestricted} value,
+\emph{i.e.} one which is not guaranteed to be used exactly once, such
+as the argument of a regular function |g :: a -> b|, can freely be
+passed to |f|: |f| offers stronger guarantees than regular
+functions. On the other hand a linear value |u|, such as the argument of
+|f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
+times, or none at all, both violating the linearity guarantee that |u|
+must be consumed exactly once.
+
+In light of this definition, suppose that we have |f :: a ⊸ b| and |g
+:: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
+of |x|:
+\begin{itemize}
+\item If |x| is a linear variable, \emph{i.e.} it must be consumed
+  exactly once, we can ensure that it's consumed exactly once by
+  consuming |f| exactly once: it is the definition of linear
+  functions. However, |g| does not guarantee that it will consume |f
+  x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
+  x)| cannot be well-typed.
+\item If |x| is an unrestricted variable, on the other hand, there is
+  no constraint on how |x| must be consumed. So |g (f x)| is perfectly
+  valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
+  for the details.
+\end{itemize}
+
+\subsection{Linear data types}
+\label{sec:linear-constructors}
+
+Using the new linear arrow, we can (re-)define Haskell's list type as follows:
+\begin{code}
+data [a] where
+  []   :: [a]
+  (:)  :: a ⊸ [a] ⊸ [a]
+\end{code}
+That is, we give a linear type to the |(:)| data constructor.
+Crucially, this is not a new, linear list type: this \emph{is}
+\HaskeLL{}'s list type, and all existing Haskell functions will work
+over it perfectly well.  But we can \emph{also} use the very same list
+type to contain linear resources (such as file handles) without
+compromising safety; the type system ensures that resources in a list
+will eventually be deallocated by the programmer, and that they will
+not be used after that.
+
+Many list-based functions conserve the multiplicity of data, and thus can
+be given a more precise type. For example we can write |(++)| as follows:
+\begin{code}
+(++) :: [a] ⊸ [a] ⊸ [a]
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+The type of |(++)| tells us that if we have a list |xs| with
+multiplicity $1$, appending any other list to it will never duplicate
+any of the elements in |xs|, nor drop any element in
+|xs|\footnote{This follows from parametricity.  In order to {\em free}
+  linear list elements, we must pattern match on them to consume them,
+  and thus must know their type (or have a type class instance).
+  Likewise to copy them.}.
+
+Giving a more precise type to |(++)| only {\em strengthens} the
+contract that |(++)| offers to its callers; \emph{it does not restrict
+  its usage}. For example:
+\begin{code}
+  sum :: [Int] ⊸ Int
+  f :: [Int] ⊸ [Int] -> Int
+  f xs ys = sum (xs ++ ys) + sum ys
+\end{code}
+Here the two arguments to |(++)| have different multiplicities, but
+the function |f| guarantees that it will consume |xs| precisely once.
+
+For an existing language, being able to strengthen |(++)|, and similar
+functions, in a {\em backwards-compatible} way is a huge boon.  Of
+course, not all functions are linear: a function may legitimately
+demand unrestricted input.  For example, the function |f| above
+consumed |ys| twice, and so |ys| must have multiplicity $\omega$, and
+|f| needs an unrestricted arrow for that argument.
+
+Generalising from lists to arbitrary algebraic data types, we designed
+\HaskeLL{} so that when in a traditional Haskell (non-linear) calling
+context, linear constructors degrade to regular Haskell data
+types. Thus our radical position is that data types in \HaskeLL{}
+should have {\em linear fields by default}, including all standard
+definitions, such as pairs, tuples, |Maybe|, lists, and so on.  More
+precisely, when defined in old-style Haskell-98 syntax, all fields are
+linear; when defined using GADT syntax, the programmer can explicitly
+choose.  For example, in our system, pairs defined as
+\begin{code}
+data (,) a b = (,) a b
+\end{code}
+would use linear arrows. This becomes explicit when defined in GADT syntax:
+\begin{code}
+data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
+\end{code}
+We will see in \fref{sec:non-linear-constructors} when it is also
+useful to have contstructors with unrestricted arrows.
+
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
 
