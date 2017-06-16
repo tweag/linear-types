@@ -1115,6 +1115,235 @@ logic maybe?}
 
 \section{Related work}
 \label{sec:related}
+\subsection{Region-types}
+
+Haskell's |ST| monad~\cite{launchbury_st_1995} taught us
+a conceptually simple approach to lifetimes. The |ST| monad has
+a phantom type parameter |s| that is instantiated once at the
+beginning of the computation by a |runST| function of type:
+\begin{code}
+  runST :: (forall s. ST s a) -> a
+\end{code}
+In this way, resources that are allocated during the computation, such
+as mutable cell references, cannot escape the dynamic scope of the call
+to |runST| because they are themselves tagged with the same phantom
+type parameter.
+
+This apparent simplicity (one only needs rank-2 polymorphism)
+comes at the cost of strong limitations in practice:
+\begin{itemize}
+% arnaud: The stack story is true, but it is not an easy case to make,
+% so I've taken it out for now. General idea is: in |ST| you can use
+% values as long as their regions lives, so resources can't be closed
+% before |runST| has completed. Whereas with linear types, we can
+% "disappear" a value, at which time we can take the opportunity to
+% close it. It is hard, however to pinpoint a case where it is
+% critical not to use stack-allocation.
+% \item |ST|-like regions confine to a stack-like allocation discipline.
+%   Scopes cannot intersect arbitrarily, limiting the applicability of
+%   this technique.
+\item |ST| actions cannot be interleaved with |IO| actions. So in our
+  mutable array examples, for instance, it is not possible to provide
+  a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
+  a)| which will also make it possible to use |IO| actions to fill in
+  the array.
+\item \citet{kiselyov_regions_2008} show that it is possible to
+  promote resources in parent regions to resources in a subregion. But
+  this is an explicit and monadic operation, forcing an unnatural
+  imperative style of programming where order of evaluation is
+  explicit. Moreover, computations cannot live directly in |IO|, but
+  instead in a wrapper monad. The HaskellR
+  project~\cite{boespflug_project_2014} uses monadic regions in the
+  style of \citeauthor{kiselyov_regions_2008} to safely synchronise
+  values shared between two different garbage collectors for two
+  different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
+  writing code at an interactive prompt difficult, compromises code
+  reuse, force otherwise pure functions to be written monadically and
+  rule out useful syntactic facilities like view patterns. In
+  contrast, with linear types, values in two regions (in our running
+  example packets from different mailboxes) have the same type hence
+  can safely be mixed: any data structure containing packet of
+  a mailbox will be forced to be consumed before the mailbox is
+  closed.
+\end{itemize}
+
+\subsection{Uniqueness types}
+
+The literature is awash with enforcing linearity not via linear types,
+but via uniqueness (or ownership) types. The most prominent representatives of
+languages with such uniqueness types are perhaps Clean~\cite{barendsen_uniqueness_1993} and
+Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
+designed around linear types based on linear
+logic~\cite{girard_linear_1987}.
+
+Linear types and uniqueness types are, at their core, dual: whereas a linear type is
+a contract that a function uses its argument exactly once
+even if the call's context can share a linear argument as many times as it
+pleases, a uniqueness type ensures that the argument of a function is
+not used anywhere else in the expressions context even if the function
+can work with the argument as it pleases.
+
+From a compiler's perspective, uniqueness type provide a {\em non-aliasing
+analysis} while linear types provides a {\em cardinality analysis}. The
+former aims at in-place updates and related optimisations, the latter
+at inlining and fusion. Rust and Clean largely explore the
+consequences of uniqueness on in-place update; an in-depth exploration
+of linear types in relation with fusion can be found
+in~\citet{bernardy_composable_2015}, see also the discussion in
+\fref{sec:fusion}.\unsure{The discussion on fusion may well disappear}
+
+Because of this weak duality, we perhaps could as well have
+retrofitted uniqueness types to Haskell. But several points
+guided our choice of designing \HaskeLL{} around linear
+logic rather than uniqueness types: (a) functional languages have more use
+for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
+analysis but no non-aliasing analysis is any indication); (b) there is a
+wealth of literature detailing the applications of linear
+logic — see \fref{sec:applications}; (c) and decisively, linear type systems are
+conceptually simpler than uniqueness type systems, giving a
+clearer path to implementation in \textsc{ghc}.
+
+\subsection{Linearity as a property of types vs. a property of bindings}
+
+In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
+programming languages incorporate
+linearity by dividing types into two kinds. A type is either linear
+or unrestricted.
+
+In effect, this distinction imposes a clean separation between the linear world
+and the unrestricted world. An advantage of this approach is that it
+instantiates both to linear types and to uniqueness types depending on
+how they the two worlds relate, and even have characteristics of
+both~\cite{devries_linearity_2017}.
+
+Such approaches have been very successful for theory: see for instance
+the line of work on so-called \emph{mixed linear and non-linear logic}
+(usually abbreviated \textsc{lnl}) started by
+\citet{benton_mixed_1995}. However, for practical language design,
+code duplication between the linear an unrestricted worlds quickly
+becomes costly. So language designers try to create languages with some
+kind of kind polymorphism to overcome this limitation. This usually
+involves a subkinding relation and bounded polymorphism, and these kind
+polymorphic designs are complex. See \citet{morris_best_2016}
+for a recent example. We argue
+that by contrast, the type system of \calc{} is simpler.
+
+The complexity introduced by kind polymorphism and subtyping relations
+makes retrofitting a rich core language such as \textsc{ghc}'s an
+arduous endeavour. \textsc{ghc} already supports impredicative
+dependent types and a wealth of unboxed or otherwise primitive types
+that cannot be substituted for polymorphic type arguments. It is not
+clear how to support linearity in \textsc{ghc} by extending its kind system.
+In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
+including its compatibility with dependent types, and
+such compatibility is pretty much necessary to accommodate the dependently-typed kinds of \textsc{ghc}.
+
+\subsection{Alms}
+Alms~\cite{tov_practical_2011} is an \textsc{ml}-like language based on affine types (a variant
+of linear types where values can be used \emph{at most} once). It is
+uses kinds to separate affine from unrestricted arguments.
+
+It is a case in point for kind-based systems being more complex: for
+the sake polymorphism, Alms deploys an elaborate dependent kind
+system. Even if such a kind system could be added to an existing
+language implementation, Alms does not attempt to be backwards
+compatible with an \textsc{ml} dialect.
+
+\subsection{Ownership typing à la Rust}
+
+Rust \cite{matsakis_rust_2014} features ownership (aka uniqueness)
+types. But like the original formulation of linear logic, in Rust \verb+A+
+stands for linear values, unrestricted values at type \verb+A+ are denoted
+\verb+RC<A>+, and duplication is explicit.
+
+Rust quite beautifully addresses the problem of being mindful about
+memory, resources, and latency. But this comes at a heavy price: Rust,
+as a programming language, is specifically optimised for writing
+programs that are structured using the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens. For instance, tail-call optimization, crucial to the
+operational behaviour of many functional programs, is not usually
+sound. This is because resource liberation must be triggered when the
+tail call returns.
+
+\HaskeLL{} aims to hit a different point in the design space where
+regular non-linear expressions are the norm yet gracefully scaling up
+to latency-sensitive and resource starved programs is still
+possible.\improvement{Change depending on what we put in the
+  evaluation section}
+
+\subsection{Related type systems}
+\label{sec:related-type-systems}
+
+The \calc{} type system is heavily inspired from the work of
+\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
+present a type system where arrows are annotated with the multiplicty
+of the the argument that they require, and where the multiplicities
+form a semi-ring.
+
+In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
+multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
+represents the multiplicity of $t$. So, in
+\citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
+required, instead of computing $ωΓ$, it is enough to check that
+$ρ=ω$. The problem is that this check is arguably too coarse, and
+results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
+This derivation is not desirable: it means that there cannot be
+reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
+\citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
+into an isomorphism.
+
+In that respect, our system is closer to
+\citeauthor{ghica_bounded_2014}'s. What we keep from
+\citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+\fref{sec:statics}), which can be phrased in terms of linear logic as
+making the natural function of type $!A⊗!B ⟹ !(A⊗B)$ into an
+isomorphism. This choice is unusual from a linear logic perspective,
+but it is the key to be able to use types both linearly an
+unrestrictedly without intrusive multiplicity polymorphic annotation
+on all the relevant types.
+
+The literature on so-called
+coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
+uses type systems similar to \citeauthor{ghica_bounded_2014}, but
+with a linear arrow and multiplicities carried by the exponential
+modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
+develops a Krivine-style realisability model for such a calculus. We are not
+aware of an account of Krivine realisability for lazy languages, hence
+it is not directly applicable to \calc.
+
+\subsection{Operational aspects of linear languages}
+
+\improvement{Not the right place, but let us not forget to cite the
+  very relevant: \cite{pottier_programming_2013}}
+\unsure{This section will need a clean up, to be more in phase of what
+we present in the evaluation section}
+
+\Citet{wakeling_linearity_1991} produced a complete implementation of
+a language with linear types, with the goal of improving the
+performance. Their implementation features a separate linear heap, as
+\fref{sec:dynamics} where they allocate as much as possible in the
+linear heap, as modelled by the strengthened semantics. However,
+\citeauthor{wakeling_linearity_1991} did not manage to obtain
+consistent performance gains. On the other hand, they still manage to
+reduce \textsc{gc} usage, which may be critical in distributed and
+real-time environments, where latency that matters more than
+throughput.
+
+\citeauthor{wakeling_linearity_1991} propose to not attempt prompt
+free of thunks and only taking advantage of linearity for managing the
+lifetimes of large arrays. Our approach is similar: we advocate
+exploiting linearity for operational gains on large data structures
+(but not just arrays) stored off-heap. we go further and leave the
+management of external (linear) data to external code, only accessing
+it via an \textsc{api}. Yet, our language supports an implementation
+where each individual constructor with multiplicity 1 can be allocated
+on a linear heap, and deallocated when it is pattern matched.
+Implementing this behaviour is left for future work.
 
 \section{Conclusion and future work}
 
