@@ -230,23 +230,26 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-  Linear and affine type systems have a long and storied history, but not a
-  clear path forward to integrate with existing languages such as
-  Ocaml or Haskell.
-  In this paper, we introduce and study a linear type system designed with two
-  crucial properties in mind:
-  backwards-compatibility and code reuse across linear and non-linear users of
-  a library. Only then can the benefits of linear types permeate
-  conventional functional programming.
-  Rather than bifurcate data types into linear and non-linear
-  counterparts, we instead attach linearity to {\em binders}.  Linear function
-  types can receive inputs from linearly-bound values, but can also operate over
+  Linear type systems have a long and storied history, but not a clear
+  path forward to integrate with existing languages such as Ocaml or
+  Haskell. In this paper, we introduce and study a linear type system
+  designed with two crucial properties in mind:
+  backwards-compatibility and code reuse across linear and non-linear
+  users of a library. Only then can the benefits of linear types
+  permeate conventional functional programming.  Rather than bifurcate
+  data types into linear and non-linear counterparts, we instead
+  attach linearity to {\em binders}.  Linear function types can
+  receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
 
-  Linear types are an enabling tool for safe and resource efficient
-  systems programming. We explore the power of linear types with
-  a case study of a large, in-memory data structure that must serve
-  responses with low latency.
+  To demonstrate the efficacy of our linear type system~---~both how
+  easy it can be integrated in an existing language implementation and
+  how streamlined it makes it to write program with linear
+  types~---~we implemented our type system in a branch of
+  \textsc{ghc}, the leading Haskell compiler, and demonstrate, with
+  it, two kinds of applications of linear types: making functions,
+  that otherwise would be considered to have side effects, pure; and
+  enforcing protocols in \textsc{i/o}-performing functions.
 \end{abstract}
 
 
