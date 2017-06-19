@@ -31,6 +31,18 @@ correctApp1 f a = f a
 correctApp2 :: (a⊸a) -> a ⊸ a
 correctApp2 f a = f (f a)
 
+correctApp3 :: Int ⊸ Int
+correctApp3 x = f x
+  where
+    f :: Int ⊸ Int
+    f y = y
+
+correctApp4 :: Int ⊸ Int
+correctApp4 x = f (f x)
+  where
+    f :: Int ⊸ Int
+    f y = y
+
 incorrectIf :: Bool -> Int ⊸ Int
 incorrectIf x n =
   if x then n else 0
@@ -170,3 +182,14 @@ bind5 b x f = b x (\g -> f (\a -> g a))
 
 bind6 :: (d ⊸ I ((a ⊸ a') ⊸ b) ⊸ c) ⊸ d ⊸ ((a⊸a')⊸b) ⊸ c
 bind6 b x f = b x (I (\g -> f (\a -> g a)))
+
+--
+
+correctWhere :: Int ⊸ Int
+correctWhere a = g a
+  where
+    f :: Int ⊸ Int
+    f x = x
+
+    g :: Int ⊸ Int
+    g x = f x
