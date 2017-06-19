@@ -25,6 +25,12 @@ incorrectApp1 x = dup (x,0)
 incorrectApp2 :: (a->b) -> a ⊸ b
 incorrectApp2 f x = f x
 
+correctApp1 :: (a⊸b) ⊸ a ⊸ b
+correctApp1 f a = f a
+
+correctApp2 :: (a⊸a) -> a ⊸ a
+correctApp2 f a = f (f a)
+
 incorrectIf :: Bool -> Int ⊸ Int
 incorrectIf x n =
   if x then n else 0
