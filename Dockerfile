@@ -59,7 +59,7 @@ ENV GHCBUILD /tmp/ghc_linear
 # Bootstrapped with ghc 8.0.1:
 # ENV LINEAR_SHA 36666a9db79adeb27dffebbfb5dbe2939d0f0972
 # Bootstrapped with ghc 8.0.2, rebased with some new stuff:
-ENV LINEAR_SHA 50cae7b435403a7058c17ab3f17f271d8d8db30a
+ENV LINEAR_SHA 188a72043b94cd16c3e00bb6da801c008f374fc4
 
 # Clone and build, but don't store the build dir OR the extra version of GHC.
 RUN stack --version && stack --install-ghc --resolver=$RESOLVER --local-bin-path=/usr/bin/ install happy alex && \
