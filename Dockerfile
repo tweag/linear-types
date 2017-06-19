@@ -53,7 +53,7 @@ ENV LANG     C.UTF-8
 ENV LC_ALL   C.UTF-8
 ENV LANGUAGE C.UTF-8
 
-ENV GHCBOOTSTRAP /root/.stack/programs/x86_64-linux/ghc-8.0.1/bin
+ENV GHCBOOTSTRAP /root/.stack/programs/x86_64-linux/ghc-8.0.2/bin
 ENV GHCBUILD /tmp/ghc_linear
 
 # Bootstrapped with ghc 8.0.1:
