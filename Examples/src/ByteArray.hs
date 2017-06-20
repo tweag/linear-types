@@ -26,12 +26,17 @@ writeStorable = undefined
 
 freeze :: WByteArray ⊸ Unrestricted ByteArray
 freeze wba =
-  Unrestricted $ unsafeDupablePerformIO $
-    ByteString.unsafePackMallocCStringLen (orig,len)
+    pack (project (promote wba))
   where
-    project (WBA{orig=orig, stored=len}) = (orig,len)
-    promote :: WByteArray ⊸ Unrestricted (orig,len)
-    promote wba = undefined
+    project :: Unrestricted WByteArray ⊸ Unrestricted CStringLen
+    project (Unrestricted (WBA{orig=str, stored=len})) = Unrestricted (str,len)
+
+    promote :: WByteArray ⊸ Unrestricted WByteArray
+    promote w = unsafeUnrestricted w
+
+    pack :: Unrestricted CStringLen ⊸ Unrestricted ByteArray
+    pack (Unrestricted cstr) = Unrestricted $ unsafeDupablePerformIO $
+        ByteString.unsafePackMallocCStringLen cstr
 
 index :: ByteArray -> Int -> Word8
 index = undefined
