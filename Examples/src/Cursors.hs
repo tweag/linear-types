@@ -143,12 +143,32 @@ writeBranch :: Needs (Tree ': b) t ⊸ Needs (Tree ': Tree ': b) t
 writeBranch (Needs bs) = Needs (ByteArray.writeByte 1 bs)
 
 
--- Todo?
--- packTree :: Tree -> Packed Tree
--- packTree t = Packed (encode t)
+-- Todo: can we make that an instance of a general unfold function?
+packTree :: Tree -> Packed Tree
+packTree t = fromHas $ getUnrestricted $
+    withOutput (\n -> finish (go t n))
+  where
+    go :: Tree -> Needs (Tree ': r) t ⊸ Needs r t
+    go (Leaf a) n = writeLeaf a n
+    go (Branch left right) n =
+      go right (go left (writeBranch n))
 
--- unpackTree :: Packed Tree -> Tree
--- unpackTree (Packed t) = decode t
+-- Todo: instance of a general fold function, like Sum below
+unpackTree :: Packed Tree -> Tree
+unpackTree = snd . go . toHas
+  where
+    go :: Has (Tree ': r) -> (Has r, Tree)
+    go h = caseTree h onLeaf onBranch
+
+    onLeaf :: Has (Int ': r) -> (Has r, Tree)
+    onLeaf h = let (a, h') = readC h in (h', Leaf a)
+
+    onBranch :: Has (Tree ': Tree ': r) -> (Has r, Tree)
+    onBranch h =
+      let (h', left) = go h
+          (h'', right) = go h'
+      in
+        (h'', Branch left right)
 
 
 ----------------------------------------
