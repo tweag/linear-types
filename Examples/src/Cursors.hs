@@ -27,35 +27,6 @@ import Data.Binary.Put (execPut)
 import Linear.Std
 import Linear.Unsafe
 
--- Scratch: experiments and tests
-------------------------------------------------------------
-           
--- unrTest :: Unrestricted a -> (Unrestricted a, Unrestricted a)
--- unrTest (Unrestricted x) = (Unrestricted x, Unrestricted x)
--- unrTest x = (x, x)
-
--- Will fail:
--- f :: Int ⊸ Unrestricted Int
--- f n = Unrestricted n
-
-f' :: Int -> Unrestricted Int
-f' n = Unrestricted n
-
-freeHas :: Has a ⊸ ()
-freeHas = unsafeCastLinear (\_->())
-       
-g :: Int ⊸ Int
-g n = n
- -- No linear let atm:
- -- g n = let _ = n in 3
- -- This won't work:
- -- (\_ -> 3) n
---   case n of _ -> 3
-
--- This is ok:
--- foo (drop n) where foo :: () ⊸ Int; foo () = 3
-
-
 app :: Builder ⊸ Builder ⊸ Builder
 app = unsafeCastLinear2 bapp -- HACK
  where
@@ -89,8 +60,6 @@ newtype Packed a = Packed ByteString
 writeC :: Binary a => a -> Needs (a ': rst) t ⊸ Needs rst t
 writeC a (Needs bld1) = Needs (bld1 `app` execPut (put a))
 
--- unsafeCoerceNeeds :: Needs a t -> Needs b t
-                  
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
 readC :: Binary a => Has (a ': rst) -> (a, Has rst)
@@ -107,17 +76,12 @@ toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
 toBS :: Builder ⊸ ByteString
-toBS = B.toLazyByteString -- Why is this allowed?  Bug?
--- toBS x = B.toLazyByteString x -- This isn't.
+toBS = unsafeCastLinear B.toLazyByteString
 
 -- | "Cast" a fully-initialized write cursor into a read one.
-finish :: Needs '[] a ⊸ Has '[a]
-finish (Needs bs) = Has (toBS bs)
+finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
+finish (Needs bs) = unsafeUnrestricted $ Has (toBS bs)
 
-finish2 :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish2 = undefined    
--- finish2 (Needs bs) = Unrestricted (Has (toBS bs))
-                    
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) -> b
 withOutput fn =
