@@ -4,7 +4,7 @@ module ByteArray where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
-import qualified Data.ByteString.Unsafe as ByteString (unsafePackMallocCStringLen)
+import qualified Data.ByteString.Unsafe as ByteString (unsafePackMallocCStringLen, unsafeUseAsCString)
 import Data.Word
 import Foreign.C.String
 import Foreign.Marshal.Alloc
@@ -49,3 +49,8 @@ freeze wba =
     pack :: Unrestricted CStringLen ⊸ Unrestricted ByteString
     pack (Unrestricted cstr) = Unrestricted $ unsafeDupablePerformIO $
         ByteString.unsafePackMallocCStringLen cstr
+
+headStorable :: Storable a => ByteString -> a
+headStorable bs = unsafeDupablePerformIO $
+    ByteString.unsafeUseAsCString bs $ \ cstr ->
+      peek (castPtr cstr)

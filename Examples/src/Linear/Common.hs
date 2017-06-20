@@ -10,3 +10,6 @@ data Unrestricted a where
 
 getUnrestricted :: Unrestricted a ⊸ a
 getUnrestricted (Unrestricted x) = x
+
+mapU :: (a ⊸ b) -> Unrestricted a ⊸ Unrestricted b
+mapU f (Unrestricted a) = Unrestricted (f a)

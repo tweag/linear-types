@@ -16,22 +16,21 @@ module Cursors
     )
     where
 
+import qualified ByteArray as ByteArray
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as ByteString
 import Data.Monoid
 import Data.Word
 import Data.Int
-import Data.ByteString.Lazy.Char8 as BS
-import Data.ByteString.Builder as B
-import Data.Binary (get, put, Binary, encode, decode, getWord8)
-import Data.Binary.Get (runGetOrFail, Get)
-import Data.Binary.Put (execPut)
+import Foreign.Storable
 import Linear.Std
 import Linear.Unsafe
 
-app :: Builder ⊸ Builder ⊸ Builder
-app = unsafeCastLinear2 bapp -- HACK
- where
-  bapp :: Builder -> Builder -> Builder      
-  bapp = mappend
+-- Hard-coded constant:
+--------------------------------------------------------------------------------
+-- | Size allocated for each regions: 4KB.
+regionSize :: Int
+regionSize = 4096 -- in Bytes
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -39,7 +38,7 @@ app = unsafeCastLinear2 bapp -- HACK
 -- | A "needs" cursor requires a list of fields be written to the
 -- bytestream before the data is fully initialized.  Once it is, a
 -- value of the (second) type parameter can be extracted.
-newtype Needs (l :: [*]) t = Needs Builder
+newtype Needs (l :: [*]) t = Needs ByteArray.WByteArray
 
 -- | A "has" cursor is a pointer to a series of consecutive,
 -- serialized values.  It can be read multiple times.
@@ -57,16 +56,15 @@ newtype Packed a = Packed ByteString
          
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
-writeC :: Binary a => a -> Needs (a ': rst) t ⊸ Needs rst t
-writeC a (Needs bld1) = Needs (bld1 `app` execPut (put a))
+writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
+writeC a (Needs bld1) = Needs (ByteArray.writeStorable a bld1)
 
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
-readC :: Binary a => Has (a ': rst) -> (a, Has rst)
-readC (Has bs) =
-  case runGetOrFail get bs of
-    Left (_,_,err) -> error $ "internal error: "++err
-    Right (remain,num,a) -> (a, Has remain)
+readC :: Storable a => Has (a ': rst) -> (a, Has rst)
+readC (Has bs) = (a, Has (ByteString.drop (sizeOf a) bs))
+  where
+    a = ByteArray.headStorable bs
 
 -- | "Cast" has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
@@ -75,20 +73,13 @@ fromHas (Has b) = Packed b
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
-toBS :: Builder ⊸ ByteString
-toBS = unsafeCastLinear B.toLazyByteString
-
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish (Needs bs) = unsafeUnrestricted $ Has (toBS bs)
+finish (Needs bs) = Has `mapU` ByteArray.freeze bs
 
 -- | Allocate a fresh output cursor and compute with it.
-withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-withOutput fn =
-    force $ fn (Needs mempty)
-  where
-    force :: Unrestricted b ⊸ Unrestricted b
-    force (Unrestricted x) = Unrestricted x
+withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
+withOutput fn = ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
 
 -- Tests:
 --------------------------------------------------------------------------------
@@ -115,18 +106,19 @@ data Tree = Leaf Int
           | Branch Tree Tree
  deriving Show
 
-instance Binary Tree where
-      put (Leaf i)      = do put (0 :: Word8)
-                             put i
-      put (Branch l r) = do put (1 :: Word8)
-                            put l; put r
-      get = do t <- get :: Get Word8
-               case t of
-                    0 -> do i <- get
-                            return (Leaf i)
-                    1 -> do l <- get
-                            r <- get
-                            return (Branch l r)
+-- Todo?
+-- instance Binary Tree where
+--       put (Leaf i)      = do put (0 :: Word8)
+--                              put i
+--       put (Branch l r) = do put (1 :: Word8)
+--                             put l; put r
+--       get = do t <- get :: Get Word8
+--                case t of
+--                     0 -> do i <- get
+--                             return (Leaf i)
+--                     1 -> do l <- get
+--                             r <- get
+--                             return (Branch l r)
 
 
 caseTree :: Has (Tree ': b)
@@ -134,56 +126,29 @@ caseTree :: Has (Tree ': b)
          -> (Has (Tree ': Tree ': b) -> a)
          -> a
 caseTree (Has bs) f1 f2 =
-  case runGetOrFail getWord8 bs of
-    Left (_,_,err)  -> error $ "internal error: "++err
-    Right (remain,num,i) ->
-      case i of
-        0 -> f1 (Has (BS.drop 1 bs))
-        1 -> f2 (Has (BS.drop 1 bs))
+  case ByteString.head bs of
+    0 -> f1 (Has (ByteString.drop 1 bs))
+    1 -> f2 (Has (ByteString.drop 1 bs))
 
--- Another Hack:
-runGetLin :: ByteString ⊸ Either (ByteString,Int64,String) (ByteString,Int64,Word8)
-runGetLin = unsafeCastLinear (runGetOrFail getWord8)
-
-
--- | Testing a version on a linear read cursor.
--- It should consume the first byte of its input, which could in principle
--- be freed immediately.
-caseTree' :: forall b . Has (Tree ': b)
-          ⊸  Either (Has (Int ': b))
-                    (Has (Tree ': Tree ': b))
-caseTree' = undefined
-{-            
-caseTree' (Has bs) = f (runGetLin bs)
-  where
-   f :: Either (ByteString,Int64,String) (ByteString,Int64,Word8) ⊸
-        Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
---   f (Left (b,n,err)) = error $ "internal error: "++err
-   f (Right (remain,num,0)) = Left  (Has remain)
-   f (Right (remain,num,0)) = Right (Has remain)
--}
 
 -- | Write a complete Leaf node to the output cursor.
 writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
-writeLeaf n (Needs b) = 
-  Needs (b `app` execPut (put (Leaf n)))
+writeLeaf n (Needs b) = Needs (
+  ByteArray.writeStorable n (ByteArray.writeByte 0 b))
 
 -- | Write a complete Branch node to the output cursor.
 --   First, write the tag.  Second, use the provided function to
 --   initialize the left and write branches.
-writeBranch :: Needs (Tree ': b) t
-            ⊸ (Needs (Tree ': Tree ': b) t ⊸ c)
-            ⊸ c
--- writeBranch :: Needs '[Tree] t ⊸ (Needs '[Tree, Tree] t ⊸ Unrestricted b) -> b
-writeBranch (Needs bs) fn =
-  fn (Needs (bs `app` execPut (put (1::Word8))))
+writeBranch :: Needs (Tree ': b) t ⊸ Needs (Tree ': Tree ': b) t
+writeBranch (Needs bs) = Needs (ByteArray.writeByte 1 bs)
 
 
-packTree :: Tree -> Packed Tree
-packTree t = Packed (encode t)
+-- Todo?
+-- packTree :: Tree -> Packed Tree
+-- packTree t = Packed (encode t)
 
-unpackTree :: Packed Tree -> Tree
-unpackTree (Packed t) = decode t
+-- unpackTree :: Packed Tree -> Tree
+-- unpackTree (Packed t) = decode t
 
 
 ----------------------------------------
@@ -204,22 +169,27 @@ sumTree pt = fin
                        (y,c'')  = go c'
                    in (x+y, c''))
            
-add1 :: Packed Tree -> Packed Tree
-add1 pt = fromHas fin
- where
-  fin :: Has '[Tree]
-  fin = getUnrestricted (withOutput f1)
+mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
+mapTree f pt = fromHas $ getUnrestricted $
+    withOutput (\n -> finishMapDest (mapDest (toHas pt) n))
+  where
+    finishMapDest :: (Unrestricted (Has '[]), Needs '[] t) ⊸ Unrestricted (Has '[t])
+    finishMapDest (Unrestricted _, n) = finish n
 
-  f1 :: Needs '[Tree] Tree ⊸ Unrestricted (Has '[Tree])
-  f1 oc = f2 (go (toHas pt) oc)
+    mapDest :: Has(Tree ': r) -> Needs(Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
+    mapDest h = caseTree h onLeaf onBranch
 
-  f2 :: (Unrestricted (Has '[]), Needs '[] Tree) ⊸ Unrestricted (Has '[Tree])
-  f2 (Unrestricted _, oc2) = finish oc2
+    onBranch :: Has (Tree ': Tree ': r) -> Needs (Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
+    onBranch h n = onRightBranch (mapDest h (writeBranch n))
 
-  -- This version uses ω-weight read pointers but linear write cursors.
-  go :: forall b t . Has (Tree ': b) -> Needs (Tree ': b) t ⊸
-                     (Unrestricted (Has b), Needs b t)
-  go = undefined
+    onRightBranch :: (Unrestricted (Has (Tree ': r)), Needs (Tree ': r) t) ⊸ (Unrestricted (Has r), Needs r t)
+    onRightBranch (Unrestricted h, n) = mapDest h n
+
+    onLeaf :: Has (Int ': r) -> Needs (Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
+    onLeaf h n =
+      let (a, h') = readC h
+      in
+        (Unrestricted h', writeLeaf (f a) n)
 
   -- This version uses linear read and write cursors.
 {- 
