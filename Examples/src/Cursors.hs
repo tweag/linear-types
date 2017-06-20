@@ -83,10 +83,12 @@ finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 finish (Needs bs) = unsafeUnrestricted $ Has (toBS bs)
 
 -- | Allocate a fresh output cursor and compute with it.
-withOutput :: (Needs '[a] a ⊸ Unrestricted b) -> b
+withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn =
-  case fn (Needs mempty) of
-    Unrestricted x -> x
+    force $ fn (Needs mempty)
+  where
+    force :: Unrestricted b ⊸ Unrestricted b
+    force (Unrestricted x) = Unrestricted x
 
 -- Tests:
 --------------------------------------------------------------------------------
@@ -104,7 +106,7 @@ test02 :: Needs '[] Double
 test02 = writeC True bar
 
 test03 :: Double
-test03 = fst (readC (finish test02))
+test03 = fst (readC (getUnrestricted (finish test02)))
 
 -- Example
 ----------------------------------------
@@ -206,13 +208,13 @@ add1 :: Packed Tree -> Packed Tree
 add1 pt = fromHas fin
  where
   fin :: Has '[Tree]
-  fin = withOutput f1
+  fin = getUnrestricted (withOutput f1)
 
   f1 :: Needs '[Tree] Tree ⊸ Unrestricted (Has '[Tree])
   f1 oc = f2 (go (toHas pt) oc)
 
   f2 :: (Unrestricted (Has '[]), Needs '[] Tree) ⊸ Unrestricted (Has '[Tree])
-  f2 (Unrestricted _, oc2) = finish2 oc2
+  f2 (Unrestricted _, oc2) = finish oc2
 
   -- This version uses ω-weight read pointers but linear write cursors.
   go :: forall b t . Has (Tree ': b) -> Needs (Tree ': b) t ⊸
