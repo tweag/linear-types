@@ -1146,6 +1146,11 @@ to index our arrays by a type-level list\footnote{Haskell has
 
 \todo{copy actual \textsc{api}}
 
+\subsection{Pure bindings to impure APIs}
+\label{sec:spritekit}
+
+\todo{Short example based on Haskell SpriteKit \cite{chakravarty_spritekit_2017}}
+
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 
