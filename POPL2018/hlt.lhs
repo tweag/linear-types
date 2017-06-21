@@ -1194,9 +1194,10 @@ implement dynamic lifetimes for objects in the linear heap.
 
 Consider the primitives:
 
+\begin{code}
 alloc : (A ⊸ r) ⊸ r
 free  : A ⊸ r ⊸ r
-
+\end{code}
 We can write code such as the following, where the lifetimes of x, y
 and z overlap in a non-LIFO fashion:
 
@@ -1339,7 +1340,7 @@ destroyer : Reference ⊸ A -> B
 A function which borrows a reference can take it as input and return
 it.
 \begin{code}
-borrower : Reference ⊸ A -> (Reference, b)
+borrower : Reference ⊸ A -> (Reference, B)
 \end{code}
 \paragraph{Borrowing references in data structures}
 In an imperative language, one often walks data structure, extract
