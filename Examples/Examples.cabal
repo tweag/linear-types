@@ -20,13 +20,13 @@ library
   exposed-modules:
         ByteArray,
         Cursors,
-        IO
+        IO,
+        Linear.Std,
+        Linear.Unsafe
 -- Protocol, InPlaceArrays, HaskellR, StorageServer, Network, ByteArrays, PtrArray, Queues.QueueRefImpl, Queues.Queue1_fromPaper
 
   other-modules:
-        Linear.Common,
-        Linear.Std,
-        Linear.Unsafe
+        Linear.Common
 
   other-extensions:    TypeOperators, GADTs, DataKinds, KindSignatures, BangPatterns, LambdaCase
   build-depends:       base >=4.9,
@@ -35,3 +35,14 @@ library
                        ghc-prim
   -- hs-source-dirs:      
   default-language:    Haskell2010
+
+test-suite tests
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: test.hs
+  build-depends:
+          base
+        , bytestring >=0.10
+        , Examples
+        , hspec
+        , QuickCheck

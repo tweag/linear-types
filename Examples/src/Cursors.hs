@@ -11,11 +11,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module Cursors
-    ( Needs, Has
---    , readC, writeC
-    )
-    where
+module Cursors where
 
 import qualified ByteArray as ByteArray
 import Data.ByteString (ByteString)
@@ -104,7 +100,7 @@ test03 = fst (readC (getUnrestricted (finish test02)))
 
 data Tree = Leaf Int
           | Branch Tree Tree
- deriving Show
+ deriving (Show, Eq)
 
 -- Todo?
 -- instance Binary Tree where

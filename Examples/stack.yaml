@@ -9,7 +9,24 @@ system-ghc: true
 # # Trying intero-0.1.20, no luck yet.
 # skip-ghc-check: true
 # allow-newer: true
-# extra-deps:
+extra-deps:
+  - QuickCheck-2.9.2
+  - hspec-2.4.3
+  - HUnit-1.6.0.0
+  - call-stack-0.1.0
+  - hspec-core-2.4.3
+  - hspec-discover-2.4.3
+  - hspec-expectations-0.8.2
+  - random-1.1
+  - tf-random-0.5
+  - ansi-terminal-0.6.2.3
+  - async-2.1.1.1
+  - primitive-0.6.2.0
+  - quickcheck-io-0.1.4
+  - setenv-0.1.1.3
+  - stm-2.4.4.1
+
+
 # - ghc-paths-0.1.0.9
 # - syb-0.7
 #    # /tmp/stack1/intero-0.1.20/src/GhciMonad.hs:302:52: error:
