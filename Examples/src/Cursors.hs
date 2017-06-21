@@ -24,7 +24,6 @@ import Data.Word
 import Data.Int
 import Foreign.Storable
 import Linear.Std
-import Linear.Unsafe
 
 -- Hard-coded constant:
 --------------------------------------------------------------------------------
@@ -153,22 +152,8 @@ packTree t = fromHas $ getUnrestricted $
     go (Branch left right) n =
       go right (go left (writeBranch n))
 
--- Todo: instance of a general fold function, like Sum below
 unpackTree :: Packed Tree -> Tree
-unpackTree = snd . go . toHas
-  where
-    go :: Has (Tree ': r) -> (Has r, Tree)
-    go h = caseTree h onLeaf onBranch
-
-    onLeaf :: Has (Int ': r) -> (Has r, Tree)
-    onLeaf h = let (a, h') = readC h in (h', Leaf a)
-
-    onBranch :: Has (Tree ': Tree ': r) -> (Has r, Tree)
-    onBranch h =
-      let (h', left) = go h
-          (h'', right) = go h'
-      in
-        (h'', Branch left right)
+unpackTree = foldTree Leaf Branch
 
 
 ----------------------------------------
@@ -178,16 +163,23 @@ unpackTree = snd . go . toHas
 -- Here we manually write functions agains the packed representation.
 
 sumTree :: Packed Tree -> Int
-sumTree pt = fin
- where
-  (fin,_) = go (toHas pt)
+sumTree = foldTree id (+)
 
-  go :: forall b . Has (Tree ': b) -> (Int, Has b)
-  go cur = caseTree cur
-            (\c -> readC c)
-            (\c -> let (x,c') = go c
-                       (y,c'')  = go c'
-                   in (x+y, c''))
+foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
+foldTree leaf branch = snd . go . toHas
+  where
+    go :: forall r. Has (Tree ': r) -> (Has r, o)
+    go h = caseTree h onLeaf onBranch
+
+    onLeaf :: forall r. Has (Int ': r) -> (Has r, o)
+    onLeaf h = let (a, h') = readC h in (h', leaf a)
+
+    onBranch :: forall r. Has (Tree ': Tree ': r) -> (Has r, o)
+    onBranch h =
+      let (h', left) = go h
+          (h'', right) = go h'
+      in
+        (h'', branch left right)
            
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt = fromHas $ getUnrestricted $
