@@ -302,8 +302,6 @@
 \subsection{Freezing arrays}
 \label{sec:freezing-arrays}
 
-\subsubsection{Mutable arrays}
-
 Let us consider immutable arrays. It is quite clear how to write an
 \textsc{api} for consuming such arrays: we can retrieve the value at a
 given index, map a function, pair-up values of two different arrays of
@@ -386,42 +384,6 @@ opportunities for the compiler to reorder and optimise a
 program.\improvement{Maybe more about the comparison to |ST|
   here. Though it would probably be better to have a dedicated section
   in the related work section.}
-
-\subsubsection{Initialisation of byte-arrays}
-
-Emboldened by our success, we may try to do something which is, in
-regular Haskell, even more unsafe. Something that used improperly
-would yield the dreaded \verb+segfault+. Indeed, |newMArray|
-initialises all of its cells with some initial value. It is needed for
-three reasons: we can read the mutable array, if we would access
-uninitialised memory cells the program would \verb+segfault+; even if
-we refrain from reading from the mutable array, we will read from the
-frozen array, so it must be fully initialised; and the garbage
-collector will traverse the array and cannot handle uninitialised
-memory.
-
-But if we are considering an array a binary data, \emph{i.e.} which
-contains no pointer to garbage collected objects, like a |ByteArray|
-in Haskell, then we know that the garbage collector will not traverse
-the array. Therefore, as long as we don't access uninitialised data, a
-pre-initialisation of the entire array is a waste.
-
-With linear types, we can make sure that uninitialised data is never
-accessed. There is more than one way to approach this problem. Let us
-focus on the cache-friendly left-to-right initialisation: that is, we
-will start with an uninitialised byte-array and fill the leftmost
-byte, when we are finished, we will freeze the byte-array leaving any
-remaining data uninitialised, but also inaccessible.\improvement{Say
-  that |WByteArray| is write-only}
-\begin{code}
-  type WByteArray
-  type ByteArray
-
-  allocByteArray :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
-  writeByte :: Word8 -> WByteArray ⊸ WByteArray
-  freezeByteArray :: WByteArray ⊸ Unrestricted ByteArray
-  index :: ByteArray -> Int -> Word8
-\end{code}
 
 \subsection{I/O protocols}
 
