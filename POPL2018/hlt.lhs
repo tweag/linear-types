@@ -32,6 +32,11 @@
 %format freeT = "free_T"
 %format copyT = "copy_T"
 %format __ = "\_"
+\def\mathindent{1em} % used by lhs2tex for indentation of code
+\renewcommand\Varid[1]{\mathord{\textsf{#1}}}
+\renewcommand\Conid[1]{\mathord{\textsf{#1}}}
+%subst keyword a = "\mathbf{" a "}"
+
 % \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -108,8 +113,8 @@
 \newcommand\HaskeLL{Hask-LL}
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
-%%%%%%%%%%%%%%%%% Author's configuration %%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%% Author's configuration %%%%%%%%%%%%%%%%%
 
 %% Some recommended packages.
 \usepackage{booktabs}   %% For formal tables:
