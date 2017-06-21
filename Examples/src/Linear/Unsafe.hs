@@ -13,6 +13,11 @@ unsafeCoerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
 
 data NotUnrestricted a where NotUnrestricted :: a ⊸ NotUnrestricted a
 
+-- | @unsafeUnrestricted x@ can only work if all the effects hidden in `x` have
+-- been run. Otherwise the effects may get duplicated. Make sure you only use it
+-- for something that is fully evaluated or pass the unrestricted value to a
+-- function which will ensure that the effects are not duplicated (for instance
+-- a function that starts by fully evaluating its unrestricted argument).
 unsafeUnrestricted :: a ⊸ Unrestricted a
 unsafeUnrestricted x = unsafeCoerce $ NotUnrestricted x
 

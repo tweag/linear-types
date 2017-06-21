@@ -9,8 +9,14 @@ module Linear.Std (
 import GHC.Types (Int(..))
 import Linear.Common
 import Linear.Unsafe
+import Prelude hiding (($))
 
 -- * Linear version of some standard function
+
+($) :: (a⊸b) ⊸ a ⊸ b
+($) f x = f x
+
+infixr 0 $
 
 const :: a ⊸ b -> a
 const x _ = x

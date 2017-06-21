@@ -21,6 +21,7 @@ import Data.Word
 import Data.Int
 import Foreign.Storable
 import Linear.Std
+import Prelude hiding (($))
 
 -- Hard-coded constant:
 --------------------------------------------------------------------------------
