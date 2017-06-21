@@ -9,6 +9,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Cursors
     ( Needs, Has
@@ -142,15 +143,11 @@ writeBranch :: Needs (Tree ': b) t ⊸ Needs (Tree ': Tree ': b) t
 writeBranch (Needs bs) = Needs (ByteArray.writeByte 1 bs)
 
 
--- Todo: can we make that an instance of a general unfold function?
 packTree :: Tree -> Packed Tree
-packTree t = fromHas $ getUnrestricted $
-    withOutput (\n -> finish (go t n))
+packTree = unfoldTree viewTree
   where
-    go :: Tree -> Needs (Tree ': r) t ⊸ Needs r t
-    go (Leaf a) n = writeLeaf a n
-    go (Branch left right) n =
-      go right (go left (writeBranch n))
+    viewTree (Leaf a) = Left a
+    viewTree (Branch left right) = Right (left,right)
 
 unpackTree :: Packed Tree -> Tree
 unpackTree = foldTree Leaf Branch
@@ -180,6 +177,15 @@ foldTree leaf branch = snd . go . toHas
           (h'', right) = go h'
       in
         (h'', branch left right)
+
+unfoldTree :: forall s. (s -> Either Int (s,s)) -> s -> Packed Tree
+unfoldTree step seed = fromHas $ getUnrestricted $
+    withOutput (\n -> finish (go seed n))
+  where
+    go :: s -> Needs (Tree ': r) t ⊸ Needs r t
+    go (step -> Left a) n = writeLeaf a n
+    go (step -> Right (left,right)) n =
+      go right (go left (writeBranch n))
            
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt = fromHas $ getUnrestricted $
