@@ -1224,6 +1224,37 @@ comes at the cost of strong limitations in practice:
   closed.
 \end{itemize}
 
+\paragraph{Non-LIFO behavior}
+
+In our system, even though the lifetimes of linear variables is
+checked statically, we can make use of continuation-passing style to
+implement dynamic lifetimes for objects in the linear heap.
+
+Consider the primitives:
+
+alloc : (A ⊸ r) ⊸ r
+free  : A ⊸ r ⊸ r
+
+We can write code such as the following, where the lifetimes of x, y
+and z overlap in a non-LIFO fashion:
+
+\begin{code}
+alloc  (\x ->
+alloc  (\y ->
+-- copy f(x) to y
+free x (
+alloc  (\z ->
+-- copy g(y) to z
+free y (
+-- print z
+free z)))))
+\end{code}
+
+Such a property is infeasible in region-based systems, where the
+dynamic lifetime necessarily coincides with the static scope: the
+|free| primitive is built into |alloc|.
+
+
 \subsection{Uniqueness types}
 
 The literature is awash with enforcing linearity not via linear types,
@@ -1309,12 +1340,12 @@ compatible with an \textsc{ml} dialect.
 \subsection{Ownership typing à la Rust}
 
 Rust \cite{matsakis_rust_2014} features ownership (aka uniqueness)
-types. But like the original formulation of linear logic, in Rust \verb+A+
-stands for linear values, unrestricted values at type \verb+A+ are denoted
-\verb+RC<A>+, and duplication is explicit.
+types. But like the original formulation of linear logic, in Rust \texttt{A}
+stands for linear values, unrestricted values at type \texttt{A} are denoted
+\texttt{RC<A>}, and duplication is explicit.
 
-Rust quite beautifully addresses the problem of being mindful about
-memory, resources, and latency. But this comes at a heavy price: Rust,
+Rust addresses the problem of being mindful about
+memory, resources, and latency, but this comes at a price: Rust,
 as a programming language, is specifically optimised for writing
 programs that are structured using the RAII
 pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
@@ -1332,6 +1363,42 @@ regular non-linear expressions are the norm yet gracefully scaling up
 to latency-sensitive and resource starved programs is still
 possible.\improvement{Change depending on what we put in the
   evaluation section}
+
+How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
+lifetime of references using a special system, one can simply give
+each reference a multiplicity of one, and explicitly pass them around.
+
+A function can be declared to destroy a reference simply by taking it
+as a (linear) parameter.  For example the following signature is that
+of a function from |A| to |B| which also destroys a reference:
+\begin{code}
+destroyer : Reference ⊸ A -> B
+\end{code}
+A function which borrows a reference can take it as input and return
+it.
+\begin{code}
+borrower : Reference ⊸ A -> (Reference, b)
+\end{code}
+\paragraph{Borrowing references in data structures}
+In an imperative language, one often walks data structure, extract
+references and pass them around. In Rust, the borrowing system will
+ensure that the passed reference does not outlive the datastructure
+that it point to.
+
+In a functional language, instead of extracting references, one will
+use lenses to lift a modification function from a local subtree to a
+global one. Thanks to garbage collection, there is already no risk of
+dangling references, but one has to pay a runtime cost. By using
+linear types one can avoid this cost.
+
+Indeed, we can ensure that a modification function can have the type:
+|Reference ⊸ Reference| and thus can be implemented with no need for
+GC. At the same time, the lens library will use linear types and lift
+local linear modifications to global linear modifications. Note that,
+if the original object lives in the GC heap (and thus can be shared),
+the same lens library can be used, but individual lifting of
+modifications cannot be implemented by in-place update.
+
 
 \subsection{Related type systems}
 \label{sec:related-type-systems}
@@ -1401,6 +1468,24 @@ it via an \textsc{api}. Yet, our language supports an implementation
 where each individual constructor with multiplicity 1 can be allocated
 on a linear heap, and deallocated when it is pattern matched.
 Implementing this behaviour is left for future work.
+
+\subsubsection{Garbage}
+\citet{mogensen_types_1997} proposes a type system whose purpose is to
+track the number of times that a value is used. They intend their
+system to be used for inference instead of declaration. Thus, while
+our main concern is the smooth integration with an exesting lazy
+functional language, they do not pay any attention to any language
+design issue. Besides, their system features both annotations on types
+an certain variable bindings: while our type-system is related to
+theirs it appears to be incomparable.
+
+The work of \citet{igarashi_garbage_2000} uses the typesystem of
+Mogensen to drive a garbage collection mechanism. Yet, their approach
+is opposite to ours: while we aim to keep linear values
+completely outside of garbage collection, they use the type
+information at runtime to ensure that the GC does not follow dangling
+pointers.
+% How can that even work?
 
 \section{Conclusion and future work}
 
