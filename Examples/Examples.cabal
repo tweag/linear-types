@@ -19,7 +19,8 @@ library
   hs-source-dirs:     src
   exposed-modules:
         ByteArray,
-        Cursors
+        Cursors,
+        IO
 -- Protocol, InPlaceArrays, HaskellR, StorageServer, Network, ByteArrays, PtrArray, Queues.QueueRefImpl, Queues.Queue1_fromPaper
 
   other-modules:
