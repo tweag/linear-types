@@ -35,12 +35,12 @@ data R (l::Weight) a where
 -- | Again, we lack a subscripted, multiplicity-polymorphic arrow, so
 -- this is an approximation.
 data Arrow l a b where
-  LA :: (a ⊸ b)  -> Arrow 'One a b
-  UA :: (a -> b) -> Arrow 'Ω   a b
+  LA :: (a ⊸ b)  ⊸ Arrow 'One a b
+  UA :: (a -> b) ⊸ Arrow 'Ω   a b
           
 -- type Arrow (l::Weight) a b = ()
           
-(>>=) :: IO' l a ⊸ (Arrow l a (IO' l' b)) -> IO' l' b
+(>>=) :: IO' l a ⊸ (Arrow l a (IO' l' b)) ⊸ IO' l' b
 (>>=) = P.undefined
 
 returnL :: a ⊸ IO' 'One a
@@ -69,10 +69,10 @@ t3 :: IO' 'One ()
 t3 = open "test.txt" >>= LA (\h -> close h >>= UA (\() -> returnL ()))
 
 -- But how do we do some work inbetween?
-delayedClose :: Handle ⊸ IO' Ω ()
-delayedClose h = close h -- FIXME:
+delayedClose :: Handle ⊸ IO' 'One ()
+-- delayedClose h = close h -- FIXME:
 -- This fails, giving 'h' weight ω!:
--- delayedClose h = return () >>= LA (\() -> close h)
+delayedClose h = returnL () >>= LA (\() -> close h)
 
-t4 :: IO' 'Ω ()
+t4 :: IO' 'One ()
 t4 = open "test.txt" >>= LA delayedClose
