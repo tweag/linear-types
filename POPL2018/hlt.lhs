@@ -1441,7 +1441,7 @@ Implementing this behaviour is left for future work.
 \citet{mogensen_types_1997} proposes a type system whose purpose is to
 track the number of times that a value is used. They intend their
 system to be used for inference instead of declaration. Thus, while
-our main concern is the smooth integration with an exesting lazy
+our main concern is the smooth integration with an existing lazy
 functional language, they do not pay any attention to any language
 design issue. Besides, their system features both annotations on types
 an certain variable bindings: while our type-system is related to
