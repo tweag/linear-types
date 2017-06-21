@@ -1151,6 +1151,15 @@ to index our arrays by a type-level list\footnote{Haskell has
 
 \todo{Short example based on Haskell SpriteKit \cite{chakravarty_spritekit_2017}}
 
+\subsection{Some protocol example}
+
+\todo{We're missing something here}
+
+\subsection{Feedback from industrial experience}
+
+\todo{Tweag to give some short descriptions of situations where linear
+  types are desirable from actual industrial work}
+
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 
