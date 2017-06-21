@@ -1080,6 +1080,72 @@ logic maybe?}
 \section{Evaluation}
 \label{sec:evaluation}
 
+Implemented using our branch of the \textsc{ghc} compiler described in
+\fref{sec:implementation}\improvement{Needs an introductory paragraph}
+
+\subsection{Serialised tree traversals}
+\label{sec:cursors}
+
+Let us look back to the array-freezing \textsc{api} of
+\fref{sec:freezing-arrays}. An push the boundaries to a new range of
+applications inspired by \citet{vollmer_gibbon_2017}.
+
+\improvement{aspiwack: I've spent too much time being abstract about
+  the data-structure, I should have just gone with trees and rolled
+  with it}
+The problem is the following: representing recursive data structure
+not as linked data-structures but as a compact representation in a
+binary array. There are various reasons for being interested in such a
+representation:
+\begin{itemize}
+\item if data needs to be serialised and deserialised a lot (for
+  instance because it transits on the network) then it can be more
+  efficient to manage data in a serialised form (in this we can see
+  such a representation as an extension on the idea of \emph{compact
+    region}~\cite{yang_compact_2015})
+\item such data representation also has a much smaller memory
+  footprint than a linked data structure
+  (\citeauthor{vollmer_gibbon_2017} report a $50\%$ to $70\%$
+  improvement on binary trees), linked representations are also less
+  cache-friendly
+\item in such a data representation, there is no outgoing pointer, so
+  the garbage collector is free to treat the entire data structure as
+  binary data and not traverse the data
+\end{itemize}
+
+\Citeauthor{vollmer_gibbon_2017} realise such an implementation scheme
+in a compiler for an \textsc{ml}-like language. Data structures are
+compiled to a compact form, and traversal are transformed in
+destination-passing style~\cite{larus_destination_1998}: building a
+new data-structure is done by writing binary data left-to-right in an
+array. \Citeauthor{vollmer_gibbon_2017}'s compiler targets a typed
+language. With linear types we can represent their type system
+directly in \HaskeLL{}. The challenges are:
+\begin{itemize}
+\item Taking the example of binary trees: we have to traverse the tree
+  in a particular order, indeed supposing that the tree is stored as
+  its prefix-traversal, the size of the left sub-tree is not known, so
+  it is not possible to access the right sub-tree without traversing
+  the left sub-tree.
+\item It does not make sense to read from an array of binary data
+  until it is fully initialised. After it is initialised, data becomes
+  immutable.
+\end{itemize}
+We recognise similar problems to the array-freezing example of
+\fref{sec:freezing-array}. However, there are further things to
+consider: first, we cannot freeze a binary array before we have
+completely initialised it, otherwise we would have an incomplete tree,
+which would probably yield a dreaded \texttt{segfault}; also at any
+given point we may have more than one data-structure to fill in (for
+instance both branches of a tree may have yet to be filled) so we need
+to index our arrays by a type-level list\footnote{Haskell has
+  type-level lists, which we use in the following. But in any language
+  with \textsc{ml}-style polymorphism, the type level list
+  $[a_1, …, a_n]$ can be represented by the type
+  $(a_1, (…, (a_n,())))$.}
+
+\todo{copy actual \textsc{api}}
+
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 
