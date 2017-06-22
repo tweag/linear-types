@@ -22,9 +22,16 @@ library
         Cursors,
         IO,
         Linear.Std,
-        Linear.Unsafe
--- Protocol, InPlaceArrays, HaskellR, StorageServer, Network, ByteArrays, PtrArray, Queues.QueueRefImpl, Queues.Queue1_fromPaper
+        Linear.Unsafe,
 
+        -- Exposed only for testing:
+        PackedTree
+
+        -- Unfinished:
+        -- Protocol, InPlaceArrays, HaskellR, StorageServer, Network,
+        -- ByteArrays, PtrArray, Queues.QueueRefImpl,
+        -- Queues.Queue1_fromPaper
+           
   other-modules:
         Linear.Common
 

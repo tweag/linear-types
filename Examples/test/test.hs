@@ -4,6 +4,8 @@ module Main where
 
 import qualified ByteArray as ByteArray
 import Cursors
+import PackedTree
+---------------------
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import Data.Word (Word8)
