@@ -9,8 +9,8 @@ module IO where
 
 import qualified Prelude as P
 import System.IO (Handle)
-import System.IO.Unsafe (unsafePerformIO)
-import GHC.Prim
+-- import System.IO.Unsafe (unsafePerformIO)
+-- import GHC.Prim
 
 ------------------------------------------------------------
     
@@ -51,7 +51,7 @@ return = P.undefined
           
 ---------------------
         
-open :: P.String -> IO' One Handle
+open :: P.String -> IO' 'One Handle
 open = P.undefined
 
 close :: Handle ⊸ IO' l ()

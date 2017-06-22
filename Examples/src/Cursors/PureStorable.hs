@@ -25,18 +25,12 @@ import Linear.Std (Unrestricted(..))
 import Linear.Unsafe (unsafeCastLinear, unsafeCastLinear2, unsafeUnrestricted)
 
 import Data.Sequence      
-import Data.Monoid
-import Data.Word
-import Data.Int
 import Data.ByteString.Char8   as BS
 import Data.ByteString.Internal (fromForeignPtr, toForeignPtr)
-import Data.Binary (get, put, Binary, encode, decode, getWord8)
-import Data.Binary.Get (runGetOrFail, Get)
-import Data.Binary.Put (execPut)
 import Foreign.Storable
 import Foreign.Ptr ()
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr, mallocForeignPtr, castForeignPtr)
-import Foreign.Marshal.Alloc (alloca)
+-- import Foreign.Marshal.Alloc (alloca)
 import System.IO.Unsafe (unsafeDupablePerformIO)
 
 -- | A hack for treating Storable as a pure, rather than IO-based interface.
@@ -53,7 +47,7 @@ deserialize = unsafeCastLinear
    let (fp,st,_) = toForeignPtr bs
        fp' :: ForeignPtr a
        fp' = castForeignPtr fp
-   withForeignPtr fp (`peekByteOff` st))
+   withForeignPtr fp' (`peekByteOff` st))
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -80,39 +74,39 @@ newtype Packed a = Packed ByteString
 consR :: Seq a ⊸ a ⊸ Seq a
 consR = unsafeCastLinear2 (|>)
 
+linerror :: String -> b ⊸ a
+linerror = error
+
+           
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
 writeC a (Needs s) = Needs (s `consR` serialize a)
 
-{-
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
-readC :: Binary a => Has (a ': rst) -> (a, Has rst)
-readC (Has bs) =
-  case runGetOrFail get bs of
-    Left (_,_,err) -> error $ "internal error: "++err
-    Right (remain,num,a) -> (a, Has remain)
+readC :: Storable a => Has (a ': rst) -> (a, Has rst)
+readC (Has Empty) = error "impossible"
+readC (Has (bs :<| rst)) = (deserialize bs, Has rst)
 
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
-fromHas (Has b) = Packed b
+fromHas (Has (a :<| Empty)) = Packed a
+fromHas (Has x) = (linerror "impossible") x
 
 -- | Safely cast a packed value to a has cursor.
 toHas :: Packed a ⊸ Has '[a]
-toHas (Packed b) = Has b
+toHas (Packed b) = Has (consR Empty b)
 
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
 unsafeCastNeeds (Needs b) = (Needs b)
-                   
-toBS :: Builder ⊸ ByteString
-toBS = unsafeCastLinear B.toLazyByteString
 
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish (Needs bs) = unsafeUnrestricted $ Has (toBS bs)
+finish (Needs (Empty :|> bs)) = unsafeUnrestricted $ Has (Empty `consR` bs)
+finish (Needs x) = linerror "finish: the impossible happened" x
 
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
@@ -121,5 +115,3 @@ withOutput fn =
   where
     force :: Unrestricted b ⊸ Unrestricted b
     force (Unrestricted x) = Unrestricted x
-
--}
