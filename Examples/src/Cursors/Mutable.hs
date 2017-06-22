@@ -19,7 +19,7 @@ module Cursors.Mutable
     , finish, withOutput
 
       -- * Unsafe interface
-    , unsafeCastNeeds
+    , unsafeCastNeeds, unsafeCastHas
     )
     where      
 
@@ -85,6 +85,8 @@ toHas (Packed b) = Has b
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
 unsafeCastNeeds (Needs b) = (Needs b)
 
+unsafeCastHas :: Has l1 ⊸ Has l2
+unsafeCastHas (Has b) = (Has b)
 
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])

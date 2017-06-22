@@ -17,7 +17,7 @@ module Cursors.PureStorable
     , finish, withOutput
 
       -- * Unsafe interface
-    , unsafeCastNeeds
+    , unsafeCastNeeds, unsafeCastHas
     )
     where
 
@@ -100,9 +100,13 @@ toHas (Packed b) = Has (consR Empty b)
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
 unsafeCastNeeds (Needs b) = (Needs b)
 
+unsafeCastHas :: Has l1 ⊸ Has l2
+unsafeCastHas (Has b) = (Has b)
+
+
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish (Needs (Empty :|> bs)) = unsafeUnrestricted $ Has (Empty `consR` bs)
+finish (Needs (_ :|> bs)) = unsafeUnrestricted $ Has (Empty `consR` bs)
 finish (Needs x) = linerror "finish: the impossible happened" x
 
 -- | Allocate a fresh output cursor and compute with it.

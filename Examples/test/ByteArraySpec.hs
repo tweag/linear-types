@@ -1,12 +1,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 module ByteArraySpec (spec) where
 
 import qualified ByteArray as ByteArray
 
--- import Cursors.Mutable
+#ifdef PUREMODE
 import Cursors.PureStorable
-
+#else
+import Cursors.Mutable
+#endif
+    
 import PackedTree
 ---------------------
 import Data.ByteString (ByteString)

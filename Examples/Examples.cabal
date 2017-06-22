@@ -39,32 +39,38 @@ library
         Linear.Common
 
   other-extensions:    TypeOperators, GADTs, DataKinds, KindSignatures,
-                       BangPatterns, LambdaCase
+                       BangPatterns, LambdaCase, CPP
   build-depends:       base >=4.9,
                        bytestring >=0.10,
                        binary,
                        containers,
                        ghc-prim
-
+  if flag(pure)
+    cpp-options: -DPUREMODE
   ghc-options:         -Wall -O2 
   -- hs-source-dirs:      
   default-language:    Haskell2010
 
-
+flag pure
+  default: True
 
 test-suite tests
   type: exitcode-stdio-1.0
   hs-source-dirs: test
-  ghc-options:         -Wall 
+  ghc-options:         -Wall -fno-warn-orphans
+  other-extensions: CPP
   main-is: Main.hs
-  other-modules:       ByteArraySpec
+  if flag(pure)
+    cpp-options: -DPUREMODE
+  other-modules:       ByteArraySpec,
+                       PackedTreeSpec
   build-depends:
           base
         , bytestring >=0.10
         , Examples
         , hspec
         , QuickCheck
-
+  default-language:    Haskell2010
 
 executable bench-cursor
   hs-source-dirs:      bench

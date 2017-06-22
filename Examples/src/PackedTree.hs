@@ -8,11 +8,25 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE CPP #-}
 
-module PackedTree where
+module PackedTree
+    ( Tree(..), TagTy
+    , writeLeaf
+    , writeBranch
+    , caseTree
+    , packTree, unpackTree
+    , sumTree, mapTree, foldTree, unfoldTree     
+    ) where
 
--- import Cursors.Pure
+#ifdef PUREMODE
+#warning "Building library with PURE cursors, not internally mutable."
+import Cursors.PureStorable
+#else
+#warning "Building library with internally MUTABLE cursors."
 import Cursors.Mutable
+#endif
+    
 import Linear.Std
 import Data.Word
 import qualified Data.ByteString as ByteString
@@ -31,7 +45,7 @@ data Tree = Leaf Int
 type TagTy = Word8
 
 leafTag   :: TagTy; leafTag   = 0
-branchTag :: TagTy; branchTag = 1
+-- branchTag :: TagTy; branchTag = 1
 
     
 -- | Write a complete Leaf node to the output cursor.
@@ -67,15 +81,25 @@ writeBranch -- (Needs bs) = Needs (ByteArray.writeByte 1 bs)
 --                             return (Branch l r)
 
 
-caseTree :: Has (Tree ': b)
+caseTree :: forall a b.
+            Has (Tree ': b)
          -> (Has (Int ': b) -> a)
          -> (Has (Tree ': Tree ': b) -> a)
          -> a
-caseTree (Has bs) f1 f2 =
-  case ByteString.head bs of
-    0 -> f1 (Has (ByteString.drop 1 bs))
-    1 -> f2 (Has (ByteString.drop 1 bs))
-    _ -> error "impossible"
+caseTree c f1 f2 = f (readC (unsafeCastHas c))
+  where   
+    f :: (TagTy, Has '[]) -> a
+    f (tg,c2) = case tg of
+                 0 -> f1 (unsafeCastHas c2)
+                 1 -> f2 (unsafeCastHas c2)
+                 _ -> error $ "caseTree: corrupt tag, "++show tg
+    
+-- This version violates the abstraction:
+-- caseTree (Has bs) f1 f2 =
+--   case ByteString.head bs of
+--     0 -> f1 (Has (ByteString.drop 1 bs))
+--     1 -> f2 (Has (ByteString.drop 1 bs))
+--     _ -> error "impossible"
 
 packTree :: Tree -> Packed Tree
 packTree = unfoldTree viewTree
