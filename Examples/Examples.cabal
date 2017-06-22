@@ -54,7 +54,7 @@ library
 test-suite tests
   type: exitcode-stdio-1.0
   hs-source-dirs: test
-  main-is: test.hs
+  main-is: Main.hs
   build-depends:
           base
         , bytestring >=0.10

@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main where
+module ByteArraySpec (spec) where
 
 import qualified ByteArray as ByteArray
 
@@ -27,8 +27,8 @@ instance Arbitrary Tree where
       False -> Branch <$> arbitrary <*> arbitrary
 
 
-main :: IO ()
-main = hspec $ do
+spec :: Spec 
+spec = do
     describe "ByteArray: Word8" $ do
       prop "are written then read once correctly" $ \ (n :: Word8) ->
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
