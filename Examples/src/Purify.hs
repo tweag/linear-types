@@ -28,12 +28,12 @@ maybeWriteTree (Just mtree) v = writeTree mtree v >> return mtree
 maybeWriteTree Nothing v = newTree v
 
 unsafeUpdateTree :: Tree a -> Tree a -> IO (MTree a)
-unsafeUpdateTree (Node l1 a1 r1 _) (Node l2 (Unrestricted a2) r2 mmtree) = do
+unsafeUpdateTree (Node l1 _ r1 _) (Node l2 (Unrestricted a2) r2 mmtree) = do
   ml2 <- unsafeUpdateTree l1 l2
   mr2 <- unsafeUpdateTree r1 r2
   mtree <- maybeWriteTree mmtree (VNode ml2 a2 mr2)
   return mtree
-unsafeUpdateTree _ newTree = unsafeAllocTree newTree
+unsafeUpdateTree _ tree = unsafeAllocTree tree
 
 unsafeAllocTree :: Tree a -> IO (MTree a)
 unsafeAllocTree (Leaf mmtree) = do
