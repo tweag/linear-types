@@ -1150,7 +1150,7 @@ to index our arrays by a type-level list\footnote{Haskell has
 \label{sec:spritekit}
 
 \Citet{chakravarty_spritekit_2017} have a different kind of
-problem. \Citeauthors{chakravarty_spritekit_2017} are building a pure
+problem. \Citeauthor{chakravarty_spritekit_2017} are building a pure
 interface for graphical interfaces, in the same style as the Elm
 programming language\improvement{citation}, but are implementing it in
 terms of an existing imperative graphical interface engine.
