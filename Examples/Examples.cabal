@@ -25,6 +25,7 @@ library
         IO,
         Linear.Std,
         Linear.Unsafe,
+        Purify,
 
         -- Exposed only for testing:
         PackedTree
