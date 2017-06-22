@@ -23,6 +23,11 @@ data Tree a
   = Leaf (Maybe (MTree a))
   | Node (Tree a) (Unrestricted a) (Tree a) (Maybe (MTree a))
 
+mapTree :: (a -> a) -> Tree a ⊸ Tree a
+mapTree _ (Leaf mmtree) = Leaf mmtree
+mapTree f (Node left (Unrestricted x) right mmtree) =
+    Node (mapTree f left) (Unrestricted (f x)) (mapTree f right) mmtree
+
 maybeWriteTree :: Maybe (MTree a) -> TreeView a -> IO (MTree a)
 maybeWriteTree (Just mtree) v = writeTree mtree v >> return mtree
 maybeWriteTree Nothing v = newTree v
