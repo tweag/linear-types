@@ -11,7 +11,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module Cursors
+module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
       Has(..), Needs(..), Packed
       -- * Public cursor interface

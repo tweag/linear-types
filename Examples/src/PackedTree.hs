@@ -12,7 +12,7 @@
 module PackedTree where
 
 -- import Cursors.Pure
-import Cursors
+import Cursors.Mutable
 import Linear.Std
 import qualified ByteArray as ByteArray
 

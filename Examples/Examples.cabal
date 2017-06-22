@@ -19,7 +19,9 @@ library
   hs-source-dirs:     src
   exposed-modules:
         ByteArray,
-        Cursors,
+        Cursors.Mutable,
+        Cursors.PureBinary,
+        Cursors.PureStorable,
         IO,
         Linear.Std,
         Linear.Unsafe,

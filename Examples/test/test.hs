@@ -3,7 +3,7 @@
 module Main where
 
 import qualified ByteArray as ByteArray
-import Cursors
+import Cursors.Mutable
 import PackedTree
 ---------------------
 import Data.ByteString (ByteString)
