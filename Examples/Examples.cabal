@@ -55,7 +55,9 @@ library
 test-suite tests
   type: exitcode-stdio-1.0
   hs-source-dirs: test
+  ghc-options:         -Wall 
   main-is: Main.hs
+  other-modules:       ByteArraySpec
   build-depends:
           base
         , bytestring >=0.10
@@ -71,4 +73,3 @@ executable bench-cursor
   build-depends:       base
                      , Examples
   default-language:    Haskell2010
-
