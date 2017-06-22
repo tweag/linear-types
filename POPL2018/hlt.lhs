@@ -1149,7 +1149,38 @@ to index our arrays by a type-level list\footnote{Haskell has
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
 
-\todo{Short example based on Haskell SpriteKit \cite{chakravarty_spritekit_2017}}
+\Citet{chakravarty_spritekit_2017} have a different kind of
+problem. \Citeauthors{chakravarty_spritekit_2017} are building a pure
+interface for graphical interfaces, in the same style as the Elm
+programming language\improvement{citation}, but are implementing it in
+terms of an existing imperative graphical interface engine.
+
+Basically, the pure interface takes an update function |Scene ->
+Scene| which is tasked with returning the next state that the
+interface will display. In order to efficiently map this pure
+interface to the imperative engine, the new |Scene| must not destroy
+the entire imperative scene and re-create it, but must be rendered
+using imperative update. To achieve this result, the nodes in the
+|Scene| data-type contain pointers to the imperative nodes that they
+represent, so that changing, say, a node |np|'s children will be
+effected as an imperative update of the corresponding imperative node
+|ni|.
+
+But if the update function duplicates |ni|, the imperative update will
+mutate |ni| twice. Which would break the pure semantics. In the
+current state of the implementation, the programmer must be careful of
+not duplicating |ni|. Linear types offer a solution where the
+programmer cannot inadvertently break that promise: we take the update
+function to be of type |Scene ⊸ Scene|. With such a linear update
+function duplication of |ni| becomes impossible, and if a |np| must be
+duplicated, only one of the duplicates will have a reference to |ni|.
+
+We have implemented a simplified version of this solution in the case
+where the impure \textsc{api} is a simple tree
+\textsc{api}.\improvement{With some data regarding implementation, a
+  remark that linearity is not used \emph{in} the implementation but
+  only as the interface level to ensure that the proof obligation is
+  respected by the \textsc{api} user.}
 
 \subsection{Some protocol example}
 
