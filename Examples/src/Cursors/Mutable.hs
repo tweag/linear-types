@@ -28,8 +28,6 @@ import qualified ByteArray as ByteArray
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
-import Data.Monoid
-import Data.Word
 import Data.Int
 import Foreign.Storable
 import Prelude hiding (($))
@@ -105,12 +103,12 @@ foo = undefined
 bar :: Needs '[Bool] Double
 bar = writeC 3 foo
 
-test01 :: Needs '[Int] a ⊸ Needs '[] a
-test01 x = writeC 3 x
+_test01 :: Needs '[Int] a ⊸ Needs '[] a
+_test01 x = writeC 3 x
 
 test02 :: Needs '[] Double
 test02 = writeC True bar
 
-test03 :: Double
-test03 = fst (readC (getUnrestricted (finish test02)))
+_test03 :: Double
+_test03 = fst (readC (getUnrestricted (finish test02)))
 

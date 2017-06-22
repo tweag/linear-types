@@ -21,7 +21,7 @@ module Cursors.PureStorable
     -- )
     where
 
-import Linear.Std (Unrestricted(..))
+import Linear.Std (Unrestricted(..), linerror)
 import Linear.Unsafe (unsafeCastLinear, unsafeCastLinear2, unsafeUnrestricted)
 
 import Data.Sequence      
@@ -73,9 +73,6 @@ newtype Packed a = Packed ByteString
 
 consR :: Seq a ⊸ a ⊸ Seq a
 consR = unsafeCastLinear2 (|>)
-
-linerror :: String -> b ⊸ a
-linerror = error
 
            
 -- | Write a value to the cursor.  Write doesn't need to be linear in

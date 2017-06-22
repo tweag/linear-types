@@ -16,3 +16,7 @@ mapU f (Unrestricted a) = Unrestricted (f a)
 
 forceUnrestricted :: Unrestricted a ⊸ Unrestricted a
 forceUnrestricted (Unrestricted a) = Unrestricted a
+
+
+linerror :: String -> b ⊸ a
+linerror = error

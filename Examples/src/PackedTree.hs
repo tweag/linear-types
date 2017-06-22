@@ -14,10 +14,7 @@ module PackedTree where
 -- import Cursors.Pure
 import Cursors.Mutable
 import Linear.Std
-import qualified ByteArray as ByteArray
-
 import Data.Word
-import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
 
@@ -42,7 +39,7 @@ writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
 writeLeaf n oc = writeLeaf' n (unsafeCastNeeds oc)
   where
    writeLeaf' :: Int -> Needs (TagTy ': Int ': b) t ⊸ Needs b t
-   writeLeaf' n oc = writeC n (writeC leafTag oc)
+   writeLeaf' x c = writeC x (writeC leafTag c)
 
 -- Old way to write a leaf:
 -- writeLeaf n (Needs b) = Needs (
@@ -78,7 +75,7 @@ caseTree (Has bs) f1 f2 =
   case ByteString.head bs of
     0 -> f1 (Has (ByteString.drop 1 bs))
     1 -> f2 (Has (ByteString.drop 1 bs))
-
+    _ -> error "impossible"
 
 packTree :: Tree -> Packed Tree
 packTree = unfoldTree viewTree
@@ -123,6 +120,7 @@ unfoldTree step seed = fromHas $ getUnrestricted $
     go (step -> Left a) n = writeLeaf a n
     go (step -> Right (left,right)) n =
       go right (go left (writeBranch n))
+    go _ y = linerror "impossible" y
            
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt = fromHas $ getUnrestricted $
