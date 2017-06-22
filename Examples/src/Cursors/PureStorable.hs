@@ -10,15 +10,15 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 
 module Cursors.PureStorable
-    -- ( -- * Abstract Cursor datatypes
-    --   Has, Needs, Packed
-    --   -- * Public cursor interface
-    -- , writeC, readC, fromHas, toHas
-    -- , finish, withOutput
+    ( -- * Abstract Cursor datatypes
+      Has, Needs, Packed
+      -- * Public cursor interface
+    , writeC, readC, fromHas, toHas
+    , finish, withOutput
 
-    --   -- * Unsafe interface
-    -- , unsafeCastNeeds
-    -- )
+      -- * Unsafe interface
+    , unsafeCastNeeds
+    )
     where
 
 import Linear.Std (Unrestricted(..), linerror)

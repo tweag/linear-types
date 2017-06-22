@@ -52,7 +52,7 @@ instance Comonoid Int where
     where
       -- it matters, for correctness, that the int is forced
       almostDropInt :: Int -> ()
-      almostDropInt (I# i) = ()
+      almostDropInt (I# _) = ()
   dup = unsafeCastLinear $ almostDupInt
     where
       -- it matters, for correctness, that the int is forced

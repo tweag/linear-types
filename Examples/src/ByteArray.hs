@@ -3,7 +3,7 @@
 module ByteArray where
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as ByteString
+-- import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Unsafe as ByteString (unsafePackMallocCStringLen, unsafeUseAsCString)
 import Data.Word
 import Foreign.C.String
