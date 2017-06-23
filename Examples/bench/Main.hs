@@ -4,7 +4,11 @@
 
 module Main where
 
+import qualified ByteArray as BA
 import PackedTree
+-- import Linear.Common
+import Linear.Unsafe
+
 -- import Criterion
 import Data.Time.Clock
 import System.Environment
@@ -35,7 +39,7 @@ timePrint act = do
 comma :: (Show a,Num a) => a -> String
 comma n = reverse (frst : go rst)
   where (frst:rst)    = reverse (show n)
-        go [a,b,c]   = [',',a,b,c]
+        go [a,b,c]   = [a,b,c,',']
         go (a:b:c:r) = a:b:c:',': go r
         go ls        = ls
          
@@ -45,8 +49,15 @@ pureMap f (Branch x y) = Branch (pureMap f x) (pureMap f y)
          
 main :: IO () 
 main = do
+  putStr "Fill 10K bytes in a ByteArray: "
+  _ <- timePrint $ evaluate $ 
+         BA.alloc 20000 (unsafeCastLinear
+                         (\c -> let go 0 = c
+                                    go n = BA.writeByte 33 (go (n-1))
+                                in BA.freeze (go (10000::Int))))
+
   [dep] <- getArgs
-  putStr "Generate tree: "
+  putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
   putStr "Boxed map: "
   !_ <- timePrint $ evaluate $ force $ pureMap (+1) tr

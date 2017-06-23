@@ -54,7 +54,7 @@ type TagTy = Word8
 leafTag   :: TagTy; leafTag   = 100
 branchTag :: TagTy; branchTag = 111
 
-    
+{-# INLINE writeLeaf #-}
 -- | Write a complete Leaf node to the output cursor.
 writeLeaf :: Int -> Needs (Tree ': b) t ⊸ Needs b t
 writeLeaf n oc = writeLeaf' n (unsafeCastNeeds oc)
@@ -62,6 +62,7 @@ writeLeaf n oc = writeLeaf' n (unsafeCastNeeds oc)
    writeLeaf' :: Int -> Needs (TagTy ': Int ': b) t ⊸ Needs b t
    writeLeaf' x c = writeC x (writeC leafTag c)
 
+{-# INLINE writeBranch #-}
 -- | Write a complete Branch node to the output cursor.
 --   First, write the tag.  Second, use the provided function to
 --   initialize the left and write branches.
