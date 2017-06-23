@@ -7,7 +7,9 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module ByteArray
-    ( WByteArray, alloc, freeze, headStorable, writeStorable, writeByte )
+    ( WByteArray,
+      alloc, freeze, headStorable, withHeadStorable, withHeadStorable2,
+      writeStorable, writeByte )
     where
 
 import Data.ByteString (ByteString)
@@ -116,3 +118,25 @@ headStorable :: Storable a => ByteString -> a
 headStorable bs = unsafeDupablePerformIO $
     ByteString.unsafeUseAsCString bs $ \ cstr -> 
       peek (castPtr cstr)
+
+{-# INLINE withHeadStorable #-}
+-- | An alternative to @headStorable@ which permits different compiler
+-- optimizations.
+withHeadStorable :: Storable a => ByteString -> (a -> b) -> b
+withHeadStorable bs f = unsafeDupablePerformIO $
+    ByteString.unsafeUseAsCString bs $ \ cstr ->  do
+      !x <- peek (castPtr cstr)
+      return $! f x
+
+{-# INLINE withHeadStorable2 #-}
+-- | An alternative to @headStorable@ which permits different compiler
+-- optimizations.
+withHeadStorable2 :: Storable a => ByteString -> (a -> (# b1, b2 #)) -> (# b1, b2 #)
+withHeadStorable2 bs f = (# x, y #)
+  where
+   (x,y) = unsafeDupablePerformIO $
+    ByteString.unsafeUseAsCString bs $ \ cstr ->  do
+      !x <- peek (castPtr cstr)
+      case f x of
+        (# a,b #) -> return (a,b)  -- Sigh... 
+

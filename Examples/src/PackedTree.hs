@@ -106,11 +106,11 @@ caseTree2 :: forall a1 a2 b.
           -> (Has (Int ': b) -> (# a1, a2 #))
           -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
           -> (# a1, a2 #)
-caseTree2 c f1 f2 =
-  let c2 = unsafeCastHas c in
-      case fstC c2 of
-        tg | tg == leafTag   -> f1 (unsafeCastHas (rstC c2))
-        tg | tg == branchTag -> f2 (unsafeCastHas (rstC c2))
+caseTree2 c f1 f2 = withC2 c2 f 
+  where 
+    c2 = unsafeCastHas c 
+    f tg | tg == leafTag   = f1 (unsafeCastHas (rstC c2))
+         | tg == branchTag = f2 (unsafeCastHas (rstC c2))
 --                 _ -> error $ "caseTree2: corrupt tag, "++show tg
 
 

@@ -11,13 +11,15 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE MagicHash #-}
 
 module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
       Has(..), Needs(..), Packed
       -- * Public cursor interface
     , writeC, readC, fstC, rstC, fromHas, toHas
-    , finish, withOutput
+    , finish, withOutput, withC, withC2
     , tup, untup
 
       -- * Unsafe interface
@@ -69,7 +71,6 @@ instance NFData (Packed a) where
 --------------------------------------------------------------------------------
 
 {-# INLINABLE writeC #-}           
-{-# INLINABLE readC #-}
 {-# INLINABLE fromHas #-}
 {-# INLINABLE toHas #-}
 {-# INLINE unsafeCastNeeds #-}
@@ -84,6 +85,7 @@ instance NFData (Packed a) where
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
 writeC a (Needs bld1) = Needs (ByteArray.writeStorable a bld1)
 
+{-# INLINE readC #-}
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
 readC :: forall a rst . Storable a => Has (a ': rst) -> (a, Has rst)
@@ -91,13 +93,23 @@ readC (Has bs) =
     let !a = ByteArray.headStorable bs in 
     (a, Has (ByteString.drop (sizeOf (undefined::a)) bs))
 
+{-# INLINE fstC #-}
 -- | Equivalent to the first value returned by @readC@.
 fstC :: forall a rst . Storable a => Has (a ': rst) -> a
 fstC (Has bs) = ByteArray.headStorable bs
 
+{-# INLINE rstC #-}
 -- | Equivalent to the second value returned by @readC@.
 rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
 rstC (Has bs) = Has (ByteString.drop (sizeOf (undefined::a)) bs)
+
+{-# INLINE withC #-}
+withC :: forall a b rst . Storable a => Has (a ': rst) -> (a -> b) -> b
+withC (Has bs) = ByteArray.withHeadStorable bs
+
+{-# INLINE withC2 #-}
+withC2 :: forall a b1 b2 rst . Storable a => Has (a ': rst) -> (a -> (# b1, b2 #)) -> (# b1, b2 #)
+withC2 (Has bs) = ByteArray.withHeadStorable2 bs
 
 
 -- | Safely "cast" a has-cursor to a packed value.
