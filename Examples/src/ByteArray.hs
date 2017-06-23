@@ -24,6 +24,7 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
 data WByteArray = WBA { pos :: !CString, orig :: !CString, stored :: !Int, rem :: !Int }
 
+{-# NOINLINE alloc #-}
 -- | Allocate and use a mutable, linear byte array.
 alloc :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
 -- Todo: @alloc@ should handle exception and free the pointer it allocates.
@@ -36,7 +37,7 @@ alloc i f = forceUnrestricted $ f $ unsafePerformIO $ do
 writeByte :: Word8 -> WByteArray ⊸ WByteArray
 writeByte = writeStorable
 
-{- INLINABLE writeStorable -}
+{-# NOINLINE writeStorable #-}
 -- | Write a storable value to the end of a byte array.
 writeStorable :: Storable a => a -> WByteArray ⊸ WByteArray
 writeStorable obj wbarr = write (unsafeUnrestricted wbarr)
@@ -49,6 +50,7 @@ writeStorable obj wbarr = write (unsafeUnrestricted wbarr)
       let sizeStored = newPos `minusPtr` pos wba
       return $! wba { pos = newPos, rem = rem wba - sizeStored, stored = stored wba + sizeStored }
 
+{-# NOINLINE freeze #-}
 freeze :: WByteArray ⊸ Unrestricted ByteString
 freeze wba =
     pack (project (unsafeUnrestricted wba))
@@ -60,6 +62,7 @@ freeze wba =
     pack (Unrestricted cstr) = Unrestricted $ unsafePerformIO $
         ByteString.unsafePackMallocCStringLen cstr
 
+{-# NOINLINE headStorable #-}
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
 headStorable bs = unsafePerformIO $

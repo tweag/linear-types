@@ -59,7 +59,7 @@ spec = do
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
 
 -- Still a double-free exception:
-{-
+
       prop "are written then read once correctly" $ \ (n :: Int) ->
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
           let
@@ -67,7 +67,6 @@ spec = do
             test (Unrestricted bs) = Unrestricted $ ByteArray.headStorable bs == n
           in
             test (ByteArray.freeze (ByteArray.writeStorable n w))
-
 
       prop "are written then read twice correctly" $ \ (n :: Int) (p :: Int) ->
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
@@ -78,4 +77,3 @@ spec = do
               ByteArray.headStorable (ByteString.drop (sizeOf n) bs) == p
           in
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
--}
