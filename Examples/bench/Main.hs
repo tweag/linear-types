@@ -37,10 +37,8 @@ timePrint act = do
   return x
 
 comma :: (Show a,Num a) => a -> String
-comma n = reverse (frst : go rst)
-  where (frst:rst)    = reverse (show n)
-        go [a,b,c]   = [a,b,c,',']
-        go (a:b:c:r) = a:b:c:',': go r
+comma n = reverse (go (reverse (show n)))
+  where go (a:b:c:d:r) = a:b:c:',': go (d:r)
         go ls        = ls
          
 pureMap :: (Int -> Int) -> Tree -> Tree

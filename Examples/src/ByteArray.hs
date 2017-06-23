@@ -15,7 +15,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Unsafe as ByteString (unsafePackMallocCStringLen, unsafeUseAsCString)
 import Data.Word
 import Foreign.C.String
-import Foreign.Marshal.Alloc (mallocBytes)
+import Foreign.Marshal.Alloc (mallocBytes, malloc, free)
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.C.Types
@@ -30,23 +30,39 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
 -- type Token = State# RealWorld
 
-data WByteArray = WBA { pos :: !CString
-                      , orig :: !CString
---                      , stored :: !Int
---                      , rem :: !Int
---                      , state :: Token
+-- | An unboxed mutable counter.  Could use an Unboxed vector.
+type MutCounter = Ptr Int
+
+incCounter :: MutCounter -> Int -> IO ()
+incCounter c m = do n <- peek c
+                    poke c (n+m)
+
+readCounter :: MutCounter -> IO Int
+readCounter = peek
+
+newCounter :: IO MutCounter
+newCounter = do c <- malloc
+                poke c 0
+                return c
+
+freeCounter :: MutCounter -> IO ()
+freeCounter = free 
+    
+------------------------------------------------------------
+                     
+data WByteArray = WBA { offset :: !MutCounter
+                      , bytes  :: !CString
                       }
 
 {-# NOINLINE alloc #-}
 -- | Allocate and use a mutable, linear byte array.
 alloc :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
-alloc i f = forceUnrestricted $ f $ unsafePerformIO $ do
+alloc i f = forceUnrestricted $ f $ unsafePerformIO $ do              
      str <- mallocBytes (i+1) -- Remark: can't use @alloca@ as the pointer will usually survive the scope
-     pokeElemOff str i (0::CChar) -- Null terminated.
-     return $! WBA{ pos = str
-                  , orig = str
---                  , stored = 0
---                  , rem = i
+     pokeElemOff str i (0::CChar) -- Null terminated.  But there may be other zeros!  Not a real CString.
+     cnt <- newCounter
+     return $! WBA{ offset = cnt
+                  , bytes  = str
                   }
 -- Todo: @alloc@ should handle exception and free the pointer it allocates.
 
@@ -59,32 +75,34 @@ writeByte = writeStorable
 {-# INLINE writeStorable #-}
 -- | Write a storable value to the end of a byte array.
 writeStorable :: Storable a => a -> WByteArray ⊸ WByteArray
-writeStorable obj wbarr = write (unsafeUnrestricted wbarr)
+writeStorable obj wbarr = unsafeCastLinear write wbarr
   where
-    write :: Unrestricted WByteArray ⊸ WByteArray
-    write (Unrestricted WBA{pos,orig}) =       
-      let !_         = unsafeDupablePerformIO (poke (castPtr pos) obj)
-          size       = sizeOf obj
-          newPos     = pos `plusPtr` size -- no alignment 
---          sizeStored = newPos `minusPtr` pos wba
-      in
-      WBA { pos    = newPos
-          , orig   = orig
---          , stored = stored wba + sizeStored
---          , rem = rem wba - sizeStored,
-          }
+    write :: WByteArray -> WByteArray
+    write (wb@WBA{offset,bytes}) = unsafeDupablePerformIO $ do
+      i <- readCounter offset
+      poke (castPtr bytes `plusPtr` i) obj
+      incCounter offset (sizeOf obj)
+      return wb
 
 {-# NOINLINE freeze #-}
 freeze :: WByteArray ⊸ Unrestricted ByteString
-freeze wba =
-    pack (project (unsafeUnrestricted wba))
+freeze = unsafeCastLinear f
   where
-    project :: Unrestricted WByteArray ⊸ Unrestricted CStringLen
-    project (Unrestricted (WBA{orig, pos})) = Unrestricted (orig,pos `minusPtr` orig)
+   f WBA{offset,bytes} = unsafeUnrestricted $ unsafePerformIO $ do
+     sz <- readCounter offset
+     freeCounter offset
+     ByteString.unsafePackMallocCStringLen (bytes,sz)
 
-    pack :: Unrestricted CStringLen ⊸ Unrestricted ByteString
-    pack (Unrestricted cstr) = Unrestricted $ unsafePerformIO $
-        ByteString.unsafePackMallocCStringLen cstr
+--    pack (project (unsafeUnrestricted wba))
+--    pack (project (unsafeUnrestricted wba))
+--   where
+--    project :: Unrestricted WByteArray ⊸ Unrestricted CStringLen
+--    project (Unrestricted (WBA{orig, pos})) = Unrestricted (orig,pos `minusPtr` orig)
+
+    -- pack :: Unrestricted CStringLen ⊸ Unrestricted ByteString
+    -- pack (Unrestricted cstr) = Unrestricted $ unsafePerformIO $ do
+    --     freeCounter 
+    --     ByteString.unsafePackMallocCStringLen cstr
 
 {-# INLINE headStorable #-}
 -- TODO: bound checking
