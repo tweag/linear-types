@@ -5,10 +5,12 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 module IO where
 
 import qualified Prelude as P
+import Prelude (Int, fromInteger, (+)) -- TODO: For testing, can be removed when everything works
 import System.IO (Handle)
 -- import System.IO.Unsafe (unsafePerformIO)
 -- import GHC.Prim
@@ -41,6 +43,12 @@ type family Arrow l a b where
 (>>=) :: IO' l a ⊸ (Arrow l a (IO' l' b)) ⊸ IO' l' b
 (>>=) = P.undefined
 
+(>>) :: IO' 'Ω a ⊸ IO' l b ⊸ IO' l b
+(>>) x y = x >>= \_ -> y
+
+fail :: IO' l a
+fail = P.error "IO': pattern-matching failure"
+
 returnL :: a ⊸ IO' 'One a
 returnL = P.undefined
 
@@ -65,6 +73,17 @@ t2 = open "test.txt" >>= (\h -> close h >>= (\() -> return ()))
 
 t3 :: IO' 'One ()
 t3 = open "test.txt" >>= (\h -> close h >>= (\() -> returnL ()))
+
+t3' :: IO' 'One ()
+t3' = do
+  h <- open "test.txt"
+  () <- close h
+  returnL ()
+
+shouldFail :: IO' 'Ω Int
+shouldFail = do
+  x <- returnL (1::Int)
+  return (x+x)
 
 -- But how do we do some work inbetween?
 delayedClose :: Handle ⊸ IO' 'Ω ()
