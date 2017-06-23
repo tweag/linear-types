@@ -1510,7 +1510,7 @@ With linear type, however, the story becomes much simpler: a linear
 destination must be consumed exactly once, therefore we can make sure
 that our |B| is properly initialised simpley by making all
 destinations linear. A similar idea has been explored by
-\citet{minamide_hole_1998}.
+\cite{minamide_hole_1998}.
 \begin{code}
   type Dest b
   fill :: b ⊸ Dest b ⊸ ()
