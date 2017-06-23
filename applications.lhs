@@ -257,6 +257,82 @@ to be frozen first\unsure{Arnaud: it's not terribly important, but,
   because of this, I'm not sure how to make |Mutability| polymorphic
   code with |Array_l|}.
 
+\section{Where ownership works better}
+
+Ownership typing has applications it does better than linear
+typing. Array freezing is an example where we can go further with
+ownership typing.
+
+For the sake of illustration, let's write |a~>b| for a function which
+requires ownership of its argument.
+
+In Haskell, with or without linear types, we need two different types
+for mutable arrays and linear arrays. Say |MArray| and |Array|. So we
+must have a freezing function to convert between the types
+\begin{code}
+  freeze :: MArray (Unrestricted a) ⊸ Unrestricted (Array a)
+\end{code}
+
+With ownership types, however, we can use the same type |Array| for
+both: an array that you own is mutable, an array that you don't own is
+immutable\footnote{This does not apply, however, to freezing
+  write-only things like in the cursor example, in such case both
+  linear types and ownership type behaves mostly identically}. So you
+have something like this:
+\begin{code}
+  write  :: Int -> a -> Array a ~> Array a -- Only owned arrays
+  get    :: Array a -> a -- Both owned and not-owned arrays
+\end{code}
+Freezing an array is the generic operation of renouncing ownership of
+it. For instance, in Rust you would put the array in a
+reference-counted cell.
+\begin{code}
+  freeze  :: a ~> Rc a -- generic, always $O(1)$
+  getRc   :: Rc a -> a -- This |a| is never owned
+\end{code}
+
+The simplest example as to the benefit of this is a matrix represented
+as an array of array. With an ownership type system we would have
+something like:
+\begin{code}
+  type Matrix a = Array (Array a)
+
+  write  :: Int -> Int -> a -> Matrix a ~> Matrix a
+  get    :: Int -> Int -> Matrix a -> Matrix a
+  -- And we can reuse the generic freeze so freezing is $O(1)$
+\end{code}
+
+Whereas with linear types (resp. in |ST|) we have something like the
+following:
+\begin{code}
+  type MMAtrix a = MArray (MArray a)
+  type MAtrix a = Array (Array a)
+
+  write  :: Int -> Int -> a -> MMatrix a ⊸ MMatrix a
+  read   :: Int -> Int -> MMatrix a ⊸ (MMatrix a, a)
+  get    :: Int -> Int -> Matrix a -> a
+  freeze :: MMatrix a ⊸ Unrestricted (Matrix a)
+  -- The details may vary, but we will always need an $O(n)$
+  -- traversal to change the inner type of array
+  freeze m =
+    let frozenInside = mapArray freeze m
+    in
+      freeze frozenInside
+\end{code}
+
+We can make even more striking examples for data-structures that use
+arrays such as a |HashMap| defined as follows (drastic simplification
+from the standard |HashMap| implementation in Haskell):
+\begin{code}
+  data HashMap
+    = Leaf Bool
+    | Node (Array HashMap)
+\end{code}
+
+If we want to freeze a mutable |HashMap| in place, without ownership,
+we need to traverse the entire structure, so we are no better off than
+if we just copied the |HashMap|.
+
 \section{Borrowing}
 \label{sec:borrowing}
 
@@ -1510,7 +1586,7 @@ With linear type, however, the story becomes much simpler: a linear
 destination must be consumed exactly once, therefore we can make sure
 that our |B| is properly initialised simpley by making all
 destinations linear. A similar idea has been explored by
-\citet{minamide_hole_1998}.
+\cite{minamide_hole_1998}.
 \begin{code}
   type Dest b
   fill :: b ⊸ Dest b ⊸ ()
