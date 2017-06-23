@@ -11,7 +11,6 @@ import Cursors.PureStorable
 import Cursors.Mutable
 #endif
     
-import PackedTree
 ---------------------
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
@@ -22,14 +21,6 @@ import Prelude hiding (($))
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
-
-instance Arbitrary Tree where
-  arbitrary = do
-    stop <- frequency [(2, return True), (1, return False)]
-    case stop of
-      True -> Leaf <$> arbitrary
-      False -> Branch <$> arbitrary <*> arbitrary
-
 
 spec :: Spec 
 spec = do
@@ -89,6 +80,3 @@ spec = do
               ByteArray.headStorable (ByteString.drop (sizeOf n) bs) == p
           in
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
-    describe "Packed tree" $ do
-      prop "is correctly unpacked correctly" $ \ (t :: Tree) ->
-        unpackTree (packTree t) == t

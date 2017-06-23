@@ -17,6 +17,7 @@ module Cursors.Mutable
       -- * Public cursor interface
     , writeC, readC, fromHas, toHas
     , finish, withOutput
+    , tup, untup
 
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
@@ -92,6 +93,15 @@ unsafeCastHas (Has b) = (Has b)
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 finish (Needs bs) = Has `mapU` ByteArray.freeze bs
 
+-- | We /could/ create a general approach to safe coercions for data
+-- with the same serialized layout, analogous to, but distinct from,
+-- the Coercable class.
+untup :: Needs ((a,b) ': c) d ⊸ Needs (a ': b ': c) d
+untup (Needs x) = Needs x
+
+tup :: Needs (a ': b ': c) d ⊸ Needs ((a,b) ': c) d
+tup (Needs x) = Needs x
+                    
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn = ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
