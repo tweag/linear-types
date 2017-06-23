@@ -147,7 +147,7 @@ tup (Needs x) = Needs x
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn =
-    force $ fn (Needs mempty)
+    frc $ fn (Needs mempty)
   where
-    force :: Unrestricted b ⊸ Unrestricted b
-    force (Unrestricted x) = Unrestricted x
+    frc :: Unrestricted b ⊸ Unrestricted b
+    frc (Unrestricted x) = Unrestricted x

@@ -10,6 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
@@ -27,6 +28,7 @@ module Cursors.Mutable
 import Linear.Std
 import qualified ByteArray as ByteArray
 
+import Control.DeepSeq
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
 import Data.Int
@@ -37,7 +39,9 @@ import Prelude hiding (($))
 --------------------------------------------------------------------------------
 -- | Size allocated for each regions: 4KB.
 regionSize :: Int
-regionSize = 4096 -- in Bytes
+regionSize =
+  -- 4096 -- in Bytes
+  500 * 1000*1000
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -57,10 +61,24 @@ newtype Has (l :: [*]) = Has ByteString
 newtype Packed a = Packed ByteString
   deriving (Show,Eq)
 
+instance NFData (Packed a) where
+  rnf (Packed !_) = ()
 
+           
 -- Cursor interface
 --------------------------------------------------------------------------------
-         
+
+{-# INLINABLE writeC #-}           
+{-# INLINABLE readC #-}
+{-# INLINABLE fromHas #-}
+{-# INLINABLE toHas #-}
+{-# INLINABLE unsafeCastNeeds #-}
+{-# INLINABLE unsafeCastHas #-}
+{-# INLINABLE finish #-}
+{-# INLINABLE untup #-}
+{-# INLINABLE tup #-}
+{-# INLINABLE withOutput #-}
+
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t

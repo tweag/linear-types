@@ -23,11 +23,11 @@ import Linear.Unsafe
 import Prelude hiding (rem,($))
 import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
-import GHC.IO
-import GHC.Prim (RealWorld, State#)
+-- import GHC.IO
+-- import GHC.Prim (RealWorld, State#)
 ---------------------------------
 
-type Token = State# RealWorld
+-- type Token = State# RealWorld
 
 data WByteArray = WBA { pos :: !CString, orig :: !CString
                       , stored :: !Int, rem :: !Int
@@ -44,6 +44,7 @@ alloc i f = forceUnrestricted $ f $ unsafePerformIO $ do
 -- Todo: @alloc@ should handle exception and free the pointer it allocates.
 
 
+{-# INLINE writeByte #-}
 -- | Write a single byte to the end of a byte array.
 writeByte :: Word8 -> WByteArray ⊸ WByteArray
 writeByte = writeStorable

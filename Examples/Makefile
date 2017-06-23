@@ -11,3 +11,8 @@ debug:
 	stack --docker-image debug/linear-types test --no-run-tests
 	stack --docker-image debug/linear-types exec bash
 
+test:
+	stack test --flag Examples:pure
+	stack test --flag Examples:-pure
+
+.PHONY: all test debug

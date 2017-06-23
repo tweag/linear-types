@@ -46,10 +46,12 @@ main = do
   tr' <- timePrint $ evaluate $ force $ packTree tr
   performGC
 
+  putStr "de/re-serialize and map: "
+  !_ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
+  performGC
+  
   putStr "Unboxed map: "
   !_ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
   performGC
-  putStr "de/re-serialize and map: "
-  !_ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
 
   return ()

@@ -18,7 +18,7 @@ module PackedTree
     , packTree, unpackTree
     , sumTree, mapTree, foldTree, unfoldTree
     -- * Examples
-    , tr1, tr2, tr3
+    , tr1, tr2, tr3, pk0, pk1, pk2
     ) where
 
 #ifdef PUREMODE
@@ -62,10 +62,6 @@ writeLeaf n oc = writeLeaf' n (unsafeCastNeeds oc)
    writeLeaf' :: Int -> Needs (TagTy ': Int ': b) t ⊸ Needs b t
    writeLeaf' x c = writeC x (writeC leafTag c)
 
--- Old way to write a leaf:
--- writeLeaf n (Needs b) = Needs (
---   ByteArray.writeStorable n (ByteArray.writeByte 0 b))
-
 -- | Write a complete Branch node to the output cursor.
 --   First, write the tag.  Second, use the provided function to
 --   initialize the left and write branches.
@@ -86,7 +82,7 @@ writeBranch oc = writeC branchTag (unsafeCastNeeds oc)
 --                             r <- get
 --                             return (Branch l r)
 
-
+{-# INLINE caseTree #-}
 caseTree :: forall a b.
             Has (Tree ': b)
          -> (Has (Int ': b) -> a)
@@ -159,7 +155,8 @@ unfoldTree step seed = fromHas $ getUnrestricted $
     go (step -> Right (left,right)) n =
       go right (go left (writeBranch n))
     go _ y = linerror "unfoldTree: impossible" y
-           
+
+{-# INLINABLE mapTree #-}
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt = fromHas $ getUnrestricted $
     withOutput (\n -> finishMapDest (mapDest (toHas pt) n))
