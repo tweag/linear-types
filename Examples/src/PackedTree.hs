@@ -28,7 +28,8 @@ import Cursors.PureStorable
 #warning "Building library with internally MUTABLE cursors."
 import Cursors.Mutable
 #endif
-    
+
+import Control.DeepSeq
 import Linear.Std
 import Data.Word
 -- import qualified Data.ByteString as ByteString
@@ -40,6 +41,10 @@ import Prelude hiding (($))
 data Tree = Leaf Int
           | Branch Tree Tree
  deriving (Show, Eq)
+
+instance NFData Tree where
+  rnf (Leaf n) = rnf n
+  rnf (Branch x y) = rnf x `seq` rnf y
 
 -- Unsafe bits that should be derived! 
 --------------------------------------
@@ -94,19 +99,26 @@ caseTree c f1 f2 = f (readC (unsafeCastHas c))
                  _ | tg == leafTag   -> f1 (unsafeCastHas c2)
                  _ | tg == branchTag -> f2 (unsafeCastHas c2)
                  _ -> error $ "caseTree: corrupt tag, "++show tg
-    
--- This version violates the abstraction:
--- caseTree (Has bs) f1 f2 =
---   case ByteString.head bs of
---     0 -> f1 (Has (ByteString.drop 1 bs))
---     1 -> f2 (Has (ByteString.drop 1 bs))
---     _ -> error "caseTree: impossible"
 
+-- | This version takes ~0.53 seconds for a tree of depth 2^20.
 packTree :: Tree -> Packed Tree
 packTree = unfoldTree viewTree
   where
     viewTree (Leaf a) = Left a
     viewTree (Branch left right) = Right (left,right)
+
+-- | Impressively, this one goes no faster.  GHC is doing well on this
+-- one.
+{- 
+packTree :: Tree -> Packed Tree
+packTree tr0 = fromHas $ getUnrestricted $
+               withOutput (\n -> finish (go tr0 n))
+  where
+      go :: Tree -> Needs (Tree ': r) t ⊸ Needs r t
+      go (Leaf a) n = writeLeaf a n
+      go (Branch left right) n =
+          go right (go left (writeBranch n))
+-}
 
 unpackTree :: Packed Tree -> Tree
 unpackTree = foldTree Leaf Branch
@@ -137,6 +149,7 @@ foldTree leaf branch = snd . go . toHas
       in
         (h'', branch left right)
 
+{-# INLINABLE unfoldTree #-}
 unfoldTree :: forall s. (s -> Either Int (s,s)) -> s -> Packed Tree
 unfoldTree step seed = fromHas $ getUnrestricted $
     withOutput (\n -> finish (go seed n))
@@ -239,5 +252,3 @@ tr8 = add1 tr6
 tr9 = unpackTree tr8      
 
 -}
-
-    

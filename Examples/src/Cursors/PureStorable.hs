@@ -8,6 +8,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Cursors.PureStorable
     ( -- * Abstract Cursor datatypes
@@ -25,6 +26,7 @@ module Cursors.PureStorable
 import Linear.Std (Unrestricted(..)) -- linerror
 import Linear.Unsafe (unsafeCastLinear, unsafeCastLinear2, unsafeUnrestricted)
 
+import Control.DeepSeq
 import Data.Sequence as Seq
 import Data.Char (ord)
 import Data.List as L
@@ -70,12 +72,12 @@ newtype Has (l :: [*]) = Has (Seq ByteString)
 -- | A packed value is very like a singleton Has cursor.  It
 -- represents a dense encoding of a single value of the type `a`.
 newtype Packed a = Packed (Seq ByteString)
-  deriving (Eq)
+  deriving (Eq, NFData)
 
 instance Show (Packed a) where
   show (Packed sq) = "Packed ["
-                      ++ P.unwords (L.intersperse " | "
-                         [ show (BS.length bs)++": "++
+                      ++ P.unwords (L.intersperse "|"
+                         [ -- show (BS.length bs)++": "++
                            P.concat (L.intersperse "," [ show (ord c) | c <- BS.unpack bs])
                          | bs <- P.foldr (:) [] sq ]) ++ "]"
 
@@ -83,15 +85,17 @@ instance Show (Packed a) where
 -- Cursor interface
 --------------------------------------------------------------------------------
 
+{-# INLINABLE consR #-}
 consR :: Seq a ⊸ a ⊸ Seq a
 consR = unsafeCastLinear2 (|>)
 
-           
+{-# INLINABLE writeC #-}           
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
 writeC a (Needs s) = Needs (s `consR` serialize a)
 
+{-# INLINABLE readC #-}
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
 readC :: Storable a => Has (a ': rst) -> (a, Has rst)
@@ -99,23 +103,28 @@ readC :: Storable a => Has (a ': rst) -> (a, Has rst)
 readC (Has (bs :<| rst)) = (deserialize bs, Has rst)
 readC (Has Empty) = error "readC: impossible - read from empty cursor"
 
+{-# INLINABLE fromHas #-}
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
 fromHas (Has s) = Packed s
 
+{-# INLINABLE toHas #-}
 -- | Safely cast a packed value to a has cursor.
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
+{-# INLINABLE unsafeCastNeeds #-}
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
 unsafeCastNeeds (Needs b) = (Needs b)
 
+{-# INLINABLE unsafeCastHas #-}
 unsafeCastHas :: Has l1 ⊸ Has l2
 unsafeCastHas (Has b) = (Has b)
 
 
+{-# INLINABLE finish #-}
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 -- We don't KNOW how many bytestring chunks the value has.  So even
@@ -123,17 +132,18 @@ finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 -- thing:
 finish (Needs bss) = unsafeUnrestricted $ Has bss
 
-
+{-# INLINABLE untup #-}
 -- | We /could/ create a general approach to safe coercions for data
 -- with the same serialized layout, analogous to, but distinct from,
 -- the Coercable class.
 untup :: Needs ((a,b) ': c) d ⊸ Needs (a ': b ': c) d
 untup (Needs x) = Needs x
 
+{-# INLINABLE tup #-}
 tup :: Needs (a ': b ': c) d ⊸ Needs ((a,b) ': c) d
 tup (Needs x) = Needs x
 
-         
+{-# INLINABLE withOutput #-}
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn =
