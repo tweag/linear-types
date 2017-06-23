@@ -97,15 +97,14 @@ caseTree c f1 f2 = f (readC (unsafeCastHas c))
                  _ -> error $ "caseTree: corrupt tag, "++show tg
 
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
-packTree :: Tree -> Packed Tree
-packTree = unfoldTree viewTree
+_packTree1 :: Tree -> Packed Tree
+_packTree1 = unfoldTree viewTree
   where
     viewTree (Leaf a) = Left a
     viewTree (Branch left right) = Right (left,right)
 
 -- | Impressively, this one goes no faster.  GHC is doing well on this
 -- one.
-{- 
 packTree :: Tree -> Packed Tree
 packTree tr0 = fromHas $ getUnrestricted $
                withOutput (\n -> finish (go tr0 n))
@@ -114,7 +113,6 @@ packTree tr0 = fromHas $ getUnrestricted $
       go (Leaf a) n = writeLeaf a n
       go (Branch left right) n =
           go right (go left (writeBranch n))
--}
 
 unpackTree :: Packed Tree -> Tree
 unpackTree = foldTree Leaf Branch

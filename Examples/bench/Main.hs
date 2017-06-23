@@ -33,8 +33,8 @@ timePrint act = do
   return x
 
 comma :: (Show a,Num a) => a -> String
-comma n = reverse (fst : go rst)
-  where (fst:rst)    = reverse (show n)
+comma n = reverse (frst : go rst)
+  where (frst:rst)    = reverse (show n)
         go [a,b,c]   = [',',a,b,c]
         go (a:b:c:r) = a:b:c:',': go r
         go ls        = ls
