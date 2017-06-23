@@ -46,7 +46,8 @@ library
                        bytestring >=0.10,
                        binary,
                        containers,
-                       ghc-prim
+                       ghc-prim,
+                       socket
   if flag(pure)
     cpp-options: -DPUREMODE
   ghc-options:         -Wall -O2 
