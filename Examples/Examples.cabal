@@ -54,7 +54,7 @@ library
 flag pure
   default: True
 
-test-suite tests
+test-suite test-Examples
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   ghc-options:         -Wall -fno-warn-orphans
