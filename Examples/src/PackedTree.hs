@@ -9,6 +9,8 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE MagicHash #-}
 
 module PackedTree
     ( Tree(..), TagTy
@@ -97,6 +99,22 @@ caseTree c f1 f2 = f (readC (unsafeCastHas c))
                  _ | tg == branchTag -> f2 (unsafeCastHas c2)
                  _ -> error $ "caseTree: corrupt tag, "++show tg
 
+
+{-# INLINE caseTree2 #-}
+caseTree2 :: forall a1 a2 b.
+             Has (Tree ': b)
+          -> (Has (Int ': b) -> (# a1, a2 #))
+          -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
+          -> (# a1, a2 #)
+caseTree2 c f1 f2 = f (readC (unsafeCastHas c))
+  where   
+    f :: (TagTy, Has '[]) -> (# a1, a2 #)
+    f (tg,c2) = case tg of
+                 _ | tg == leafTag   -> f1 (unsafeCastHas c2)
+                 _ | tg == branchTag -> f2 (unsafeCastHas c2)
+--                 _ -> error $ "caseTree2: corrupt tag, "++show tg
+
+
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
 _packTree1 :: Tree -> Packed Tree
 _packTree1 = unfoldTree viewTree
@@ -125,9 +143,29 @@ unpackTree = foldTree Leaf Branch
 
 -- Here we manually write functions agains the packed representation.
 
-sumTree :: Packed Tree -> Int
-sumTree = foldTree id (+)
+_sumTree :: Packed Tree -> Int
+_sumTree = foldTree id (+)
 
+-- | Optimizing away allocation.
+sumTree :: Packed Tree -> Int
+sumTree t =
+    case go (toHas t) of
+      (# acc, _ #) -> acc
+  where
+    go :: forall r. Has (Tree ': r) -> (# Int, Has r #)
+    go h = caseTree2 h onLeaf onBranch
+
+    onLeaf :: forall r. Has (Int ': r) -> (# Int, Has r #)
+    onLeaf h = let (n, c) = readC h in (# n, c #)
+
+    onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int, Has r #)
+    onBranch h =
+      case go h  of { (# x, h' #) ->
+      case go h' of { (# y, h'' #) ->
+        (# x+y,  h'' #)
+      } }
+
+{-# INLINABLE foldTree #-}
 foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
 foldTree leaf branch = snd . go . toHas
   where
@@ -139,7 +177,7 @@ foldTree leaf branch = snd . go . toHas
 
     onBranch :: forall r. Has (Tree ': Tree ': r) -> (Has r, o)
     onBranch h =
-      let (h', left) = go h
+      let (h', left)   = go h
           (h'', right) = go h'
       in
         (h'', branch left right)

@@ -57,7 +57,7 @@ library
                        deepseq,
                        socket
   default-language:    Haskell2010
-  ghc-options:         -Wall -O2 -funbox-strict-fields 
+  ghc-options:         -Wall -Wno-deprecations -O2 -funbox-strict-fields 
 
   if flag(pure)
     cpp-options: -DPUREMODE
@@ -69,7 +69,7 @@ library
 test-suite test-Examples
   type: exitcode-stdio-1.0
   hs-source-dirs: test
-  ghc-options:         -Wall -fno-warn-orphans 
+  ghc-options:         -Wall -Wno-deprecations -fno-warn-orphans 
   other-extensions: CPP
   main-is: Main.hs
   if flag(pure)
@@ -88,7 +88,7 @@ test-suite test-Examples
 executable bench-cursor
   hs-source-dirs:      bench
   main-is:             Main.hs
-  ghc-options:         -Wall -O2 -threaded -rtsopts -funbox-strict-fields -with-rtsopts=-T
+  ghc-options:         -Wall -Wno-deprecations -O2 -threaded -rtsopts -funbox-strict-fields -with-rtsopts=-T
   build-depends:       base
                      , Examples
                      , time
