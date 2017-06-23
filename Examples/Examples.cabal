@@ -27,6 +27,7 @@ library
         Linear.Std,
         Linear.Unsafe,
         Purify,
+        Socket,
 
         -- Exposed only for testing:
         PackedTree
