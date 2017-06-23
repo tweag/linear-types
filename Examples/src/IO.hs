@@ -23,6 +23,12 @@ data World = World
 -- newtype IO' l a = IO' (World ⊸ Tensor World (R l a))
 newtype IO' l a = IO' (World ⊸ (World, R l a))
 
+unsafeIOtoIO1 :: P.IO a ⊸ IO' 'One a
+unsafeIOtoIO1 = P.error "TODO: IO.unsafeIOtoIO1"
+
+unsafeIOtoIOΩ :: P.IO a ⊸ IO' 'Ω a
+unsafeIOtoIOΩ = P.error "TODO: IO.unsafeIOtoIOΩ"
+
 -- | Cannot use lowercase ω as a type constructor...
 data Weight = One | Ω 
     
