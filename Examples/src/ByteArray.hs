@@ -33,18 +33,22 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 -- | An unboxed mutable counter.  Could use an Unboxed vector.
 type MutCounter = Ptr Int
 
+{-# INLINE incCounter #-}
 incCounter :: MutCounter -> Int -> IO ()
 incCounter c m = do n <- peek c
                     poke c (n+m)
 
+{-# INLINE readCounter #-}
 readCounter :: MutCounter -> IO Int
 readCounter = peek
 
+{-# INLINE newCounter #-}
 newCounter :: IO MutCounter
 newCounter = do c <- malloc
                 poke c 0
                 return c
 
+{-# INLINE freeCounter #-}
 freeCounter :: MutCounter -> IO ()
 freeCounter = free 
     

@@ -68,3 +68,63 @@ $wgo
       }
       }
 ```
+
+And for the allocating ByteArray-writing loop, here's the STG:
+
+```
+main4 =
+    \r [c]
+        let {
+          $wgo =
+              sat-only \r [ww] 
+                  case ww of wild {
+                    __DEFAULT -> 
+                        case -# [wild 1#] of sat {
+                          __DEFAULT ->
+                              case $wgo sat of wild1 {
+                                WBA dt dt1 -> 
+                                    case
+                                        case readIntOffAddr# [dt 0# realWorld#] of {
+                                          (#,#) ipv ipv1 -> 
+                                              case plusAddr# [dt1 ipv1] of sat {
+                                                __DEFAULT ->
+                                                    case
+                                                        writeWord8OffAddr# [sat 0# 33## ipv]
+                                                    of
+                                                    s2
+                                                    { __DEFAULT -> 
+                                                          case readIntOffAddr# [dt 0# s2] of {
+                                                            (#,#) ipv2 ipv3 -> 
+                                                                case +# [ipv3 1#] of sat {
+                                                                  __DEFAULT ->
+                                                                      case
+                                                                          writeIntOffAddr# [dt
+                                                                                            0#
+                                                                                            sat
+                                                                                            ipv2]
+                                                                      of
+                                                                      s1
+                                                                      { __DEFAULT -> 
+                                                                            (#,#) [s1 wild1];
+                                                                      };
+                                                                };
+                                                          };
+                                                    };
+                                              };
+                                        }
+                                    of
+                                    { (#,#) _ ipv1 -> ipv1;
+                                    };
+                              };
+                        };
+                    0# -> c;
+                  };
+        } in 
+          case $wgo 10000# of {
+            WBA ww1 ww2 ->
+                case $wfreeze ww1 ww2 of { Unit# ww4 -> Unrestricted [ww4]; };
+          };
+```
+
+That looks pretty good.  I don't see where the allocation is.
+
