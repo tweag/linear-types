@@ -114,5 +114,5 @@ freeze = unsafeCastLinear f
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
 headStorable bs = unsafeDupablePerformIO $
-    ByteString.unsafeUseAsCString bs $ \ cstr ->
+    ByteString.unsafeUseAsCString bs $ \ cstr -> 
       peek (castPtr cstr)

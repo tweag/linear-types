@@ -16,7 +16,7 @@ module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
       Has(..), Needs(..), Packed
       -- * Public cursor interface
-    , writeC, readC, fromHas, toHas
+    , writeC, readC, fstC, rstC, fromHas, toHas
     , finish, withOutput
     , tup, untup
 
@@ -90,7 +90,15 @@ readC :: forall a rst . Storable a => Has (a ': rst) -> (a, Has rst)
 readC (Has bs) =
     let !a = ByteArray.headStorable bs in 
     (a, Has (ByteString.drop (sizeOf (undefined::a)) bs))
-    
+
+-- | Equivalent to the first value returned by @readC@.
+fstC :: forall a rst . Storable a => Has (a ': rst) -> a
+fstC (Has bs) = ByteArray.headStorable bs
+
+-- | Equivalent to the second value returned by @readC@.
+rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
+rstC (Has bs) = Has (ByteString.drop (sizeOf (undefined::a)) bs)
+
 
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
