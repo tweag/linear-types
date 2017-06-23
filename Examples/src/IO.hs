@@ -4,6 +4,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module IO where
 
@@ -17,9 +18,6 @@ import System.IO (Handle)
 -- type World = State# RealWorld -- Unlifted.
 data World = World
 
-data Tensor a b where
-    Tensor :: a ⊸ b ⊸ Tensor a b
-    
 -- newtype IO' l a = IO' (World ⊸ Tensor World (R l a))
 newtype IO' l a = IO' (World ⊸ (World, R l a))
 
@@ -34,10 +32,10 @@ data R (l::Weight) a where
 
 -- | Again, we lack a subscripted, multiplicity-polymorphic arrow, so
 -- this is an approximation.
-data Arrow l a b where
-  LA :: (a ⊸ b)  ⊸ Arrow 'One a b
-  UA :: (a -> b) ⊸ Arrow 'Ω   a b
-          
+type family Arrow l a b where
+  Arrow 'One a b = a ⊸ b
+  Arrow 'Ω a b = a -> b
+
 -- type Arrow (l::Weight) a b = ()
           
 (>>=) :: IO' l a ⊸ (Arrow l a (IO' l' b)) ⊸ IO' l' b
@@ -54,29 +52,29 @@ return = P.undefined
 open :: P.String -> IO' 'One Handle
 open = P.undefined
 
-close :: Handle ⊸ IO' l ()
+close :: Handle ⊸ IO' 'Ω ()
 close = P.undefined
 
 ---------------------
 
-t1 :: IO' l ()
-t1 = open "test.txt" >>= LA (\h -> close h)
+t1 :: IO' 'Ω ()
+t1 = open "test.txt" >>= (\h -> close h)
 
 t2 :: IO' 'Ω ()
-t2 = open "test.txt" >>= LA (\h -> close h >>= UA (\() -> return ()))
+t2 = open "test.txt" >>= (\h -> close h >>= (\() -> return ()))
 
 t3 :: IO' 'One ()
-t3 = open "test.txt" >>= LA (\h -> close h >>= UA (\() -> returnL ()))
+t3 = open "test.txt" >>= (\h -> close h >>= (\() -> returnL ()))
 
 -- But how do we do some work inbetween?
 delayedClose :: Handle ⊸ IO' 'Ω ()
 -- delayedClose h = close h -- FIXME:
 -- This fails, giving 'h' weight ω!:
-delayedClose h = returnL () >>= LA (\() -> close h)
+delayedClose h = returnL () >>= (\() -> close h)
 
 -- It doesn't matter whether that unit value is linear:
 delayedClose' :: Handle ⊸ IO' 'Ω ()
-delayedClose' h = return () >>= UA (\() -> close h)
+delayedClose' h = return () >>= (\() -> close h)
 
 t4 :: IO' 'Ω ()
-t4 = open "test.txt" >>= LA delayedClose
+t4 = open "test.txt" >>= delayedClose
