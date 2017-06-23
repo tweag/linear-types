@@ -18,27 +18,33 @@ import Prelude hiding (($))
 
 data Socket = Socket
 data SocketAddress = SocketAddress
+data State
+  = Unbound
+  | Bound
+  | Listening
+  | Ingress
+  | Egress
 
-socket ::  IO' 'One (Socket)
+socket ::  IO' 'One (Socket Unbound)
 socket = error "TODO: Socket.socket"
 
-connect ::  Socket ⊸ SocketAddress -> IO' 'One (Socket)
-connect = error "TODO: Socket.connect"
-
-bind ::  Socket ⊸ SocketAddress -> IO' 'One (Socket)
+bind ::  Socket Unbound ⊸ SocketAddress -> IO' 'One (Socket Bound)
 bind = error "TODO: Socket.bind"
 
-listen :: Socket ⊸ IO' 'One (Socket)
+listen :: Socket Bound ⊸ IO' 'One (Socket Listening)
 listen = error "TODO: Socket.listen"
 
-accept ::  Socket ⊸ IO' 'One (Socket, Socket)
+accept ::  Socket Listening ⊸ IO' 'One (Socket Listening, Socket Egress)
 accept = error "TODO: Socket.accept"
 
-send :: Socket ⊸ ByteString -> IO' 'One (Socket, Unrestricted Int)
+connect ::  Socket Unbound ⊸ SocketAddress -> IO' 'One (Socket Ingress)
+connect = error "TODO: Socket.connect"
+
+send :: Socket Ingress ⊸ ByteString -> IO' 'One (Socket Ingress, Unrestricted Int)
 send = error "TODO: Socket.send"
 
-receive :: Socket ⊸ IO' 'One (Socket, ByteString)
+receive :: Socket Egress ⊸ IO' 'One (Socket Egress, ByteString)
 receive = error "TODO: Socket.send"
 
-close :: Socket -> IO' 'Ω ()
+close :: Socket s -> IO' 'Ω ()
 close = error "TODO: Socket.close"
