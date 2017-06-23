@@ -38,7 +38,7 @@ import Prelude hiding (($))
 ----------------------------------------
 
 -- | A very simple binary tree.
-data Tree = Leaf Int
+data Tree = Leaf !Int
           | Branch Tree Tree
  deriving (Show, Eq)
 

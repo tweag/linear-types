@@ -61,7 +61,7 @@ library
     cpp-options: -DPUREMODE
 
   if flag(perfdebug)
-    ghc-options: -keep-tmp-files -ddump-to-file -ddump-core-stats -ddump-simpl-stats -dcore-lint -dcmm-lint -ddump-ds -ddump-simpl -ddump-stg -ddump-asm -ddump-bcos -ddump-cmm -ddump-opt-cmm -ddump-inlinings -dsuppress-idinfo -dsuppress-module-prefixes -dsuppress-coercions -dsuppress-unfoldings -dsuppress-type-applications -dsuppress-type-signatures -dsuppress-uniques -dsuppress-var-kinds
+    ghc-options: -keep-tmp-files -ddump-to-file -ddump-core-stats -ddump-simpl-stats -dcore-lint -dcmm-lint -ddump-ds -ddump-simpl -ddump-stg -ddump-asm -ddump-bcos -ddump-cmm -ddump-opt-cmm -ddump-inlinings -dsuppress-idinfo -dsuppress-module-prefixes -dsuppress-coercions -dsuppress-unfoldings -dsuppress-type-applications  -dsuppress-uniques -dsuppress-var-kinds
     
 
 test-suite test-Examples
@@ -95,4 +95,4 @@ executable bench-cursor
   default-language:    Haskell2010
 
   if flag(perfdebug)
-    ghc-options: -keep-tmp-files -ddump-to-file -ddump-core-stats -ddump-simpl-stats -dcore-lint -dcmm-lint -ddump-ds -ddump-simpl -ddump-stg -ddump-asm -ddump-bcos -ddump-cmm -ddump-opt-cmm -ddump-inlinings -dsuppress-idinfo -dsuppress-module-prefixes -dsuppress-coercions -dsuppress-unfoldings -dsuppress-type-applications -dsuppress-type-signatures -dsuppress-uniques -dsuppress-var-kinds
+    ghc-options: -keep-tmp-files -ddump-to-file -ddump-core-stats -ddump-simpl-stats -dcore-lint -dcmm-lint -ddump-ds -ddump-simpl -ddump-stg -ddump-asm -ddump-bcos -ddump-cmm -ddump-opt-cmm -ddump-inlinings -dsuppress-idinfo -dsuppress-module-prefixes -dsuppress-coercions -dsuppress-unfoldings -dsuppress-type-applications  -dsuppress-uniques -dsuppress-var-kinds

@@ -79,14 +79,16 @@ writeByte = writeStorable
 {-# INLINE writeStorable #-}
 -- | Write a storable value to the end of a byte array.
 writeStorable :: Storable a => a -> WByteArray ⊸ WByteArray
-writeStorable obj wbarr = unsafeCastLinear write wbarr
+writeStorable = unsafeCastLinear writeStorable'
+
+{-# INLINE writeStorable' #-}                 
+writeStorable' :: Storable a => a -> WByteArray -> WByteArray
+writeStorable' obj wbarr@WBA{offset,bytes} =
+    unsafeDupablePerformIO effect `seq` wbarr
   where
-    write :: WByteArray -> WByteArray
-    write (wb@WBA{offset,bytes}) = unsafeDupablePerformIO $ do
-      i <- readCounter offset
-      poke (castPtr bytes `plusPtr` i) obj
-      incCounter offset (sizeOf obj)
-      return wb
+   effect = do i <- readCounter offset
+               poke (castPtr bytes `plusPtr` i) obj
+               incCounter offset (sizeOf obj)
 
 {-# NOINLINE freeze #-}
 freeze :: WByteArray ⊸ Unrestricted ByteString

@@ -72,8 +72,8 @@ instance NFData (Packed a) where
 {-# INLINABLE readC #-}
 {-# INLINABLE fromHas #-}
 {-# INLINABLE toHas #-}
-{-# INLINABLE unsafeCastNeeds #-}
-{-# INLINABLE unsafeCastHas #-}
+{-# INLINE unsafeCastNeeds #-}
+{-# INLINE unsafeCastHas #-}
 {-# INLINABLE finish #-}
 {-# INLINABLE untup #-}
 {-# INLINABLE tup #-}

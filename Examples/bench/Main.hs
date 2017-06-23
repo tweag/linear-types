@@ -20,6 +20,7 @@ import GHC.Stats
 
 timePrint :: IO a -> IO a
 timePrint act = do
+  performGC
   t1 <- getCurrentTime
   s1 <- getGCStats
   c1 <- getAllocationCounter
@@ -50,6 +51,10 @@ pureMap :: (Int -> Int) -> Tree -> Tree
 pureMap f (Leaf n)     = Leaf   (f n)
 pureMap f (Branch x y) = Branch (pureMap f x) (pureMap f y)
 
+pureSum :: Tree -> Int
+pureSum (Leaf n)     = n
+pureSum (Branch x y) = pureSum x + pureSum y
+
 main :: IO () 
 main = do
   putStr "Fill 10K bytes in a ByteArray: "
@@ -62,20 +67,24 @@ main = do
   [dep] <- getArgs
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
-  putStr "Boxed map: "
-  !_ <- timePrint $ evaluate $ force $ pureMap (+1) tr
 
+  putStr "Boxed map: "
+  _ <- timePrint $ evaluate $ force $ pureMap (+1) tr
+
+  putStr "Sum tree (unpacked): "
+  _ <- timePrint $ evaluate $ pureSum tr
+         
   putStr "Pack tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
---  performGC
 
-  putStr "de/re-serialize and map: "
-  !_ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
---  performGC
+  putStr "Sum packed tree: "
+  _ <- timePrint $ evaluate $ sumTree tr'
+
+  putStr "unpack/map/repack: "
+  _ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
   
-  putStr "Unboxed map: "
-  !_ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
-  performGC
+  putStr "map on packed: "
+  _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
 
   return ()
 
