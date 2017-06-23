@@ -476,7 +476,7 @@ As we shall see in \fref{sec:polymorphism} this is not new |foldl|, but
 rather Haskell's existing |foldl| with a slightly more polymorphic type.
 \simon{I hope this is right!}
 \end{itemize}
-The ST monad has disappeared altogether; it is the array \emph{itself}
+The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation that we mentioned earlier.
 
@@ -564,7 +564,7 @@ operations with the IO monad. But in fact it is often very useful do to so,
 because we can use a phantom type to encode the state of the resource (similar to
 typestate).  For example
 \begin{code}
-data SocketState = Read | Bound | Listening | Open | Closed
+data SocketState = Ready | Bound | Listening | Open
 data Socket (sock_state :: SocketState)  -- No data constructors
 newSocket :: SocketType -> IOL 1 (Socket Ready)
 bind :: Socket Ready -> Port ⊸ IOL 1 (Socket Bound)
@@ -573,7 +573,7 @@ listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
 \end{code}
 Here, the type argument to |Socket| records the state of the socket, and that
 state changes as execution proceeds.  Here it is very convenient to have
-a succession of linear variables representint the socket, where the type
+a succession of linear variables representing the socket, where the type
 of the variable reflects the state the socket is in, and limits which
 operatios can legally be applied to it.
 
@@ -702,7 +702,7 @@ mean?  Here is a more precise operational intuition:
 \end{itemize}
 \noindent
 We can now give a more precise definition of what a linear function
-|f :: s ⊸ s| means: |f| guarantees that \emph{if |(f u)| is consumed exactly once},
+|f :: s ⊸ t| means: |f| guarantees that \emph{if |(f u)| is consumed exactly once},
 then |u| is consumed exactly once.
 Note that a linear arrow specifies how the function uses its argument. It does \emph{not}
 restrict the arguments to which the function can be applied.
@@ -715,7 +715,7 @@ g :: s -> t
 g x = f x
 \end{code}
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
-in particular, it is OK for |g| to pass that argument to |f|.
+in particular, it is \textsc{ok} for |g| to pass that argument to |f|.
 \simon{Can we pass a function of type |s ⊸ t| where a function of type |s->t| is needed?}
 
 % A consequence of this definition is that an \emph{unrestricted} value,
@@ -774,9 +774,9 @@ f2 x = case x of (a,b) -> (b,a)
 a linear type, that does \emph{not} imply that the pattern-bound variables must be
 consumed once.
 
-However |f1| does not does not have type |(Int,Int) ⊸ (Int,Int)|.
+However |f1| does not have type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
-once?  Well, |t| is guaranteed to be evalated once, but its first component is then
+once?  Well, |t| is guaranteed to be evaluated once, but its first component is then
 consumed twice and its second component not at all.  So, no.
 
 In contrast, |f2| does have a linear type: if |(f2 t)| is consumed exactly once,
@@ -943,7 +943,7 @@ In \fref{sec:io-protocols} we introduced |IOL| monad.  But how does it work?
   returnIOL :: a -> _ p IOL p a
   bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 
-  instance IOL p where
+  instance Monad (IOL p) where
     return = returnIOL
     (>>=)  = bindIOL
 \end{code}
@@ -958,23 +958,23 @@ And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 
 |IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
 
-A slight bump in the road is the treatmen tof |do|-notation.  Consider
+A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
-  do { f <- openFile s   -- openFile :: FilePath -> IO 1 (File ByteString)
-     ; d <- getData      -- getDate  :: IO ω Date
+  do { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+     ; d <- getData      -- |getDate  :: IO ω Date|
      ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should closed, but |getDate| returns
 an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-We can easily combine them with `bindIOL` thus:
+We can easily combine them with |`bindIOL`| thus:
 \begin{code}
   openFile s `bindIOL` \f ->
   getData    `bindIOL` \d ->
   e[f,d]
 \end{code}
-becuase, crucially, |bindIOL| does not require uniform linearity: it has two
+because, crucially, |bindIOL| does not require uniform linearity: it has two
 linearity parameters |p| and |q|, not just one.  We simply need |do|-notation to
-behave exactly like this sequence of |bindIOL| calls.  In GHC that requires the
+behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requires the
 |-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
 be worth considering a more robust solution.
 
@@ -1010,7 +1010,7 @@ Here |f| is certainly linear according to \fref{sec:consumed}, and
 given the type of |(,)| in \fref{sec:linear-constructors}. If |(f x)|
 is consumed exactly once, then each component of its result pair is
 consumed exactly once, and hence |x| is consumed exactly once.
-But |f| is certainly not strict: |f \bot| is not |\bot|.
+But |f| is certainly not strict: |f undefined| is not |undefined|.
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
