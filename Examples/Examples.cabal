@@ -23,6 +23,7 @@ library
         Cursors.PureBinary,
         Cursors.PureStorable,
         IO,
+        FreezeArray,
         Linear.Std,
         Linear.Unsafe,
         Purify,
