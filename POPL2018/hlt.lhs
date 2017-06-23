@@ -301,130 +301,285 @@
 
 \section{Introduction}
 
-\section{A taste of \HaskeLL{}}
+Despite their obvious promise, and a huge research literature, linear
+type systems have not made it into mainstream programming languages,
+with the notable exceptions of Clean and, more recently, Rust.
+We take up this challenge by extending Haskell with linear types.
+
+Linear types can do many things, but we focus on two particular
+use-cases.  First, safe update-in-place for mutable structures, such
+as arrays; and second, enforcing access protocols for external APIs,
+such as files, sockets, channels and other resources.
+Our particular contributions are these
+\begin{itemize}
+\item Our extension to Haskell, dubbed \HaskeLL, is
+      \emph{non-invasive}.  Existing programs continue to typecheck,
+      and existing data types can be used as-is even in linear parts
+      of the program.
+\item The key to this non-invasiveness is that, in contrast most other
+      approaches, we focus on \emph{linarity on the function arrow}
+      rather than \emph{linearity on the types} (\fref{sec:lin-arrow}).
+\item Linearity on the function arrow alone is not enough: a linear
+      function must be able return both linear and non-linear results.
+      We make a simple extension to algebraic data type declarations to
+      support this need (\fref{sec:datattypes}).
+\item A benefit of linearity-on-the-arrow is that it naturally supports
+      linearity polymorphism (\fref{sec:polymorphism}).  This contributes
+      to a smooth extension of Haskell by allowing many existing functions
+      (map, compose, etc) to be given more general types, so they can
+      work uniformly in both linear and non-linear code.
+\item We formalise our system in a small, statically-typed core
+      calculus that exhibits all these features (\fref{sec:calculus}).
+      It enjoys the usual properties of progress and preservation.
+\item We have implemented a prototype of system in as a modest extension to GHC
+      (\fref{sec:impl}, which substantiates our claim of non-invasiveness.
+      Our prototype type performs linearity \emph{inference}, but a systematic
+      treatment of type inference for linearity in our system remains open.
+\end{itemize}
+There is a rich literature on linear type systems, as we discuss in a long
+related work section (\fref{sec:related}.
+
+\section{Motivation and intuitions}
 \label{sec:programming-intro}
 
-\subsection{Freezing arrays}
-\label{sec:freezing-arrays}
+Informally, \emph{a function is ``linear'' if it consumes its argument exactly once}.
+(It is ``affine'' if it consumes it at most once.)  A linear type system
+gives a static guarantee that a claimed linear function really is linear.
+There are many motivations for linear type systems, but they mostly come down
+to two questions:
+\begin{itemize}
+\item \emph{Is it safe to update this value in-place?}  That depends on whether there
+are aliases to the value; update-in-place is OK if there are no other pointers to it.
+Linearity supports a more efficicient implementation, by O(1) update rather than O(n) copying.
+\item \emph{Am I obeying the usage protocol of this external resource?}
+For example, a open file should be closed, and should not be used after it it has been closed;
+a socket should be opened, then bound, and only then used for reading; a malloc'd memory
+block should be freed, and should not be used after that.
+Here, linearity does not affect efficiency, but rather eliminates many bugs.
+\end{itemize}
+We introduce our extension to Haskell, which we call \HaskeLL, by focusing on these
+two use-cases.   In doing so, we introduce a number of ideas that we flesh out in
+subsequent subsections.
 
-Let us consider immutable arrays. It is quite clear how to write an
-\textsc{api} for consuming such arrays: we can retrieve the value at a
-given index, map a function, pair-up values of two different arrays of
-the same length, etc… But all of these combinators assume that an
-array already exists. How can we create a brand new array? In the
-Haskell ecosystem, the preferred solution is usually to create a
-mutable array, let the programmer fill it the way he wants, and
-eventually ``freeze'' the mutable array into a mutable
-array.\improvement{cite vector library}\improvement{Maybe explain that
-  we need the |a| argument to |newMArray| in order to initialise the
-  array}
+\subsection{Safe mutable arrays}
+\label{sec:freezing-arrays}
+\begin{figure}
 \begin{code}
   type MArray s a
   type Array a
 
   newMArray :: Int -> a -> ST s (MArray s a)
-  write :: MArray s a -> Int -> a -> ST s ()
-  read :: MArray s a -> Int -> ST s a
+  read  :: MArray s a -> Int -> ST s a
+  write :: MArray s a -> (Int, a) -> ST s ()
   unsafeFreeze :: MArray s a -> ST s (Array a)
-  index :: Array a -> Int -> a
+
+  forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
+  runST :: (forall a. ST s a) -> a
 \end{code}
+\caption{Type signatures for array primitives (currrent GHC)}
+\label{fig:array-sigs}
+\end{figure}
 
-The freezing primitive is called |unsafeFreeze| because it
-is, indeed, unsafe: after calling |unsafeArray marray| we get a new
-immutable array |array|, but in order to avoid an unnecessary copy,
-|array| and |marray| are actually \emph{the same array}. But any
-mutation to |marray| will break the immutability of |array|. As a
-consequence it is required of the caller of |unsafeFreeze| that he
-will not use |marray| again after that. But this is not enforced by
-the type system. Wouldn't it be better if we could tell the type
-system that |marray| ought to be \emph{consumed} by the |unsafeFreeze|
-call so that |marray| is not accessible to the programmer when |array|
-is? This way |unsafeFreeze| would not be unsafe anymore.
-
-\HaskeLL{} introduces a new kind of function type: the \emph{linear
-  arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
-\emph{exactly once}. This new arrow makes it possible to express the
-array \textsc{api} as follows:
+\begin{figure}
 \begin{code}
   type MArray a
   type Array a
 
-  newMArray :: Int -> a -> (MArray a ⊸ Unrestricted b) ⊸ Unrestricted b
-  write :: MArray a ⊸ Int -> a -> MArray a
+  newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
+  write :: MArray a ⊸ (Int, a) -> MArray a
   read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
   freeze :: MArray a ⊸ Unrestricted (Array a)
-  index :: Array a -> Int -> a
 \end{code}
-There are a few things to remark. First, and foremost, |freeze| is not
-|unsafe| any more. The second thing is that |write| and |Read| consume
-the |MArray|, then return the |MArray| again: this is necessary as if
-we were allowed to use the same |MArray| in several places, then it
-would not be possible to prevent its use after |freeze| has been
-effected. It means that we have to thread the |MArray| throughout the
-computation, on the other hand, none of the functions use the |ST|
-monad anymore. Notice that |read| also returns an |Unrestricted a|:
-you should read it as ``despite |read| being a linear function, the
-|a| need not be used in a linear''.
+\caption{Type signatures for array primitives (linear version)}
+\label{fig:fig:linear-array-sigs}
+\end{figure}
+The Haskell language provides immutable arrays, built with the function\footnote{
+Haskell actually generalises over the type of array indices, but for this
+paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
+\begin{code}
+array :: (Int,Int) -> [(Int,a)] -> Array a
+\end{code}
+But how is |array| implemented? A possible answer is ``it is primitive; don't ask''.
+But GHC implements |array| using more primitive pieces, so that library authors
+can readily implement variations (which they certainly do):
+\begin{code}
+array :: Int -> [(Int,a)] -> Array a
+array size pairs = runST (do { ma <- newMArray size
+                             ; forM_ pairs (write ma)
+                             ; return (unsafeFreeze ma) })
+\end{code}
+\fref{fig:array-sigs} give the type signatures for the library functions
+that we use here.
+In the fist line we allocate a mutable array, of type |MArray s a|.
+Then we iterate over the |pairs|, with |forM_|, updating the array in place
+for each pair.  Finally, we freeze the mutable array, returning an immutable
+array as required.  All this is done in the |ST| monad, using |runST| to
+securely encapsulate an imperative algorithm in a purely-functional context,
+as described in \cite{launchbury-pj:state-in-haskell}.
 
-The last thing of notice is the funny type of
-|newMArray|. Specifically it does not return an array, but it asks for
-a function |k| that consumes an array. The reason is that the type
-system of \HaskeLL{} can express that |k| consumes its argument
-exactly once. But it does not provide a direct way to return a value
-which must be consumed exactly once. Also note that |k| must return an
-unrestricted result, this is a common pattern in \HaskeLL{}: this make
-sure that the |MArray| argument has been consumed prior to |k|
-returning. If the |MArray| argument leaked, either by being directly
-returned, or hidden in a closure, then its linearity would be
-compromised and the \textsc{api} would be unsafe.\improvement{These
-  two last paragraphs are not very tight. Improve prose. In
-  particular, I don't even mention that freeze returns an
-  |Unrestricted| array.}
+The freezing primitive is called |unsafeFreeze| because it
+is, indeed, unsafe: after calling |unsafeArray marray| we get a new
+immutable array |array|, but in order to avoid an unnecessary copy,
+|array| and |marray| are actually \emph{the same array}.  The intention is that
+that |unsafeFreeze| should be the last use of the mutable array.  But
+nothing stops us continuing to mutate it further, with quite undefined semantics.
+The ``unsafe'' in the function name is a GHC convention meaning ``the programmer
+has a proof obligation here that the compiler cannot check''.
 
-We replaced the |ST| monad by manually threading individual mutable
-arrays. The single-threadedness of each array is ensured by the type
-system. Compared to |ST|, it is interesting that actions on
-two independent arrays are \emph{not} sequentialised. Yielding more
-opportunities for the compiler to reorder and optimise a
-program.\improvement{Maybe more about the comparison to |ST|
-  here. Though it would probably be better to have a dedicated section
-  in the related work section.}
+The other unsatisfactory thing about the monadic approach to array
+construction is that it is over-sequential. Suppose you had a pair of
+mutable arrays, with some updates to perform to each; these updates could
+be done in parallel, but the |ST| monad would serialise them.
 
-\subsection{I/O protocols}
+Linear types allow a more secure and less sequential interface.
+\HaskeLL{} introduces a new kind of function type: the \emph{linear
+arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
+\emph{exactly once}. This new arrow is used in
+a new array \textsc{api}, given in \fref{fig:linear-array-sigs},
+using which we can define |array| thus:
+\begin{code}
+array :: Int -> [(Int,a)] -> Array a
+array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
+\end{code}
+\simon{I have gneralised the type of |newMArray| so it does not have
+to return an unrestricted value.  Is that right?}
+There are several things to note here:
+\begin{itemize}
+\item We still disinguish the type of mutable arrays |MArray| from that of
+immutable arrays |Array|.
+\item The function |newMArray| allocates a fresh, mutable array of the specified
+size, and passes it to the function supplied as the second argument to |newMArray|.
+\item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
+lollipop arrow says that the function guarantees to consume the mutable array
+exactly once; it will neither discard it nor use it twice.  We will define
+``consume'' more precisely in \fref{sec:consume}.
+\item Since |ma| is a linear array, we cannot pass it to many calls to
+|write|.  Instead, each call to |write| returns a new array, so that the
+array is single-threaded, by |foldl|, through the sequence of writes.
+\item The call to |freeze| consumes the mutable array and produces an immutable one.
+Because it consumes its input, there is no danger of the same mutable array being
+subsequently written to, eliminating the problem with |unsafeFreeze|.
+\item The result of |freeze| is an immutable array that can be freely shared.
+But in our system, \emph{linearity is a property of function arrows,
+not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
+result of |freeze| can be freely shared.  That is what the |Unrestricted|
+type does.  However, |Unrestricted| is just a libarary type; it does not have to
+be built-in \fref{sec:data-types}.
+\item The function |foldl| has the type
+\begin{code}
+foldl :: (a ⊸ b -> a) -> a ⊸ [b] -> a
+\end{code}
+which expresses that it consumes its second argument linearly
+(in this case the mutable array), while the function it is given as
+its first argument (in this case |write|) must be linear.
+As we shall see in \fref{sec:polymorphism} this is not new |foldl|, but
+rather Haskell's existing |foldl| with a slightly more polymorphic type.
+\simon{I hope this is right!}
+\end{itemize}
+The |ST| monad has disappeared altogether; it is the array \emph{itself}
+that must be single threaded, not the operations of a monad. That removes
+the unnecessary sequentialisation that we mentioned earlier.
 
-In the previous section, we got rid of the |ST| monad entirely. There
-is a gain: actions on distinct arrays are not
-sequentialised. This means that the compiler is free to reorder such
-actions in order to find more optimisation opportunities.
+Compared to the status quo (using |ST| and |unsafeFreeze|), the main gain
+is in shrinking the trusted code base, because more library code (and it
+can be particularly gnarly code) is statically typechecked.  Clients who
+use immutable arrays do not see the inner workings of the library, and will
+be unaffected.  Our second use-case has a much more direct impact on library clients.
 
-On the other hand, in other cases, we need actions to be fully
-sequentialised, because they are interacting with the real world. This
-is the world of |IO| action. In this case, linearity will not serve to
-make the program less sequentialised~---~it must not be~---~but will
-help make sure that a sequence of actions obey a certain discipline. We
-think of such disciplines as protocols\footnote{Such protocol can be
-  imposed on actual network communications, in which case they are
-  actual communication protocols. See
-  \citet{wadler_propositions_2012,parente_logical_2015}, for a formal
-  treatment of such communication protocols.}.
+\subsection{I/O protocols} \label{sec:io-protocols}
 
-A common example of such protocol is network- or storage-based
-collection. For example databases: the common feature is that getting
-(or setting) an element of this collection requires I/O, hence, in
-Haskell, happens in the |IO| monad.
+% On the other hand, in other cases, we need actions to be fully
+% sequentialised, because they are interacting with the real world. This
+% is the world of |IO| action. In this case, linearity will not serve to
+% make the program less sequentialised~---~it must not be~---~but will
+% help make sure that a sequence of actions obey a certain discipline. We
+% think of such disciplines as protocols\footnote{Such protocol can be
+%   imposed on actual network communications, in which case they are
+%   actual communication protocols. See
+%   \citet{wadler_propositions_2012,parente_logical_2015}, for a formal
+%   treatment of such communication protocols.}.
+% 
+% A common example of such protocol is network- or storage-based
+% collection. For example databases: the common feature is that getting
+% (or setting) an element of this collection requires I/O, hence, in
+% Haskell, happens in the |IO| monad.
 
-For the purpose of this example, let us view files as collections of
-lines. So that we have:
+Consider this \textsc{api} for files:
 \begin{code}
   type File a
-
   openFile :: FilePath -> IO (File ByteString)
   readLine :: File a -> IO a
   closeFile :: File a -> IO ()
 \end{code}
-In this \textsc{api} we see |File a| as a cursor in a file. Each call
+Here we see |File a| as a cursor in a file. Each call
 to |readLine| returns an |a| (the line) and moves the cursor one line
-forward.
+forward.  But nothing stops us reading a file after we have closed it,
+or forgetting to close it.
+
+\begin{figure}
+\begin{code}
+  -- The IO monad be
+  type IOL p a
+  type IO a = IOL 1 a
+  return  :: a -> _ p IOL p a
+  (>>=)   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+
+  -- The File API
+  type File a
+  openFile :: FilePath -> IOL 1 (File ByteString)
+  readLine :: File a ⊸ IOL 1 (File a, Unrestricted a)
+  closeFile :: File a ⊸ IOL ω ()
+%  mapFile :: (a->b) -> File a ⊸ File b
+%  zipFile :: File a ⊸ File b ⊸ File (a,b)
+\end{code}
+\caption{Types for linear file IO} \label{fig:io-linear}
+\end{figure}
+
+An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
+Using this we can write a simple file-handling program:
+\begin{code}
+firstLine :: FilePath -> Bytestring
+firstLine fp = do { f <- open fp
+                  ; (f, Unrestricted bs) <- readLine f
+                  ; close f
+                  ; return bs }
+\end{code}
+Notice several things
+\begin{itemize}
+\item Operations on files remain monadic, unlike the case with mutable arrays.
+I/O operations affect the world, and hence must be sequenced.  It is not enough
+to sequence operations on files individually, as it was for arrays.
+\item We generalise the IO monad so that it expresses whether or not the
+returned value is linear.  We add an extra type parameter |p| to the monad |IOL|,
+where |p| can be |1| or |ω|.  Now |openFile| returns |IO 1 (File ByteString)|,
+the ``|1|'' indicating that the returned |File| must be used linearly.
+We will return to how |IOL| is defined in \fref{sec:linear-io}.
+\item As before, operations on linear values must consume their input
+and return a new one; here |readLine| consumes the |File| and produces a new one.
+\item Unlike the |File|, the |ByteString| returned by |readLine| is unrestricted,
+and the type of |readLine| indicates this.
+\end{itemize}
+It may seem tiresome to have to thread the |File| as well as sequence
+operations with the IO monad. But in fact it is often very useful do to so,
+because we can use a phantom type to encode the state of the resource (similar to
+typestate).  For example
+\begin{code}
+data SocketState = Ready | Bound | Listening | Open
+data Socket (sock_state :: SocketState)  -- No data constructors
+newSocket :: SocketType -> IOL 1 (Socket Ready)
+bind :: Socket Ready -> Port ⊸ IOL 1 (Socket Bound)
+listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
+...etc...
+\end{code}
+Here, the type argument to |Socket| records the state of the socket, and that
+state changes as execution proceeds.  Here it is very convenient to have
+a succession of linear variables representing the socket, where the type
+of the variable reflects the state the socket is in, and limits which
+operatios can legally be applied to it.
+
+\subsection{Lifting files}
+
+\simon{I doubt we want this material; just leaving it here for now}
 
 We will want that |File| behaves as much as possible as an ordinary
 collection. In particular we would like to |File| to be a functor:
@@ -486,17 +641,6 @@ The issue is that the intention behind |mapFile| and |zipFile| is that
 the handle is transformed, not shared. It is a crucial difference with
 immutable collections which can be shared freely.
 
-Before we can apply linear types to the problem, we need to generalise
-|IO| to be able to return both linear and non-linear values. To that
-effect, we will make |IO| multiplicity polymorhic:
-\begin{code}
-  type IO p a
-  return  :: a -> _ p IO p a
-  (>>=)   :: IO p a ⊸ (a -> _ p IO q b) ⊸ IO q b
-\end{code}
-We will continue using the |do| notation even though |return| and
-|(>>=)| are not quite the right type to form a monad.
-
 The following \textsc{api} for |File| makes all the examples above
 ill-typed, ensuring that we don't use the same handle under two
 different guises at the same time. It ensures, in particular, that
@@ -531,7 +675,7 @@ and multi-cast.
   dupFileMulti  :: File a ⊸ (File a, File a)
 \end{code}
 
-We have willfully ignored, so far, the fact that files are finite, and
+We have wilfully ignored, so far, the fact that files are finite, and
 that |readLine| may reach the end of the file. The real type of
 |readLine| should be:
 \begin{code}
@@ -548,7 +692,7 @@ entire file.
 
 We have said repeatedly spoken loosely of \emph{``consuming a value
   exactly once''}. But what does ``consuming a value exactly once''
-mean? Let us give a more precise operational intuition:
+mean?  Here is a more precise operational intuition:
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
@@ -556,69 +700,106 @@ mean? Let us give a more precise operational intuition:
 \item More generally, to consume exactly once a value of an algebraic data type, evaluate
   it and consume all its linear components exactly once.
 \end{itemize}
+\noindent
+We can now give a more precise definition of what a linear function
+|f :: s ⊸ t| means: |f| guarantees that \emph{if |(f u)| is consumed exactly once},
+then |u| is consumed exactly once.
+Note that a linear arrow specifies how the function uses its argument. It does \emph{not}
+restrict the arguments to which the function can be applied.
 
-We can now give a more precise definition of what a linear function |f
-:: a ⊸ b| means: |f| guarantees that \emph{if |f u| is consumed
-  exactly once}, then |u| is consumed exactly once. A salient point of
-this definition is that ``linear'' emphatically does not imply
-``strict''. Our linear function space behaves as Haskell programmers
-expect.
+In particular, a linear function cannot assume that it is given the
+unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
+this is fine:
+\begin{code}
+g :: s -> t
+g x = f x
+\end{code}
+The type of |g| makes no particular guarantees about the way in which it uses |x|;
+in particular, it is \textsc{ok} for |g| to pass that argument to |f|.
+\simon{Can we pass a function of type |s ⊸ t| where a function of type |s->t| is needed?}
 
-A consequence of this definition is that an \emph{unrestricted} value,
-\emph{i.e.} one which is not guaranteed to be used exactly once, such
-as the argument of a regular function |g :: a -> b|, can freely be
-passed to |f|: |f| offers stronger guarantees than regular
-functions. On the other hand a linear value |u|, such as the argument of
-|f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
-times, or none at all, both violating the linearity guarantee that |u|
-must be consumed exactly once.
-
-In light of this definition, suppose that we have |f :: a ⊸ b| and |g
-:: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
-of |x|:
-\begin{itemize}
-\item If |x| is a linear variable, \emph{i.e.} it must be consumed
-  exactly once, we can ensure that it's consumed exactly once by
-  consuming |f| exactly once: it is the definition of linear
-  functions. However, |g| does not guarantee that it will consume |f
-  x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
-  x)| cannot be well-typed.
-\item If |x| is an unrestricted variable, on the other hand, there is
-  no constraint on how |x| must be consumed. So |g (f x)| is perfectly
-  valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
-  for the details.
-\end{itemize}
-
-In the same spirit, an unrestricted value |u| can never point to a
-linear value |v|: if |u| is never consumed (which is a correct use of
-an unrestricted value), then |v| will never be consumed either, which
-is incorrect of a linear value.
+% A consequence of this definition is that an \emph{unrestricted} value,
+% \emph{i.e.} one which is not guaranteed to be used exactly once, such
+% as the argument of a regular function |g :: a -> b|, can freely be
+% passed to |f|: |f| offers stronger guarantees than regular
+% functions. On the other hand a linear value |u|, such as the argument of
+% |f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
+% times, or none at all, both violating the linearity guarantee that |u|
+% must be consumed exactly once.
+% 
+% In light of this definition, suppose that we have |f :: a ⊸ b| and |g
+% :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
+% of |x|:
+% \begin{itemize}
+% \item If |x| is a linear variable, \emph{i.e.} it must be consumed
+%   exactly once, we can ensure that it's consumed exactly once by
+%   consuming |f| exactly once: it is the definition of linear
+%   functions. However, |g| does not guarantee that it will consume |f
+%   x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
+%   x)| cannot be well-typed.
+% \item If |x| is an unrestricted variable, on the other hand, there is
+%   no constraint on how |x| must be consumed. So |g (f x)| is perfectly
+%   valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
+%   for the details.
+% \end{itemize}
+% 
+% In the same spirit, an unrestricted value |u| can never point to a
+% linear value |v|: if |u| is never consumed (which is a correct use of
+% an unrestricted value), then |v| will never be consumed either, which
+% is incorrect of a linear value.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
 
-Using the new linear arrow, we can (re-)define Haskell's list type as follows:
+With the above intutions in mind, what type should we assign to a data
+constructor such as the pairing constructor |(,)|?  Here are two possibilities:
+\begin{code}
+ (,) ::  a ⊸ b ⊸ (a,b)
+ (,) ::  a -> b -> (a,b)
+\end{code}
+Using the definition in \fref{sec:consumed}, the former is clearly the right
+choice: if |(e1,e2)| is consumed exactly once, then (by the defintion),
+|e1| and |e2| are each consumed exactly once; and hence |(,)| is linear it its
+arguments.
+
+So much for construction; what about pattern matching?  Consider:
+\begin{code}
+f1 :: (Int,Int) -> (Int,Int)
+f1 x = case x of (a,b) -> (a+a,0)
+
+f2 :: (Int,Int) ⊸ (Int,Int)
+f2 x = case x of (a,b) -> (b,a)
+\end{code}
+|f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
+a linear type, that does \emph{not} imply that the pattern-bound variables must be
+consumed once.
+
+However |f1| does not have type |(Int,Int) ⊸ (Int,Int)|.
+Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
+once?  Well, |t| is guaranteed to be evaluated once, but its first component is then
+consumed twice and its second component not at all.  So, no.
+
+In contrast, |f2| does have a linear type: if |(f2 t)| is consumed exactly once,
+then indeed |t| is consumed exactly once.  In type-checking terms we may reason
+as follows: since |x| is a linear variable, when we pattern match on |x| we must
+bind linear variables; and then we do indeed consume them linearly in the
+right hand side of the case alternative, because |(,)| is a linear function.
+
+The key point here is that \emph{the same pair constructor works in both functions;
+we do not need a special linear pair}.
+
+The same idea applies to all existing Haskell data types: we (re)-define
+their constuctors to use a linear arrow.  For example here is a declaration
+of Haskell's list type:
 \begin{code}
 data [a] where
   []   :: [a]
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
-That is, we give a linear type to the |(:)| data constructor.
-Crucially, this is not a new, linear list type: this \emph{is}
+Just as with pairs, this is not a new, linear list type: this \emph{is}
 \HaskeLL{}'s list type, and all existing Haskell functions will work
-over it perfectly well.  But we can \emph{also} use the very same list
-type to contain linear values (such as file handles) without
-compromising safety; the type system ensures that resources in a list
-will eventually be consumed by the programmer, and that they will not
-be used after that.
-
-Let us introduce a piece of terminology: variables can be either
-linear or unrestricted depending on what kind of function introduced
-them, we call this dichotomy the \emph{multiplicity} of the
-variable. Furthermore we say that linear variables have multiplicity
-$1$ and unrestricted variables have multiplicity $ω$.
-
-Many list-based functions preserve the multiplicity of data, and thus
+over it perfectly well.
+Even better, many list-based functions are in fact linear, and
 can be given a more precise type. For example we can write |(++)| as
 follows:
 \begin{code}
@@ -626,15 +807,11 @@ follows:
 []      ++ ys = ys
 (x:xs)  ++ ys = x : (xs ++ ys)
 \end{code}
-The type of |(++)| tells us that if we have a list |xs| with
-multiplicity $1$, appending any other list to it will never duplicate
-any of the elements in |xs|, nor drop any element in
-|xs|\footnote{This follows from parametricity.  In order to {\em free}
-  linear list elements, we must pattern match on them to consume them,
-  and thus must know their type (or have a type class instance).
-  Likewise to copy them.}.
+This type says that if |(xs ++ ys)| is consumed exactly once, then
+|xs| is consumed exactly once, and so is |ys|, and indeed our type
+system will accept this definition.
 
-Giving a more precise type to |(++)| only {\em strengthens} the
+As before, giving a more precise type to |(++)| only {\em strengthens} the
 contract that |(++)| offers to its callers; \emph{it does not restrict
   its usage}. For example:
 \begin{code}
@@ -650,69 +827,30 @@ For an existing language, being able to strengthen |(++)|, and similar
 functions, in a {\em backwards-compatible} way is a huge boon.  Of
 course, not all functions are linear: a function may legitimately
 demand unrestricted input.  For example, the function |f| above
-consumed |ys| twice, and so |ys| must have multiplicity $\omega$, and
+consumed |ys| twice, and so
 |f| needs an unrestricted arrow for that argument.
 
-Generalising from lists to arbitrary algebraic data types, we designed
-\HaskeLL{} so that when in a traditional Haskell (non-linear) calling
-context, linear constructors degrade to regular Haskell data
-types. Thus our radical position is that data types in \HaskeLL{}
-should have {\em linear fields by default}, including all standard
-definitions, such as pairs, tuples, |Maybe|, lists, and so on.  More
-precisely, when defined in old-style Haskell-98 syntax, all fields are
-linear; when defined using GADT syntax, the programmer can explicitly
-choose.  For example, in our system, pairs defined as
-\begin{code}
-data (,) a b = (,) a b
-\end{code}
-would use linear arrows. This becomes explicit when defined in GADT syntax:
-\begin{code}
-data (a,b) where  (,) ::  a ⊸ b ⊸ (a,b)
-\end{code}
-We will see in \fref{sec:non-linear-constructors} when it is also
-useful to have contstructors with unrestricted arrows.
+% The type of |(++)| tells us that if we have a list |xs| with
+% multiplicity $1$, appending any other list to it will never duplicate
+% any of the elements in |xs|, nor drop any element in
+% |xs|\footnote{This follows from parametricity.  In order to {\em free}
+%   linear list elements, we must pattern match on them to consume them,
+%   and thus must know their type (or have a type class instance).
+%  Likewise to copy them.}.
 
-\subsection{Linearity polymorphism}
-\label{sec:lin-poly}
-
-As we have seen, implicit conversions between multiplicities make
-first-order linear functions {\em more general}. But the higher-order
-case thickens the plot. Consider that the standard |map| function over
-(linear) lists:
+Moreover, we can \emph{also} use the very same pairs and lists
+type to contain linear values (such as mutable arrays) without
+compromising safety.  For example:
 \begin{code}
-map f []      = []
-map f (x:xs)  = f x : map f xs
+upd :: (MArray Char, MArray Char) ⊸ Int -> (MArray Char, MArray Char)
+upd (a1, a2) n | n >= 10   = (write a1 n 'x', a2)
+               | otherwise = (write a2 n 'o', a1)
 \end{code}
-It can be given the two following incomparable types:
-  |(a ⊸ b) -> [a] ⊸ [b]|  and
-  |(a -> b) -> [a] -> [b]|.
-%
-  Thus, \HaskeLL{} features quantification over multiplicities and
-  parameterised arrows (|A → _ q B|).  Using these, |map| can be given
-  the following most general type: |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ
-  [b]|.
-%
-Likewise, function composition can be given the following general type:
-\begin{code}
-(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
-(f ∘ g) x = f (g x)
-\end{code}
-That is: two functions that accept arguments of arbitrary
-multiplicities ($ρ$ and $π$ respectively) can be composed to form a
-function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
-product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
-%
-Finally, from a backwards-compatibility perspective, all of these
-subscripts and binders for multiplicity polymorphism can be {\em
-  ignored}. Indeed, in a context where client code does not use
-linearity, all inputs will have multiplicity $ω$, and transitively all
-expressions can be promoted to $ω$. Thus in such a context the
-compiler, or indeed documentation tools, can even altogether hide
-linearity annotations from the programmer when this language
-extension is not turned on.
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
 \label{sec:non-linear-constructors}
+
+\simon{Still needs work}
 
 We saw in \fref{sec:linear-constructors} that data types in \HaskeLL{} have
 linear arguments by default. Do we ever need data constructors
@@ -755,6 +893,124 @@ that will consume its argument exactly once if its result is ever
 evaluated. This is why |Unrestricted| appears in many abstractions in
 order to ensure that values have been consumed at a given point in the
 program.
+
+
+\subsection{Linearity polymorphism}
+\label{sec:lin-poly}
+
+As we have seen, implicit conversions between multiplicities make
+first-order linear functions {\em more general}. But the higher-order
+case thickens the plot. Consider that the standard |map| function over
+(linear) lists:
+\begin{code}
+map f []      = []
+map f (x:xs)  = f x : map f xs
+\end{code}
+It can be given the two following incomparable types:
+  |(a ⊸ b) -> [a] ⊸ [b]|  and
+  |(a -> b) -> [a] -> [b]|.
+%
+  Thus, \HaskeLL{} features quantification over multiplicities and
+  parameterised arrows (|A → _ q B|).  Using these, |map| can be given
+  the following most general type: |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ
+  [b]|.
+%
+Likewise, function composition can be given the following general type:
+\begin{code}
+(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(f ∘ g) x = f (g x)
+\end{code}
+That is: two functions that accept arguments of arbitrary
+multiplicities ($ρ$ and $π$ respectively) can be composed to form a
+function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
+product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
+%
+Finally, from a backwards-compatibility perspective, all of these
+subscripts and binders for multiplicity polymorphism can be {\em
+  ignored}. Indeed, in a context where client code does not use
+linearity, all inputs will have multiplicity $ω$, and transitively all
+expressions can be promoted to $ω$. Thus in such a context the
+compiler, or indeed documentation tools, can even altogether hide
+linearity annotations from the programmer when this language
+extension is not turned on.
+
+\subsection{Linear input/output}
+
+In \fref{sec:io-protocols} we introduced |IOL| monad.  But how does it work?
+|IOL| is just a generalisation of the |IO| monad, thus:
+\begin{code}
+  type IOL p a
+  returnIOL :: a -> _ p IOL p a
+  bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+
+  instance Monad (IOL p) where
+    return = returnIOL
+    (>>=)  = bindIOL
+\end{code}
+The idea is that if |m :: IO 1 t|, then |m| is a input/output
+computation that returns a linear value of type |t|.  But what does it mean to
+``return a linear value'' in a world in which linearity applies only to
+function arrows?  Fortunately, in the world of monads each computation
+has an explicit continuation, so we just need to control the linearity of
+the continuation arrow.  More precisely, in an application |m >>= k|,
+where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ t'|.
+And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
+
+|IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
+
+A slight bump in the road is the treatment of the |do|-notation.  Consider
+\begin{code}
+  do { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+     ; d <- getData      -- |getDate  :: IO ω Date|
+     ; e[f,d] }
+\end{code}
+Here |openFile| returns a linear |File| that should closed, but |getDate| returns
+an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
+We can easily combine them with |`bindIOL`| thus:
+\begin{code}
+  openFile s `bindIOL` \f ->
+  getData    `bindIOL` \d ->
+  e[f,d]
+\end{code}
+because, crucially, |bindIOL| does not require uniform linearity: it has two
+linearity parameters |p| and |q|, not just one.  We simply need |do|-notation to
+behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requires the
+|-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
+be worth considering a more robust solution.
+
+Internally, hidden from clients, GHC actually implements |IO| as a function,
+and that implementation too is illuminated by linearity.  Here it is:
+\begin{code}
+data World
+newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
+data IORes p a where
+  IOR :: World ⊸ a -> _ p IOR p a
+
+bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+bindIOL (IOL m) k = IOL (\w -> case m w of
+                                 IOR w' r -> unIOL (k r) w')
+\end{code}
+A value of type |World| represents the state of the world, and is
+threaded linearly through I/O computations.  The linearity of the
+result of the computation is described by the |p| parameter of |IOL|,
+which is inherited by the specialised form of pair, |IORes| that an
+|IOL| computation returns.  All this code is can be statically
+typechecked, further reducing the size of the trusted code base.
+
+\subsection{Linearity and strictness}
+
+It is tempting to suppose that, since a linear function consumes its
+argument exactly once, then it must also be strict.  But not so!
+For example
+\begin{code}
+f :: a ⊸ (a, Bool)
+f x = (x, True)
+\end{code}
+Here |f| is certainly linear according to \fref{sec:consumed}, and
+given the type of |(,)| in \fref{sec:linear-constructors}. If |(f x)|
+is consumed exactly once, then each component of its result pair is
+consumed exactly once, and hence |x| is consumed exactly once.
+But |f| is certainly not strict: |f undefined| is not |undefined|.
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
@@ -1054,7 +1310,7 @@ $$\caserule$$
 The interesting case is when $p=ω$, which reads as: if we can consume
 $t$ an arbitrary number of time, then so can we of its
 constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
-are its constituents (see \ref{sec:consumed}). As a consequence, the
+are its constituents (see \fref{sec:consumed}). As a consequence, the
 following program, which asserts the existence of projections, is
 well-typed (note that, both in |first| and |snd|, the arrow is~---~and
 must be~---~unrestricted).
