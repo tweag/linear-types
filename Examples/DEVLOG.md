@@ -332,3 +332,127 @@ Ah, ok, this bit could be the culprit:
 
      let { sat :: WByteArray = NO_CCS WBA! [ww ww1]; }
      in (#,#) [s1 sat];
+
+--------------------------------------------------------------------------------
+
+Ok, now I'm getting some bad code for SumTree having to do with how
+the results of "readC" flow back to the caller.  See the "W8#" boxes
+below in the STG.
+
+```Haskell
+$wgo1
+  :: forall (r :: [*]).
+     Addr# -> ForeignPtrContents -> Int# -> Int# -> (# Int, Has r #) =
+    \r [ww ww1 ww2 ww3] 
+        case plusAddr# [ww ww2] of sat {
+          __DEFAULT ->
+              case
+                  case readWord8OffAddr# [sat 0# realWorld#] of {
+                    (#,#) ipv ipv1 ->
+                        case touch# [ww1 ipv] of s' {
+                          __DEFAULT ->
+                              let { sat :: TagTy = NO_CCS W8#! [ipv1]; } in  (#,#) [s' sat];
+                        };
+                  }
+              of
+              { (#,#) _ ipv1 -> 
+                    case ipv1 of {
+                      W8# x -> 
+                          case x of {
+                            __DEFAULT -> patError lvl18;
+                            100## ->
+                                let {
+                                  w1 :: Has (Int : r) =
+                                      \u [] 
+                                          case >=# [1# ww3] of sat {
+                                            __DEFAULT ->
+                                                case tagToEnum# [sat] of {
+                                                  False -> 
+                                                      case -# [ww3 1#] of sat {
+                                                        __DEFAULT ->
+                                                            case +# [ww2 1#] of sat {
+                                                              __DEFAULT -> PS [ww ww1 sat sat];
+                                                            };
+                                                      };
+                                                  True -> 
+                                                      empty;
+                                                };
+                                          }; } in
+                                let {
+                                  sat :: Has r =
+                                      \u [] 
+                                          case w1 of {
+                                            PS dt dt1 dt2 dt3 -> 
+                                                case >=# [8# dt3] of sat {
+                                                  __DEFAULT ->
+                                                      case tagToEnum# [sat] of {
+                                                        False -> 
+                                                            case -# [dt3 8#] of sat {
+                                                              __DEFAULT ->
+                                                                  case +# [dt2 8#] of sat {
+                                                                    __DEFAULT ->
+                                                                        PS [dt dt1 sat sat];
+                                                                  };
+                                                            };
+                                                        True -> 
+                                                            empty;
+                                                      };
+                                                };
+                                          }; } in
+                                let {
+                                  sat :: Int =
+                                      \u [] 
+                                          case
+                                              case w1 of {
+                                                PS dt dt1 dt2 _ -> 
+                                                    case plusAddr# [dt dt2] of sat {
+                                                      __DEFAULT ->
+                                                          case
+                                                              readIntOffAddr# [sat 0# realWorld#]
+                                                          of
+                                                          { (#,#) ipv2 ipv3 ->
+                                                                case touch# [dt1 ipv2] of s' {
+                                                                  __DEFAULT ->
+                                                                      let {
+                                                                        sat :: Int =
+                                                                            NO_CCS I#! [ipv3];
+                                                                      } in  (#,#) [s' sat];
+                                                                };
+                                                          };
+                                                    };
+                                              }
+                                          of
+                                          { (#,#) _ ipv3 -> ipv3;
+                                          };
+                                } in  (#,#) [sat sat];
+                            111## -> 
+                                case >=# [1# ww3] of sat {
+                                  __DEFAULT ->
+                                      case tagToEnum# [sat] of {
+                                        False -> 
+                                            case -# [ww3 1#] of sat {
+                                              __DEFAULT ->
+                                                  case +# [ww2 1#] of sat {
+                                                    __DEFAULT -> poly_$j ww ww1 sat sat;
+                                                  };
+                                            };
+                                        True -> 
+                                            poly_$j __NULL $fMonoidByteString1 0# 0#;
+                                      };
+                                };
+                          };
+                    };
+              };
+        };
+
+sumTree_go
+  :: forall (r :: [*]). Has (Tree : r) -> (# Int, Has r #) =
+    \r [w] case w of { PS ww1 ww2 ww3 ww4 -> $wgo1 ww1 ww2 ww3 ww4; };
+
+sumTree :: Packed Tree -> Int =
+    \r [t]
+        case t of {
+          PS ww1 ww2 ww3 ww4 ->
+              case $wgo1 ww1 ww2 ww3 ww4 of { (#,#) ipv _ -> ipv; };
+        };
+```

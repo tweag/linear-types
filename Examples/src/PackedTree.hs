@@ -106,12 +106,12 @@ caseTree2 :: forall a1 a2 b.
           -> (Has (Int ': b) -> (# a1, a2 #))
           -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
           -> (# a1, a2 #)
-caseTree2 c f1 f2 = f (readC (unsafeCastHas c))
-  where   
-    f :: (TagTy, Has '[]) -> (# a1, a2 #)
-    f (tg,c2) = case tg of
-                 _ | tg == leafTag   -> f1 (unsafeCastHas c2)
-                 _ | tg == branchTag -> f2 (unsafeCastHas c2)
+caseTree2 c f1 f2 =
+  case readC (unsafeCastHas c) of
+    (tg,c2) -> 
+      case tg of
+        _ | tg == leafTag   -> f1 (unsafeCastHas c2)
+        _ | tg == branchTag -> f2 (unsafeCastHas c2)
 --                 _ -> error $ "caseTree2: corrupt tag, "++show tg
 
 

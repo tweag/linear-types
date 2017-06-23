@@ -86,10 +86,11 @@ writeC a (Needs bld1) = Needs (ByteArray.writeStorable a bld1)
 
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
-readC :: Storable a => Has (a ': rst) -> (a, Has rst)
-readC (Has bs) = (a, Has (ByteString.drop (sizeOf a) bs))
-  where
-    a = ByteArray.headStorable bs
+readC :: forall a rst . Storable a => Has (a ': rst) -> (a, Has rst)
+readC (Has bs) =
+    let !a = ByteArray.headStorable bs in 
+    (a, Has (ByteString.drop (sizeOf (undefined::a)) bs))
+    
 
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
