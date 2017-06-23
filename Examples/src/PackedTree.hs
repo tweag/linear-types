@@ -16,7 +16,9 @@ module PackedTree
     , writeBranch
     , caseTree
     , packTree, unpackTree
-    , sumTree, mapTree, foldTree, unfoldTree     
+    , sumTree, mapTree, foldTree, unfoldTree
+    -- * Examples
+    , tr1, tr2, tr3
     ) where
 
 #ifdef PUREMODE
@@ -29,7 +31,7 @@ import Cursors.Mutable
     
 import Linear.Std
 import Data.Word
-import qualified Data.ByteString as ByteString
+-- import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
 
 ----------------------------------------
@@ -44,8 +46,8 @@ data Tree = Leaf Int
 
 type TagTy = Word8
 
-leafTag   :: TagTy; leafTag   = 0
--- branchTag :: TagTy; branchTag = 1
+leafTag   :: TagTy; leafTag   = 100
+branchTag :: TagTy; branchTag = 111
 
     
 -- | Write a complete Leaf node to the output cursor.
@@ -62,9 +64,8 @@ writeLeaf n oc = writeLeaf' n (unsafeCastNeeds oc)
 -- | Write a complete Branch node to the output cursor.
 --   First, write the tag.  Second, use the provided function to
 --   initialize the left and write branches.
-writeBranch :: Needs (Tree ': b) t ⊸ Needs (Tree ': Tree ': b) t
-writeBranch -- (Needs bs) = Needs (ByteArray.writeByte 1 bs)
-  = error "FINISHME"
+writeBranch :: forall b t . Needs (Tree ': b) t ⊸ Needs (Tree ': Tree ': b) t
+writeBranch oc = writeC branchTag (unsafeCastNeeds oc)
 
 -- Todo?
 -- instance Binary Tree where
@@ -90,8 +91,8 @@ caseTree c f1 f2 = f (readC (unsafeCastHas c))
   where   
     f :: (TagTy, Has '[]) -> a
     f (tg,c2) = case tg of
-                 0 -> f1 (unsafeCastHas c2)
-                 1 -> f2 (unsafeCastHas c2)
+                 _ | tg == leafTag   -> f1 (unsafeCastHas c2)
+                 _ | tg == branchTag -> f2 (unsafeCastHas c2)
                  _ -> error $ "caseTree: corrupt tag, "++show tg
     
 -- This version violates the abstraction:
@@ -99,7 +100,7 @@ caseTree c f1 f2 = f (readC (unsafeCastHas c))
 --   case ByteString.head bs of
 --     0 -> f1 (Has (ByteString.drop 1 bs))
 --     1 -> f2 (Has (ByteString.drop 1 bs))
---     _ -> error "impossible"
+--     _ -> error "caseTree: impossible"
 
 packTree :: Tree -> Packed Tree
 packTree = unfoldTree viewTree
@@ -144,7 +145,7 @@ unfoldTree step seed = fromHas $ getUnrestricted $
     go (step -> Left a) n = writeLeaf a n
     go (step -> Right (left,right)) n =
       go right (go left (writeBranch n))
-    go _ y = linerror "impossible" y
+    go _ y = linerror "unfoldTree: impossible" y
            
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt = fromHas $ getUnrestricted $
@@ -184,18 +185,36 @@ mapTree f pt = fromHas $ getUnrestricted $
               in Tensor c4 oc4)
 -}
 
-{-
 -- Tree tests:
 ----------------------------------------
         
 tr1 :: Tree
 tr1 = Branch (Leaf 3) (Leaf 4)
 
+pk0 :: Packed TagTy
+pk0 = fromHas $ getUnrestricted $
+      withOutput (\c -> finish (writeC leafTag c))
+
+pk1 :: Packed (TagTy, TagTy)
+pk1 = fromHas $ getUnrestricted $
+      withOutput (\(c :: Needs '[(TagTy,TagTy)] (TagTy,TagTy)) ->
+                      finish (writeC leafTag (writeC leafTag (untup c))))
+
+pk2 :: Packed Tree
+pk2 = fromHas $ getUnrestricted $
+      withOutput (\c -> finish (writeLeaf 33 c))
+      
+tr2 :: Packed Tree
 tr2 = packTree tr1
+
+tr3 :: Tree
+tr3 = unpackTree tr2
+
+{-
       
 s1 = sumTree tr2
 
-tr3 = unpackTree tr2
+
 
 tr4 :: Packed Tree
 tr4 = fromHas $

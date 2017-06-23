@@ -15,16 +15,19 @@ module Cursors.PureStorable
       -- * Public cursor interface
     , writeC, readC, fromHas, toHas
     , finish, withOutput
-
+    , tup, untup
+      
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
     )
     where
 
-import Linear.Std (Unrestricted(..), linerror)
+import Linear.Std (Unrestricted(..)) -- linerror
 import Linear.Unsafe (unsafeCastLinear, unsafeCastLinear2, unsafeUnrestricted)
 
-import Data.Sequence      
+import Data.Sequence as Seq
+import Data.Char (ord)
+import Data.List as L
 import Data.ByteString.Char8   as BS
 import Data.ByteString.Internal (fromForeignPtr, toForeignPtr)
 import Foreign.Storable
@@ -32,6 +35,8 @@ import Foreign.Ptr ()
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr, mallocForeignPtr, castForeignPtr)
 -- import Foreign.Marshal.Alloc (alloca)
 import System.IO.Unsafe (unsafeDupablePerformIO)
+import Prelude as P 
+--------------------------------------------------------------------------------
 
 -- | A hack for treating Storable as a pure, rather than IO-based interface.
 serialize :: Storable a => a ⊸ ByteString
@@ -64,8 +69,15 @@ newtype Has (l :: [*]) = Has (Seq ByteString)
 
 -- | A packed value is very like a singleton Has cursor.  It
 -- represents a dense encoding of a single value of the type `a`.
-newtype Packed a = Packed ByteString
-  deriving (Show,Eq)
+newtype Packed a = Packed (Seq ByteString)
+  deriving (Eq)
+
+instance Show (Packed a) where
+  show (Packed sq) = "Packed ["
+                      ++ P.unwords (L.intersperse " | "
+                         [ show (BS.length bs)++": "++
+                           P.concat (L.intersperse "," [ show (ord c) | c <- BS.unpack bs])
+                         | bs <- P.foldr (:) [] sq ]) ++ "]"
 
 
 -- Cursor interface
@@ -83,17 +95,17 @@ writeC a (Needs s) = Needs (s `consR` serialize a)
 -- | Reading from a cursor scrolls past the read item and gives a
 -- cursor into the next element in the stream:
 readC :: Storable a => Has (a ': rst) -> (a, Has rst)
-readC (Has Empty) = error "impossible"
+-- One STORABLE element always constitutes one contiguous bytestring chunk:         
 readC (Has (bs :<| rst)) = (deserialize bs, Has rst)
+readC (Has Empty) = error "readC: impossible - read from empty cursor"
 
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
-fromHas (Has (a :<| Empty)) = Packed a
-fromHas (Has x) = (linerror "impossible") x
+fromHas (Has s) = Packed s
 
 -- | Safely cast a packed value to a has cursor.
 toHas :: Packed a ⊸ Has '[a]
-toHas (Packed b) = Has (consR Empty b)
+toHas (Packed b) = Has b
 
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
@@ -106,9 +118,22 @@ unsafeCastHas (Has b) = (Has b)
 
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish (Needs (_ :|> bs)) = unsafeUnrestricted $ Has (Empty `consR` bs)
-finish (Needs x) = linerror "finish: the impossible happened" x
+-- We don't KNOW how many bytestring chunks the value has.  So even
+-- though this may include MORE than we need, we include the whole
+-- thing:
+finish (Needs bss) = unsafeUnrestricted $ Has bss
 
+
+-- | We /could/ create a general approach to safe coercions for data
+-- with the same serialized layout, analogous to, but distinct from,
+-- the Coercable class.
+untup :: Needs ((a,b) ': c) d ⊸ Needs (a ': b ': c) d
+untup (Needs x) = Needs x
+
+tup :: Needs (a ': b ': c) d ⊸ Needs ((a,b) ': c) d
+tup (Needs x) = Needs x
+
+         
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn =
