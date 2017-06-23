@@ -25,11 +25,20 @@ mkTree depth = go 0 depth
 timePrint :: IO a -> IO a
 timePrint act = do
   t1 <- getCurrentTime
+  c1 <- getAllocationCounter
   x  <- act
+  c2 <- getAllocationCounter
   t2 <- getCurrentTime
-  putStrLn (show (diffUTCTime t2 t1))
+  putStrLn $ show (diffUTCTime t2 t1) ++", alloc "++ comma(abs(c2-c1))
   return x
 
+comma :: (Show a,Num a) => a -> String
+comma n = reverse (fst : go rst)
+  where (fst:rst)    = reverse (show n)
+        go [a,b,c]   = [',',a,b,c]
+        go (a:b:c:r) = a:b:c:',': go r
+        go ls        = ls
+         
 pureMap :: (Int -> Int) -> Tree -> Tree
 pureMap f (Leaf n)     = Leaf   (f n)
 pureMap f (Branch x y) = Branch (pureMap f x) (pureMap f y)
