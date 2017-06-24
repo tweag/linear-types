@@ -11,12 +11,13 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE BangPatterns #-}
 
 module PackedTree
     ( Tree(..), TagTy
     , writeLeaf
     , writeBranch
-    , caseTree
+    , caseTree, toEither
     , packTree, unpackTree
     , sumTree, mapTree, foldTree, unfoldTree
     -- * Examples
@@ -106,12 +107,23 @@ caseTree2 :: forall a1 a2 b.
           -> (Has (Int ': b) -> (# a1, a2 #))
           -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
           -> (# a1, a2 #)
-caseTree2 c f1 f2 = withC2 c2 f 
+caseTree2 c f1 f2 = f (fstC c2)
   where 
     c2 = unsafeCastHas c 
     f tg | tg == leafTag   = f1 (unsafeCastHas (rstC c2))
          | tg == branchTag = f2 (unsafeCastHas (rstC c2))
 --                 _ -> error $ "caseTree2: corrupt tag, "++show tg
+
+{-# INLINE toEither #-}
+toEither :: forall b. Has (Tree ': b)
+         -> Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
+toEither c =
+    let 
+        c2 = unsafeCastHas c in
+    case fstC c2 of 
+      tg | tg == leafTag   -> Left  (rstC (unsafeCastHas c2:: Has (TagTy ': Int ': b)))
+         | tg == branchTag -> Right (rstC (unsafeCastHas c2:: Has (TagTy ': Tree ': Tree ': b)))
+         | otherwise -> error $ "toEither: corrupt tag, "++show tg
 
 
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
@@ -147,20 +159,32 @@ _sumTree = foldTree id (+)
 
 -- | Optimizing away allocation.
 sumTree :: Packed Tree -> Int
-sumTree t =
-    case go (toHas t) of
-      (# acc, _ #) -> acc
+sumTree t = fin2
   where
-    go :: forall r. Has (Tree ': r) -> (# Int, Has r #)
-    go h = caseTree2 h onLeaf onBranch
+    ----------- Version 2 : Either ----------
+    fin2 = fst (go (toHas t))
+    go :: forall r. Has (Tree ': r) -> (Int, Has r)
+    go h = case toEither h of
+             Left  h1  -> readC h1
+             Right h1 -> let (!x,h2) = go h1
+                             (!y,h3) = go h2
+                             !s = x+y
+                         in (s, h3)
+    
+    ----------- Version 1 : unboxed tuples ----------
+    fin1 = case go1 (toHas t) of
+             (# acc, _ #) -> acc
+    
+    go1 :: forall r. Has (Tree ': r) -> (# Int, Has r #)
+    go1 h = caseTree2 h onLeaf onBranch
 
     onLeaf :: forall r. Has (Int ': r) -> (# Int, Has r #)
     onLeaf h = let (n, c) = readC h in (# n, c #)
 
     onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int, Has r #)
     onBranch h =
-      case go h  of { (# x, h' #) ->
-      case go h' of { (# y, h'' #) ->
+      case go1 h  of { (# x, h' #) ->
+      case go1 h' of { (# y, h'' #) ->
         (# x+y,  h'' #)
       } }
 

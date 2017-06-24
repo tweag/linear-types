@@ -8,7 +8,8 @@
 
 module ByteArray
     ( WByteArray,
-      alloc, freeze, headStorable, withHeadStorable, withHeadStorable2,
+      alloc, freeze, headStorable, headStorableIO,
+      withHeadStorable, withHeadStorable2,
       writeStorable, writeByte )
     where
 
@@ -119,6 +120,12 @@ headStorable bs = unsafeDupablePerformIO $
     ByteString.unsafeUseAsCString bs $ \ cstr -> 
       peek (castPtr cstr)
 
+{-# INLINE headStorableIO #-}
+-- TODO: bound checking
+headStorableIO :: Storable a => ByteString -> IO a
+headStorableIO bs = ByteString.unsafeUseAsCString bs $ \ cstr -> 
+                  peek (castPtr cstr)
+
 {-# INLINE withHeadStorable #-}
 -- | An alternative to @headStorable@ which permits different compiler
 -- optimizations.
@@ -136,7 +143,7 @@ withHeadStorable2 bs f = (# x, y #)
   where
    (x,y) = unsafeDupablePerformIO $
     ByteString.unsafeUseAsCString bs $ \ cstr ->  do
-      !x <- peek (castPtr cstr)
-      case f x of
+      !r <- peek (castPtr cstr)
+      case f r of
         (# a,b #) -> return (a,b)  -- Sigh... 
 
