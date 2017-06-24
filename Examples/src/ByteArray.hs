@@ -5,12 +5,16 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module ByteArray
     ( WByteArray,
-      alloc, freeze, headStorable, headStorableIO,
+      alloc, freeze, headStorable, 
       withHeadStorable, withHeadStorable2,
-      writeStorable, writeByte )
+      writeStorable, writeByte,
+      -- * Monadic interface
+      ReadM, runReadM, headStorableM,
+    )
     where
 
 import Data.ByteString (ByteString)
@@ -57,9 +61,13 @@ freeCounter = free
     
 ------------------------------------------------------------
 
--- | A restricted IO monad to /aggregate/ peek and poke operations on byte buffers.
---  This is for optimization purposes.
-newtype ByteScrollM = BSM ()
+-- | A monad to /aggregate/ peek operations on byte buffers.  This is
+--  for optimization purposes.
+newtype ReadM a = ReadM (IO a)
+  deriving (Monad, Functor, Applicative)
+
+runReadM :: ReadM a -> a
+runReadM (ReadM i) = unsafeDupablePerformIO i
                      
 data WByteArray = WBA { offset :: !MutCounter
                       , bytes  :: !CString
@@ -120,12 +128,13 @@ freeze = unsafeCastLinear f
 {-# INLINE headStorable #-}
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
-headStorable = unsafeDupablePerformIO . headStorableIO
+headStorable = runReadM . headStorableM
 
-{-# INLINE headStorableIO #-}
+{-# INLINE headStorableM #-}
 -- TODO: bound checking
-headStorableIO :: Storable a => ByteString -> IO a
-headStorableIO bs = ByteString.unsafeUseAsCString bs $ \ cstr -> 
+headStorableM :: Storable a => ByteString -> ReadM a
+headStorableM bs = ReadM $
+                   ByteString.unsafeUseAsCString bs $ \ cstr -> 
                       peek (castPtr cstr)
 
 {-# INLINE withHeadStorable #-}

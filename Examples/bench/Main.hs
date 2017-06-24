@@ -45,23 +45,39 @@ comma n = reverse (go (reverse (show n)))
         go ls        = ls
 
 
-main :: IO () 
-main = do
-  putStr "Fill 10K bytes in a ByteArray: "
+bytearray :: IO () 
+bytearray = do
+  let nbytes = 10000
+  putStr$ "Fill "++comma nbytes++" bytes in a ByteArray: "
   bs <- timePrint $ evaluate $ 
          BA.alloc 20000 (unsafeCastLinear
                          (\c -> let go 0 = c
                                     go n = BA.writeByte 1 (go (n-1))
-                                in BA.freeze (go (10000::Int))))
+                                in BA.freeze (go (nbytes::Int))))
   putStr "Sum bytes of a ByteString "
   n <- timePrint $ evaluate $
          (let go b | BS.null b = 0 :: Int
                    | otherwise = fromIntegral (BA.headStorable b :: Word8) +
                                  go (BS.drop (sizeOf (0::Word8)) b)
           in go (getUnrestricted bs))
-  putStrLn $ "(Sum was "++show n++")"
+  putStrLn $ "    (Sum was "++show n++")"
+  putStr "Sum bytes of a ByteString, monadic "
+  n <- timePrint $ evaluate $ BA.runReadM $ 
+         (let go b !acc | BS.null b = return acc
+                        | otherwise = do n <- BA.headStorableM b
+                                         go (BS.drop (sizeOf (0::Word8)) b)
+                                            (fromIntegral (n::Word8) + acc)
+          in go (getUnrestricted bs) (0::Int))
+  putStrLn $ "    (Sum was "++show n++")"
+
+main :: IO ()
+main = do
+  bytearray
+--  treebench
 
 {-
+treebench :: IO ()
+treebench = do 
   [dep] <- getArgs
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
