@@ -114,9 +114,10 @@ caseTree2 c f1 f2 = f (fstC c2)
          | tg == branchTag = f2 (unsafeCastHas (rstC c2))
 --                 _ -> error $ "caseTree2: corrupt tag, "++show tg
 
+type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
+
 {-# INLINE toEither #-}
-toEither :: forall b. Has (Tree ': b)
-         -> Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
+toEither :: forall b. Has (Tree ': b) -> EitherTree b
 toEither c =
     let 
         c2 = unsafeCastHas c in
@@ -126,6 +127,16 @@ toEither c =
          | otherwise -> error $ "toEither: corrupt tag, "++show tg
 
 
+{-# INLINE withEither #-}
+withEither :: forall a b. Has (Tree ': b) -> (EitherTree b -> a) -> a
+withEither c f = withC c2 f2
+  where
+   c2 = unsafeCastHas c
+   f2 tg | tg == leafTag   = f (Left  (rstC (unsafeCastHas c2:: Has (TagTy ': Int ': b))))
+         | tg == branchTag = f (Right (rstC (unsafeCastHas c2:: Has (TagTy ': Tree ': Tree ': b))))
+         | otherwise = error $ "withEither: corrupt tag, "++show tg
+
+                        
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
 _packTree1 :: Tree -> Packed Tree
 _packTree1 = unfoldTree viewTree
@@ -162,16 +173,25 @@ sumTree :: Packed Tree -> Int
 sumTree t = fin2
   where
     ----------- Version 2 : Either ----------
-    fin2 = fst (go (toHas t))
-    go :: forall r. Has (Tree ': r) -> (Int, Has r)
-    go h = case toEither h of
-             Left  h1  -> readC h1
-             Right h1 -> let (!x,h2) = go h1
-                             (!y,h3) = go h2
-                             !s = x+y
-                         in (s, h3)
+    fin2 = go (toHas t) fst
+
+    go :: forall a r. Has (Tree ': r) -> ((Int, Has r) -> a) -> a
+    go h k = withEither h
+             (\e ->
+               case e of
+                 Left h1  -> withC h1 (\n -> k (n, rstC h1))
+                 Right h1 -> go h1 (\(n,h2) -> go h2 (\(m,h3) -> k (n+m,h3)))
+             )
+               
+    --            f (Left  h1) = readC h1
+    -- f (Right h1) = let (!x,h2) = go h1
+    --                    (!y,h3) = go h2
+    --                    !s = x+y
+    --                in (s, h3)
+
     
     ----------- Version 1 : unboxed tuples ----------
+{-                            
     fin1 = case go1 (toHas t) of
              (# acc, _ #) -> acc
     
@@ -187,6 +207,7 @@ sumTree t = fin2
       case go1 h' of { (# y, h'' #) ->
         (# x+y,  h'' #)
       } }
+-}
 
 {-# INLINABLE foldTree #-}
 foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
