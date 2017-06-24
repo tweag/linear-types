@@ -56,6 +56,10 @@ freeCounter :: MutCounter -> IO ()
 freeCounter = free 
     
 ------------------------------------------------------------
+
+-- | A restricted IO monad to /aggregate/ peek and poke operations on byte buffers.
+--  This is for optimization purposes.
+newtype ByteScrollM = BSM ()
                      
 data WByteArray = WBA { offset :: !MutCounter
                       , bytes  :: !CString
@@ -116,15 +120,13 @@ freeze = unsafeCastLinear f
 {-# INLINE headStorable #-}
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
-headStorable bs = unsafeDupablePerformIO $
-    ByteString.unsafeUseAsCString bs $ \ cstr -> 
-      peek (castPtr cstr)
+headStorable = unsafeDupablePerformIO . headStorableIO
 
 {-# INLINE headStorableIO #-}
 -- TODO: bound checking
 headStorableIO :: Storable a => ByteString -> IO a
 headStorableIO bs = ByteString.unsafeUseAsCString bs $ \ cstr -> 
-                  peek (castPtr cstr)
+                      peek (castPtr cstr)
 
 {-# INLINE withHeadStorable #-}
 -- | An alternative to @headStorable@ which permits different compiler
