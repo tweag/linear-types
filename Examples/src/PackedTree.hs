@@ -37,6 +37,7 @@ import Linear.Std
 import Data.Word
 -- import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
+import ByteArray (runReadM, ReadM)
 
 ----------------------------------------
 
@@ -136,6 +137,21 @@ withEither c f = withC c2 f2
          | tg == branchTag = f (Right (rstC (unsafeCastHas c2:: Has (TagTy ': Tree ': Tree ': b))))
          | otherwise = error $ "withEither: corrupt tag, "++show tg
 
+
+-- toEitherM :: forall b. Has (Tree ': b) -> ReadM (EitherTree b)
+
+{-# INLINE caseTreeM #-}
+caseTreeM :: forall a b.
+            Has (Tree ': b)
+         -> (Has (Int ': b) -> ReadM a)
+         -> (Has (Tree ': Tree ': b) -> ReadM a)
+         -> ReadM a
+caseTreeM c f1 f2 =
+    do let c2 = unsafeCastHas c
+       tg::TagTy <- fstCM c2
+       if tg == leafTag
+        then f1 (unsafeCastHas (rstC c2))
+        else f2 (unsafeCastHas (rstC c2))
                         
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
 _packTree1 :: Tree -> Packed Tree
@@ -170,8 +186,25 @@ _sumTree = foldTree id (+)
 
 -- | Optimizing away allocation.
 sumTree :: Packed Tree -> Int
-sumTree t = fin2
+sumTree t = fin3
   where
+    ----------- Version 3 : Monadic reader ----------
+    fin3 = fst $ runReadM $ go3 (toHas t)
+
+    go3 :: forall r. Has (Tree ': r) -> ReadM (Int, Has r)
+    go3 h = caseTreeM h onLeaf onBranch
+
+    onLeaf :: forall r. Has (Int ': r) -> ReadM (Int, Has r)
+    onLeaf h = do !n <- fstCM h
+                  return (n, rstC h)
+
+    onBranch :: forall r. Has (Tree ': Tree ': r) -> ReadM (Int, Has r)
+    onBranch h1 = do
+      (n,h2) <- go3 h1
+      (m,h3) <- go3 h2
+      return (n+m, h3)
+
+{-
     ----------- Version 2 : Either ----------
     fin2 = go (toHas t) fst
 
@@ -182,16 +215,8 @@ sumTree t = fin2
                  Left h1  -> withC h1 (\n -> k (n, rstC h1))
                  Right h1 -> go h1 (\(n,h2) -> go h2 (\(m,h3) -> k (n+m,h3)))
              )
-               
-    --            f (Left  h1) = readC h1
-    -- f (Right h1) = let (!x,h2) = go h1
-    --                    (!y,h3) = go h2
-    --                    !s = x+y
-    --                in (s, h3)
-
     
     ----------- Version 1 : unboxed tuples ----------
-{-                            
     fin1 = case go1 (toHas t) of
              (# acc, _ #) -> acc
     

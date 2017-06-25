@@ -18,7 +18,7 @@ module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
       Has(..), Needs(..), Packed
       -- * Public cursor interface
-    , writeC, readC, fstC, rstC, fromHas, toHas
+    , writeC, readC, fstC, rstC, fstCM, fromHas, toHas
     , finish, withOutput, withC, withC2
     , tup, untup
 
@@ -103,6 +103,11 @@ fstC (Has bs) = ByteArray.headStorable bs
 rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
 rstC (Has bs) = Has (ByteString.drop (sizeOf (undefined::a)) bs)
 
+{-# INLINE fstCM #-}
+-- | Monadic version of @fstC@
+fstCM :: forall a rst . Storable a => Has (a ': rst) -> ByteArray.ReadM a
+fstCM (Has bs) = ByteArray.headStorableM bs
+
 {-# INLINE withC #-}
 withC :: forall a b rst . Storable a => Has (a ': rst) -> (a -> b) -> b
 withC (Has bs) = ByteArray.withHeadStorable bs
@@ -110,8 +115,7 @@ withC (Has bs) = ByteArray.withHeadStorable bs
 {-# INLINE withC2 #-}
 withC2 :: forall a b1 b2 rst . Storable a => Has (a ': rst) -> (a -> (# b1, b2 #)) -> (# b1, b2 #)
 withC2 (Has bs) = ByteArray.withHeadStorable2 bs
-
-
+                  
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
 fromHas (Has b) = Packed b

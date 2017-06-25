@@ -16,9 +16,10 @@ import Data.Word
 import Data.Time.Clock
 import System.Environment
 import Control.Exception (evaluate)
--- import Control.DeepSeq (force)
+import Control.DeepSeq (force)
 import Foreign.Storable (sizeOf)
 import System.Mem
+import System.IO (stdout, hFlush)
 import GHC.Stats
 ----------------------------------------------
 
@@ -44,6 +45,10 @@ comma n = reverse (go (reverse (show n)))
   where go (a:b:c:d:r) = a:b:c:',': go (d:r)
         go ls        = ls
 
+main :: IO ()
+main = do
+  bytearray
+  treebench
 
 bytearray :: IO () 
 bytearray = do
@@ -70,12 +75,7 @@ bytearray = do
           in go (getUnrestricted bs) (0::Int))
   putStrLn $ "    (Sum was "++show n++")"
 
-main :: IO ()
-main = do
-  bytearray
---  treebench
 
-{-
 treebench :: IO ()
 treebench = do 
   [dep] <- getArgs
@@ -91,19 +91,18 @@ treebench = do
   putStr "Pack tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
 
-  putStr "Sum packed tree: "
+  putStr "Sum packed tree: "; hFlush stdout
   _ <- timePrint $ evaluate $ sumTree tr'
-
+{-
   putStr "unpack/map/repack: "
   _ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
   
   putStr "map on packed: "
   _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
 -}
-
   return ()
 
-{-
+
 mkTree :: Int -> Tree
 mkTree depth = go 0 depth
   where
@@ -118,5 +117,5 @@ pureMap f (Branch x y) = Branch (pureMap f x) (pureMap f y)
 pureSum :: Tree -> Int
 pureSum (Leaf n)     = n
 pureSum (Branch x y) = pureSum x + pureSum y
--}
+
          
