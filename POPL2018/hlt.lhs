@@ -1979,9 +1979,6 @@ on multiplicities.
     \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A = z) :
       z}\text{shared variable}
 
-
-    % \inferrule{Γ : e ⇓ Δ : z} {(Γ,x :_1 A = e) : x ⇓ Δ :
-    % z}\text{linear variable}
     \inferrule{ }
     {(Γ,x :_1 A = z) : x ⇓ (Δ, x :_1 A = z) : x}\text{linear variable}
 
@@ -2014,16 +2011,6 @@ on multiplicities.
 
 
     %%%% /Arrays
-
-    % \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailbox k w ⇓ Δ:z}\text{withMailbox}
-
-    % \inferrule{Γ:x ⇓ Δ:⟨j,i⟩}{Γ:close x ⇓ Δ:()}\text{close}
-
-    % \inferrule
-    %   {Γ:x ⇓ Δ:⟨j,i⟩}
-    %   {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i : (y,z)}\text{get}
-
-    %   \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
   \end{mathpar}
 
   \caption{Dynamic semantics}
@@ -2083,22 +2070,6 @@ on multiplicities.
   [a_1,…,a_n]) :_1 \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
 
 %%%% /Arrays
-
-% \inferrule
-%   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
-%   {Ξ ⊢ (Γ,w:_1 : \varid{World} = j||withMailbox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailbox}
-
-% \inferrule
-%   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
-%   {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i || (y,z)) :_1 (\varid{Packet},\varid{MB}),Σ}\text{get}
-
-% \inferrule
-%   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
-%   {Ξ ⊢ (Γ||close x ⇓ Δ||()) :_1 (),Σ}\text{close}
-
-% \inferrule
-%   {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 \varid{Packet},Σ}
-%   {Ξ ⊢ (Γ||send x ⇓ Δ||()) :_1 (),Σ}\text{send}
   \end{mathpar}
   \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
   \label{fig:typed-semop}
