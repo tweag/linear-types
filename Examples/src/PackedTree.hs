@@ -1,6 +1,7 @@
 
 -- | Use the Cursor interface to develop a tree example.
 
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
@@ -14,6 +15,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeInType #-}
 
 module PackedTree
     ( Tree(..), TagTy
@@ -41,7 +43,10 @@ import Data.Word
 import Prelude hiding (($))
 import ByteArray (runReadM, ReadM, headStorableM, headWord8')
 import Foreign.Storable
-import GHC.Prim(ord#)
+import GHC.Prim(ord#, Int#, (+#), TYPE)
+import GHC.Int(Int(..))
+import GHC.Types(RuntimeRep)
+import Data.Kind(Type)
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -104,17 +109,15 @@ caseTree c@(Has bs) f1 f2 =
 
 
 {-# INLINE caseTree2 #-}
-caseTree2 :: forall a1 a2 b.
+caseTree2 :: forall (rep :: RuntimeRep) (a1 :: TYPE rep) a2 b.
              Has (Tree ': b)
           -> (Has (Int ': b) -> (# a1, a2 #))
           -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
           -> (# a1, a2 #)
-caseTree2 c f1 f2 = f (fstC c2)
-  where 
-    c2 = unsafeCastHas c 
-    f tg | tg == leafTag   = f1 (unsafeCastHas (rstC c2))
-         | tg == branchTag = f2 (unsafeCastHas (rstC c2))
---                 _ -> error $ "caseTree2: corrupt tag, "++show tg
+caseTree2 c@(Has bs) f1 f2 =
+    case ord# (headWord8' bs) of
+      100# -> f1 (unsafeDropBytes 1 c)
+      _    -> f2 (unsafeDropBytes 1 c)
 
 type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
 
@@ -158,7 +161,7 @@ caseTreeM c f1 f2 =
 -- A bytestream-reader monad:
 --------------------------------------------------------------------------------
 
-newtype ReadHasM (a :: [*]) b = ReadHasM (ReadM b)
+newtype ReadHasM (a :: [Type]) b = ReadHasM (ReadM b)
   deriving (Functor, Applicative, Monad)
 
 -- | Run a reader computation with the input bytestream.  However, this
@@ -231,9 +234,10 @@ _sumTree = foldTree id (+)
 
 -- | Optimizing away allocation.
 sumTree :: Packed Tree -> Int
-sumTree t = fin5
+sumTree t = fin1
   where
     ----------- Version 5 : Raw primops, no IO ----------
+{-
     (fin5,_) = go5 (toHas t)
 
     go5 :: Has (Tree ': r) -> (Int, Has r)
@@ -244,7 +248,7 @@ sumTree t = fin5
       let (!x, h2) = go5 h1
           (!y, h3) = go5 h2
       in (, h3) $! x+y
-           
+-}
     ----------- Version 4 : Monadic reader with implicit read-ee state ----------
 {-
     fin4 = runReadHasM (toHas t) go3 
@@ -291,22 +295,23 @@ sumTree t = fin5
              )
     
     ----------- Version 1 : unboxed tuples ----------
+-}
     fin1 = case go1 (toHas t) of
-             (# acc, _ #) -> acc
+             (# acc, _ #) -> I# acc
     
-    go1 :: forall r. Has (Tree ': r) -> (# Int, Has r #)
+    go1 :: forall r. Has (Tree ': r) -> (# Int#, Has r #)
     go1 h = caseTree2 h onLeaf onBranch
 
-    onLeaf :: forall r. Has (Int ': r) -> (# Int, Has r #)
-    onLeaf h = let (n, c) = readC h in (# n, c #)
+    onLeaf :: forall r. Has (Int ': r) -> (# Int#, Has r #)
+    onLeaf h = let ( I# n, c) = readIntC h in (# n, c #)
 
-    onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int, Has r #)
+    onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int#, Has r #)
     onBranch h =
       case go1 h  of { (# x, h' #) ->
       case go1 h' of { (# y, h'' #) ->
-        (# x+y,  h'' #)
+        (# x +# y,  h'' #)
       } }
--}
+
 
 {-# INLINABLE foldTree #-}
 foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
