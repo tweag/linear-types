@@ -1959,7 +1959,11 @@ probably fix this.}
   |x| that points to |l|}
 \improvement{aspiwack: in the |newMArray| rule, I use an illegal form
   of application. It is straightforward to put in in let-form as is
-  required by the Launchbury semantics, but it should be done}
+  required by the Launchbury semantics, but it should be done. In the
+  |freeze| rule I do the same, but in the return type. Can I
+  reuse the variable carrying the array in the left-hand side
+  (currently omitted, see above) to avoid the complication of creating
+  a new variable? I think so.}
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -2021,7 +2025,7 @@ probably fix this.}
       [a_1,…,a,…,a_n] : l}\text{write}
 
     \inferrule{ }
-    { (Γ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : \varid{freeze}~arr ⇓ (Γ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+    { (Γ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : \varid{freeze}~l ⇓ (Γ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
       \varid{Unrestricted}~l}\text{freeze}
 
 
@@ -2081,7 +2085,7 @@ probably fix this.}
 
 \inferrule
 { }
-{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n] ⇓ Γ||\varid{Unrestricted}
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n]||\varid{freeze}~a ⇓ Γ||\varid{Unrestricted}
   [a_1,…,a_n]) :_1 \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
 
 %%%% /Arrays
@@ -2197,5 +2201,12 @@ probably fix this.}
 By induction, using the restrictions on substituting |MArray| pointers
 for the \emph{shared variable} and \emph{let} rules.
 \end{document}
+
+% safety proves that the mutable semantics is equivalent to a pure
+% semantics.
+% liveness proves that the primitives don't block on typestate (\emph{e.g.} in the
+% write primitive, we are never given an |Array|) (because typing is
+% preserved in the denotational semantics, hence the denotational
+% semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum
