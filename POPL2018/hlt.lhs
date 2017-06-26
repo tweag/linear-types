@@ -1241,7 +1241,7 @@ relation:
 \end{itemize}
 \end{definition}
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
-module structure on typing contexts as follows.
+module structure on typing contexts.
 
 Returning to the typing rules in \fref{fig:typing}, rule (let) is like
 a combination of (abs) and (app).  Again, the $\flet$ bindings are
@@ -1251,7 +1251,7 @@ The variable rule (var) uses a standard idiom:
 $$\varrule$$
 This rule allows us to ignore variables with
 multiplicity $ω$ (usually called weakening),
-so that, for example $x :_1 A, y_ω : B ⊢ x : A$
+so that, for example $x :_1 A, y :_ω B ⊢ x : A$
 \footnote{Pushing weakening to the variable rule is
   classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
@@ -1268,7 +1268,7 @@ are handled straightforwardly by (m.abs) and (m.app).
 The handling of data constructors and case expressions is a
 distinctive aspect of our design.  For constructor applications, rule
 (con), everything is straightforward: we tread the data constructor in
-precisely the same as an application of a function with that data constructor's type.
+precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
@@ -1279,7 +1279,7 @@ in the case of |let|, the right hand side) will be consumed.  Just as
 for |let|, we expect |p| to be inferred from an un-annotated |case| in
 the source language.
 
-If the scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
+The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
 the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
@@ -1300,15 +1300,16 @@ Here are some concrete examples:
 \end{code}
 Recall that both fields of a pair are linear (\fref{sec:linear-constructors}).
 In |fst|, the second component of the pair is used non-linearly (by being
-discarded) which forces the use of |case_ω|, and hence a non-linear type
-for |fst|.  But |swap| uses the components linearly, so we can use |case_1|, giving
+discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear type
+for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
 |swap| a linear type.  (Actually its most general type is polymorphic:
-|swap :: forall p. (a,b) ->p (b,a)|. \simon{How do I typeset this?}
+|swap :: forall p. (a,b) -> _ p (b,a)|.
 
-This particular formulation of the case rule is not implied by the
+This particular formulation of the |case| rule is not implied by the
 rest of the system: only the case $p=1$ is actually necessary.
 \simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
-paragraph is opaque to me.}
+  paragraph is opaque to me.}
+\jp{In short: $case_ω$ allows to type-check |fst| while keeping $(,)$ purely linear.}
 Yet, providing the case $p=ω$
 is the design choice which makes it possible to consider data-type
 constructors as linear by default, while preserving the semantics of
