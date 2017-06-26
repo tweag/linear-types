@@ -155,14 +155,19 @@ caseTreeM c f1 f2 =
         else f2 (unsafeCastHas (rstC c2))
 
 --------------------------------------------------------------------------------
--- A more strongly-typed bytestream reader monad:
+-- A more strongly-typed bytestream-reader monad:
+--------------------------------------------------------------------------------
 
 newtype ReadHasM (a :: [*]) b = ReadHasM (ReadM b)
   deriving (Functor, Applicative, Monad)
 
+-- | Run a reader computation with the input bytestream.  However, this
+-- bytestream is not reclaimable memory until the computation has completely finished.
 runReadHasM :: Has '[a] -> ReadHasM '[a] b -> b
 runReadHasM (Has b) (ReadHasM rm) = runReadM b rm 
 
+-- | Read a single value off the implicit stream, and continue to
+-- compute using that value.
 withRead :: Storable a => (a -> ReadHasM r b) -> ReadHasM (a ': r) b 
 withRead fn = ReadHasM $ do 
     x <- headStorableM
