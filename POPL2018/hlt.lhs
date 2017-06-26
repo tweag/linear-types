@@ -330,7 +330,7 @@ channels and other resources.  Our particular contributions are these
       We make a simple extension to algebraic data type declarations to
       support this need (\fref{sec:datattypes}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
-      linearity polymorphism (\fref{sec:polymorphism}).  This contributes
+      \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
       (map, compose, etc) to be given more general types, so they can
       work uniformly in both linear and non-linear code.
@@ -338,7 +338,7 @@ channels and other resources.  Our particular contributions are these
       calculus that exhibits all these features (\fref{sec:calculus}).
       It enjoys the usual properties of progress and preservation.
 \item We have implemented a prototype of system in as a modest extension to GHC
-      (\fref{sec:impl}, which substantiates our claim of non-invasiveness.
+      (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
       Our prototype type performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
@@ -354,10 +354,12 @@ gives a static guarantee that a claimed linear function really is linear.
 There are many motivations for linear type systems, but they mostly come down
 to two questions:
 \begin{itemize}
-\item \emph{Is it safe to update this value in-place?}  That depends on whether there
+\item \emph{Is it safe to update this value in-place} (\fref{sec:freezing-arrays})?
+That depends on whether there
 are aliases to the value; update-in-place is OK if there are no other pointers to it.
-Linearity supports a more efficicient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
+Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
 \item \emph{Am I obeying the usage protocol of this external resource?}
+(\fref{sec:io-protocols})?
 For example, a open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
 block should be freed, and should not be used after that.
@@ -397,25 +399,25 @@ subsequent subsections.
   freeze :: MArray a ⊸ Unrestricted (Array a)
 \end{code}
 \caption{Type signatures for array primitives (linear version)}
-\label{fig:fig:linear-array-sigs}
+\label{fig:linear-array-sigs}
 \end{figure}
-The Haskell language provides immutable arrays, built with the function\footnote{
+The Haskell language provides immutable arrays, built with the function |array|\footnote{
 Haskell actually generalises over the type of array indices, but for this
 paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
 \begin{code}
 array :: (Int,Int) -> [(Int,a)] -> Array a
 \end{code}
-But how is |array| implemented? A possible answer is ``it is primitive; don't ask''.
-But GHC implements |array| using more primitive pieces, so that library authors
-can readily implement variations (which they certainly do):
+But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
+But in reality GHC implements |array| using more primitive pieces, so that library authors
+can readily implement variations (which they certainly do).  Here is the
+definition of |array|, using library functions whose types are given
+in \fref{fig:array-sigs}:
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = runST (do  { ma <- newMArray size
                               ; forM_ pairs (write ma)
                               ; return (unsafeFreeze ma) })
 \end{code}
-\fref{fig:array-sigs} gives the type signatures for the library functions
-that we use here.
 In the fist line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
@@ -423,11 +425,10 @@ array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
 as described in \cite{launchbury-pj:state-in-haskell}.
 
-The freezing primitive is called |unsafeFreeze| because it
-is, indeed, unsafe: after calling |unsafeArray marray| we get a new
-immutable array |array|, but in order to avoid an unnecessary copy,
-|array| and |marray| are actually \emph{the same array}.  The intention is that
-that |unsafeFreeze| should be the last use of the mutable array.  But
+Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
+immutable array, but to avoid an unnecessary copy,
+the two are actually \emph{the same array}.  The intention is, of course, that
+that |unsafeFreeze| should be the last use of the mutable array; but
 nothing stops us continuing to mutate it further, with quite undefined semantics.
 The ``unsafe'' in the function name is a GHC convention meaning ``the programmer
 has a proof obligation here that the compiler cannot check''.
@@ -441,8 +442,8 @@ Linear types allow a more secure and less sequential interface.
 \HaskeLL{} introduces a new kind of function type: the \emph{linear
 arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
 \emph{exactly once}. This new arrow is used in
-a new array \textsc{api}, given in \fref{fig:linear-array-sigs},
-using which we can define |array| thus:
+a new array \textsc{api}, given in \fref{fig:linear-array-sigs}.  Using
+this \textsc{api}  we can define |array| thus:
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
@@ -479,8 +480,8 @@ foldl :: (a ⊸ b -> a) -> a ⊸ [b] -> a
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
-As we shall see in \fref{sec:polymorphism} this is not a new |foldl|, but
-rather Haskell's existing |foldl| with a more precise type.
+As we shall see in \fref{sec:lin-poly} this is not new |foldl|, but
+rather Haskell's existing |foldl| with a slightly more polymorphic type.
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
@@ -509,6 +510,15 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 % collection. For example databases: the common feature is that getting
 % (or setting) an element of this collection requires I/O, hence, in
 % Haskell, happens in the |IO| monad.
+\begin{figure}
+\begin{code}
+  type File a
+  openFile :: FilePath -> IOL 1 (File ByteString)
+  readLine :: File a ⊸ IOL 1 (File a, Unrestricted a)
+  closeFile :: File a ⊸ IOL ω ()
+\end{code}
+\caption{Types for linear file IO} \label{fig:io-linear}
+\end{figure}
 
 Consider this \textsc{api} for files:
 \begin{code}
@@ -521,26 +531,6 @@ Here we see |File a| as a cursor in a file. Each call
 to |readLine| returns an |a| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
-
-\begin{figure}
-\begin{code}
-  -- The IO monad be
-  type IOL p a
-  type IO a = IOL 1 a
-  return  :: a -> _ p IOL p a
-  (>>=)   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
-
-  -- The File API
-  type File a
-  openFile :: FilePath -> IOL 1 (File ByteString)
-  readLine :: File a ⊸ IOL 1 (File a, Unrestricted a)
-  closeFile :: File a ⊸ IOL ω ()
-%  mapFile :: (a->b) -> File a ⊸ File b
-%  zipFile :: File a ⊸ File b ⊸ File (a,b)
-\end{code}
-\caption{Types for linear file IO} \label{fig:io-linear}
-\end{figure}
-
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
 Using this we can write a simple file-handling program:
 \begin{code}
@@ -583,137 +573,138 @@ a succession of linear variables representing the socket, where the type
 of the variable reflects the state the socket is in, and limits which
 operatios can legally be applied to it.
 
-\subsection{Lifting files}
-
-\simon{I doubt we want this material; just leaving it here for now}
-
-We will want that |File| behaves as much as possible as an ordinary
-collection. In particular we would like to |File| to be a functor:
-this is how we will parse lines.
-\begin{code}
-  mapFile :: (a->b) -> File a -> File b
-\end{code}
-We may also want ways to compose |File|s. For instance a way to zip to
-files:
-\begin{code}
-  zipFile :: File a -> File b -> File (a,b)
-\end{code}
-Such a programing idiom can be found in the
-\texttt{streaming}~\cite{thompson_streaming_2015} library.
-
-The problem is that it makes a number of unintended things
-possible. We have observed such mistakes in our own code in industrial
-projects, and it proved quite costly to hunt down.
-\begin{code}
-  bad1 path = do
-    file <- openFile path
-    let coll = map someParsingFun file
-    string <- readLine file
-    value <- readLine coll
-    closeFile coll
-
-  bad2 path = do
-    file <- openFile path
-    let coll = map someParsingFun file
-    closeFile file
-    value <- readLine coll
-    closeFile coll
-
-  bad3 path1 path2 = do
-    file1 <- openFile path
-    file2 <- openFile path
-    coll <- zipFile file1 file2
-    string <- readLine file1
-    value <- readLine coll
-    closeFile coll
-
-  bad4 path1 path2 = do
-    file1 <- openFile path
-    file2 <- openFile path
-    coll <- zipFile file1 file2
-    closeFile file1
-    closeFile coll
-
-\end{code}
-In |bad1|, the programmer expects |coll| and |file| to be independent, but
-both instances of |readLine| read from the same file.
-Thus reads from |file| will cause the cursor in |line| to progress. The
-matter gets worse in |bad3| where |file1| and |file2| are intended
-to be read in lockstep, but they get desynchronised by the call to
-|readLine file1|. In |bad2|, |file| is closed before |coll| is read (causing an exception),
-and in |bad4|, |file1| is closed twice, once directly, and a second
-time via |closeFile coll|.
-
-The issue is that the intention behind |mapFile| and |zipFile| is that
-the cursor is sharable at will, but is not intended to be. It is a crucial difference with
-immutable collections which can be shared freely.
-
-The following \textsc{api} for |File| makes all the examples above
-ill-typed, ensuring that we don't use the same handle under two
-different guises at the same time. It ensures, in particular, that
-every file is closed exactly once.
-\begin{code}
-  type File a
-
-  openFile :: FilePath -> IO 1 (File ByteString)
-  readLine :: File a ⊸ IO 1 (Unrestricted a, File a)
-  closeFile :: File a -> IO ω ()
-  mapFile :: (a->b) -> File a ⊸ File b
-  zipFile :: File a ⊸ File b ⊸ File (a,b)
-\end{code}
-
-There is a price to pay in that we have to thread files at every use,
-even for |readLine|. Note, however, that the \texttt{streaming}
-library's \textsc{api} shares this characteristic, despite not using
-linear types. What we gain for this price is a guarantee that files
-will be closed exactly once and that we are not using two versions of
-a file.\unsure{If we talk about borrowing, we can even alleviate that
-  cost by having |readLine :: File a -> _ β IO ω a|.}
-
-Sometimes, however, you may want to have two versions of the same
-file. There are two possible semantics: any-cast~---~the two versions of
-the file read from the same cursor, and each line is read by only
-one of the two versions~---~and multi-cast where lines are read by
-both versions. Thanks to linear types you must specify when you want
-to versions of a file, at which point you can choose between any-cast
-and multi-cast.
-\begin{code}
-  dupFileAny    :: File a ⊸ (File a, File a)
-  dupFileMulti  :: File a ⊸ (File a, File a)
-\end{code}
-
-We have wilfully ignored, so far, the fact that files are finite, and
-that |readLine| may reach the end of the file. The real type of
-|readLine| should be:
-\begin{code}
-  readLine :: File a ⊸ IO 1 (Maybe (Unrestricted a, File a))
-\end{code}
-Which is like pattern matching a list, except in |IO|. Note that if
-we reach the end of the file, no new |File a| is returned, which means
-that |readLine| will close the file handle in that case. So
-|closeFile| only needs to be called when we do not want to consume the
-entire file.
+% \subsection{Lifting files}
+% 
+% \simon{I doubt we want this material; just leaving it here for now}
+% 
+% We will want that |File| behaves as much as possible as an ordinary
+% collection. In particular we would like to |File| to be a functor:
+% this is how we will parse lines.
+% \begin{code}
+%   mapFile :: (a->b) -> File a -> File b
+% \end{code}
+% We may also want ways to compose |File|s. For instance a way to zip to
+% files:
+% \begin{code}
+%   zipFile :: File a -> File b -> File (a,b)
+% \end{code}
+% Such a programing idiom can be found in the
+% \texttt{streaming}~\cite{thompson_streaming_2015} library.
+% 
+% The problem is that it makes a number of unintended things
+% possible. We have observed such mistakes in our own code in industrial
+% projects, and it proved quite costly to hunt down.
+% \begin{code}
+%   bad1 path = do
+%     file <- openFile path
+%     let coll = map someParsingFun file
+%     string <- readLine file
+%     value <- readLine coll
+%     closeFile coll
+% 
+%   bad2 path = do
+%     file <- openFile path
+%     let coll = map someParsingFun file
+%     closeFile file
+%     value <- readLine coll
+%     closeFile coll
+% 
+%   bad3 path1 path2 = do
+%     file1 <- openFile path
+%     file2 <- openFile path
+%     coll <- zipFile file1 file2
+%     string <- readLine file1
+%     value <- readLine coll
+%     closeFile coll
+% 
+%   bad4 path1 path2 = do
+%     file1 <- openFile path
+%     file2 <- openFile path
+%     coll <- zipFile file1 file2
+%     closeFile file1
+%     closeFile coll
+% 
+% \end{code}
+% In |bad1|, the process reads from both handlers to the same file,
+% reads from |file| will cause the cursor in |line| to progress. The
+% matter gets worse in |bad3| where the |file1| and |file2| are supposed
+% to be read in lockstep, but they get desynchronised by the call to
+% |readLine file1|. In |bad2|, |file1| is closed before |coll| is read,
+% and in |bad4|, |file1| is closed twice, once directly, and a second
+% time via |closeFile coll|.
+% 
+% The issue is that the intention behind |mapFile| and |zipFile| is that
+% the handle is transformed, not shared. It is a crucial difference with
+% immutable collections which can be shared freely.
+% 
+% The following \textsc{api} for |File| makes all the examples above
+% ill-typed, ensuring that we don't use the same handle under two
+% different guises at the same time. It ensures, in particular, that
+% every file is closed exactly once.
+% \begin{code}
+%   type File a
+% 
+%   openFile :: FilePath -> IO 1 (File ByteString)
+%   readLine :: File a ⊸ IO 1 (Unrestricted a, File a)
+%   closeFile :: File a -> IO ω ()
+%   mapFile :: (a->b) -> File a ⊸ File b
+%   zipFile :: File a ⊸ File b ⊸ File (a,b)
+% \end{code}
+% 
+% There is a price to pay in that we have to thread files at every use,
+% even for |readLine|. Note, however, that the \texttt{streaming}
+% library's \textsc{api} shares this characteristic, despite not using
+% linear types. What we gain for this price is a guarantee that files
+% will be closed exactly once and that we are not using two versions of
+% a file.\unsure{If we talk about borrowing, we can even alleviate that
+%   cost by having |readLine :: File a -> _ β IO ω a|.}
+% 
+% Sometimes, however, you may want to have two versions of the same
+% file. There are two possible semantics: any-cast~---~the two versions of
+% the file read from the same cursor, and each line is read by only
+% one of the two versions~---~and multi-cast where lines are read by
+% both versions. Thanks to linear types you must specify when you want
+% to versions of a file, at which point you can choose between any-cast
+% and multi-cast.
+% \begin{code}
+%   dupFileAny    :: File a ⊸ (File a, File a)
+%   dupFileMulti  :: File a ⊸ (File a, File a)
+% \end{code}
+% 
+% We have wilfully ignored, so far, the fact that files are finite, and
+% that |readLine| may reach the end of the file. The real type of
+% |readLine| should be:
+% \begin{code}
+%   readLine :: File a ⊸ IO 1 (Maybe (Unrestricted a, File a))
+% \end{code}
+% Which is like pattern matching a list, except in |IO|. Note that if
+% we reach the end of the file, no new |File a| is returned, which means
+% that |readLine| will close the file handle in that case. So
+% |closeFile| only needs to be called when we do not want to consume the
+% entire file.
 
 \subsection{Operational intuitions}
 \label{sec:consumed}
 
-We have said repeatedly spoken loosely of \emph{``consuming a value
-  exactly once''}. But what does ``consuming a value exactly once''
-mean?  Here is a more precise operational intuition:
+We have said informally that \emph{``a linear function consumes its argument
+exactly once''}. But what does ``consuming a value exactly once''
+mean, exactly?  Here is a more precise operational intuition:
+\begin{definition}[Consume exactly once] \label{def:consume}
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
 \item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
 \item More generally, to consume exactly once a value of an algebraic data type, evaluate
-  it and consume all its linear components exactly once.
+  it and consume all its linear components exactly once (\fref{sec:non-linear-constructors}).
 \end{itemize}
+\end{definition}
 \noindent
 We can now give a more precise definition of what a linear function
-|f :: s ⊸ t| means: |f| guarantees that \emph{if |(f u)| is consumed exactly once},
+|f :: s ⊸ t| means: |f| guarantees that if |(f u)| is consumed exactly once,
 then |u| is consumed exactly once.
+
 Note that a linear arrow specifies how the function uses its argument. It does \emph{not}
 restrict the arguments to which the function can be applied.
-
 In particular, a linear function cannot assume that it is given the
 unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
 this is fine:
@@ -722,7 +713,7 @@ g :: s -> t
 g x = f x
 \end{code}
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
-in particular, it is \textsc{ok} for |g| to pass that argument to |f|.
+in particular, |g| can pass that argument to |f|.
 \simon{Can we pass a function of type |s ⊸ t| where a function of type |s->t| is needed?}
 
 % A consequence of this definition is that an \emph{unrestricted} value,
@@ -765,7 +756,8 @@ constructor such as the pairing constructor |(,)|?  Here are two possibilities:
  (,) ::  a -> b -> (a,b)
 \end{code}
 Using the definition in \fref{sec:consumed}, the former is clearly the right
-choice: if |(e1,e2)| is consumed exactly once, then (by the defintion),
+choice: if the result of |(,) e1 e2| is consumed exactly once,
+then (by \fref{def:consume}),
 |e1| and |e2| are each consumed exactly once; and hence |(,)| is linear it its
 arguments.
 
@@ -779,18 +771,14 @@ f2 x = case x of (a,b) -> (b,a)
 \end{code}
 |f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
 a linear type, that does \emph{not} imply that the pattern-bound variables must be
-consumed once.
+consumed exactly once.
 
-However |f1| does not have type |(Int,Int) ⊸ (Int,Int)|.
+However |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
-once?  Well, |t| is guaranteed to be evaluated once, but its first component is then
-consumed twice and its second component not at all.  So, no.
-
-In contrast, |f2| does have a linear type: if |(f2 t)| is consumed exactly once,
-then indeed |t| is consumed exactly once.  In type-checking terms we may reason
-as follows: since |x| is a linear variable, when we pattern match on |x| we must
-bind linear variables; and then we do indeed consume them linearly in the
-right hand side of the case alternative, because |(,)| is a linear function.
+once?  No: |t| is guaranteed to be evaluated once, but its first component is then
+consumed twice and its second component not at all.
+In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactly once,
+then indeed |t| is consumed exactly once.
 
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special linear pair}.
@@ -828,7 +816,7 @@ contract that |(++)| offers to its callers; \emph{it does not restrict
 \end{code}
 Here the two arguments to |(++)| have different multiplicities, but
 the function |f| guarantees that it will consume |xs| exactly once if
-|f xs ys| is consumed exactly once.
+|(f xs ys)| is consumed exactly once.
 
 For an existing language, being able to strengthen |(++)|, and similar
 functions, in a {\em backwards-compatible} way is a huge boon.  Of
@@ -845,7 +833,7 @@ consumed |ys| twice, and so
 %   and thus must know their type (or have a type class instance).
 %  Likewise to copy them.}.
 
-Moreover, we can \emph{also} use the very same pairs and lists
+Finally, we can use the very same pairs and lists
 type to contain linear values (such as mutable arrays) without
 compromising safety.  For example:
 \begin{code}
@@ -854,59 +842,53 @@ upd (a1, a2) n  | n >= 10   = (write a1 n 'x', a2)
                 | otherwise = (write a2 n 'o', a1)
 \end{code}
 
-\subsection{Linearity of constructors: the usefulness of unrestricted constructors}
+\subsection{Unrestricted data constructors}
 \label{sec:non-linear-constructors}
 
-\simon{Still needs work}
-
-We saw in \fref{sec:linear-constructors} that data types in \HaskeLL{} have
-linear arguments by default. Do we ever need data constructors
-unrestricted arguments?  Yes, we do.
-
-Using the type |T| of \fref{sec:consumed}, consider the |freeze|
-function from \fref{sec:freezing-arrays}. We could define it in
-\textsc{cps} style but a direct style is more convenient: %
+Suppose I want to pass a linear |MArray| and an unrestricted |Int| to a function |f|.
+We could give |f| the signature |f :: MArray Int ⊸ Int -> MArray Int|.  But suppose
+we wanted to uncurry the function; we could then give it the type
 \begin{code}
-  freeze :: (Array a -> r) ⊸ MArray a ⊸ r mediumSpace vs. mediumSpace copy :: MArray a ⊸ Unrestricted (Array a)
+  f :: (MArray Int, Int) ⊸  MArray Int
 \end{code}
-where |Unrestricted| is a data type with
-a non-linear constructor\footnote{The type constructor
-  |Unrestricted| is in fact an encoding of the so-called \emph{exponential}
-  modality written ${!}$ in linear logic.}:
+But this is no good: now |f| is only allowed to use the |Int| linearly, but it
+might actually use it many times.  For this reason it is extremely useful to be
+able to declare data constructors with non-linear types, like this:
 \begin{code}
-  data Unrestricted a where Unrestricted :: a → Unrestricted a
+  data PLU a b where { PLU :: a ⊸ b -> PLU a b }
+
+  f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
-The |Unrestricted|
-data type is used to indicate that when a value |(Unrestricted x)| is consumed
-once (see \fref{sec:consumed}) we have no guarantee about how often |x| is
-consumed.
-With our primitive in hand, we can now use ordinary code to freeze
-a list of |Marray| values into a list of arrays (we mark patterns in
-|let| and |where|
-with |!|, Haskell's syntax for strict pattern bindings: \HaskeLL{}
-does not support lazy pattern bindings of linear values, |case| on the
-other hand, is always strict):
+Here we use GADT-style syntax to give an explicit type signature to the data
+constructor |PLU|, with mixed linearity.
+Now, when \emph{constructing} a |PLU| pair the type of the constructor means
+that we must always supply an unrestricted second argument; and dually
+when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
+in an unrestricted way, even if the |PLU| value itself is linear.
+
+Instead of defining a pair with mixed linearity, we can also write
 \begin{code}
-  freezeList :: [MArray a] ⊸ Unrestricted [Array a]
-  freezeList (x:xs) = Unrestricted (x':xs')  where  !(Unrestricted xs')  = freezeList xs
-                                                    !(Unrestricted x')   = freeze x
+  data Unrestricted a where { Unrestricted :: a → Unrestricted a }
+  
+  f :: (MArray Int, Unrestricted Int) ⊸  MArray Int
 \end{code}
-
-Note that according to the definition of \fref{sec:consumed},
-consuming a value of type |Unrestricted a| means evaluating it, the
-|a| inside need not be consumed, or can be consumed any number of
-time. Therefore a function of type |a ⊸ Unrestricted b| is a function
-that will consume its argument exactly once if its result is ever
-evaluated. This is why |Unrestricted| appears in many abstractions in
-order to ensure that values have been consumed at a given point in the
-program.
-
+The type |(Unrestricted t)| is very like |!t| in linear logic, but to us
+it is just a library data type.
+We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
+a pair of a linaer |MArray| and an unrestricted array element:
+\begin{code}
+  read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
+\end{code}
+Note that, according to the definition in \fref{sec:consumed},
+if a value of type |(Unrestricted t)| is consumed exactly once,
+that tells us nothing about how the argument of the data constructor is consumed:
+it may be consumed many times or not at all.
 
 \subsection{Linearity polymorphism}
 \label{sec:lin-poly}
 
-As we have seen, implicit conversions between multiplicities make
-first-order linear functions {\em more general}. But the higher-order
+A linear function provides more guarantees to its caller than
+a non-linear one -- it is more general.  But the higher-order
 case thickens the plot. Consider that the standard |map| function over
 (linear) lists:
 \begin{code}
@@ -933,17 +915,17 @@ function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
 product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
-subscripts and binders for multiplicity polymorphism can be {\em
-  ignored}. Indeed, in a context where client code does not use
+subscripts and binders for multiplicity polymorphism can be
+ignored. Indeed, in a context where client code does not use
 linearity, all inputs will have multiplicity $ω$, and transitively all
 expressions can be promoted to $ω$. Thus in such a context the
 compiler, or indeed documentation tools, can even altogether hide
 linearity annotations from the programmer when this language
 extension is not turned on.
 
-\subsection{Linear input/output}
+\subsection{Linear input/output} \label{sec:linear-io}
 
-In \fref{sec:io-protocols} we introduced |IOL| monad.  But how does it work?
+In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how does it work?
 |IOL| is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
@@ -967,13 +949,13 @@ And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
-  do { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-     ; d <- getDate      -- |getDate  :: IO ω Date|
-     ; e[f,d] }
+  do  { f <- openFile s   -- openFile :: FilePath -> IO 1 (File ByteString)
+      ; d <- getData      -- getDate  :: IO ω Date
+      ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should closed, but |getDate| returns
 an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-We can easily combine them with |`bindIOL`| thus:
+Nevertheless, we can easily combine them with |bindIOL| thus:
 \begin{code}
   openFile s `bindIOL` \f ->
   getData    `bindIOL` \d ->
@@ -1024,35 +1006,13 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
 
-In this section we turn to the calculus at the core of \HaskeLL{},
-which we refer to as
-\calc{}, and for which we provide a step-by-step account of its syntax and typing
-rules.
-
-As we discussed in \fref{sec:consumed}, the meaning of linear
-functions is that they will consume their argument \emph{exactly once}
-if their result is consumed exactly once. The role of the type system
-of \calc{} is to enforce this very property.
-
-Let us point out that closures (partial applications or lazy thunks)
-may need to be consumed exactly once. Indeed, as we explained in
-\fref{sec:consumed}, unrestricted values do not point to linear
-values, so if any member of a closure is linear, so must the closure
-itself.
+It would be impractical to formalise all of \HaskeLL{}, so instead we
+formalise a core calculus, \calc{}, which exhibits all the key features
+of \HaskeLL{}, including data types and linearity polymorphism.  In this
+way we make precise much of the informal discussion above.
 
 \subsection{Syntax}
 \label{sec:syntax}
-
-The term syntax (\fref{fig:syntax}) is that of a type-annotated
-(\emph{à la} Church) simply typed $λ$-calculus with let-definitions.
-Binders in $λ$-abstractions and type definitions are annotated both
-with their type and their multiplicity. Multiplicity abstraction and
-application are explicit.
-
-In our static semantics for \calc{} the familiar judgement \(Γ ⊢ t :
-A\) has a non-standard reading: it asserts that consuming the term
-$t : A$ \emph{exactly once} will consume $Γ$ exactly once
-(see \fref{sec:consumed}).
 
 \begin{figure}
   \figuresection{Multiplicities}
@@ -1097,30 +1057,26 @@ $t : A$ \emph{exactly once} will consume $Γ$ exactly once
   \label{fig:contexts}
 \end{figure}
 
+The term syntax of \calc{} is that of a type-annotated (\emph{à la}
+Church) simply-typed $λ$-calculus with let-definitions
+(\fref{fig:syntax}).  It includes linearity polymorphism, but to avoid clutter
+we omit ordinary type polymorphism.
+\simon{Save space by putting the syntax of types and context on one line each.}
+
+\calc{} is an explicitly-typed language: each binder is annotated with
+its type and multiplicity; and multiplicity abstraction and application
+are explicit.  The source language will use type inference to fill in
+much of this information, but we do not address the challenges of type
+inference here.
+
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
 arrows (albeit multiplicity-annotated ones), data types, and
-multiplicity polymorphism. The annotated function type is a
-generalisation of the intuitionistic arrow and the linear arrow. We
-use the following notations:
+multiplicity polymorphism.
+% The annotated function type is a
+% generalisation of the intuitionistic arrow and the linear arrow.
+We use the following abbreviations:
 \(A → B ≝  A →_ω B\) and
 \(A ⊸ B ≝ A →_1 B\).
-
-The intuition behind the multiplicity-annotated arrow \(A →_q B\) is
-that consuming $f u : B$ exactly once will consume $q$ times the value
-$u{:}A$. Therefore, a function of type $A→B$ \emph{must} be applied to
-an unrestricted argument, while a function of type $A⊸B$ \emph{may} be
-applied to any argument, linear or not.
-%
-One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
-is however, not so, because there is no notion of subtyping in \calc{}. This
-is a salient choice in our design. Our objective is to integrate with
-existing typed functional languages such as Haskell and the
-\textsc{ml} family, which are based on Hindley-Milner-style
-polymorphism. Hindley-Milner-style polymorphism, however, does not
-mesh well with subtyping as the extensive exposition by
-\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
-multiplicity polymorphism for the purpose of reuse of higher-order
-function as we described in \fref{sec:lin-poly}.
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
@@ -1129,31 +1085,39 @@ Data type declarations (see \fref{fig:syntax}) are of the following form:
 The above declaration means that \(D\) has \(m\) constructors \(c_k\)
 (where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions: an
-argument of multiplicity $ω$ means that the data type can store, at
-that position, data which \emph{must} reside in the dynamic heap;
-while a multiplicity of $1$ means that data at that position
-\emph{can} reside in either heap. For simplicity's sake, we assume
+argument of multiplicity $ω$ means that consuming the data constructor once
+makes no claim on how often that argument is consumed (\fref{def:consume}).
+% the data type can store, at
+% that position, data which \emph{must} reside in the dynamic heap;
+% while a multiplicity of $1$ means that data at that position
+% \emph{can} reside in either heap.
+For simplicity's sake, we assume
 that the multiplicities $q_i$ must be concrete (\emph{i.e.} either $1$
 or $ω$) even though \HaskeLL{} has multiplicity-polymorphic data
-types.
+types (see \fref{sec:linear-io} for an example).
+\simon{I think we should allow multiplicity polymorphism, sinc we use it in examples}
 
-For most purposes, $c_k$ behaves like a constant with the type
-$A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-\fref{fig:typing} make clear, this means in particular that from a
-value $d$ of type $D$ with multiplicity $ω$, pattern matching
-extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
-the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
-with multiplicity $ω$.
+% For most purposes, $c_k$ behaves like a constant with the type
+% $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
+% \fref{fig:typing} make clear, this means in particular that from a
+% value $d$ of type to save clutter $D$ with multiplicity $ω$, pattern matching
+% extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
+% the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
+% with multiplicity $ω$.
+%
+% Note that, as discussed in \fref{sec:linear-constructors},
+% constructors with arguments of multiplicity $1$ are not more general
+% than constructors with arguments of multiplicity $ω$, because if, when
+% constructing $c u$ with the argument of $c$ of multiplicity $1$, $u$
+% \emph{may} be either of multiplicity $1$ or of multiplicity $ω$;
+% dually when pattern-matching on $c x$, $x$ \emph{must} be of
+% multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
+% on the other hand, then $x$ could be used either as having
+% multiplicity $ω$ or $1$).
 
-Note that, as discussed in \fref{sec:linear-constructors},
-constructors with arguments of multiplicity $1$ are not more general
-than constructors with arguments of multiplicity $ω$, because if, when
-constructing $c u$ with the argument of $c$ of multiplicity $1$, $u$
-\emph{may} be either of multiplicity $1$ or of multiplicity $ω$;
-dually when pattern-matching on $c x$, $x$ \emph{must} be of
-multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
-on the other hand, then $x$ could be used either as having
-multiplicity $ω$ or $1$).
+% -------------------------------------------------
+\subsection{Static semantics}
+\label{sec:typing-contexts}
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
@@ -1193,40 +1157,38 @@ multiplicity $ω$ or $1$).
   \label{fig:typing}
 \end{figure}
 
-\subsection{Contexts}
-\label{sec:typing-contexts}
-Many of the typing rules scale contexts by a multiplicity, or add
-contexts together. We will
-explain the why very soon in \fref{sec:typing-rules}, but first, let
-us focus on the how.
+The static semantics of \calc{} is given in \fref{fig:typing}.  Each
+binding in $Γ$, of form \(x :_q A\), includes a multiplicity $q$
+(\fref{fig:syntax}).  The familiar judgement \(Γ ⊢ t : A\) should
+be read as follows
+\begin{quote}
+ \(Γ ⊢ t : A\) asserts that consuming the term $t : A$ exactly once will
+  consume each binding $(x :_{q} A)$ in $Γ$ with its multiplicity $q$.
+\end{quote}
+You may want to think of the \emph{types} in $Γ$ as
+inputs of the judgement, and the \emph{multiplicities} as outputs.
 
-In \calc{}, each variable binding, in a typing context, is annotated with a
-multiplicity. These multiplicity annotations are the natural counterpart
-of the multiplicity annotations on abstractions and arrows.
+For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
+environment $Γ$ before checking the body |t| of the abstraction.
+Notice that in \calc{}, the lambda abstraction  $λ(x:_q A). t$
+is explicitly annotated with its multiplicity $q$.  Remember, this
+is an explicitly-typed intermediate language; in the source langauge
+this multiplicity is inferred.
 
-For multiplicities we need the concrete multiplicities $1$ and $ω$ as
-well as multiplicity variables (ranged over by the metasyntactic
-variables \(π\) and \(ρ\)) for the sake of polymorphism. However, we
-are going to need to multiply and add multiplicities together,
-therefore we also need formal sums and products of multiplicities.
-%
-Multiplicity expressions are quotiented by the following equivalence
-relation:
-\begin{definition}[equivalence of multiplicities]
-  \label{def:equiv-multiplicity}
-  The equivalence of multiplicities is the smallest transitive and
-  reflexive relation, which obeys the following laws:
-\begin{itemize}
-\item $+$ and $·$ are associative and commutative
-\item $1$ is the unit of $·$
-\item $·$ distributes over $+$
-\item $ω · ω = ω$
-\item $1 + 1 = 1 + ω = ω + ω = ω$
-\end{itemize}
-\end{definition}
-Thus, multiplicities form a semi-ring (without a zero), which extends to a
-module structure on typing contexts as follows.
+The dual application rule (app) is more interesting:
+$$\apprule$$
+To consume |(t u)| once, we consume |t| once, yielding the
+multiplicities in $Γ$, and |u| once, yielding the multiplicies in
+$\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
+then the function consumes its argument not once but $ω$ times, so all
+|u|'s free variables must also be used with multiplicity $ω$. We
+express this by ``multiplying'' all the multiplicities in $\Delta$ by $q$,
+thus $q\Delta$.  Finally we need to add together all the
+multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
+conclusion of the rule.
 
+In writing this rule we needed to ``multiply'' a context by
+a multiplicity, and ``add'' two contexts.  We pause to define these operations.
 \begin{definition}[Context addition]~
   \begin{align*}
     (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
@@ -1234,6 +1196,7 @@ module structure on typing contexts as follows.
     () + Δ &= Δ
   \end{align*}
 \end{definition}
+\noindent
 Context addition is total: if a variable occurs in both operands the
 first rule applies (with possible re-ordering of bindings in $Δ$), if
 not the second or third rule applies.
@@ -1255,67 +1218,65 @@ not the second or third rule applies.
   \end{align*}
 \end{lemma}
 
-\subsection{Typing rules}
-\label{sec:typing-rules}
-
-We are now ready to understand the typing rules of
-\fref{fig:typing}. Remember that the typing judgement \(Γ ⊢ t : A\)
-reads as: consuming the term $t:A$ once consumes $Γ$ once. But what if
-we want to consume $t$ more than once? This is where context scaling
-comes into play, like in the application rule:
-$$\apprule$$
-The idea is that consuming $u$ an arbitrary number of times also
-consumes $Δ$ an arbitrary number of times, or equivalently, consumes
-$ωΔ$ exactly once. We call this the \emph{promotion
-  principle}\footnote{The name \emph{promotion principle} is a
-  reference to the promotion rule of linear logic. In \calc{},
-  however, promotion is implicit.}: to know how to consume a value any
-number of times it is sufficient (and, in fact, necessary) to know how
-to consume said value exactly once.
-
-To get a better grasp of the application rule and the promotion
-principle, you may want to consider how it indeed validates
-following judgement. In this judgement, $π$ is a
-multiplicity variable; that is, the judgement is
-multiplicity-polymorphic:
-$$f:_ωA→_πB, x:_π A ⊢ f x$$
-
-This implicit use of the promotion principle in rules such as the
-application rule is the technical device
-which makes the intuitionistic $λ$-calculus a subset of
-\calc{}. Specifically the subset where all variables are annotated
-with the multiplicity $ω$:
-$$
-\inferrule
-{\inferrule
-  {\inferrule
-    {\inferrule{ }{x :_ω A ⊢ x : A}\text{var} \qquad \inferrule{ }{x :_ω A ⊢ x : A}\text{var}}
-    {x :_ω A ⊢ Tensor x x : Tensor A A}\text{con}}
-  {⊢ λ (x :_ω A). Tensor x x : A →_ω Tensor A A}\text{abs} \qquad \inferrule{\vdots}{⊢ id_ω 42 : A}}
-{()+ω() ⊢ (λ (x :_ω A). Tensor x x)_ω \; (id_ω \; 42)}\text{app}
-$$
-This latter fact is, in turn, why \HaskeLL{} is an extension of Haskell
-(provided unannotated bindings are understood
-as having multiplicity $ω$).
+These operations depend, in turn, on addition and multiplication of multiplicities.
+The syntax of multiplicities is given in \fref{fig:syntax}.
+We need the concrete multiplicities $1$ and $ω$ and, to support polymorphism,
+multiplicity variables (ranged over by the metasyntactic
+variables \(π\) and \(ρ\)).  Because we
+need to multiply and add multiplicities,
+we also need formal sums and products of multiplicities.
 %
-The variable rule, as used above, may require some
-clarification:
+Multiplicity expressions are quotiented by the following equivalence
+relation:
+\begin{definition}[equivalence of multiplicities]
+  \label{def:equiv-multiplicity}
+  The equivalence of multiplicities is the smallest transitive and
+  reflexive relation, which obeys the following laws:
+\begin{itemize}
+\item $+$ and $·$ are associative and commutative
+\item $1$ is the unit of $·$
+\item $·$ distributes over $+$
+\item $ω · ω = ω$
+\item $1 + 1 = 1 + ω = ω + ω = ω$
+\end{itemize}
+\end{definition}
+Thus, multiplicities form a semi-ring (without a zero), which extends to a
+module structure on typing contexts as follows.
+
+Returning to the typing rules in \fref{fig:typing}, rule (let) is like
+a combination of (abs) and (app).  Again, the $\flet$ bindings are
+explicitly annotated with their multiplicities.
+
+The variable rule (var) uses a standard idiom:
 $$\varrule$$
-The variable rule implements weakening of
-unrestricted variables: that is, it lets us ignore variables with
-multiplicity $ω$\footnote{Pushing weakening to the variable rule is
+This rule allows us to ignore variables with
+multiplicity $ω$ (usually called weakening),
+so that, for example $x :_1 A, y_ω : B ⊢ x : A$
+\footnote{Pushing weakening to the variable rule is
   classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
   focusing~\cite{andreoli_logic_1992}.}. Note that the judgement
 $x :_ω A ⊢ x : A$ is an instance of the variable rule, because
-$(x :_ω A)+(x :_1 A) = x:_ω A$. The constructor rule has a similar
-$ωΓ$ context: it is necessary to support weakening at the level of
-constant constructors.
+$(x :_ω A)+(x :_1 A) = x:_ω A$.
 
-Most of the other typing rules are straightforward, but let us linger
-for a moment on the unusual, yet central to our design, case rule, and specifically on its multiplicity
-annotation:
+Finally, abstraction and application for multiplicity polymorphism
+are handled straightforwardly by (m.abs) and (m.app).
+
+\subsection{Data constructors and case expressions}
+\label{sec:typing-rules}
+
+The handling of data constructors and case expressions is a
+distinctive aspect of our design.  For constructor applications, rule
+(con), everything is straightforward: we tread the data constructor in
+precisely the same as an application of a function with that data constructor's type.
+This includes weakening via the $ωΓ$ context in the conclusion.
+The (case) rule is more interesting:
 $$\caserule$$
+Notice that the |case| keyword is itself annotated with a multiplicity |p|; this
+is precisely like the explicit multiplicity on |let| binding. 
+
+\simon{working here}
+
 The interesting case is when $p=ω$, which reads as: if we can consume
 $t$ an arbitrary number of time, then so can we of its
 constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
@@ -1341,6 +1302,25 @@ linear context. Inheritance of multiplicity is thus crucial for
 backwards compatibility, which is a design goal of
 \HaskeLL{}.\improvement{Announce here what it means in terms of linear
 logic maybe?}
+
+\subsection{Discussion}
+
+One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
+is however, not so, because there is no notion of subtyping in \calc{}. This
+is a salient choice in our design. Our objective is to integrate with
+existing typed functional languages such as Haskell and the
+\textsc{ml} family, which are based on Hindley-Milner-style
+polymorphism. Hindley-Milner-style polymorphism, however, does not
+mesh well with subtyping as the extensive exposition by
+\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
+multiplicity polymorphism for the purpose of reuse of higher-order
+function as we described in \fref{sec:lin-poly}.  So, for example, if
+\begin{code}
+  f :: Int → Int
+  g :: (Int -> Int) -> Bool
+\end{code}
+then the call |(g f)| is ill-typed, even though |f| provides more guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)| makes the expression typeable, as the reader may check.
+
 
 \section{Evaluation}
 \label{sec:evaluation}
