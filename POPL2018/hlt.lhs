@@ -474,14 +474,14 @@ type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (See \fref{sec:data-types}).
 \item The function |foldl| has the type
 \begin{code}
-foldl :: (a ⊸ b -> a) -> a ⊸ [b] -> a
+foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a
 \end{code}
-\jp{Why not |foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|?}
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
 As we shall see in \fref{sec:lin-poly} this is not new |foldl|, but
-rather Haskell's existing |foldl| with a slightly more polymorphic type.
+just an instance of a more general, multiplicity-polymorphic version of
+a single |foldl|.
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
@@ -1272,26 +1272,44 @@ precisely the same as an application of a function with that data constructor's 
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-Notice that the |case| keyword is itself annotated with a multiplicity |p|; this
-is precisely like the explicit multiplicity on |let| binding. 
+First, notice that the |case| keyword is itself annotated with a
+multiplicity |p|; this is precisely analogous to the explicit
+multiplicity on a |let| binding.  It says how often the scrutinee (or,
+in the case of |let|, the right hand side) will be consumed.  Just as
+for |let|, we expect |p| to be inferred from an un-annotated |case| in
+the source language.
 
-\simon{working here}
+If the scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
+the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
+environment for typechecking $u_k$.  That binding will be linear only if
+\emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
+that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
+specifies that is it consumed once if the constructor is (\fref{def:consumed}).
 
-The interesting case is when $p=ω$, which reads as: if we can consume
-$t$ an arbitrary number of time, then so can we of its
-constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
-are its constituents (see \fref{sec:consumed}). As a consequence, the
-following program, which asserts the existence of projections, is
-well-typed (note that, both in |first| and |snd|, the arrow is~---~and
-must be~---~unrestricted).
+To put it another way, suppose one of the linear
+fields\footnote{
+Recall \fref{sec:non-linear-constructors}, which described
+how each constructor can have a mixture of linear and non-linear fields).}
+of $c_k$ is used non-linearly in $u_k$.  Then, $q_I=1$ (it is a linear field),
+so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
+forces the strutinee to be used non-linearly, which is just what we want.
+Here are some concrete examples:
 \begin{code}
-  first  ::  (a,b) →   a     bigSpace    snd  ::  (a,b) →   b
-  first      (a,b)  =  a                 snd      (a,b)  =  b
+  fst  ::  (a,b) →  a     bigSpace    swap ::  (a,b) ⊸ (b,a)
+  fst      (a,b)  =  a                swap     (a,b) =  (b,a)
 \end{code}
+Recall that both fields of a pair are linear (\fref{sec:linear-constructors}).
+In |fst|, the second component of the pair is used non-linearly (by being
+discarded) which forces the use of |case_ω|, and hence a non-linear type
+for |fst|.  But |swap| uses the components linearly, so we can use |case_1|, giving
+|swap| a linear type.  (Actually its most general type is polymorphic:
+|swap :: forall p. (a,b) ->p (b,a)|. \simon{How do I typeset this?}
 
 This particular formulation of the case rule is not implied by the
-rest of the system: only the case $p=1$ is actually necessary. Yet,
-providing the case $p=ω$
+rest of the system: only the case $p=1$ is actually necessary.
+\simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
+paragraph is opaque to me.}
+Yet, providing the case $p=ω$
 is the design choice which makes it possible to consider data-type
 constructors as linear by default, while preserving the semantics of
 the intuitionistic $λ$-calculus (as we already stated in
@@ -1305,6 +1323,7 @@ logic maybe?}
 
 \subsection{Discussion}
 
+\simon{What about polymorphism? See my email.}
 One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
