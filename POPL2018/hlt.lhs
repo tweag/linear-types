@@ -2005,7 +2005,7 @@ on multiplicities.
 
     \inferrule{ }
     {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
-      \varid{write}~l~i~arg ⇓ Γ,l :_1 \varid{MArray}~a =
+      \varid{write}~l~i~a ⇓ Γ,l :_1 \varid{MArray}~a =
       [a_1,…,a,…,a_n] : l}\text{write}
 
     \inferrule{ }
