@@ -34,7 +34,13 @@ import Prelude hiding (rem,($))
 import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
 -- import GHC.IO
--- import GHC.Prim (RealWorld, State#)
+--import GHC.Prim (RealWorld, State#)
+import GHC.Prim (Word#, Char#, plusAddr#, indexCharOffAddr#, ord#, int2Word#)
+import GHC.Magic (runRW#)
+import GHC.ForeignPtr (ForeignPtr(..))
+import Data.ByteString.Internal (ByteString(..))
+import GHC.Int (Int(..))
+import GHC.Word (Word8(..))
 ---------------------------------
 
 -- type Token = State# RealWorld
@@ -175,6 +181,17 @@ headStorableOfM :: Storable a => ByteString -> ReadM a
 headStorableOfM bs = ReadM $ \_ _ _ ->
                        ByteString.unsafeUseAsCString bs $ \ cstr -> 
                                peek (castPtr cstr)
+
+-- | An example of how to read directly from a ptr without boxing the result.
+headWord8 :: ByteString -> Char#
+headWord8 (PS (ForeignPtr addr _) (I# offset) _)=
+    indexCharOffAddr# (plusAddr# addr offset) 0#    
+--    (error "FINISHMe -- read from Addr# directly" :: Word#)
+
+headWord8' :: ByteString -> Word8
+headWord8' (PS (ForeignPtr addr _) (I# offset) _)=
+    W8# (int2Word# (ord# (indexCharOffAddr# (plusAddr# addr offset) 0#)))
+
 
 {-# INLINE headStorableM #-}
 -- | Read from the bytestring stored in the monad.

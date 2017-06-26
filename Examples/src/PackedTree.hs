@@ -171,7 +171,7 @@ runReadHasM (Has b) (ReadHasM rm) = runReadM b rm
 withRead :: Storable a => (a -> ReadHasM r b) -> ReadHasM (a ': r) b 
 withRead fn = ReadHasM $ do 
     x <- headStorableM
-    let (ReadHasM a) = fn x
+    let (ReadHasM a) = fn $! x
     a
 
 -- | Run a computation that reads part of the stream, then run
@@ -179,7 +179,7 @@ withRead fn = ReadHasM $ do
 thenRead :: ReadHasM '[a] b -> (b -> ReadHasM r c) -> ReadHasM (a ': r) c
 thenRead (ReadHasM m) fn = ReadHasM $ 
          do x <- m
-            let (ReadHasM m2) = fn x
+            let (ReadHasM m2) = fn $! x
             m2
     
 -- | Read a tree value directly from the implicit reader state.
@@ -236,7 +236,7 @@ sumTree t = fin3
     go3 = caseTreeM' onLeaf onBranch
 
     onLeaf :: forall r. ReadHasM (Int ': r) Int
-    onLeaf = withRead return
+    onLeaf = withRead (\ !x -> return x)
 
     onBranch :: forall r. ReadHasM (Tree ': Tree ': r) Int
     -- onBranch :: ReadHasM '[Tree,Tree] Int

@@ -456,3 +456,60 @@ sumTree :: Packed Tree -> Int =
               case $wgo1 ww1 ww2 ww3 ww4 of { (#,#) ipv _ -> ipv; };
         };
 ```
+
+
+
+[2017.06.26] {Continued issues with unboxing optimizations}
+------------------------------------------------------------
+
+I've contorted the bytestring-reading code to use a monad with an
+implicit cursor into a designated stream being consumed (state monad).
+
+But I'm still getting an inner loop for sumTree that looks like this:
+
+
+```Haskell
+$wgo3
+  :: Addr#
+     -> Addr# -> State# RealWorld -> (# State# RealWorld, Int #)
+$wgo3
+  = \ (ww :: Addr#) (ww1 :: Addr#) (w :: State# RealWorld) -> 
+      case readIntOffAddr# ww1 0# w of { (# ipv, ipv1 #) -> 
+      case readWord8OffAddr# (plusAddr# ww ipv1) 0# ipv of
+      { (# ipv2, ipv3 #) -> 
+      case readIntOffAddr# ww1 0# ipv2 of { (# ipv4, ipv5 #) -> 
+      case writeIntOffAddr# ww1 0# (+# ipv5 1#) ipv4 of s2 { __DEFAULT -> 
+      case ipv3 of {
+        __DEFAULT -> 
+          case $wgo3 ww ww1 s2 of { (# ipv7, ipv8 #) -> 
+          case ipv8 of { I# ipv9 -> 
+          case $wgo3 ww ww1 ipv7 of { (# ipv10, ipv11 #) -> 
+          case ipv11 of { I# ipv12 -> (# ipv10, I# (+# ipv9 ipv12) #)
+          }
+          }
+          }
+          };
+        100## -> 
+          case readIntOffAddr# ww1 0# s2 of { (# ipv7, ipv8 #) -> 
+          case readIntOffAddr# (plusAddr# ww ipv8) 0# ipv7 of
+          { (# ipv9, ipv10 #) -> 
+          case readIntOffAddr# ww1 0# ipv9 of { (# ipv11, ipv12 #) -> 
+          case writeIntOffAddr# ww1 0# (+# ipv12 8#) ipv11 of s1
+          { __DEFAULT -> (# s1, I# ipv10 #)
+          }
+          }
+          }
+          }
+      }
+      }
+      }
+      }
+      }
+```
+
+I thought the Int being returned strictly should be enough for the
+worker to operate entirely on `Int#`.  But it seems there is a problem
+with this story and we end up with `Int` return value instead.
+
+
+
