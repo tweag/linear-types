@@ -102,6 +102,7 @@
 % Peanut gallery comments by Ryan:
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
+\newcommandx{\jp}[1]{\todo[]{JPB: #1}}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -307,11 +308,15 @@ even though linearity has inspired uniqueness typing in Clean, and
 borrowing typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-Linear types can do many things, but we focus on two particular
-use-cases.  First, safe update-in-place for mutable structures, such
-as arrays; and second, enforcing access protocols for external APIs,
-such as files, sockets, channels and other resources.
-Our particular contributions are these
+\jp{I suppose that this wants to say that we support many things, but
+  here we evaluate our language on two use-cases? I propose to move
+  this paragraph into the list: ``Even though our design supports many
+  applications for linear types, we demonstrate that our design
+  supports two typical use-cases. [...]}  Linear types can do many
+things, but we focus on two particular use-cases.  First, safe
+update-in-place for mutable structures, such as arrays; and second,
+enforcing access protocols for external APIs, such as files, sockets,
+channels and other resources.  Our particular contributions are these
 \begin{itemize}
 \item Our extension to Haskell, dubbed \HaskeLL, is
       \emph{non-invasive}.  Existing programs continue to typecheck,
@@ -351,7 +356,7 @@ to two questions:
 \begin{itemize}
 \item \emph{Is it safe to update this value in-place?}  That depends on whether there
 are aliases to the value; update-in-place is OK if there are no other pointers to it.
-Linearity supports a more efficicient implementation, by O(1) update rather than O(n) copying.
+Linearity supports a more efficicient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
 \item \emph{Am I obeying the usage protocol of this external resource?}
 For example, a open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
@@ -405,11 +410,11 @@ But GHC implements |array| using more primitive pieces, so that library authors
 can readily implement variations (which they certainly do):
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
-array size pairs = runST (do { ma <- newMArray size
-                             ; forM_ pairs (write ma)
-                             ; return (unsafeFreeze ma) })
+array size pairs = runST (do  { ma <- newMArray size
+                              ; forM_ pairs (write ma)
+                              ; return (unsafeFreeze ma) })
 \end{code}
-\fref{fig:array-sigs} give the type signatures for the library functions
+\fref{fig:array-sigs} gives the type signatures for the library functions
 that we use here.
 In the fist line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
@@ -464,18 +469,18 @@ subsequently written to, eliminating the problem with |unsafeFreeze|.
 But in our system, \emph{linearity is a property of function arrows,
 not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
-type does.  However, |Unrestricted| is just a libarary type; it does not have to
-be built-in \fref{sec:data-types}.
+type does.  However, |Unrestricted| is just a library type; it does not have to
+be built-in (See \fref{sec:data-types}).
 \item The function |foldl| has the type
 \begin{code}
 foldl :: (a ⊸ b -> a) -> a ⊸ [b] -> a
 \end{code}
+\jp{Why not |foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|?}
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
-As we shall see in \fref{sec:polymorphism} this is not new |foldl|, but
-rather Haskell's existing |foldl| with a slightly more polymorphic type.
-\simon{I hope this is right!}
+As we shall see in \fref{sec:polymorphism} this is not a new |foldl|, but
+rather Haskell's existing |foldl| with a more precise type.
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
@@ -540,10 +545,10 @@ An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
 Using this we can write a simple file-handling program:
 \begin{code}
 firstLine :: FilePath -> Bytestring
-firstLine fp = do { f <- open fp
-                  ; (f, Unrestricted bs) <- readLine f
-                  ; close f
-                  ; return bs }
+firstLine fp = do  { f <- open fp
+                   ; (f, Unrestricted bs) <- readLine f
+                   ; close f
+                   ; return bs }
 \end{code}
 Notice several things
 \begin{itemize}
@@ -552,7 +557,7 @@ I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
 \item We generalise the IO monad so that it expresses whether or not the
 returned value is linear.  We add an extra type parameter |p| to the monad |IOL|,
-where |p| can be |1| or |ω|.  Now |openFile| returns |IO 1 (File ByteString)|,
+where |p| can be |1| or |ω|.\jp{multiplicities are under-defined at this point}  Now |openFile| returns |IO 1 (File ByteString)|,
 the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 \item As before, operations on linear values must consume their input
@@ -630,16 +635,17 @@ projects, and it proved quite costly to hunt down.
     closeFile coll
 
 \end{code}
-In |bad1|, the process reads from both handlers to the same file,
-reads from |file| will cause the cursor in |line| to progress. The
-matter gets worse in |bad3| where the |file1| and |file2| are supposed
+In |bad1|, the programmer expects |coll| and |file| to be independent, but
+both instances of |readLine| read from the same file.
+Thus reads from |file| will cause the cursor in |line| to progress. The
+matter gets worse in |bad3| where |file1| and |file2| are intended
 to be read in lockstep, but they get desynchronised by the call to
-|readLine file1|. In |bad2|, |file1| is closed before |coll| is read,
+|readLine file1|. In |bad2|, |file| is closed before |coll| is read (causing an exception),
 and in |bad4|, |file1| is closed twice, once directly, and a second
 time via |closeFile coll|.
 
 The issue is that the intention behind |mapFile| and |zipFile| is that
-the handle is transformed, not shared. It is a crucial difference with
+the cursor is sharable at will, but is not intended to be. It is a crucial difference with
 immutable collections which can be shared freely.
 
 The following \textsc{api} for |File| makes all the examples above
@@ -844,8 +850,8 @@ type to contain linear values (such as mutable arrays) without
 compromising safety.  For example:
 \begin{code}
 upd :: (MArray Char, MArray Char) ⊸ Int -> (MArray Char, MArray Char)
-upd (a1, a2) n | n >= 10   = (write a1 n 'x', a2)
-               | otherwise = (write a2 n 'o', a1)
+upd (a1, a2) n  | n >= 10   = (write a1 n 'x', a2)
+                | otherwise = (write a2 n 'o', a1)
 \end{code}
 
 \subsection{Linearity of constructors: the usefulness of unrestricted constructors}
@@ -950,11 +956,11 @@ In \fref{sec:io-protocols} we introduced |IOL| monad.  But how does it work?
 \end{code}
 The idea is that if |m :: IO 1 t|, then |m| is a input/output
 computation that returns a linear value of type |t|.  But what does it mean to
-``return a linear value'' in a world in which linearity applies only to
+``return a linear value'' in a world where linearity applies only to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
 the continuation arrow.  More precisely, in an application |m >>= k|,
-where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ t'|.
+where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ t'|. \jp{perhaps |k :: t ⊸ IO q t'|}
 And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 
 |IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
@@ -962,7 +968,7 @@ And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
   do { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-     ; d <- getData      -- |getDate  :: IO ω Date|
+     ; d <- getDate      -- |getDate  :: IO ω Date|
      ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should closed, but |getDate| returns
@@ -997,7 +1003,9 @@ result of the computation is described by the |p| parameter of |IOL|,
 which is inherited by the specialised form of pair, |IORes| that an
 |IOL| computation returns.  All this code is can be statically
 typechecked, further reducing the size of the trusted code base.
-
+\todo{note that making bind linear in its first and second argument prevents certain existing use of monads; typically
+  lists can no longer be used as a non-determinism monad---but there is an easy way out in the long run: we can re-use the
+multiplicity parameter to introduce a dynamic multiplicity (we have forbidden dynamic multiplicities in constructors though.)}
 \subsection{Linearity and strictness}
 
 It is tempting to suppose that, since a linear function consumes its
