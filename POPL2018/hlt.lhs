@@ -2066,6 +2066,23 @@ on multiplicities.
   {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
+%%%%% Arrays
+
+\inferrule
+{Ξ ⊢ (Γ||f~[a_1,…,a_n]) ⇓ Δ||z) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||z) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
+
+\inferrule
+{ }
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~l~i~a
+  ⇓ Γ||[a_1,…,a,…,a_n]) :_1 \varid{MArray}~a, Σ)}\text{write}
+
+\inferrule
+{ }
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n] ⇓ Γ||\varid{Unrestricted}
+  [a_1,…,a_n]) :_1 \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
+
+%%%% /Arrays
 
 % \inferrule
 %   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
