@@ -68,7 +68,7 @@ freeCounter = free
 --
 --  This version does not allow any memory to be freed until the whole
 --  byte buffer is read.
-newtype ReadM a = ReadM { unReadM :: CString -> Int -> Int -> IO (a, Int) }
+newtype ReadM a = ReadM { unReadM :: CString -> MutCounter -> Int -> IO a }
     -- ^ Takes an offset into the bytes, total size, and returns a new
     -- offset at each step.
     
@@ -79,25 +79,27 @@ instance Functor ReadM where
 instance Applicative ReadM where
 
 instance Monad ReadM where
-    return x = ReadM (\_ off _ -> return (x, off))
+    return x = ReadM (\_ _ _ -> return x)
     ReadM f1 >>= f2 =
       ReadM $ \cstr offset sz ->
-        do (x,off2) <- f1 cstr offset sz 
+        do x <- f1 cstr offset sz 
            let ReadM f3 = f2 x
-           f3 cstr off2 sz
+           f3 cstr offset sz
 
 
 -- | Are we at the end of the stream?  Have we read all available bytes?
 isEndM :: ReadM Bool
-isEndM = ReadM (\ _ off size -> (return $! (, off) $! off == size))
+isEndM = ReadM $ \ _ off size -> do
+           pos <- readCounter off
+           return $! pos == size
 
 {-# INLINE runReadM #-}
 -- | Read from a particular byte array.
 runReadM :: ByteString -> ReadM a -> a
 runReadM bs (ReadM fn) = unsafeDupablePerformIO $ 
    ByteString.unsafeUseAsCString bs $ \ cstr ->
-      do (x,_) <- fn cstr 0 (BS.length bs)
-         return x
+      do cntr <- newCounter
+         fn cstr cntr (BS.length bs)
 
 -- runReadM :: WByteArray -> ReadM a -> a
 -- runReadM ba (ReadM fn) = unsafeDupablePerformIO (fn ba)
@@ -170,18 +172,18 @@ headStorable bs = unsafeDupablePerformIO $
 -- TODO: bound checking
 -- | Read from the head of the given bytestring.
 headStorableOfM :: Storable a => ByteString -> ReadM a
-headStorableOfM bs = ReadM $ \_ off _ ->
-                     do x <- ByteString.unsafeUseAsCString bs $ \ cstr -> 
+headStorableOfM bs = ReadM $ \_ _ _ ->
+                       ByteString.unsafeUseAsCString bs $ \ cstr -> 
                                peek (castPtr cstr)
-                        return (x , off)
 
 {-# INLINE headStorableM #-}
 -- | Read from the bytestring stored in the monad.
 headStorableM :: forall a . Storable a => ReadM a
-headStorableM = ReadM $ \cstr offset size -> -- TODO!  BOUNDS CHECK
-                    do x <- peek (castPtr (cstr `plusPtr` offset))
-                       return $! (x,)
-                              $! (offset + sizeOf (undefined::a))
+headStorableM = ReadM $ \cstr cntr size -> -- TODO!  BOUNDS CHECK
+                    do offset <- readCounter cntr
+                       !x <- peek (castPtr (cstr `plusPtr` offset))
+                       incCounter cntr (sizeOf (undefined::a))
+                       return x
 
 {-# INLINE withHeadStorable #-}
 -- | An alternative to @headStorable@ which permits different compiler
