@@ -1998,9 +1998,10 @@ on multiplicities.
 
     %%%% Arrays
 
-    \inferrule{ }
+    \inferrule
+    {Γ : f~l ⇓ Δ : z}
     {Γ : \varid{newMArray}~i~a~f ⇓ (Δ, l :_1 \varid{MArray}~a =
-      [a,…,a]) : f~l}\text{newMArray}
+      [a,…,a]) : z}\text{newMArray}
 
     \inferrule{ }
     {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
