@@ -17,6 +17,8 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeInType #-}
 
+{-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
+
 module PackedTree
     ( Tree(..), TagTy
     , writeLeaf
@@ -109,11 +111,11 @@ caseTree c@(Has bs) f1 f2 =
 
 
 {-# INLINE caseTree2 #-}
-caseTree2 :: forall (rep :: RuntimeRep) (a1 :: TYPE rep) a2 b.
+caseTree2 :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
              Has (Tree ': b)
-          -> (Has (Int ': b) -> (# a1, a2 #))
-          -> (Has (Tree ': Tree ': b) -> (# a1, a2 #))
-          -> (# a1, a2 #)
+          -> (Has (Int ': b) -> res )
+          -> (Has (Tree ': Tree ': b) -> res )
+          -> res
 caseTree2 c@(Has bs) f1 f2 =
     case ord# (headWord8' bs) of
       100# -> f1 (unsafeDropBytes 1 c)
@@ -303,7 +305,7 @@ sumTree t = fin1
     go1 h = caseTree2 h onLeaf onBranch
 
     onLeaf :: forall r. Has (Int ': r) -> (# Int#, Has r #)
-    onLeaf h = let ( I# n, c) = readIntC h in (# n, c #)
+    onLeaf h = let !( I# n, c) = readIntC h in (# n, c #)
 
     onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int#, Has r #)
     onBranch h =
