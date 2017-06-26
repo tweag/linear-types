@@ -1993,10 +1993,10 @@ probably fix this.}
       e x ⇓ Θ : z} \text{application}
 
     \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A = z) :
-      z}\text{shared variable}
+      z}\text{variable}
 
     \inferrule{ }
-    {(Γ,x :_1 A = z) : x ⇓ (Δ, x :_1 A = z) : x}\text{linear variable}
+    {(Γ,l :_1 A = z) : l ⇓ (Δ, l :_1 A = z) : l}\text{mutable cell}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
     {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
@@ -2012,8 +2012,8 @@ probably fix this.}
     %%%% Arrays
 
     \inferrule
-    {(Γ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Δ : \varid{Unrestricted}~z}
-    {Γ : \varid{newMArray}~i~a~f ⇓ Δ : \varid{Unrestricted}~z}\text{newMArray}
+    {(Γ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Δ : \varid{Unrestricted}~x}
+    {Γ : \varid{newMArray}~i~a~f ⇓ Δ : \varid{Unrestricted}~x}\text{newMArray}
 
     \inferrule{ }
     {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
@@ -2071,8 +2071,8 @@ probably fix this.}
 %%%%% Arrays
 
 \inferrule
-{Ξ ⊢ (Γ||f~[a,…,a]) ⇓ Δ||\varid{Unrestricted}~z) :_1 \varid{Unrestricted}~B, Σ}
-{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||\varid{Unrestricted}~z) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
+{Ξ ⊢ (Γ||f~[a,…,a]) ⇓ Δ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
 
 \inferrule
 { }
@@ -2177,10 +2177,25 @@ probably fix this.}
   \begin{itemize}
   \item The properties of the substitution of |MArray| in the
     definition of denotation assignments are crafted to make the
-    \emph{shared variable} and \emph{let} rules carry through
+    \emph{variable} and \emph{let} rules carry through
   \item The other rules are straightforward
   \end{itemize}
 \end{proof}
+
+\begin{lemma}[Liveness]\label{lem:liveness}
+  The refinement relation defines a simulation of the strengthened
+  reduction by the ordinary reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  This is proved by a straightforward induction over the derivation of
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$.
+\end{proof}
+By induction, using the restrictions on substituting |MArray| pointers
+for the \emph{shared variable} and \emph{let} rules.
 \end{document}
 
 %  LocalWords:  sequentialised supremum
