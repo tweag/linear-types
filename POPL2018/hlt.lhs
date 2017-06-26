@@ -305,10 +305,10 @@
 Despite their obvious promise, and a huge research literature, linear
 type systems have not made it into mainstream programming languages,
 even though linearity has inspired uniqueness typing in Clean, and
-borrowing typing in Rust.  We take up this challenge by extending
+ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-\jp{I suppose that this wants to say that we support many things, but
+\jp{I suppose that the next paragraph wants to say that we support many things, but
   here we evaluate our language on two use-cases? I propose to move
   this paragraph into the list: ``Even though our design supports many
   applications for linear types, we demonstrate that our design
@@ -343,7 +343,7 @@ channels and other resources.  Our particular contributions are these
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
 There is a rich literature on linear type systems, as we discuss in a long
-related work section (\fref{sec:related}.
+related work section (\fref{sec:related}).
 
 \section{Motivation and intuitions}
 \label{sec:programming-intro}
@@ -360,7 +360,7 @@ are aliases to the value; update-in-place is OK if there are no other pointers t
 Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
 \item \emph{Am I obeying the usage protocol of this external resource?}
 (\fref{sec:io-protocols})?
-For example, a open file should be closed, and should not be used after it it has been closed;
+For example, an open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
 block should be freed, and should not be used after that.
 Here, linearity does not affect efficiency, but rather eliminates many bugs.
@@ -418,7 +418,7 @@ array size pairs = runST (do  { ma <- newMArray size
                               ; forM_ pairs (write ma)
                               ; return (unsafeFreeze ma) })
 \end{code}
-In the fist line we allocate a mutable array, of type |MArray s a|.
+In the first line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
@@ -474,14 +474,14 @@ type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (See \fref{sec:data-types}).
 \item The function |foldl| has the type
 \begin{code}
-foldl :: (a ⊸ b -> a) -> a ⊸ [b] -> a
+foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a
 \end{code}
-\jp{Why not |foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|?}
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
 As we shall see in \fref{sec:lin-poly} this is not new |foldl|, but
-rather Haskell's existing |foldl| with a slightly more polymorphic type.
+just an instance of a more general, multiplicity-polymorphic version of
+a single |foldl|.
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
@@ -571,7 +571,7 @@ Here, the type argument to |Socket| records the state of the socket, and that
 state changes as execution proceeds.  Here it is very convenient to have
 a succession of linear variables representing the socket, where the type
 of the variable reflects the state the socket is in, and limits which
-operatios can legally be applied to it.
+operations can legally be applied to it.
 
 % \subsection{Lifting files}
 % 
@@ -689,7 +689,7 @@ operatios can legally be applied to it.
 We have said informally that \emph{``a linear function consumes its argument
 exactly once''}. But what does ``consuming a value exactly once''
 mean, exactly?  Here is a more precise operational intuition:
-\begin{definition}[Consume exactly once] \label{def:consume}
+\begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
@@ -875,7 +875,7 @@ Instead of defining a pair with mixed linearity, we can also write
 The type |(Unrestricted t)| is very like |!t| in linear logic, but to us
 it is just a library data type.
 We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
-a pair of a linaer |MArray| and an unrestricted array element:
+a pair of a linear |MArray| and an unrestricted array element:
 \begin{code}
   read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
 \end{code}
@@ -889,7 +889,7 @@ it may be consumed many times or not at all.
 
 A linear function provides more guarantees to its caller than
 a non-linear one -- it is more general.  But the higher-order
-case thickens the plot. Consider that the standard |map| function over
+case thickens the plot. Consider the standard |map| function over
 (linear) lists:
 \begin{code}
 map f []      = []
@@ -953,7 +953,7 @@ A slight bump in the road is the treatment of the |do|-notation.  Consider
       ; d <- getData      -- getDate  :: IO ω Date
       ; e[f,d] }
 \end{code}
-Here |openFile| returns a linear |File| that should closed, but |getDate| returns
+Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
 an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
 Nevertheless, we can easily combine them with |bindIOL| thus:
 \begin{code}
@@ -1241,7 +1241,7 @@ relation:
 \end{itemize}
 \end{definition}
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
-module structure on typing contexts as follows.
+module structure on typing contexts.
 
 Returning to the typing rules in \fref{fig:typing}, rule (let) is like
 a combination of (abs) and (app).  Again, the $\flet$ bindings are
@@ -1251,7 +1251,7 @@ The variable rule (var) uses a standard idiom:
 $$\varrule$$
 This rule allows us to ignore variables with
 multiplicity $ω$ (usually called weakening),
-so that, for example $x :_1 A, y_ω : B ⊢ x : A$
+so that, for example $x :_1 A, y :_ω B ⊢ x : A$
 \footnote{Pushing weakening to the variable rule is
   classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
@@ -1268,30 +1268,49 @@ are handled straightforwardly by (m.abs) and (m.app).
 The handling of data constructors and case expressions is a
 distinctive aspect of our design.  For constructor applications, rule
 (con), everything is straightforward: we tread the data constructor in
-precisely the same as an application of a function with that data constructor's type.
+precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-Notice that the |case| keyword is itself annotated with a multiplicity |p|; this
-is precisely like the explicit multiplicity on |let| binding. 
+First, notice that the |case| keyword is itself annotated with a
+multiplicity |p|; this is precisely analogous to the explicit
+multiplicity on a |let| binding.  It says how often the scrutinee (or,
+in the case of |let|, the right hand side) will be consumed.  Just as
+for |let|, we expect |p| to be inferred from an un-annotated |case| in
+the source language.
 
-\simon{working here}
+The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
+the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
+environment for typechecking $u_k$.  That binding will be linear only if
+\emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
+that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
+specifies that is it consumed once if the constructor is (\fref{def:consumed}).
 
-The interesting case is when $p=ω$, which reads as: if we can consume
-$t$ an arbitrary number of time, then so can we of its
-constituents. Or, in terms of heaps: if $t$ is on the dynamic heap, so
-are its constituents (see \fref{sec:consumed}). As a consequence, the
-following program, which asserts the existence of projections, is
-well-typed (note that, both in |first| and |snd|, the arrow is~---~and
-must be~---~unrestricted).
+To put it another way, suppose one of the linear
+fields\footnote{
+Recall \fref{sec:non-linear-constructors}, which described
+how each constructor can have a mixture of linear and non-linear fields).}
+of $c_k$ is used non-linearly in $u_k$.  Then, $q_I=1$ (it is a linear field),
+so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
+forces the strutinee to be used non-linearly, which is just what we want.
+Here are some concrete examples:
 \begin{code}
-  first  ::  (a,b) →   a     bigSpace    snd  ::  (a,b) →   b
-  first      (a,b)  =  a                 snd      (a,b)  =  b
+  fst  ::  (a,b) →  a     bigSpace    swap ::  (a,b) ⊸ (b,a)
+  fst      (a,b)  =  a                swap     (a,b) =  (b,a)
 \end{code}
+Recall that both fields of a pair are linear (\fref{sec:linear-constructors}).
+In |fst|, the second component of the pair is used non-linearly (by being
+discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear type
+for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
+|swap| a linear type.  (Actually its most general type is polymorphic:
+|swap :: forall p. (a,b) -> _ p (b,a)|.
 
-This particular formulation of the case rule is not implied by the
-rest of the system: only the case $p=1$ is actually necessary. Yet,
-providing the case $p=ω$
+This particular formulation of the |case| rule is not implied by the
+rest of the system: only the case $p=1$ is actually necessary.
+\simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
+  paragraph is opaque to me.}
+\jp{In short: $case_ω$ allows to type-check |fst| while keeping $(,)$ purely linear.}
+Yet, providing the case $p=ω$
 is the design choice which makes it possible to consider data-type
 constructors as linear by default, while preserving the semantics of
 the intuitionistic $λ$-calculus (as we already stated in
@@ -1305,6 +1324,7 @@ logic maybe?}
 
 \subsection{Discussion}
 
+\simon{What about polymorphism? See my email.}
 One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
@@ -1937,10 +1957,276 @@ on multiplicities.
 
 %% Appendix
 \appendix
-\section{Appendix}
+\section{Semantics and soundness of \calc{}}
+\label{sec:dynamics}
 
-Text of appendix \ldots
+\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
+\newcommand{\ta}[2]{γ(#1)(#2)}
 
+
+\unsure{aspiwack: I ignored the multiplicity polymorphism as it is
+  really of no consequence as long as we don't take higher-rank
+  multiplicity functions. That being said, we speak of multiplicity
+  polymorphism quite a bit. Maybe we can just add them back into the
+  dynamics. The proof, apart from the primitive functions, is trivial
+  anyway.}
+\improvement{aspiwack: In the rules for primitives, I tend to omit the reduction
+of the strict arguments (shuch as indices of arrays). I should
+probably fix this.}
+\improvement{aspiwack: (related with the strictness thing) In the rule
+  for |write|, I use |l| directly where I should use a variable
+  |x| that points to |l|}
+\improvement{aspiwack: in the |newMArray| rule, I use an illegal form
+  of application. It is straightforward to put in in let-form as is
+  required by the Launchbury semantics, but it should be done. In the
+  |freeze| rule I do the same, but in the return type. Can I
+  reuse the variable carrying the array in the left-hand side
+  (currently omitted, see above) to avoid the complication of creating
+  a new variable? I think so.}
+
+\begin{figure}
+  \figuresection{Translation of typed terms}
+  \begin{align*}
+    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
+    x^*             &= x \\
+    (t  x )^*     &= (t)^*  x \\
+    (t  u )^*     &= \flet y :_q A = (u)^* \fin (t)^*  y &
+    \text{with $Γ⊢ t : A →_q B$}
+  \end{align*}
+  \begin{align*}
+    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} A_1 = (t₁)^*,…, x_n :_{q_n} A_n = (t_n)^*
+                      \fin c_k x₁ … x_n & \text{with $c_k : A_1
+                                          →_{q_1}…A_n →_{q_n}D$}
+  \end{align*}
+  \begin{align*}
+    (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n :_{q_n}A_n=_{q_n} (t_n)^* \fin (u)^*
+  \end{align*}
+
+  \caption{Syntax for the Launchbury-style semantics}
+  \label{fig:launchbury:syntax}
+\end{figure}
+
+\begin{figure}
+  \begin{mathpar}
+    \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
+
+
+    \inferrule{Γ : e ⇓ Δ : λy:_pA.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+      e x ⇓ Θ : z} \text{application}
+
+    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A = z) :
+      z}\text{variable}
+
+    \inferrule{ }
+    {(Γ,l :_1 A = z) : l ⇓ (Δ, l :_1 A = z) : l}\text{mutable cell}
+
+    \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
+    {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
+      z}\text{let}
+
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
+      x_n}\text{constructor}
+
+
+    \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
+
+    %%%% Arrays
+
+    \inferrule
+    {(Γ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Δ : \varid{Unrestricted}~x}
+    {Γ : \varid{newMArray}~i~a~f ⇓ Δ : \varid{Unrestricted}~x}\text{newMArray}
+
+    \inferrule{ }
+    {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
+      \varid{write}~l~i~a ⇓ Γ,l :_1 \varid{MArray}~a =
+      [a_1,…,a,…,a_n] : l}\text{write}
+
+    \inferrule{ }
+    { (Γ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : \varid{freeze}~l ⇓ (Γ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+      \varid{Unrestricted}~l}\text{freeze}
+
+
+    %%%% /Arrays
+  \end{mathpar}
+
+  \caption{Dynamic semantics}
+  \label{fig:dynamics}
+\end{figure}
+
+\begin{figure}
+  \begin{mathpar}
+\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B, Σ}\text{abs}
+
+\inferrule
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
+     Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
+    {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
+{\text{app}}
+
+\inferrule
+  {Ξ, x:_ωB ⊢ (Γ||e ⇓ Δ||z) :_ρ A, Σ}
+  {Ξ ⊢ (Γ,x :_ω B = e || x  ⇓ Δ, x :_ω B = z || z) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ||e ⇓ Δ||z) :_1 A, Σ}
+  {Ξ ⊢ (Γ,x :_1 B = e|| x  ⇓  Δ||z) :_1 A,  Σ}
+{\text{linear variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{pq_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+{\text{let}}
+
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || c x_1…x_n  ⇓ Γ || c x_1…x_n) :_ρ A, Σ}
+{\text{constructor}}
+
+\inferrule
+  {Ξ,y_1:_{p_1qρ} A_1 … ,y_n:_{p_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+    Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
+  {\text{case}}
+
+%%%%% Arrays
+
+\inferrule
+{Ξ ⊢ (Γ||f~[a,…,a]) ⇓ Δ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
+
+\inferrule
+{ }
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~x~i~a
+  ⇓ Γ||[a_1,…,a,…,a_n]) :_1 \varid{MArray}~a, Σ)}\text{write}
+
+\inferrule
+{ }
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n]||\varid{freeze}~a ⇓ Γ||\varid{Unrestricted}
+  [a_1,…,a_n]) :_1 \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
+
+%%%% /Arrays
+  \end{mathpar}
+  \caption{Denotational dynamic semantics}
+  \label{fig:typed-semop}
+\end{figure}
+
+\begin{definition}[Annotated state]
+  \improvement{Maybe change the name from ``annotated''. Also, the
+    values are a bit different as we have values for arrays, whereas
+    previously they were only in linear bindings of the }
+
+  An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
+  \begin{itemize}
+  \item $Ξ$ is a typing context
+  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+    bindings of the form $x :_ρ A = e$
+  \item $t$ is a term
+  \item $ρ∈\{1,ω\}$ is a multiplicity
+  \item $A$ is a type
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+    a term, a multiplicity and an annotation.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}[Well-typed state]
+  We say that an annotated state is well-typed if the following
+  typing judgement holds:
+  $$
+  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
+  $$
+  Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
+  bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
+  $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
+  $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
+\end{definition}
+
+\begin{definition}[Denotational reduction relation]
+  We define the denotational reduction relation, also written $⇓$, as a
+  relation on annotated states. Because $Ξ$, $ρ$, $A$ and $Σ$ are
+  always the same for related states, we abbreviate
+  $$
+  (Ξ ⊢ Γ||t :_ρ A,Σ) ⇓ (Ξ ⊢ Δ||z :_ρ A,Σ)
+  $$
+  as
+  $$
+  Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ
+  $$
+
+  The denotational reduction relation is defined inductively by the
+  rules of \fref{fig:typed-semop}.
+\end{definition}
+
+\begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  $$
+  Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
+  $$
+\end{lemma}
+\begin{proof}
+  By induction on the typed-reduction.
+\end{proof}
+
+\begin{definition}[Denotation assignment]
+  A well-typed state is said to be a denotation assignment for an ordinary
+  state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
+  $e[Γ_1]=e' ∧ Γ' \leqslant Γ_ω[Γ_1]$.\improvement{explain the
+    restrictions of $Γ$}
+
+  That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
+  linear, and to drop unnecessary $ω$ bindings. Array pointers are
+  substituted with their value. With the additional
+  requirement\improvement{Make precise}{} that |MArray| pointers are
+  substituted \emph{exactly once} in $(Γ',e)$, and, when susbtituting
+  in $Γ'$, only inside the body of variables with multiplicity $1$,
+  and, when substituting the body of a $let$-binding, either in $Γ'$
+  or in $e$, the $let$ binding must have multiplicity $1$. If
+  there are |MArray| pointers in $Γ$, we additionally require that $ρ=1$.
+\end{definition}
+
+\begin{lemma}[Safety]\label{lem:actual_type_safety}
+  The denotaion assignment relation defines a simulation of the
+  ordinary reduction by the denotational reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  By induction on the derivation of $Γ:e⇓Δ:z$:
+  \begin{itemize}
+  \item The properties of the substitution of |MArray| in the
+    definition of denotation assignments are crafted to make the
+    \emph{variable} and \emph{let} rules carry through
+  \item The other rules are straightforward
+  \end{itemize}
+\end{proof}
+
+\begin{lemma}[Liveness]\label{lem:liveness}
+  The refinement relation defines a simulation of the strengthened
+  reduction by the ordinary reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  This is proved by a straightforward induction over the derivation of
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$.
+\end{proof}
+By induction, using the restrictions on substituting |MArray| pointers
+for the \emph{shared variable} and \emph{let} rules.
 \end{document}
+
+% safety proves that the mutable semantics is equivalent to a pure
+% semantics.
+% liveness proves that the primitives don't block on typestate (\emph{e.g.} in the
+% write primitive, we are never given an |Array|) (because typing is
+% preserved in the denotational semantics, hence the denotational
+% semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum
