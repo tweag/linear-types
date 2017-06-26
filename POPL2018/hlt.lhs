@@ -305,10 +305,10 @@
 Despite their obvious promise, and a huge research literature, linear
 type systems have not made it into mainstream programming languages,
 even though linearity has inspired uniqueness typing in Clean, and
-borrowing typing in Rust.  We take up this challenge by extending
+ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-\jp{I suppose that this wants to say that we support many things, but
+\jp{I suppose that the next paragraph wants to say that we support many things, but
   here we evaluate our language on two use-cases? I propose to move
   this paragraph into the list: ``Even though our design supports many
   applications for linear types, we demonstrate that our design
@@ -343,7 +343,7 @@ channels and other resources.  Our particular contributions are these
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
 There is a rich literature on linear type systems, as we discuss in a long
-related work section (\fref{sec:related}.
+related work section (\fref{sec:related}).
 
 \section{Motivation and intuitions}
 \label{sec:programming-intro}
@@ -360,7 +360,7 @@ are aliases to the value; update-in-place is OK if there are no other pointers t
 Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
 \item \emph{Am I obeying the usage protocol of this external resource?}
 (\fref{sec:io-protocols})?
-For example, a open file should be closed, and should not be used after it it has been closed;
+For example, an open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
 block should be freed, and should not be used after that.
 Here, linearity does not affect efficiency, but rather eliminates many bugs.
@@ -418,7 +418,7 @@ array size pairs = runST (do  { ma <- newMArray size
                               ; forM_ pairs (write ma)
                               ; return (unsafeFreeze ma) })
 \end{code}
-In the fist line we allocate a mutable array, of type |MArray s a|.
+In the first line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
@@ -571,7 +571,7 @@ Here, the type argument to |Socket| records the state of the socket, and that
 state changes as execution proceeds.  Here it is very convenient to have
 a succession of linear variables representing the socket, where the type
 of the variable reflects the state the socket is in, and limits which
-operatios can legally be applied to it.
+operations can legally be applied to it.
 
 % \subsection{Lifting files}
 % 
@@ -689,7 +689,7 @@ operatios can legally be applied to it.
 We have said informally that \emph{``a linear function consumes its argument
 exactly once''}. But what does ``consuming a value exactly once''
 mean, exactly?  Here is a more precise operational intuition:
-\begin{definition}[Consume exactly once] \label{def:consume}
+\begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
@@ -875,7 +875,7 @@ Instead of defining a pair with mixed linearity, we can also write
 The type |(Unrestricted t)| is very like |!t| in linear logic, but to us
 it is just a library data type.
 We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
-a pair of a linaer |MArray| and an unrestricted array element:
+a pair of a linear |MArray| and an unrestricted array element:
 \begin{code}
   read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
 \end{code}
@@ -889,7 +889,7 @@ it may be consumed many times or not at all.
 
 A linear function provides more guarantees to its caller than
 a non-linear one -- it is more general.  But the higher-order
-case thickens the plot. Consider that the standard |map| function over
+case thickens the plot. Consider the standard |map| function over
 (linear) lists:
 \begin{code}
 map f []      = []
@@ -953,7 +953,7 @@ A slight bump in the road is the treatment of the |do|-notation.  Consider
       ; d <- getData      -- getDate  :: IO ω Date
       ; e[f,d] }
 \end{code}
-Here |openFile| returns a linear |File| that should closed, but |getDate| returns
+Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
 an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
 Nevertheless, we can easily combine them with |bindIOL| thus:
 \begin{code}
