@@ -1980,9 +1980,10 @@ on multiplicities.
       z}\text{shared variable}
 
 
-    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x :_1 A = e) : x ⇓ Δ :
-      z}\text{linear variable}
-
+    % \inferrule{Γ : e ⇓ Δ : z} {(Γ,x :_1 A = e) : x ⇓ Δ :
+    % z}\text{linear variable}
+    \inferrule{ }
+    {(Γ,x :_1 A = z) : x ⇓ (Δ, x :_1 A = z) : x}\text{linear variable}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
     {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
@@ -1994,6 +1995,25 @@ on multiplicities.
 
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
     {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
+
+    %%%% Arrays
+
+    \inferrule{ }
+    {Γ : \varid{newMArray}~i~a~f ⇓ (Δ, l :_1 \varid{MArray}~a =
+      [a,…,a]) : f~l}\text{newMArray}
+
+    \inferrule{ Γ : arr ⇓ (Δ_l, l :_1 \varid{MArray}~a =
+      [a_1,…,a_i,…,a_n]) : l \\ (Δ_l, l :_1 …) : idx ⇓ (Δ_i,l :_1 …) :
+      i \\ (Δ_i,l :_1 …) : arg ⇓ (Δ,l :_1 …) : a}
+    {Γ : \varid{write}~arr~idx~arg ⇓ Δ,l :_1 \varid{MArray}~a =
+      [a_1,…,a,…,a_n] : l}\text{write}
+
+    \inferrule{Γ : arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : l}
+    { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+      \varid{Unrestricted}~l}\text{freeze}
+
+
+    %%%% /Arrays
 
     % \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailbox k w ⇓ Δ:z}\text{withMailbox}
 
