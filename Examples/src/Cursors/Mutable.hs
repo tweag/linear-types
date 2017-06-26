@@ -13,6 +13,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE TypeInType #-}
 
 module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
@@ -23,6 +24,9 @@ module Cursors.Mutable
     , finish, withOutput, withC, withC2
     , tup, untup
 
+      -- * Utilities for unboxed usage
+    , withHas# 
+      
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
     , unsafeDropBytes
@@ -35,10 +39,15 @@ import qualified ByteArray as ByteArray
 import Control.DeepSeq
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
-import Data.Int
+import GHC.Int
 import Foreign.Storable
 import Prelude hiding (($))
-
+import Cursors.UnboxedHas
+import GHC.Types(RuntimeRep, Type)
+import GHC.Prim(TYPE, plusAddr#)
+import Data.ByteString.Internal (ByteString(..))
+import GHC.ForeignPtr (ForeignPtr(..))
+    
 -- Hard-coded constant:
 --------------------------------------------------------------------------------
 -- | Size allocated for each regions: 4KB.
@@ -53,11 +62,11 @@ regionSize =
 -- | A "needs" cursor requires a list of fields be written to the
 -- bytestream before the data is fully initialized.  Once it is, a
 -- value of the (second) type parameter can be extracted.
-newtype Needs (l :: [*]) t = Needs ByteArray.WByteArray
+newtype Needs (l :: [Type]) t = Needs ByteArray.WByteArray
 
 -- | A "has" cursor is a pointer to a series of consecutive,
 -- serialized values.  It can be read multiple times.
-newtype Has (l :: [*]) = Has ByteString
+newtype Has (l :: [Type]) = Has ByteString
   deriving Show
 
 -- | A packed value is very like a singleton Has cursor.  It
@@ -97,7 +106,7 @@ readC (Has bs) =
 
 {-# INLINE readIntC #-}
 -- | A specialization of @readC@.
-readIntC :: forall a rst . Has (Int ': rst) -> (Int, Has rst)
+readIntC :: forall rst . Has (Int ': rst) -> (Int, Has rst)
 readIntC (Has bs) = (ByteArray.headInt bs,
                      Has (ByteString.drop (sizeOf (undefined::Int)) bs))
 -- TODO: use a RULES pragma to substitute this for readC automatically.
@@ -138,6 +147,14 @@ fromHas (Has b) = Packed b
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
+{-# INLINE withHas# #-}
+-- | Use an unboxed representation of the Has-cursor for the duration
+-- of the given computation.
+withHas# :: forall (a :: [Type]) (rep :: RuntimeRep) (r :: TYPE rep) .
+            Has a -> (Has# a -> r) -> r
+withHas# (Has (PS (ForeignPtr addr _) (I# offset) _)) fn =
+    fn (plusAddr# addr offset)                       
+                   
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a

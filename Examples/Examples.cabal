@@ -26,6 +26,7 @@ library
   hs-source-dirs:     src
   exposed-modules:
         ByteArray,
+        Cursors.UnboxedHas,
         Cursors.Mutable,
         Cursors.PureBinary,
         Cursors.PureStorable,

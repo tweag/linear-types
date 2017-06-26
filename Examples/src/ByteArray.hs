@@ -39,7 +39,7 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
 -- import GHC.IO
 --import GHC.Prim (RealWorld, State#)
-import GHC.Prim (Word#, Char#, plusAddr#, indexIntOffAddr#,
+import GHC.Prim (Word#, Char#, Int#, plusAddr#, indexIntOffAddr#,
                  indexCharOffAddr#, ord#, int2Word#)
 import GHC.Magic (runRW#)
 import GHC.ForeignPtr (ForeignPtr(..))
@@ -234,4 +234,7 @@ withHeadStorable2 bs f = (# x, y #)
       !r <- peek (castPtr cstr)
       case f r of
         (# a,b #) -> return (a,b)  -- Sigh... 
+
+
+------------------------------------------------------------
 

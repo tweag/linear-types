@@ -49,6 +49,8 @@ import GHC.Prim(ord#, Int#, (+#), TYPE)
 import GHC.Int(Int(..))
 import GHC.Types(RuntimeRep)
 import Data.Kind(Type)
+import Cursors.UnboxedHas (Has#)
+import qualified Cursors.UnboxedHas as UH
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -112,14 +114,14 @@ caseTree c@(Has bs) f1 f2 =
 
 {-# INLINE caseTree2 #-}
 caseTree2 :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
-             Has (Tree ': b)
-          -> (Has (Int ': b) -> res )
-          -> (Has (Tree ': Tree ': b) -> res )
+             Has# (Tree ': b)
+          -> (Has# (Int ': b) -> res )
+          -> (Has# (Tree ': Tree ': b) -> res )
           -> res
-caseTree2 c@(Has bs) f1 f2 =
-    case ord# (headWord8' bs) of
-      100# -> f1 (unsafeDropBytes 1 c)
-      _    -> f2 (unsafeDropBytes 1 c)
+caseTree2 h f1 f2 =
+    case UH.headWord8 h of
+      (# 100 , c2 #) -> f1 (UH.unsafeCast c2)
+      (# _   , c2 #) -> f2 (UH.unsafeCast c2)
 
 type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
 
@@ -298,16 +300,16 @@ sumTree t = fin1
     
     ----------- Version 1 : unboxed tuples ----------
 -}
-    fin1 = case go1 (toHas t) of
+    fin1 = case withHas# (toHas t) go1 of
              (# acc, _ #) -> I# acc
-    
-    go1 :: forall r. Has (Tree ': r) -> (# Int#, Has r #)
+                
+    go1 :: forall r. Has# (Tree ': r) -> (# Int#, Has# r #)
     go1 h = caseTree2 h onLeaf onBranch
 
-    onLeaf :: forall r. Has (Int ': r) -> (# Int#, Has r #)
-    onLeaf h = let !( I# n, c) = readIntC h in (# n, c #)
+    onLeaf :: forall r. Has# (Int ': r) -> (# Int#, Has# r #)
+    onLeaf h = let !(# I# n, c #) = UH.headInt h in (# n, c #)
 
-    onBranch :: forall r. Has (Tree ': Tree ': r) -> (# Int#, Has r #)
+    onBranch :: forall r. Has# (Tree ': Tree ': r) -> (# Int#, Has# r #)
     onBranch h =
       case go1 h  of { (# x, h' #) ->
       case go1 h' of { (# y, h'' #) ->
