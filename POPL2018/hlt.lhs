@@ -2002,14 +2002,13 @@ on multiplicities.
     {Γ : \varid{newMArray}~i~a~f ⇓ (Δ, l :_1 \varid{MArray}~a =
       [a,…,a]) : f~l}\text{newMArray}
 
-    \inferrule{ Γ : arr ⇓ (Δ_l, l :_1 \varid{MArray}~a =
-      [a_1,…,a_i,…,a_n]) : l \\ (Δ_l, l :_1 …) : idx ⇓ (Δ_i,l :_1 …) :
-      i \\ (Δ_i,l :_1 …) : arg ⇓ (Δ,l :_1 …) : a}
-    {Γ : \varid{write}~arr~idx~arg ⇓ Δ,l :_1 \varid{MArray}~a =
+    \inferrule{ }
+    {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
+      \varid{write}~l~i~arg ⇓ Γ,l :_1 \varid{MArray}~a =
       [a_1,…,a,…,a_n] : l}\text{write}
 
-    \inferrule{Γ : arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : l}
-    { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+    \inferrule{ }
+    { (Γ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : \varid{freeze}~arr ⇓ (Γ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
       \varid{Unrestricted}~l}\text{freeze}
 
 
