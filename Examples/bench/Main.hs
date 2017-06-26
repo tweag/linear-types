@@ -66,14 +66,24 @@ bytearray = do
                                  go (BS.drop (sizeOf (0::Word8)) b)
           in go (getUnrestricted bs))
   putStrLn $ "    (Sum was "++show n++")"
-  putStr "Sum bytes of a ByteString, monadic "
-  n <- timePrint $ evaluate $ BA.runReadM $ 
+  putStr "Sum bytes of a ByteString, monadic1 "
+  n' <- timePrint $ evaluate $ BA.runReadM BS.empty $ 
          (let go b !acc | BS.null b = return acc
-                        | otherwise = do n <- BA.headStorableM b
+                        | otherwise = do x <- BA.headStorableOfM b
                                          go (BS.drop (sizeOf (0::Word8)) b)
-                                            (fromIntegral (n::Word8) + acc)
+                                            (fromIntegral (x::Word8) + acc)
           in go (getUnrestricted bs) (0::Int))
-  putStrLn $ "    (Sum was "++show n++")"
+  putStrLn $ "    (Sum was "++show n'++")"
+  putStr "Sum bytes of a ByteString, monadic2 "
+  n'' <- timePrint $ evaluate $ BA.runReadM (getUnrestricted bs) $ 
+         (let go !acc = do
+                b <- BA.isEndM
+                if b then return acc
+                 else do x <- BA.headStorableM
+                         go (fromIntegral (x::Word8) + acc)
+          in go (0::Int))
+  putStrLn $ "    (Sum was "++show n''++")"
+
 
 
 treebench :: IO ()

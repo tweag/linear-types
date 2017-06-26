@@ -12,6 +12,7 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module PackedTree
     ( Tree(..), TagTy
@@ -37,8 +38,8 @@ import Linear.Std
 import Data.Word
 -- import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
-import ByteArray (runReadM, ReadM)
-
+import ByteArray (runReadM, ReadM, headStorableM)
+import Foreign.Storable
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -152,7 +153,42 @@ caseTreeM c f1 f2 =
        if tg == leafTag
         then f1 (unsafeCastHas (rstC c2))
         else f2 (unsafeCastHas (rstC c2))
-                        
+
+--------------------------------------------------------------------------------
+-- A more strongly-typed bytestream reader monad:
+
+newtype ReadHasM (a :: [*]) b = ReadHasM (ReadM b)
+  deriving (Functor, Applicative, Monad)
+
+runReadHasM :: Has '[a] -> ReadHasM '[a] b -> b
+runReadHasM (Has b) (ReadHasM rm) = runReadM b rm 
+
+withRead :: Storable a => (a -> ReadHasM r b) -> ReadHasM (a ': r) b 
+withRead fn = ReadHasM $ do 
+    x <- headStorableM
+    let (ReadHasM a) = fn x
+    a
+
+-- | Run a computation that reads part of the stream, then run
+-- something else after it to consume the rest.
+thenRead :: ReadHasM '[a] b -> (b -> ReadHasM r c) -> ReadHasM (a ': r) c
+thenRead (ReadHasM m) fn = ReadHasM $ 
+         do x <- m
+            let (ReadHasM m2) = fn x
+            m2
+    
+-- | Read a tree value directly from the implicit reader state.
+caseTreeM' :: ReadHasM (Int ': r) b
+           -> ReadHasM (Tree ': Tree ': r) b
+           -> ReadHasM (Tree ': r) b
+caseTreeM' (ReadHasM m1) (ReadHasM m2) = ReadHasM $ do
+  (tg::TagTy) <- headStorableM
+  if tg == leafTag
+    then m1
+    else m2
+    
+--------------------------------------------------------------------------------
+             
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
 _packTree1 :: Tree -> Packed Tree
 _packTree1 = unfoldTree viewTree
@@ -188,7 +224,23 @@ _sumTree = foldTree id (+)
 sumTree :: Packed Tree -> Int
 sumTree t = fin3
   where
-    ----------- Version 3 : Monadic reader ----------
+    ----------- Version 4 : Monadic reader with implicit read-ee state ----------
+    fin3 = runReadHasM (toHas t) go3 
+
+    go3 :: ReadHasM '[Tree] Int
+    go3 = caseTreeM' onLeaf onBranch
+
+    onLeaf :: forall r. ReadHasM (Int ': r) Int
+    onLeaf = withRead return
+
+    onBranch :: forall r. ReadHasM (Tree ': Tree ': r) Int
+    -- onBranch :: ReadHasM '[Tree,Tree] Int
+    onBranch = go3 `thenRead` (\ !n ->
+               go3 `thenRead` (\ !m ->
+               return $! n+m))
+
+    ----------- Version 3 : Monadic reader, change scope of runRW# ----------
+{-    
     fin3 = fst $ runReadM $ go3 (toHas t)
 
     go3 :: forall r. Has (Tree ': r) -> ReadM (Int, Has r)
@@ -203,7 +255,7 @@ sumTree t = fin3
       (n,h2) <- go3 h1
       (m,h3) <- go3 h2
       return (n+m, h3)
-
+-}
 {-
     ----------- Version 2 : Either ----------
     fin2 = go (toHas t) fst

@@ -5,7 +5,9 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
+-- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module ByteArray
     ( WByteArray,
@@ -13,12 +15,12 @@ module ByteArray
       withHeadStorable, withHeadStorable2,
       writeStorable, writeByte,
       -- * Monadic interface
-      ReadM, runReadM, headStorableM,
+      ReadM, runReadM, isEndM, headStorableM, headStorableOfM
     )
     where
 
 import Data.ByteString (ByteString)
--- import qualified Data.ByteString as ByteString
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as ByteString (unsafePackMallocCStringLen, unsafeUseAsCString)
 import Data.Word
 import Foreign.C.String
@@ -61,14 +63,46 @@ freeCounter = free
     
 ------------------------------------------------------------
 
--- | A monad to /aggregate/ peek operations on byte buffers.  This is
+-- | A monad to /aggregate/ peek operations on a byte buffer.  This is
 --  for optimization purposes.
-newtype ReadM a = ReadM (IO a)
-  deriving (Monad, Functor, Applicative)
+--
+--  This version does not allow any memory to be freed until the whole
+--  byte buffer is read.
+newtype ReadM a = ReadM { unReadM :: CString -> Int -> Int -> IO (a, Int) }
+    -- ^ Takes an offset into the bytes, total size, and returns a new
+    -- offset at each step.
+    
+--  deriving (Monad, Functor, Applicative)
 
-runReadM :: ReadM a -> a
-runReadM (ReadM i) = unsafeDupablePerformIO i
-                     
+instance Functor ReadM where
+
+instance Applicative ReadM where
+
+instance Monad ReadM where
+    return x = ReadM (\_ off _ -> return (x, off))
+    ReadM f1 >>= f2 =
+      ReadM $ \cstr offset sz ->
+        do (x,off2) <- f1 cstr offset sz 
+           let ReadM f3 = f2 x
+           f3 cstr off2 sz
+
+
+-- | Are we at the end of the stream?  Have we read all available bytes?
+isEndM :: ReadM Bool
+isEndM = ReadM (\ _ off size -> (return $! (, off) $! off == size))
+
+{-# INLINE runReadM #-}
+-- | Read from a particular byte array.
+runReadM :: ByteString -> ReadM a -> a
+runReadM bs (ReadM fn) = unsafeDupablePerformIO $ 
+   ByteString.unsafeUseAsCString bs $ \ cstr ->
+      do (x,_) <- fn cstr 0 (BS.length bs)
+         return x
+
+-- runReadM :: WByteArray -> ReadM a -> a
+-- runReadM ba (ReadM fn) = unsafeDupablePerformIO (fn ba)
+
+                         
 data WByteArray = WBA { offset :: !MutCounter
                       , bytes  :: !CString
                       }
@@ -128,14 +162,26 @@ freeze = unsafeCastLinear f
 {-# INLINE headStorable #-}
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
-headStorable = runReadM . headStorableM
+headStorable bs = unsafeDupablePerformIO $
+               ByteString.unsafeUseAsCString bs $ \ cstr -> 
+                   peek (castPtr cstr)
+
+{-# INLINE headStorableOfM #-}
+-- TODO: bound checking
+-- | Read from the head of the given bytestring.
+headStorableOfM :: Storable a => ByteString -> ReadM a
+headStorableOfM bs = ReadM $ \_ off _ ->
+                     do x <- ByteString.unsafeUseAsCString bs $ \ cstr -> 
+                               peek (castPtr cstr)
+                        return (x , off)
 
 {-# INLINE headStorableM #-}
--- TODO: bound checking
-headStorableM :: Storable a => ByteString -> ReadM a
-headStorableM bs = ReadM $
-                   ByteString.unsafeUseAsCString bs $ \ cstr -> 
-                      peek (castPtr cstr)
+-- | Read from the bytestring stored in the monad.
+headStorableM :: forall a . Storable a => ReadM a
+headStorableM = ReadM $ \cstr offset size -> -- TODO!  BOUNDS CHECK
+                    do x <- peek (castPtr (cstr `plusPtr` offset))
+                       return $! (x,)
+                              $! (offset + sizeOf (undefined::a))
 
 {-# INLINE withHeadStorable #-}
 -- | An alternative to @headStorable@ which permits different compiler

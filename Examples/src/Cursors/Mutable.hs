@@ -106,7 +106,7 @@ rstC (Has bs) = Has (ByteString.drop (sizeOf (undefined::a)) bs)
 {-# INLINE fstCM #-}
 -- | Monadic version of @fstC@
 fstCM :: forall a rst . Storable a => Has (a ': rst) -> ByteArray.ReadM a
-fstCM (Has bs) = ByteArray.headStorableM bs
+fstCM (Has bs) = ByteArray.headStorableOfM bs
 
 {-# INLINE withC #-}
 withC :: forall a b rst . Storable a => Has (a ': rst) -> (a -> b) -> b
