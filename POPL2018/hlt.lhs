@@ -303,8 +303,9 @@
 
 Despite their obvious promise, and a huge research literature, linear
 type systems have not made it into mainstream programming languages,
-with the notable exceptions of Clean and, more recently, Rust.
-We take up this challenge by extending Haskell with linear types.
+even though linearity has inspired uniqueness typing in Clean, and
+borrowing typing in Rust.  We take up this challenge by extending
+Haskell with linear types.
 
 Linear types can do many things, but we focus on two particular
 use-cases.  First, safe update-in-place for mutable structures, such
