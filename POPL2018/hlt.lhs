@@ -1937,9 +1937,135 @@ on multiplicities.
 
 %% Appendix
 \appendix
-\section{Appendix}
+\section{Semantics and soundness of \calc{}}
 
-Text of appendix \ldots
+\begin{figure}
+  \figuresection{Translation of typed terms}
+  \begin{align*}
+    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
+    x^*             &= x \\
+    (t  x )^*     &= (t)^*  x \\
+    (t  u )^*     &= \flet y :_q A = (u)^* \fin (t)^*  y &
+    \text{with $Γ⊢ t : A →_q B$}
+  \end{align*}
+  \begin{align*}
+    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} A_1 = (t₁)^*,…, x_n :_{q_n} A_n = (t_n)^*
+                      \fin c_k x₁ … x_n & \text{with $c_k : A_1
+                                          →_{q_1}…A_n →_{q_n}D$}
+  \end{align*}
+  \begin{align*}
+    (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n :_{q_n}A_n=_{q_n} (t_n)^* \fin (u)^*
+  \end{align*}
+
+  \caption{Syntax for the Launchbury-style semantics}
+  \label{fig:launchbury:syntax}
+\end{figure}
+
+\begin{figure}
+  \begin{mathpar}
+    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{m.abs}
+
+
+    \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
+      e q ⇓ Θ : z} \text{m.app}
+
+    \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
+
+
+    \inferrule{Γ : e ⇓ Δ : λy:_pA.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+      e x ⇓ Θ : z} \text{application}
+
+    \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A z) :
+      z}\text{shared variable}
+
+
+    \inferrule{Γ : e ⇓ Δ : z} {(Γ,x :_1 A = e) : x ⇓ Δ :
+      z}\text{linear variable}
+
+
+    \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
+    {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
+      z}\text{let}
+
+    \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
+      x_n}\text{constructor}
+
+
+    \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
+    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
+
+    % \inferrule{Γ, x:_1 \varid{MB} = ⟨j,0⟩ : k x (j+1) ⇓ Δ:z}{Γ,w:_1 \varid{World} = j:withMailbox k w ⇓ Δ:z}\text{withMailbox}
+
+    % \inferrule{Γ:x ⇓ Δ:⟨j,i⟩}{Γ:close x ⇓ Δ:()}\text{close}
+
+    % \inferrule
+    %   {Γ:x ⇓ Δ:⟨j,i⟩}
+    %   {Γ:get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i : (y,z)}\text{get}
+
+    %   \inferrule{Γ:x ⇓ Δ:p^j_i}{Γ:send x ⇓ Δ:()}\text{send}
+  \end{mathpar}
+
+  \caption{Dynamic semantics}
+  \label{fig:dynamics}
+\end{figure}
+
+\begin{figure}
+  \begin{mathpar}
+\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B}\text{abs}
+
+\inferrule
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
+     Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
+    {Ξ  ⊢  (Γ||e_q x ⇓ Θ||z) :_ρ B ,Σ}
+{\text{app}}
+
+\inferrule
+  {Ξ, x:_ωB ⊢ (Γ||e ⇓ Δ||z) :_ρ A, Σ}
+  {Ξ ⊢ (Γ,x :_ω B = e || x  ⇓ Δ, x :_ω B = z || z) :_ρ A, Σ}
+{\text{shared variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ||e ⇓ Δ||z) :_1 A, Σ}
+  {Ξ ⊢ (Γ,x :_1 B = e|| x  ⇓  Δ||z) :_1 A,  Σ}
+{\text{linear variable}}
+
+\inferrule
+  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{pq_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+{\text{let}}
+
+\inferrule
+  { }
+  {Ξ ⊢ (Γ || c x_1…x_n  ⇓ Γ || c x_1…x_n) :_ρ A, Σ}
+{\text{constructor}}
+
+\inferrule
+  {Ξ,y_1:_{p_1qρ} A_1 … ,y_n:_{p_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+    Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
+  {\text{case}}
+
+
+% \inferrule
+%   {Ξ ⊢ (Γ, x:_1 \varid{MB} = ⟨j,0⟩ || k x (j+1) ⇓ Δ||z) :_1 IO_0 A, Σ}
+%   {Ξ ⊢ (Γ,w:_1 : \varid{World} = j||withMailbox k w ⇓ Δ||z) :_1 IO_0 A, Σ}\text{withMailbox}
+
+% \inferrule
+%   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
+%   {Ξ ⊢ (Γ||get x ⇓ Δ,x:_1 \varid{MB} = ⟨j,i+1⟩, y:_1 \varid{Packet} = p^j_i || (y,z)) :_1 (\varid{Packet},\varid{MB}),Σ}\text{get}
+
+% \inferrule
+%   {Ξ ⊢ (Γ||x ⇓ Δ||⟨j,i⟩) :_1 \varid{MB},Σ}
+%   {Ξ ⊢ (Γ||close x ⇓ Δ||()) :_1 (),Σ}\text{close}
+
+% \inferrule
+%   {Ξ ⊢ (Γ||x ⇓ Δ||p^j_i) :_1 \varid{Packet},Σ}
+%   {Ξ ⊢ (Γ||send x ⇓ Δ||()) :_1 (),Σ}\text{send}
+  \end{mathpar}
+  \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
+  \label{fig:typed-semop}
+\end{figure}
 
 \end{document}
 
