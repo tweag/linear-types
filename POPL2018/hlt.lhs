@@ -1938,6 +1938,28 @@ on multiplicities.
 %% Appendix
 \appendix
 \section{Semantics and soundness of \calc{}}
+\label{sec:dynamics}
+
+\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
+\newcommand{\ta}[2]{γ(#1)(#2)}
+
+
+\unsure{aspiwack: I ignored the multiplicity polymorphism as it is
+  really of no consequence as long as we don't take higher-rank
+  multiplicity functions. That being said, we speak of multiplicity
+  polymorphism quite a bit. Maybe we can just add them back into the
+  dynamics. The proof, apart from the primitive functions, is trivial
+  anyway.}
+\improvement{aspiwack: In the rules for primitives, I tend to omit the reduction
+of the strict arguments (shuch as indices of arrays). I should
+probably fix this.}
+\improvement{aspiwack: (related with the strictness thing) In the rule
+  for |write|, I use |l| directly where I should use a variable
+  |x| that points to |l|}
+\improvement{aspiwack: in the |newMArray| rule, I use an illegal form
+  of application. It is straightforward to put in in let-form as is
+  required by the Launchbury semantics, but it should be done}
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -1964,12 +1986,6 @@ on multiplicities.
 
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λπ. t ⇓ Γ : λπ. t}\text{m.abs}
-
-
-    \inferrule{Γ : e ⇓ Δ : λπ.e' \\ Δ : e'[q/π] ⇓ Θ : z} {Γ :
-      e q ⇓ Θ : z} \text{m.app}
-
     \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
 
 
@@ -1996,9 +2012,8 @@ on multiplicities.
     %%%% Arrays
 
     \inferrule
-    {Γ : f~l ⇓ Δ : z}
-    {Γ : \varid{newMArray}~i~a~f ⇓ (Δ, l :_1 \varid{MArray}~a =
-      [a,…,a]) : z}\text{newMArray}
+    {(Γ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Δ : \varid{Unrestricted}~z}
+    {Γ : \varid{newMArray}~i~a~f ⇓ Δ : \varid{Unrestricted}~z}\text{newMArray}
 
     \inferrule{ }
     {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
@@ -2019,12 +2034,12 @@ on multiplicities.
 
 \begin{figure}
   \begin{mathpar}
-\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B}\text{abs}
+\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B, Σ}\text{abs}
 
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
      Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
-    {Ξ  ⊢  (Γ||e_q x ⇓ Θ||z) :_ρ B ,Σ}
+    {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
 {\text{app}}
 
 \inferrule
@@ -2056,12 +2071,12 @@ on multiplicities.
 %%%%% Arrays
 
 \inferrule
-{Ξ ⊢ (Γ||f~[a_1,…,a_n]) ⇓ Δ||z) :_1 \varid{Unrestricted}~B, Σ}
-{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||z) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
+{Ξ ⊢ (Γ||f~[a,…,a]) ⇓ Δ||\varid{Unrestricted}~z) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||\varid{Unrestricted}~z) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
 
 \inferrule
 { }
-{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~l~i~a
+{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~x~i~a
   ⇓ Γ||[a_1,…,a,…,a_n]) :_1 \varid{MArray}~a, Σ)}\text{write}
 
 \inferrule
@@ -2071,10 +2086,101 @@ on multiplicities.
 
 %%%% /Arrays
   \end{mathpar}
-  \caption{Strengthened operational semantics (Omitting the obvious m.abs and m.app for concision)}
+  \caption{Denotational dynamic semantics}
   \label{fig:typed-semop}
 \end{figure}
 
+\begin{definition}[Annotated state]
+  \improvement{Maybe change the name from ``annotated''. Also, the
+    values are a bit different as we have values for arrays, whereas
+    previously they were only in linear bindings of the }
+
+  An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
+  \begin{itemize}
+  \item $Ξ$ is a typing context
+  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+    bindings of the form $x :_ρ A = e$
+  \item $t$ is a term
+  \item $ρ∈\{1,ω\}$ is a multiplicity
+  \item $A$ is a type
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+    a term, a multiplicity and an annotation.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}[Well-typed state]
+  We say that an annotated state is well-typed if the following
+  typing judgement holds:
+  $$
+  Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
+  $$
+  Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
+  bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
+  $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
+  $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
+\end{definition}
+
+\begin{definition}[Denotational reduction relation]
+  We define the denotational reduction relation, also written $⇓$, as a
+  relation on annotated states. Because $Ξ$, $ρ$, $A$ and $Σ$ are
+  always the same for related states, we abbreviate
+  $$
+  (Ξ ⊢ Γ||t :_ρ A,Σ) ⇓ (Ξ ⊢ Δ||z :_ρ A,Σ)
+  $$
+  as
+  $$
+  Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ
+  $$
+
+  The denotational reduction relation is defined inductively by the
+  rules of \fref{fig:typed-semop}.
+\end{definition}
+
+\begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  $$
+  Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
+  $$
+\end{lemma}
+\begin{proof}
+  By induction on the typed-reduction.
+\end{proof}
+
+\begin{definition}[Denotation assignment]
+  A well-typed state is said to be a denotation assignment for an ordinary
+  state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
+  $e[Γ_1]=e' ∧ Γ' \leqslant Γ_ω[Γ_1]$.\improvement{explain the
+    restrictions of $Γ$}
+
+  That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
+  linear, and to drop unnecessary $ω$ bindings. Array pointers are
+  substituted with their value. With the additional
+  requirement\improvement{Make precise}{} that |MArray| pointers are
+  substituted \emph{exactly once} in $(Γ',e)$, and, when susbtituting
+  in $Γ'$, only inside the body of variables with multiplicity $1$,
+  and, when substituting the body of a $let$-binding, either in $Γ'$
+  or in $e$, the $let$ binding must have multiplicity $1$. If
+  there are |MArray| pointers in $Γ$, we additionally require that $ρ=1$.
+\end{definition}
+
+\begin{lemma}[Safety]\label{lem:actual_type_safety}
+  The denotaion assignment relation defines a simulation of the
+  ordinary reduction by the denotational reduction.
+
+  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+\end{lemma}
+\begin{proof}
+  By induction on the derivation of $Γ:e⇓Δ:z$:
+  \begin{itemize}
+  \item The properties of the substitution of |MArray| in the
+    definition of denotation assignments are crafted to make the
+    \emph{shared variable} and \emph{let} rules carry through
+  \item The other rules are straightforward
+  \end{itemize}
+\end{proof}
 \end{document}
 
 %  LocalWords:  sequentialised supremum
