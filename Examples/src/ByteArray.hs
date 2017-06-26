@@ -14,6 +14,10 @@ module ByteArray
       alloc, freeze, headStorable, 
       withHeadStorable, withHeadStorable2,
       writeStorable, writeByte,
+      -- * Monomorphic interface
+      headWord8, headWord8',
+      headInt,
+                   
       -- * Monadic interface
       ReadM, runReadM, isEndM, headStorableM, headStorableOfM
     )
@@ -35,7 +39,8 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
 -- import GHC.IO
 --import GHC.Prim (RealWorld, State#)
-import GHC.Prim (Word#, Char#, plusAddr#, indexCharOffAddr#, ord#, int2Word#)
+import GHC.Prim (Word#, Char#, plusAddr#, indexIntOffAddr#,
+                 indexCharOffAddr#, ord#, int2Word#)
 import GHC.Magic (runRW#)
 import GHC.ForeignPtr (ForeignPtr(..))
 import Data.ByteString.Internal (ByteString(..))
@@ -182,15 +187,22 @@ headStorableOfM bs = ReadM $ \_ _ _ ->
                        ByteString.unsafeUseAsCString bs $ \ cstr -> 
                                peek (castPtr cstr)
 
+{-# INLINE headWord8' #-}
 -- | An example of how to read directly from a ptr without boxing the result.
-headWord8 :: ByteString -> Char#
-headWord8 (PS (ForeignPtr addr _) (I# offset) _)=
+headWord8' :: ByteString -> Char#
+headWord8' (PS (ForeignPtr addr _) (I# offset) _)=
     indexCharOffAddr# (plusAddr# addr offset) 0#    
 --    (error "FINISHMe -- read from Addr# directly" :: Word#)
 
-headWord8' :: ByteString -> Word8
-headWord8' (PS (ForeignPtr addr _) (I# offset) _)=
+{-# INLINE headWord8 #-}
+headWord8 :: ByteString -> Word8
+headWord8 (PS (ForeignPtr addr _) (I# offset) _)=
     W8# (int2Word# (ord# (indexCharOffAddr# (plusAddr# addr offset) 0#)))
+
+{-# INLINE headInt #-}
+headInt :: ByteString -> Int
+headInt (PS (ForeignPtr addr _) (I# offset) _) =
+    I# (indexIntOffAddr# (plusAddr# addr offset) 0# )
 
 
 {-# INLINE headStorableM #-}

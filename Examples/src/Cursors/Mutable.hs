@@ -18,12 +18,14 @@ module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
       Has(..), Needs(..), Packed
       -- * Public cursor interface
-    , writeC, readC, fstC, rstC, fstCM, fromHas, toHas
+    , writeC, readC, readIntC
+    , fstC, rstC, fstCM, fromHas, toHas
     , finish, withOutput, withC, withC2
     , tup, untup
 
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
+    , unsafeDropBytes
     )
     where      
 
@@ -93,6 +95,13 @@ readC (Has bs) =
     let !a = ByteArray.headStorable bs in 
     (a, Has (ByteString.drop (sizeOf (undefined::a)) bs))
 
+{-# INLINE readIntC #-}
+-- | A specialization of @readC@.
+readIntC :: forall a rst . Has (Int ': rst) -> (Int, Has rst)
+readIntC (Has bs) = (ByteArray.headInt bs,
+                     Has (ByteString.drop (sizeOf (undefined::Int)) bs))
+-- TODO: use a RULES pragma to substitute this for readC automatically.
+    
 {-# INLINE fstC #-}
 -- | Equivalent to the first value returned by @readC@.
 fstC :: forall a rst . Storable a => Has (a ': rst) -> a
@@ -101,8 +110,13 @@ fstC (Has bs) = ByteArray.headStorable bs
 {-# INLINE rstC #-}
 -- | Equivalent to the second value returned by @readC@.
 rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
-rstC (Has bs) = Has (ByteString.drop (sizeOf (undefined::a)) bs)
+rstC h = unsafeDropBytes (sizeOf (undefined::a)) h
 
+{-# INLINE unsafeDropBytes #-}
+-- | Drop bytes of a Has pointer in an unsafe way.
+unsafeDropBytes :: forall a b . Int -> Has a -> Has b
+unsafeDropBytes n (Has bs) = Has (ByteString.drop n bs)
+                
 {-# INLINE fstCM #-}
 -- | Monadic version of @fstC@
 fstCM :: forall a rst . Storable a => Has (a ': rst) -> ByteArray.ReadM a

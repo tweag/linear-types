@@ -13,6 +13,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TupleSections #-}
 
 module PackedTree
     ( Tree(..), TagTy
@@ -38,8 +39,9 @@ import Linear.Std
 import Data.Word
 -- import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
-import ByteArray (runReadM, ReadM, headStorableM)
+import ByteArray (runReadM, ReadM, headStorableM, headWord8')
 import Foreign.Storable
+import GHC.Prim(ord#)
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -51,8 +53,9 @@ instance NFData Tree where
   rnf (Leaf n) = rnf n
   rnf (Branch x y) = rnf x `seq` rnf y
 
--- Unsafe bits that should be derived! 
---------------------------------------
+--------------------------------------------------------------------------------
+-- UNSAFE bits that should be derived! 
+--------------------------------------------------------------------------------
 
 type TagTy = Word8
 
@@ -94,13 +97,10 @@ caseTree :: forall a b.
          -> (Has (Int ': b) -> a)
          -> (Has (Tree ': Tree ': b) -> a)
          -> a
-caseTree c f1 f2 = f (readC (unsafeCastHas c))
-  where   
-    f :: (TagTy, Has '[]) -> a
-    f (tg,c2) = case tg of
-                 _ | tg == leafTag   -> f1 (unsafeCastHas c2)
-                 _ | tg == branchTag -> f2 (unsafeCastHas c2)
-                 _ -> error $ "caseTree: corrupt tag, "++show tg
+caseTree c@(Has bs) f1 f2 =
+    case ord# (headWord8' bs) of
+      100# -> f1 (unsafeDropBytes 1 c)
+      _    -> f2 (unsafeDropBytes 1 c)
 
 
 {-# INLINE caseTree2 #-}
@@ -153,9 +153,9 @@ caseTreeM c f1 f2 =
        if tg == leafTag
         then f1 (unsafeCastHas (rstC c2))
         else f2 (unsafeCastHas (rstC c2))
-
+             
 --------------------------------------------------------------------------------
--- A more strongly-typed bytestream-reader monad:
+-- A bytestream-reader monad:
 --------------------------------------------------------------------------------
 
 newtype ReadHasM (a :: [*]) b = ReadHasM (ReadM b)
@@ -191,9 +191,16 @@ caseTreeM' (ReadHasM m1) (ReadHasM m2) = ReadHasM $ do
   if tg == leafTag
     then m1
     else m2
-    
+
+
+---------------------------
+-- END UNSAFE
+---------------------------
+
 --------------------------------------------------------------------------------
-             
+-- Type-safe interface below here:
+--------------------------------------------------------------------------------
+                 
 -- | This version takes ~0.53 seconds for a tree of depth 2^20.
 _packTree1 :: Tree -> Packed Tree
 _packTree1 = unfoldTree viewTree
@@ -215,10 +222,7 @@ packTree tr0 = fromHas $ getUnrestricted $
 unpackTree :: Packed Tree -> Tree
 unpackTree = foldTree Leaf Branch
 
-
-----------------------------------------
--- Type-safe interface below here:
-----------------------------------------
+---------------------------------------------------
 
 -- Here we manually write functions agains the packed representation.
 
@@ -227,23 +231,36 @@ _sumTree = foldTree id (+)
 
 -- | Optimizing away allocation.
 sumTree :: Packed Tree -> Int
-sumTree t = fin3
+sumTree t = fin5
   where
-    ----------- Version 4 : Monadic reader with implicit read-ee state ----------
-    fin3 = runReadHasM (toHas t) go3 
+    ----------- Version 5 : Raw primops, no IO ----------
+    (fin5,_) = go5 (toHas t)
 
-    go3 :: ReadHasM '[Tree] Int
-    go3 = caseTreeM' onLeaf onBranch
+    go5 :: Has (Tree ': r) -> (Int, Has r)
+    go5 c = caseTree c readIntC onBranch
+
+    onBranch :: forall r. Has (Tree ': Tree ': r) -> (Int, Has r)
+    onBranch h1 =
+      let (!x, h2) = go5 h1
+          (!y, h3) = go5 h2
+      in (, h3) $! x+y
+           
+    ----------- Version 4 : Monadic reader with implicit read-ee state ----------
+{-
+    fin4 = runReadHasM (toHas t) go3 
+
+    go4 :: ReadHasM '[Tree] Int
+    go4 = caseTreeM' onLeaf onBranch
 
     onLeaf :: forall r. ReadHasM (Int ': r) Int
     onLeaf = withRead (\ !x -> return x)
 
     onBranch :: forall r. ReadHasM (Tree ': Tree ': r) Int
     -- onBranch :: ReadHasM '[Tree,Tree] Int
-    onBranch = go3 `thenRead` (\ !n ->
-               go3 `thenRead` (\ !m ->
+    onBranch = go4 `thenRead` (\ !n ->
+               go4 `thenRead` (\ !m ->
                return $! n+m))
-
+-}
     ----------- Version 3 : Monadic reader, change scope of runRW# ----------
 {-    
     fin3 = fst $ runReadM $ go3 (toHas t)
