@@ -53,7 +53,7 @@ import Foreign.Storable
 import GHC.Prim(ord#, Int#, (+#), TYPE)
 import GHC.Int(Int(..))
 import GHC.Types(RuntimeRep, Type)
-
+import Debug.Trace (trace)
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -376,7 +376,10 @@ dropNum = unsafeCoerce (\ _ x -> x)
 
 {-# INLINABLE mapTree #-}
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
-mapTree f pt = fromHas $ getUnrestricted fin
+mapTree f pt =
+    trace ("mapTree over packed of size "++show (hasByteSize (toHas pt))) $ 
+    trace ("result tree size is "++show (hasByteSize (getUnrestricted fin)))
+    (fromHas (getUnrestricted fin))
   where
     fin = withHas# (toHas pt) $ \h -> 
            withOutput (\n -> finishMapDest (mapDest h n))

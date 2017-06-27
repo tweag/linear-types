@@ -23,7 +23,8 @@ module Cursors.Mutable
     , fstC, rstC, fstCM, fromHas, toHas
     , finish, withOutput, withC, withC2
     , tup, untup
-
+    , hasByteSize
+      
       -- * Utilities for unboxed usage
     , Has#, withHas#, unsafeCastHas#
     , readIntHas#, readWord8Has#
@@ -61,7 +62,8 @@ readInt = ByteArray.headInt
 regionSize :: Int
 regionSize =
   -- 4096 -- in Bytes
-  500 * 1000*1000
+  500 *1000*1000
+--  5 * 1000 * 1000 * 1000
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
@@ -128,6 +130,9 @@ fstC (Has bs) = ByteArray.headStorable bs
 rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
 rstC h = unsafeDropBytes (sizeOf (undefined::a)) h
 
+hasByteSize :: Has a -> Int
+hasByteSize (Has bs) = ByteString.length bs
+         
 {-# INLINE unsafeDropBytes #-}
 -- | Drop bytes of a Has pointer in an unsafe way.
 unsafeDropBytes :: forall a b . Int -> Has a -> Has b

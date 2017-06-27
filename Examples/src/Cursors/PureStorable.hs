@@ -23,6 +23,7 @@ module Cursors.PureStorable
     , finish, withOutput
 --    , fstCM, withC, withC2
     , tup, untup
+    , hasByteSize
 
     -- * Utilities for unboxed usage
     , Has#, withHas#, unsafeCastHas#
@@ -138,6 +139,9 @@ rstC (Has Empty) = error "rstC: impossible - read from empty cursor"
 fromHas :: Has '[a] ⊸ Packed a
 fromHas (Has s) = Packed s
 
+hasByteSize :: Has a -> Int
+hasByteSize (Has s) = P.foldr (\bs acc -> BS.length bs + acc) 0 s    
+                  
 {-# INLINABLE toHas #-}
 -- | Safely cast a packed value to a has cursor.
 toHas :: Packed a ⊸ Has '[a]

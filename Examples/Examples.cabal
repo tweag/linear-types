@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 
 flag pure
-  default: True
+  default: False
 
 flag perfdebug
   default: False

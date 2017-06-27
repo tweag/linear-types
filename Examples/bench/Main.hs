@@ -92,31 +92,33 @@ treebench = do
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
 
-  putStr "Sum tree (unpacked): "
+  putStr "sumtree-boxed: "
   s1 <- timePrint $ evaluate $ pureSum tr
   putStrLn $ "    (sum was "++show s1++")"
 
-  putStr "Pack tree: "
+  putStr "pack-tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
 
-  putStrLn $ "Resulting packed tree "++show tr'
+  putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr')
          
-  putStr "Sum packed tree: "; hFlush stdout
+  putStr "sumtree-packed: "; hFlush stdout
   s2 <- timePrint $ evaluate $ sumTree tr'
   putStrLn $ "    (sum was "++show s2++")"
-{-
-  putStr "Unpack-then-sum: "
+
+  putStr "unpack-then-sumtree: "
   _ <- timePrint $ evaluate $ force $ pureSum $ unpackTree tr'
 
-  putStr "Boxed map: "
+  putStrLn ""
+  putStr "map-boxed: "
   _ <- timePrint $ evaluate $ force $ pureMap (+1) tr
 
-  putStr "unpack/map/repack: "
+  putStr "unpack-map-repack: "
   _ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
 
-  putStr "map-on-packed: "
+  putStr "map-packed: "; hFlush stdout
   _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
--}
+
+  putStrLn "Done with benchmarks."
   return ()
 
 
