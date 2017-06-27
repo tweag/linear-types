@@ -1360,8 +1360,8 @@ product of linear logic, where the components must be consumed the
 same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
 
 \paragraph{Subtyping}
-\simon{What about polymorphism? See my email.}
-One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
+Because the type $A⊸B$ only strengthens the contract of its elements
+compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
 existing typed functional languages such as Haskell and the
@@ -1372,7 +1372,7 @@ mesh well with subtyping as the extensive exposition by
 multiplicity polymorphism for the purpose of reuse of higher-order
 function as we described in \fref{sec:lin-poly}.  So, for example, if
 \begin{code}
-  f :: Int → Int
+  f :: Int ⊸ Int
   g :: (Int -> Int) -> Bool
 \end{code}
 then the call |(g f)| is ill-typed, even though |f| provides more
