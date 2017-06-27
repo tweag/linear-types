@@ -1713,38 +1713,37 @@ clearer path to implementation in \textsc{ghc}.
 
 \subsection{Linearity via arrows vs. linearity via kinds}
 
-
-In a type system capturing linearity, a design choice is which device
-to use to distinguish linear objects from regular ones.  Our choice is
-to extend the arrow type: the linear arrow introduces linear objects
-in the environment, while the unrestricted arrow introduces
+There are two possible choices to indicate the distinction between
+linear and unrestricted objects.  Our choice is to use the arrow
+type. That is, we have both a linear arrow to introduce linear objects
+in the environment, and an unrestricted arrow to introduce
 unrestricted objects. This choice is featured in the work of
-\cite{mcbride_rig_2016,ghica_bounded_2014} and is ultimately inspired
-by Girard's presentation of linear logic, which features only linear
-arrows, and where the unrestricted arrow $A → B$ is encoded as
-$!A ⊸ B$.
+\citet{mcbride_rig_2016} and \citet{ghica_bounded_2014} and is
+ultimately inspired by Girard's presentation of linear logic, which
+features only linear arrows, and where the unrestricted arrow $A → B$
+is encoded as $!A ⊸ B$.
 
 Another popular choice
-\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011} is
-to separate types themselves into two kinds: linear and
-unrestricted. Values with a type whose kind is linear will be linear,
-and unrestricted otherwise.  In such designs, every type constructor
-typically exists in two flavours: one constructing a linear type and
-one constructing an unrestricted type. (Thus in particular such systems
-feature ``linear arrows'', but have a completely different
-interpretation from ours.)
+\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011}
+is to separate types into two kinds: a linear kind and an unrestricted
+kind. Values with a type whose kind is linear are be linear, and the
+others are unrestricted.  In a typical design making this choice,
+every type constructor exists in two flavours: one which constructs a
+linear type and one which constructs an unrestricted type. (Thus in
+particular such systems feature ``linear arrows'', but they have a
+completely different interpretation from ours.)
 
-Advantages of ``linearity via kinds'' include:
-
-
-\begin{itemize}
-\item It is possible to express the linearity of an object even on the
-  right-hand-side of an arrow (and in fact even in absence of an arrow
-  type). In contrast, in our system if one wants to indicate that a
-  returned value is to be used linearly, we have to use a
-  double-negation trick. That is, given $f : A → (B ⊸ r) ⊸ r$, then
-  $B$ can be used a single time in the (single) continuation, and
-  effectively $f$ ``returns'' a single $B$.
+An advantage of ``linearity via kinds'' is the possibility to directly
+declare the linearity of values returned by a function---not just that
+of the argument of a function. In contrast, in our system if one wants
+to indicate that a returned value is to be used linearly, we have to
+use a double-negation trick. That is, given $f : A → (B ⊸ r) ⊸ r$,
+then $B$ can be used a single time in the (single) continuation, and
+effectively $f$ ``returns'' a single $B$. One can obviously declare a
+type for linear values |Linear a = (a ⊸ r) ⊸ r| and chain
+|Linear|-returning functions with appropriate combinators.  In fact,
+as explained in \fref{sec:linear-io}, the cost of the double negation
+almost entirely vanishes in the presence of an ambient monad.
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
@@ -1758,22 +1757,24 @@ Advantages of ``linearity via kinds'' include:
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-
-
-\end{itemize}
-
-Advantages of ``Linearity via arrows'' include:
+Advantages of ``linearity via arrows'' include:
 
 \begin{itemize}
-\item Better subsumption properties.
-  When retrofitting linear types in an existing language, it is
-  important to share has much code as possible between linear and
-  non-linear code. In a system with linearity on arrows, the
-  subsumption relation (linear arrows subsume unrestricted arrows)
-  means that much linear code can be used as-is from unrestricted
-  code. This property is discussed at length in \fref{sec:compatibility}.
+\item Better subsumption properties.  When retrofitting linear types
+  in an existing language, it is important to share has much code as
+  possible between linear and non-linear code. In a system with
+  linearity on arrows, the subsumption relation (linear arrows subsume
+  unrestricted arrows) and the scaling of context in the application
+  rule mean that much linear code can be used as-is from unrestricted
+  code, and be properly promoted. This property is discussed at length
+  in \fref{sec:compatibility}.
 
-\item Easier polymorphism.  In the cases where code-sharing requires
+  In a two-kind system, a function \emph{must} declare the linearity
+  of its return value. Consequently, to make a function promotable
+  from linear to unrestriced, it must be declared so using
+  polymorphism over kinds.
+
+\item Easier polymorphism.  Even in the cases where code-sharing requires
   to use polymorphism, linearity on arrows is simpler to use.  Indeed,
   linearity polymorphism can be supported by adding a special-purpose
   quantification, which is syntactically separate and does not
@@ -1782,25 +1783,27 @@ Advantages of ``Linearity via arrows'' include:
   kind-polymorphism. Furthermore, the subsumption property must be
   encoded via a sub-kinding property, which is not easy to get right,
   especially in the presence of ML-style polymorphism. The difficulty
-  is witnessed in the work of \citet{morris_best_2016}. Several of
+  is witnessed in the work of \citet{morris_best_2016}: several of
   applications (including monads) require bounded polymorphism, while
-  we can avoid it.
+  we can avoid it here.
 
-\item Exensibility.
-  It is easy to extend our system to any base set of multiplicities
-  with a ring structure (\fref{sec:extending-multiplicities}), which
-  is useful to support affine types and dependent linear types.
-  Supporting such extensions require ad-hoc work in a multiple-kind
-  system. Indeed, supporting affine types requires changes in the
-  subkinding system, which in turns impacts unification; and while
-  there are systems with two-kinds and dependent types, they are only
-  trivial in the sense that the dependent product is never linear.
+\item Exensibility.  It is easy to extend our system to any set of
+  ground multiplicities with a ring structure
+  (\fref{sec:extending-multiplicities}), which is useful to support
+  for example affine types and dependent linear types.  In contrast,
+  in a multiple-kind system, such extensions require \textit{ad-hoc}
+  support. Indeed, affine types require changes in the subkinding
+  system, which in turns may impact unification. While there exists
+  systems with two-kinds and dependent types, they are only trivial in
+  the sense that no linear arrow can be dependent.
 
-\item Easy conversion of existing code.  Linearity-on-arrow makes it
-  safe to change any first-order function to a linear arrow where it
-  applies, because of the subsumption property. In the two-kind
-  approach, this common case requires to introduce a polymorphism over
-  kinds.
+% Linearity-on-arrow makes it possible to constrain any function to
+% use its arguments linearly, this is useful for the function writer,
+% similarly to how parametricity can be. We also anticipate that we
+% can leverage programmers’ annotation to make linear functions always
+% inlinable.
+
+% JP: isn't so also for a kinding system?
 
   % We also anticipate that we can leverage programmers’ annotation to
   % make linear functions always inlinable.
@@ -1815,19 +1818,16 @@ Advantages of ``Linearity via arrows'' include:
   % using a two-kind system.
   % JP: I do not understand this one.
 
-\item Easier implementation. We could implement a working prototype of
-  GHC linearity-on-arrow, and our patch is only a little over 1000loc.
-  While this is only anectodal evidence, we attribute the relative
-  simplicity of the implementation to the fact that we do not need to
-  keep track of the kind of types in the variables, which is a
-  daunting task in GHC's type-checker \jp{why?}.
+\item Easier implementation. We managed to implement a working
+  prototype of GHC linearity-on-arrow, and our patch is only a little
+  over 1000loc. We attribute its relative simplicity to two factors.
+  First, we could avoid tracking of the kind of types in the
+  variables, which is a daunting task in GHC's type-checker \jp{why?}.
 
-  \textsc{Ghc} already supports impredicative dependent types and a
-  wealth of unboxed or otherwise primitive types and kinds that cannot
-  be substituted for polymorphic type arguments.  Therefore is is not
-  clear how to support linearity in \textsc{ghc} by extending its kind
-  system.
-
+  Second, \textsc{Ghc} already supports impredicative dependent types
+  and a wealth of unboxed or otherwise primitive types and kinds that
+  cannot be substituted for polymorphic type arguments. Further extending
+  the kind system is a complex endeavour which we could avoid entirely.
 \end{itemize}
 
 % Such approaches have been very successful for theory: see for instance
