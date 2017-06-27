@@ -14,6 +14,7 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TypeInType #-}
+-- {-# LANGUAGE TypeFamilies #-}
 
 module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
@@ -48,12 +49,12 @@ import Data.Word
 import GHC.Int
 import Foreign.Storable
 import Foreign.Marshal.Alloc (mallocBytes)
-import Foreign.Ptr
+import GHC.Ptr    
 import Foreign.C.Types (CChar)
 import Prelude hiding (($))
 import Cursors.UnboxedHas as UH
 import GHC.Types(RuntimeRep, Type)
-import GHC.Prim(TYPE, plusAddr#, addr2Int#, coerce)
+import GHC.Prim 
 import Data.ByteString.Internal (ByteString(..))
 import GHC.ForeignPtr (ForeignPtr(..))
 import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
@@ -65,7 +66,10 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 -- | A "needs" cursor requires a list of fields be written to the
 -- bytestream before the data is fully initialized.  Once it is, a
 -- value of the (second) type parameter can be extracted.
-data Needs (l :: [Type]) t = Needs !Int !(Ptr CChar)
+type Needs (l :: [Type]) t = (# Int#, Addr# #)
+
+-- type family Foo (l :: [Type]) t
+-- type instance Foo l t = (# Int#, Addr# #)
 
 -- | A "has" cursor is a pointer to a series of consecutive,
 -- serialized values.  It can be read multiple times.
@@ -90,9 +94,10 @@ instance NFData (Packed a) where
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
 writeC a = unsafeCastLinear f
   where
-   f (Needs off ptr) = 
-     unsafeDupablePerformIO (poke (ptr `plusPtr` off) a) `seq` 
-      Needs (off + sizeOf a) ptr
+   f (# off, ptr #) =
+     let !(I# sz) = sizeOf a in 
+      unsafeDupablePerformIO (poke (Ptr ptr `plusPtr` I# off) a) `seq` 
+       (# off +# sz,  ptr #)
 
 {-# INLINE readC #-}
 -- | Reading from a cursor scrolls past the read item and gives a
@@ -154,7 +159,8 @@ toHas (Packed b) = Has b
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
-unsafeCastNeeds = coerce
+unsafeCastNeeds x = x
+-- unsafeCastNeeds (# i,p #) = (# i,p #)
 
 {-# INLINE unsafeCastHas #-}
 unsafeCastHas :: Has l1 ⊸ Has l2
@@ -165,8 +171,8 @@ unsafeCastHas (Has b) = (Has b)
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 finish = unsafeCastLinear f
  where
- f (Needs ix ptr) = unsafeUnrestricted
-                     (Has (unsafePerformIO (U.unsafePackMallocCStringLen (ptr,ix))))
+ f (# ix, ptr #) = unsafeUnrestricted
+      (Has (unsafePerformIO (U.unsafePackMallocCStringLen (Ptr ptr, I# ix))))
 
 -- finish (Needs bs) = Has `mapU` ByteArray.freeze bs
 
@@ -175,11 +181,11 @@ finish = unsafeCastLinear f
 -- with the same serialized layout, analogous to, but distinct from,
 -- the Coercable class.
 untup :: Needs ((a,b) ': c) d ⊸ Needs (a ': b ': c) d
-untup = coerce
+untup (# i,p #) = (# i,p #)
 
 {-# INLINABLE tup #-}
 tup :: Needs (a ': b ': c) d ⊸ Needs ((a,b) ': c) d
-tup = coerce
+tup x = x
 
 {-# NOINLINE withOutput #-}                    
 -- | Allocate a fresh output cursor and compute with it.
@@ -189,8 +195,8 @@ withOutput = unsafeCastLinear f
    f fn = unsafePerformIO $ do 
             -- ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
             -- DANGER: don't float out:
-            p <- mallocBytes regionSize
-            return $! fn $! Needs 0 p
+            Ptr p <- mallocBytes regionSize
+            return $! fn (# 0#, p #)
 
 --------------------------------------------------------------------------------
 
@@ -225,19 +231,19 @@ traceHas# str = unsafeCastLinear
 
 -- Tests:
 --------------------------------------------------------------------------------
-
+{-
 foo :: Needs '[Int, Bool] Double
 foo = undefined
 
 bar :: Needs '[Bool] Double
-bar = writeC 3 foo
+bar = writeC (3::Int) foo
 
 _test01 :: Needs '[Int] a ⊸ Needs '[] a
-_test01 x = writeC 3 x
+_test01 x = writeC (3::Int) x
 
 test02 :: Needs '[] Double
 test02 = writeC True bar
 
 _test03 :: Double
 _test03 = fst (readC (getUnrestricted (finish test02)))
-
+-}

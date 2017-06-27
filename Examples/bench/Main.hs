@@ -91,7 +91,6 @@ bytearray = do
   putStrLn $ "    (Sum was "++show n''++")"
 
 
-
 treebench :: IO ()
 treebench = do 
   [dep] <- getArgs
@@ -137,6 +136,8 @@ treebench = do
 
   return ()
 
+
+--------------------------------------------------------------------------------
 
 mkTree :: Int -> Tree
 mkTree depth = go 0 depth
@@ -195,8 +196,4 @@ mapTreeST fn pkd = S.finish
                         (h3,n3) <- go h2 n2
                         go h3 n3)
 
-----------------------------------------
-
-
--- sumTreeST :: Packed Tree -> ST s Int
-
+--------------------------------------------------------------------------------

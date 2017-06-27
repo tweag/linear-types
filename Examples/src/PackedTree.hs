@@ -195,10 +195,10 @@ unfoldTree step seed = fromHas $ getUnrestricted $
     go (step -> Left a) n = writeLeaf a n
     go (step -> Right (left,right)) n =
       go right (go left (writeBranch n))
-    go _ y = linerror "unfoldTree: impossible" y
+--    go _ y = linerror "unfoldTree: impossible" y
 
 
-{-# INLINABLE mapTree #-}
+{-# INLINE mapTree #-}
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
 mapTree f pt =
 --    trace ("mapTree over packed of size "++show (hasByteSize (toHas pt))) $ 
