@@ -949,8 +949,8 @@ And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
-  do  { f <- openFile s   -- openFile :: FilePath -> IO 1 (File ByteString)
-      ; d <- getData      -- getDate  :: IO ω Date
+  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+      ; d <- getData      -- |getDate  :: IO ω Date|
       ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
