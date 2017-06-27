@@ -124,7 +124,9 @@ caseTree2 :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
           -> res
 caseTree2 h f1 f2 =    
     (f (readWord8Has# (unsafeCastHas#
-         (traceHas# "caseTree2 on " h))))
+         -- (traceHas# "caseTree2 on " h)
+         h
+         )))
  where
    f :: (# Word8, Has# '[] #) ⊸ res
    f (# 100 , c2 #) = f1 (unsafeCastHas# c2)
@@ -241,11 +243,8 @@ packTree tr0 = fromHas $ getUnrestricted $
           go right (go left (writeBranch n))
 
 unpackTree :: Packed Tree -> Tree
-#ifdef PUREMODE
-unpackTree = error "FINISHME"
-#else
 unpackTree = foldTree Leaf Branch
-#endif
+
 
 ---------------------------------------------------
 
@@ -334,24 +333,23 @@ sumTree t = fin1
         (# x +# y,  h'' #)
       } }
 
-#ifndef PUREMODE
-{-# INLINABLE foldTree #-}
+{-# INLINE foldTree #-}
 foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
-foldTree leaf branch = snd . go . toHas
+foldTree leaf branch tr =
+    case withHas# (toHas tr) go of
+      (# acc, _ #) -> acc
   where
-    go :: forall r. Has (Tree ': r) -> (Has r, o)
-    go h = caseTree h onLeaf onBranch
+    go :: forall r. Has# (Tree ': r) -> (# o, Has# r #)
+    go h = caseTree2 h onLeaf onBranch
 
-    onLeaf :: forall r. Has (Int ': r) -> (Has r, o)
-    onLeaf h = let (a, h') = readC h in (h', leaf a)
+    onLeaf :: forall r. Has# (Int ': r) -> (# o, Has# r #)
+    onLeaf h = let !(# n, c #) = readIntHas# h in (# leaf n, c #)
 
-    onBranch :: forall r. Has (Tree ': Tree ': r) -> (Has r, o)
+    onBranch :: forall r. Has# (Tree ': Tree ': r) -> (# o, Has# r #)
     onBranch h =
-      let (h', left)   = go h
-          (h'', right) = go h'
-      in
-        (h'', branch left right)
-#endif
+      let (# left,  h' #)  = go h
+          (# right, h'' #) = go h'
+      in (# branch left right, h'' #)
 
 {-# INLINABLE unfoldTree #-}
 unfoldTree :: forall s. (s -> Either Int (s,s)) -> s -> Packed Tree

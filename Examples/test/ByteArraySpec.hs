@@ -86,8 +86,8 @@ spec = do
           in
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
 
--- Umm, this inexplicably diverges -RRN [2017.06.27].  But not when I run it by hand in GHCI.
--- The same problem exists with the pointer and IORef version:
---      prop "counter write then read" ByteArray.prop_counter
+    describe "ByteArray: Word8" $ do
+      it "prop_counter 2 " (ByteArray.prop_counter 2)
+      it "prop_counter 100 " (ByteArray.prop_counter 2)
 
-      return ()
+    return ()
