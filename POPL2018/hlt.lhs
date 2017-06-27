@@ -1129,7 +1129,7 @@ types (see \fref{sec:linear-io} for an example).
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
       x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
-      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n_k-1}} A_{n_k} →_{q_{n_k}} D$}}
     {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
