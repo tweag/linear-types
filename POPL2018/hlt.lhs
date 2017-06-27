@@ -1961,7 +1961,7 @@ on multiplicities.
 \label{sec:dynamics}
 
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
-\newcommand{\multiplicatedTypes}[1]{\mathnormal{multiplicatedTypes}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
 
