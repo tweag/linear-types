@@ -1068,6 +1068,7 @@ its type and multiplicity; and multiplicity abstraction and application
 are explicit.  The source language will use type inference to fill in
 much of this information, but we do not address the challenges of type
 inference here.
+\improvement{Though there are some thoughts in \fref{sec:implementation}}
 
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
 arrows (albeit multiplicity-annotated ones), data types, and
@@ -1342,7 +1343,7 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
 then the call |(g f)| is ill-typed, even though |f| provides more guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)| makes the expression typeable, as the reader may check.
 
 
-\section{Evaluation}
+\section{Applications}
 \label{sec:evaluation}
 
 Implemented using our branch of the \textsc{ghc} compiler described in
