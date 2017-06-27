@@ -509,7 +509,7 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 %   actual communication protocols. See
 %   \citet{wadler_propositions_2012,parente_logical_2015}, for a formal
 %   treatment of such communication protocols.}.
-% 
+%
 % A common example of such protocol is network- or storage-based
 % collection. For example databases: the common feature is that getting
 % (or setting) an element of this collection requires I/O, hence, in
@@ -567,7 +567,7 @@ typestate).  For example
 data SocketState = Ready | Bound | Listening | Open
 data Socket (sock_state :: SocketState)  -- No data constructors
 newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready -> Port ⊸ IOL 1 (Socket Bound)
+bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
 listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
 ...etc...
 \end{code}
@@ -578,9 +578,9 @@ of the variable reflects the state the socket is in, and limits which
 operations can legally be applied to it.
 
 % \subsection{Lifting files}
-% 
+%
 % \simon{I doubt we want this material; just leaving it here for now}
-% 
+%
 % We will want that |File| behaves as much as possible as an ordinary
 % collection. In particular we would like to |File| to be a functor:
 % this is how we will parse lines.
@@ -594,7 +594,7 @@ operations can legally be applied to it.
 % \end{code}
 % Such a programing idiom can be found in the
 % \texttt{streaming}~\cite{thompson_streaming_2015} library.
-% 
+%
 % The problem is that it makes a number of unintended things
 % possible. We have observed such mistakes in our own code in industrial
 % projects, and it proved quite costly to hunt down.
@@ -605,14 +605,14 @@ operations can legally be applied to it.
 %     string <- readLine file
 %     value <- readLine coll
 %     closeFile coll
-% 
+%
 %   bad2 path = do
 %     file <- openFile path
 %     let coll = map someParsingFun file
 %     closeFile file
 %     value <- readLine coll
 %     closeFile coll
-% 
+%
 %   bad3 path1 path2 = do
 %     file1 <- openFile path
 %     file2 <- openFile path
@@ -620,14 +620,14 @@ operations can legally be applied to it.
 %     string <- readLine file1
 %     value <- readLine coll
 %     closeFile coll
-% 
+%
 %   bad4 path1 path2 = do
 %     file1 <- openFile path
 %     file2 <- openFile path
 %     coll <- zipFile file1 file2
 %     closeFile file1
 %     closeFile coll
-% 
+%
 % \end{code}
 % In |bad1|, the process reads from both handlers to the same file,
 % reads from |file| will cause the cursor in |line| to progress. The
@@ -636,25 +636,25 @@ operations can legally be applied to it.
 % |readLine file1|. In |bad2|, |file1| is closed before |coll| is read,
 % and in |bad4|, |file1| is closed twice, once directly, and a second
 % time via |closeFile coll|.
-% 
+%
 % The issue is that the intention behind |mapFile| and |zipFile| is that
 % the handle is transformed, not shared. It is a crucial difference with
 % immutable collections which can be shared freely.
-% 
+%
 % The following \textsc{api} for |File| makes all the examples above
 % ill-typed, ensuring that we don't use the same handle under two
 % different guises at the same time. It ensures, in particular, that
 % every file is closed exactly once.
 % \begin{code}
 %   type File a
-% 
+%
 %   openFile :: FilePath -> IO 1 (File ByteString)
 %   readLine :: File a ⊸ IO 1 (Unrestricted a, File a)
 %   closeFile :: File a -> IO ω ()
 %   mapFile :: (a->b) -> File a ⊸ File b
 %   zipFile :: File a ⊸ File b ⊸ File (a,b)
 % \end{code}
-% 
+%
 % There is a price to pay in that we have to thread files at every use,
 % even for |readLine|. Note, however, that the \texttt{streaming}
 % library's \textsc{api} shares this characteristic, despite not using
@@ -662,7 +662,7 @@ operations can legally be applied to it.
 % will be closed exactly once and that we are not using two versions of
 % a file.\unsure{If we talk about borrowing, we can even alleviate that
 %   cost by having |readLine :: File a -> _ β IO ω a|.}
-% 
+%
 % Sometimes, however, you may want to have two versions of the same
 % file. There are two possible semantics: any-cast~---~the two versions of
 % the file read from the same cursor, and each line is read by only
@@ -674,7 +674,7 @@ operations can legally be applied to it.
 %   dupFileAny    :: File a ⊸ (File a, File a)
 %   dupFileMulti  :: File a ⊸ (File a, File a)
 % \end{code}
-% 
+%
 % We have wilfully ignored, so far, the fact that files are finite, and
 % that |readLine| may reach the end of the file. The real type of
 % |readLine| should be:
@@ -691,8 +691,15 @@ operations can legally be applied to it.
 \label{sec:consumed}
 
 We have said informally that \emph{``a linear function consumes its argument
-exactly once''}. But what does ``consuming a value exactly once''
-mean, exactly?  Here is a more precise operational intuition:
+exactly once''}. But what exactly does that mean?
+
+\begin{quote}
+\emph{Meaning of the linear arrow}:
+|f :: s ⊸ t| guarantees that if |(f u)| is consumed exactly once,
+then the argument |u| is consumed exactly once.
+\end{quote}
+To make sense of this statement we need to know what ``consumed exactly once'' means.
+Our definition is based on the type of the value concerned:
 \begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
@@ -703,12 +710,12 @@ mean, exactly?  Here is a more precise operational intuition:
 \end{itemize}
 \end{definition}
 \noindent
-We can now give a more precise definition of what a linear function
-|f :: s ⊸ t| means: |f| guarantees that if |(f u)| is consumed exactly once,
-then |u| is consumed exactly once.
+This definition is enough to allow programmers to reason about the
+typing of their functions, and it drives the formal typing judgements in
+\fref{sec:statics}.
 
-Note that a linear arrow specifies how the function uses its argument. It does \emph{not}
-restrict the arguments to which the function can be applied.
+Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
+restrict \emph{the arguments to which the function can be applied}.
 In particular, a linear function cannot assume that it is given the
 unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
 this is fine:
@@ -728,7 +735,7 @@ in particular, |g| can pass that argument to |f|.
 % |f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
 % times, or none at all, both violating the linearity guarantee that |u|
 % must be consumed exactly once.
-% 
+%
 % In light of this definition, suppose that we have |f :: a ⊸ b| and |g
 % :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
 % of |x|:
@@ -744,7 +751,7 @@ in particular, |g| can pass that argument to |f|.
 %   valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
 %   for the details.
 % \end{itemize}
-% 
+%
 % In the same spirit, an unrestricted value |u| can never point to a
 % linear value |v|: if |u| is never consumed (which is a correct use of
 % an unrestricted value), then |v| will never be consumed either, which
@@ -843,8 +850,8 @@ type to contain linear values (such as mutable arrays) without
 compromising safety.  For example:
 \begin{code}
 upd :: (MArray Char, MArray Char) ⊸ Int -> (MArray Char, MArray Char)
-upd (a1, a2) n  | n >= 10   = (write a1 n 'x', a2)
-                | otherwise = (write a2 n 'o', a1)
+upd (a1, a2) n  | n >= 10    = (write a1 n 'x', a2)
+                | otherwise  = (write a2 n 'o', a1)
 \end{code}
 
 \subsection{Unrestricted data constructors}
@@ -874,7 +881,7 @@ in an unrestricted way, even if the |PLU| value itself is linear.
 Instead of defining a pair with mixed linearity, we can also write
 \begin{code}
   data Unrestricted a where { Unrestricted :: a → Unrestricted a }
-  
+
   f :: (MArray Int, Unrestricted Int) ⊸  MArray Int
 \end{code}
 The type |(Unrestricted t)| is very like |!t| in linear logic, but to us
@@ -1248,8 +1255,8 @@ Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts.
 
 Returning to the typing rules in \fref{fig:typing}, rule (let) is like
-a combination of (abs) and (app).  Again, the $\flet$ bindings are
-explicitly annotated with their multiplicities.
+a combination of (abs) and (app).  Again, each $\flet$ binding is
+explicitly annotated with its multiplicity.
 
 The variable rule (var) uses a standard idiom:
 $$\varrule$$
@@ -1276,10 +1283,10 @@ precisely the same way as an application of a function with that data constructo
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-First, notice that the |case| keyword is itself annotated with a
+First, notice that the |case| keyword is annotated with a
 multiplicity |p|; this is precisely analogous to the explicit
 multiplicity on a |let| binding.  It says how often the scrutinee (or,
-in the case of |let|, the right hand side) will be consumed.  Just as
+for a |let|, the right hand side) will be consumed.  Just as
 for |let|, we expect |p| to be inferred from an un-annotated |case| in
 the source language.
 
@@ -1306,28 +1313,51 @@ Recall that both fields of a pair are linear (\fref{sec:linear-constructors}).
 In |fst|, the second component of the pair is used non-linearly (by being
 discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear type
 for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
-|swap| a linear type.  (Actually its most general type is polymorphic:
-|swap :: forall p. (a,b) -> _ p (b,a)|.
+|swap| a linear type.
 
 \subsection{Design choices \& trade-offs}
 
-\paragraph{Case rule}
-This particular formulation of the |case| rule is not implied by the
-rest of the system: only the case $p=1$ is actually necessary.
-\simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
-  paragraph is opaque to me.}
-\jp{In short: $case_ω$ allows to type-check |fst| while keeping $(,)$ purely linear.}
-Yet, providing the case $p=ω$
-is the design choice which makes it possible to consider data-type
-constructors as linear by default, while preserving the semantics of
-the intuitionistic $λ$-calculus (as we already stated in
-\fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
-defined in libraries which are not aware of linear type (\emph{i.e.}
-libraries in pure Haskell) can nevertheless be immediately useful in a
-linear context. Inheritance of multiplicity is thus crucial for
-backwards compatibility, which is a design goal of
-\HaskeLL{}.\improvement{Announce here what it means in terms of linear
-  logic maybe?}
+Let us review the design space allowed by \calc{}, the points that we
+chose, and the dimension that we have left opened.
+
+\paragraph{Case rule}\unsure{While I was writing this new version,
+  Simon suggested that we canned the discussion on $\varid{case}_ω$
+  altogether. Let's discuss that soon.}
+The particular formulation of the \varid{case} rule in \calc{}, where
+\varid{case} is annotated by a multiplicity is not implied by the rest
+of the system. In fact, only the case $p=1$ is actually necessary: it
+is the case which makes it possible to consume data-types exactly once
+(see \fref{def:consume}).
+
+Yet, providing the case $p=ω$ is a deliberate design choice. It is
+thanks to $\varid{case}_ω$ that we can turn existing Haskell
+data types into linear data types as we've described in
+\fref{sec:linear-constructors}.
+
+The original linear logic~\cite{girard_linear_1987}, for instance,
+does not have an equivalent of $\varid{case}_ω$. Which means in
+particular that if we have an unrestricted value of type $(a,b)$, we
+will have to consume $a$ and $b$ \emph{the same number of times}. In
+Haskell, that would mean having twp pair data types: one that supports
+|fst :: (a,b) ⊸ a| and one that supports |(,) :: a ⊸ b ⊸ (a,b)|.
+Alternatively, we could have one linearity-parametric data
+type, but that would be more intrusive and run afoul of our goal to
+blend in Haskell.
+
+It boils down to the definition of ``consume arbitrarily many times''
+that we are interested in. Without $\varid{case}_ω$, ``consuming a
+value $v$ arbitrarily many times'' means ``choosing an arbitrary
+number of time $n$, and consuming $v$ exactly once, $n$ times''. With
+$\varid{case}_ω$, we choose it to mean ``evaluate $v$ arbitrarily many
+times, and consume its components aribtrarily many time''.
+
+In more theoretical terms, there is a natural function
+|(Unrestrict a, Unrestricted b) ⊸ Unrestricted (a,b)|. With
+$\varid{case}_ω$, this function is an isomorphism. In linear logic,
+this is not the case.
+\unsure{aspiwack: we could add that, interestingly, the regular tensor
+product of linear logic, where the components must be consumed the
+same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
 
 \paragraph{Subtyping}
 \simon{What about polymorphism? See my email.}
@@ -1350,7 +1380,8 @@ guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 
 \paragraph{Polymorphism}
-
+  (Actually its most general type is polymorphic:
+|swap :: forall p. (a,b) -> _ p (b,a)|.
 
 \section{Applications}
 \label{sec:evaluation}
@@ -1692,7 +1723,7 @@ Advantages of ``linearity via kinds'' include:
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-  
+
 
 \end{itemize}
 
@@ -1720,7 +1751,7 @@ Advantages of ``Linearity via arrows'' include:
   applications (including monads) require bounded polymorphism, while
   we can avoid it.
 
-\item Exensibility. 
+\item Exensibility.
   It is easy to extend our system to any base set of multiplicities
   with a ring structure (\fref{sec:extending-multiplicities}), which
   is useful to support affine types and dependent linear types.
