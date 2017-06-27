@@ -1304,45 +1304,29 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 |swap| a linear type.
 
 \subsection{Design choices \& trade-offs}
-
 Let us review the design space allowed by \calc{}, the points that we
-chose, and the dimension that we have left opened.
+chose, and the generalizations that we have left open.
 
 \paragraph{Case rule}\unsure{While I was writing this new version,
   Simon suggested that we canned the discussion on $\varid{case}_ω$
   altogether. Let's discuss that soon.}
 The particular formulation of the \varid{case} rule in \calc{}, where
-\varid{case} is annotated by a multiplicity is not implied by the rest
-of the system. In fact, only the case $p=1$ is actually necessary: it
-is the case which makes it possible to consume data-types exactly once
-(see \fref{def:consume}).
-
-Yet, providing the case $p=ω$ is a deliberate design choice. It is
-thanks to $\varid{case}_ω$ that we can turn existing Haskell
-data types into linear data types as we've described in
+\varid{case} is annotated by a multiplicity $p$ is not implied by the
+rest of the system: only the case $p=1$ is necessary to embed
+linear logic.  Yet, providing the case $p=ω$ is a deliberate
+design choice. It is thanks to $\varid{case}_ω$ that we can simultaneously inhabit
+|fst :: (a,b) -> a| and retain a single pair constructor with type
+|(,) :: a ⊸ b ⊸ (a,b)|. In general, our choice allows modifing existing Haskell data types
+into linear data types as we have described in
 \fref{sec:linear-constructors}.
-
-The original linear logic~\cite{girard_linear_1987}, for instance,
-does not have an equivalent of $\varid{case}_ω$. Which means in
-particular that if we have an unrestricted value of type $(a,b)$, we
-will have to consume $a$ and $b$ \emph{the same number of times}. In
-Haskell, that would mean having twp pair data types: one that supports
-|fst :: (a,b) ⊸ a| and one that supports |(,) :: a ⊸ b ⊸ (a,b)|.
 Alternatively, we could have one linearity-parametric data
 type, but that would be more intrusive and run afoul of our goal to
 blend in Haskell.
 
-It boils down to the definition of ``consume arbitrarily many times''
-that we are interested in. Without $\varid{case}_ω$, ``consuming a
-value $v$ arbitrarily many times'' means ``choosing an arbitrary
-number of time $n$, and consuming $v$ exactly once, $n$ times''. With
-$\varid{case}_ω$, we choose it to mean ``evaluate $v$ arbitrarily many
-times, and consume its components aribtrarily many time''.
+In other words, our design choice allows to meaningfully inhabit
+|Unrestricted (a,b) ⊸ (Unrestrict a, Unrestricted b)|, while linear logic
+forbids that.
 
-In more theoretical terms, there is a natural function
-|(Unrestrict a, Unrestricted b) ⊸ Unrestricted (a,b)|. With
-$\varid{case}_ω$, this function is an isomorphism. In linear logic,
-this is not the case.
 \unsure{aspiwack: we could add that, interestingly, the regular tensor
 product of linear logic, where the components must be consumed the
 same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
