@@ -151,13 +151,6 @@ fromHas (Has b) = Packed b
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
-{-# INLINE withHas# #-}
--- | Use an unboxed representation of the Has-cursor for the duration
--- of the given computation.
-withHas# :: forall (a :: [Type]) (rep :: RuntimeRep) (r :: TYPE rep) .
-            Has a -> (Has# a -> r) -> r
-withHas# (Has (PS (ForeignPtr addr _) (I# offset) _)) fn =
-    fn (plusAddr# addr offset)                       
                    
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
@@ -185,6 +178,15 @@ withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn = ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
 
 --------------------------------------------------------------------------------
+
+{-# INLINE withHas# #-}
+-- | Use an unboxed representation of the Has-cursor for the duration
+-- of the given computation.
+withHas# :: forall (a :: [Type]) (rep :: RuntimeRep) (r :: TYPE rep) .
+            Has a -> (Has# a -> r) -> r
+withHas# (Has (PS (ForeignPtr addr _) (I# offset) _)) fn =
+    fn (plusAddr# addr offset)                       
+
 
 {-# INLINE readIntHas# #-}
 readIntHas# :: forall rst . Has# (Int ': rst) ⊸ (# Int, Has# rst #)
