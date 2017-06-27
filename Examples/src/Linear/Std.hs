@@ -74,5 +74,6 @@ instance UComonoid Int where
 
 -- | Trace a value in a linear context.
 lintrace :: String -> a ⊸ a
-lintrace str x = case unsafePerformIO (putStrLn str) of
-                    () -> x
+lintrace str = trace str (\x -> x)
+--    case unsafePerformIO (putStrLn str) of
+--                    () -> x

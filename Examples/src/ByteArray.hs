@@ -7,6 +7,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE CPP #-}
 -- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module ByteArray
@@ -19,7 +20,10 @@ module ByteArray
       headInt,
                    
       -- * Monadic interface
-      ReadM, runReadM, isEndM, headStorableM, headStorableOfM
+      ReadM, runReadM, isEndM, headStorableM, headStorableOfM,
+
+      -- * Tests
+      prop_counter, t1, allocWBA
     )
     where
 
@@ -46,32 +50,40 @@ import GHC.ForeignPtr (ForeignPtr(..))
 import Data.ByteString.Internal (ByteString(..))
 import GHC.Int (Int(..))
 import GHC.Word (Word8(..))
+import Data.IORef
 ---------------------------------
 
 -- type Token = State# RealWorld
 
--- | An unboxed mutable counter.  Could use an Unboxed vector.
-type MutCounter = Ptr Int
 
 {-# INLINE incCounter #-}
-incCounter :: MutCounter -> Int -> IO ()
-incCounter c m = do n <- peek c
-                    poke c (n+m)
-
 {-# INLINE readCounter #-}
-readCounter :: MutCounter -> IO Int
-readCounter = peek
-
 {-# INLINE newCounter #-}
-newCounter :: IO MutCounter
-newCounter = do c <- malloc
-                poke c 0
-                return c
-
 {-# INLINE freeCounter #-}
+incCounter  :: MutCounter -> Int -> IO ()
+readCounter :: MutCounter -> IO Int
+newCounter  :: IO MutCounter
 freeCounter :: MutCounter -> IO ()
+
+#if 1
+-- | An unboxed mutable counter.  Could use an Unboxed vector.
+type MutCounter = Ptr Int
+incCounter c m = do n <- peek c; poke c (n+m)
+readCounter    = peek
+newCounter  = do (c::Ptr Int) <- malloc
+                 poke c (0::Int)
+                 return c
 freeCounter = free 
-    
+#else
+-- SAFER version, debugging:
+type MutCounter = IORef Int
+incCounter c m = modifyIORef' c (+m)
+readCounter    = readIORef
+newCounter     = newIORef 0
+freeCounter _ = return ()
+#endif
+
+              
 ------------------------------------------------------------
 
 -- | A monad to /aggregate/ peek operations on a byte buffer.  This is
@@ -120,12 +132,21 @@ data WByteArray = WBA { offset :: !MutCounter
                       , bytes  :: !CString
                       }
 
+instance Show WByteArray where
+  show WBA{offset,bytes} =
+    let off = unsafePerformIO (readCounter offset) in
+    "WByteArray <offset "++ show off ++ ">"
+    -- "WByteArray <"++show bytes ++ ", offset at "++show offset++" = "++ show off ++ ">"
+                
 {-# NOINLINE alloc #-}
 -- | Allocate and use a mutable, linear byte array.
 alloc :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
-alloc i f = forceUnrestricted $ f $ unsafePerformIO $ do              
-     str <- mallocBytes (i+1) -- Remark: can't use @alloca@ as the pointer will usually survive the scope
-     pokeElemOff str i (0::CChar) -- Null terminated.  But there may be other zeros!  Not a real CString.
+alloc i f = forceUnrestricted $ f $ unsafePerformIO (allocWBA i)
+
+allocWBA :: Int -> IO WByteArray
+allocWBA i= do              
+     str <- mallocBytes (i) -- Remark: can't use @alloca@ as the pointer will usually survive the scope
+     -- pokeElemOff str i (0::CChar) -- Null terminated.  But there may be other zeros!  Not a real CString.
      cnt <- newCounter
      return $! WBA{ offset = cnt
                   , bytes  = str
@@ -238,3 +259,14 @@ withHeadStorable2 bs f = (# x, y #)
 
 ------------------------------------------------------------
 
+t1 = alloc 128 (\w -> unsafeUnrestricted w)
+
+{-# NOINLINE prop_counter #-}
+prop_counter :: Int -> Bool
+prop_counter n = unsafePerformIO (do c <- newCounter
+                                     go c n)
+                 == n
+ where
+   go c 0 = readCounter c
+   go c n = do incCounter c 1
+               go c (n-1)

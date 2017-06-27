@@ -1,7 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
 
-module ByteArraySpec (spec) where
+module ByteArraySpec
+    -- (spec)
+    where
 
 import qualified ByteArray as ByteArray
 ---------------------
@@ -14,16 +16,22 @@ import Prelude hiding (($))
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 
-spec :: Spec 
-spec = do
-    describe "ByteArray: Word8" $ do
-      prop "are written then read once correctly" $ \ (n :: Word8) ->
+prop_char1 :: Word8 -> Bool
+prop_char1 n = 
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
           let
             test :: Unrestricted ByteString ⊸ Unrestricted Bool
-            test (Unrestricted bs) = Unrestricted $ ByteString.head bs == n
+            test (Unrestricted bs) =
+                -- lintrace ("Got head " ++show (ByteString.head bs))
+                (Unrestricted $ ByteString.head bs == n)
           in
             test (ByteArray.freeze (ByteArray.writeByte n w))
+
+spec :: Spec 
+spec = do
+    describe "ByteArray: Word8" $ do
+
+      prop "are written then read once correctly" prop_char1
 
       prop "have correct head after being written twice" $ \ (n :: Word8) (p :: Word8) ->
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
@@ -77,3 +85,9 @@ spec = do
               ByteArray.headStorable (ByteString.drop (sizeOf n) bs) == p
           in
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
+
+-- Umm, this inexplicably diverges -RRN [2017.06.27].  But not when I run it by hand in GHCI.
+-- The same problem exists with the pointer and IORef version:
+--      prop "counter write then read" ByteArray.prop_counter
+
+      return ()

@@ -12,7 +12,9 @@ import GHC.Types (Type, TYPE, RuntimeRep)
     
 -- * Unrestricted
 
-newtype Unrestricted a where
+-- RRN [2017.06.27] Possible GHC Bug.  Making this a newtype causes segfaults.
+-- newtype Unrestricted a where
+data Unrestricted a where
     Unrestricted :: -- forall (r :: RuntimeRep) (a :: TYPE r) .
                     a -> Unrestricted a
   deriving Show
