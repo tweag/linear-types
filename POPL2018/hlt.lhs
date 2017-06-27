@@ -1188,12 +1188,12 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by ``multiplying'' all the multiplicities in $\Delta$ by $q$,
+express this by ``scaling'' all the multiplicities in $\Delta$ by $q$,
 thus $q\Delta$.  Finally we need to add together all the
 multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
 conclusion of the rule.
 
-In writing this rule we needed to ``multiply'' a context by
+In writing this rule we needed to ``scale'' a context by
 a multiplicity, and ``add'' two contexts.  We pause to define these operations.
 \begin{definition}[Context addition]~
   \begin{align*}
