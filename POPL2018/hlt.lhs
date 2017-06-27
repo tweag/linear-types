@@ -560,22 +560,10 @@ and return a new one; here |readLine| consumes the |File| and produces a new one
 and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
-operations with the IO monad. But in fact it is often very useful do to so,
-because we can use a phantom type to encode the state of the resource (similar to
-typestate).  For example
-\begin{code}
-data SocketState = Ready | Bound | Listening | Open
-data Socket (sock_state :: SocketState)  -- No data constructors
-newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
-listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
-...etc...
-\end{code}
-Here, the type argument to |Socket| records the state of the socket, and that
-state changes as execution proceeds.  Here it is very convenient to have
-a succession of linear variables representing the socket, where the type
-of the variable reflects the state the socket is in, and limits which
-operations can legally be applied to it.
+operations with the IO monad. But in fact it is often very useful do
+to so, as we will see in \fref{sec:sockets}, because we can use a
+phantom type to encode the state of the resource (similar to a
+typestate).
 
 % \subsection{Lifting files}
 %
@@ -1360,8 +1348,8 @@ product of linear logic, where the components must be consumed the
 same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
 
 \paragraph{Subtyping}
-\simon{What about polymorphism? See my email.}
-One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
+Because the type $A⊸B$ only strengthens the contract of its elements
+compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
 is a salient choice in our design. Our objective is to integrate with
 existing typed functional languages such as Haskell and the
@@ -1372,16 +1360,48 @@ mesh well with subtyping as the extensive exposition by
 multiplicity polymorphism for the purpose of reuse of higher-order
 function as we described in \fref{sec:lin-poly}.  So, for example, if
 \begin{code}
-  f :: Int → Int
+  f :: Int ⊸ Int
   g :: (Int -> Int) -> Bool
 \end{code}
 then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 
-\paragraph{Polymorphism}
-  (Actually its most general type is polymorphic:
-|swap :: forall p. (a,b) -> _ p (b,a)|.
+\paragraph{Polymorphism} Could |f| be given the polymorphic type
+|f :: Int -> _ π Int| instead? Usually not. For instance, consider the
+identity function and note that $λ_π (x:Int). x$ because, in the
+variable rule, it reduces to $π = 1 + ωπ'$ which the system cannot
+prove. Instead we rely on |g| being polymorphic with type
+|(Int -> _ π) -> Bool|, which is often the case. In which case |(g f)|
+is, indeed typeable.
+
+This reduces the amount of library reuse that we can have because
+higher-order functions in linearity-unaware libraries are likely to
+have overly-monormorphic types. But it makes it possible to freely
+extend the multiplicity semi-ring.
+
+In order to make the identity polymorphic, we would only need to add a
+new law to the multiplicity semi-ring adding that $π = 1 + ωπ'$ for
+any variable (or,to be more general, we would add an ordering to the
+semi-ring and impose that $1 \leqslant π$, and change the variable
+rule to use the ordering instead of sums). That is, for any
+muliplicity $q$ that $π$, consuming a value $q$ times includes
+consuming said value exactly once.
+
+This precludes multiplicities such as $2$ which imposes that a value
+is consumed exactly twice. But the examples of multiplicity we
+consider in this article are all compatible with the above law. That
+is, with the exception of $0$ (the value cannot be consumed at all),
+which, in accordance with \citet{mcbride_rig_2016}, we may need to use
+to extend the design to \textsc{ghc}'s dependent types. However, it is
+preferable to restrict multiplicity variables to range over non-$0$
+multiplicities: allowing $\varid{case}_0$ would be quite incorrect
+(for instance given a list with multiplicity $0$ we would be able
+to compute its length).
+
+Experience will tell whether it is best to add said law and make
+first-order function polymorphic, or keep the design open for more
+exotic multiplicities.
 
 \section{Applications}
 \label{sec:evaluation}
@@ -1452,6 +1472,25 @@ to index our arrays by a type-level list\footnote{Haskell has
 
 \todo{copy actual \textsc{api}}
 
+\subsection{Sockets with type-level state}
+\label{sec:sockets}
+
+\begin{code}
+data SocketState = Ready | Bound | Listening | Open
+data Socket (sock_state :: SocketState)  -- No data constructors
+newSocket :: SocketType -> IOL 1 (Socket Ready)
+bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
+listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
+...etc...
+\end{code}
+Here, the type argument to |Socket| records the state of the socket, and that
+state changes as execution proceeds.  Here it is very convenient to have
+a succession of linear variables representing the socket, where the type
+of the variable reflects the state the socket is in, and limits which
+operations can legally be applied to it.
+
+\todo{The rest of the section}
+
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
 
@@ -1487,10 +1526,6 @@ where the impure \textsc{api} is a simple tree
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
-
-\subsection{Some protocol example}
-
-\todo{We're missing something here}
 
 \subsection{Feedback from industrial experience}
 
