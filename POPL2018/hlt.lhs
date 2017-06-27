@@ -1766,12 +1766,22 @@ Advantages of ``linearity via arrows'' include:
   linearity on arrows, the subsumption relation (linear arrows subsume
   unrestricted arrows) and the scaling of context in the application
   rule mean that much linear code can be used as-is from unrestricted
-  code, and be properly promoted. This property is discussed at length
-  in \fref{sec:compatibility}.
+  code, and be properly promoted. Indeed, assuming lists as defined in
+  \fref{sec:compatibility} and:
+  \begin{code}
+    (++) :: [a] ⊸ [a] ⊸ [a]
+    cycle :: [a] → [a]
+  \end{code}
+  The following definition type-checks, even though |++| is applied to
+  unrestricted values and used in an unrestricted context.
+  \begin{code}
+    f :: [a] → [a] → [a]
+    f xs ys = cycle (xs ++ ys)
+  \end{code}
 
-  In a two-kind system, a function \emph{must} declare the linearity
-  of its return value. Consequently, to make a function promotable
-  from linear to unrestriced, it must be declared so using
+  In contrast, in a two-kind system, a function \emph{must} declare
+  the linearity of its return value. Consequently, to make a function
+  promotable from linear to unrestriced, its declaration must use
   polymorphism over kinds.
 
 \item Easier polymorphism.  Even in the cases where code-sharing requires
