@@ -132,6 +132,9 @@ treebench = do
   s3 <- timePrint $ evaluate $ sumTreeST tr''
   putStrLn $ "    (sum was "++show s3++")"
 
+  putStr "map-packed-tree-ST: "
+  s3 <- timePrint $ evaluate $ mapTreeST (+1) tr''
+
   return ()
 
 
@@ -174,6 +177,23 @@ sumTreeST pkd = runST (fmap fst (go (S.toHas pkd)))
     onBranch h1 = do (x,h2) <- go h1
                      (y,h3) <- go h2
                      return $! (,h3) $! x+y
+
+{-# INLINE mapTreeST #-}
+mapTreeST :: (Int -> Int) -> S.Packed Tree -> S.Packed Tree 
+mapTreeST fn pkd = S.finish
+                   (do n0 <- S.allocC regionSize
+                       (_,n1) <- go (S.toHas pkd) n0
+                       return n1)
+ where
+  go :: S.Has s (Tree ': r) -> S.Needs s (Tree ': r) t
+     -> ST s ( S.Has s r, S.Needs s r t)
+  go h1 n1 = S.caseTree h1
+             (\h2 -> do (x,h3) <- S.readC h2
+                        n2 <- S.writeLeaf (fn x) n1
+                        return $! (h3,n2))
+             (\h2 -> do n2 <- S.writeBranchTag n1
+                        (h3,n3) <- go h2 n2
+                        go h3 n3)
 
 ----------------------------------------
 
