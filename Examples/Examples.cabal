@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 
 flag pure
-  default: False
+  default: True
 
 flag perfdebug
   default: False
@@ -58,7 +58,8 @@ library
                        deepseq,
                        socket
   default-language:    Haskell2010
-  ghc-options:         -Wall -Wno-deprecations -O2 -funbox-strict-fields 
+  -- Bring disabled warnings back later:
+  ghc-options:  -Wall -fno-warn-unused-top-binds -fno-warn-unused-imports -Wno-deprecations -O2 -funbox-strict-fields 
 
   if flag(pure)
     cpp-options: -DPUREMODE

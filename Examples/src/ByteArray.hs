@@ -208,7 +208,7 @@ headInt (PS (ForeignPtr addr _) (I# offset) _) =
 {-# INLINE headStorableM #-}
 -- | Read from the bytestring stored in the monad.
 headStorableM :: forall a . Storable a => ReadM a
-headStorableM = ReadM $ \cstr cntr size -> -- TODO!  BOUNDS CHECK
+headStorableM = ReadM $ \cstr cntr _size -> -- TODO!  BOUNDS CHECK
                     do offset <- readCounter cntr
                        !x <- peek (castPtr (cstr `plusPtr` offset))
                        incCounter cntr (sizeOf (undefined::a))

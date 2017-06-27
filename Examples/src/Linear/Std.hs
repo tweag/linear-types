@@ -1,15 +1,21 @@
+-- | Derived utilities that use the Unsafe bits.
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE TypeInType #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Linear.Std (
   module Linear.Std, -- self
   module Linear.Common
 ) where
 
-import GHC.Types (Int(..))
+import GHC.Types (Int(..), Type, TYPE, RuntimeRep)
 import Linear.Common
 import Linear.Unsafe
 import Prelude hiding (($))
+import Debug.Trace
+import System.IO.Unsafe(unsafePerformIO)
 
 -- * Linear version of some standard function
 
@@ -65,3 +71,8 @@ instance UComonoid Int where
       -- it matters, for correctness, that the int is forced
       almostMoveInt :: Int -> Unrestricted Int
       almostMoveInt (I# i) = (Unrestricted (I# i))
+
+-- | Trace a value in a linear context.
+lintrace :: String -> a ⊸ a
+lintrace str x = case unsafePerformIO (putStrLn str) of
+                    () -> x

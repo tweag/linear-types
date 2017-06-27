@@ -11,7 +11,7 @@ module Linear.Unsafe where
 import Linear.Common
 import qualified Unsafe.Coerce as NonLinear
 
-import GHC.Types (Type, TYPE, RuntimeRep)
+import GHC.Types (TYPE, RuntimeRep)
 
     
 -- | Linearly typed @unsafeCoerce@

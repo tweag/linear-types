@@ -1,3 +1,6 @@
+-- | The root of the dependence hierarchy -- the most widely used bits
+-- included everywhere else.
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE KindSignatures #-}
@@ -5,14 +8,15 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Linear.Common where
-
+import GHC.Types (Type, TYPE, RuntimeRep)
     
 -- * Unrestricted
 
 newtype Unrestricted a where
     Unrestricted :: -- forall (r :: RuntimeRep) (a :: TYPE r) .
                     a -> Unrestricted a
-
+  deriving Show
+                         
 {-
 data Unrestricted a where
     Unrestricted :: a -> Unrestricted a
@@ -31,8 +35,6 @@ mapU f (Unrestricted a) = Unrestricted (f a)
 forceUnrestricted :: Unrestricted a ⊸ Unrestricted a
 forceUnrestricted (Unrestricted a) = Unrestricted a
 
-linerror :: String -> b ⊸ a
+linerror :: forall (a :: Type) (r :: RuntimeRep) (b :: TYPE r)  .
+            String -> a ⊸ b
 linerror = error
-
-
-

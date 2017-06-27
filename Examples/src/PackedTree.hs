@@ -43,7 +43,7 @@ import Cursors.Mutable
 
 import Control.DeepSeq
 import Linear.Std
--- import Linear.Unsafe (unsafeCastLinear2)
+-- import Linear.Unsafe (unsafeCastLinear)
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Word
 -- import qualified Data.ByteString as ByteString
@@ -52,8 +52,8 @@ import ByteArray (runReadM, ReadM, headStorableM, headWord8')
 import Foreign.Storable
 import GHC.Prim(ord#, Int#, (+#), TYPE)
 import GHC.Int(Int(..))
-import GHC.Types(RuntimeRep)
-import Data.Kind(Type)
+import GHC.Types(RuntimeRep, Type)
+
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -122,7 +122,9 @@ caseTree2 :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
           ⊸  (Has# (Int ': b) ⊸ res )
           -> (Has# (Tree ': Tree ': b) ⊸ res )
           -> res
-caseTree2 h f1 f2 = f (readWord8Has# (unsafeCastHas# h))
+caseTree2 h f1 f2 =    
+    (f (readWord8Has# (unsafeCastHas#
+         (traceHas# "caseTree2 on " h))))
  where
    f :: (# Word8, Has# '[] #) ⊸ res
    f (# 100 , c2 #) = f1 (unsafeCastHas# c2)
@@ -131,8 +133,8 @@ caseTree2 h f1 f2 = f (readWord8Has# (unsafeCastHas# h))
        ((error "impossible: got an invalid tag")
             :: Word8 ⊸ Has# '[] ⊸ res) x c2
 
-type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
 
+type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
 
 #ifndef PUREMODE
 {-# INLINE toEither #-}
@@ -313,9 +315,9 @@ sumTree t = fin1
                  Left h1  -> withC h1 (\n -> k (n, rstC h1))
                  Right h1 -> go h1 (\(n,h2) -> go h2 (\(m,h3) -> k (n+m,h3)))
              )
+-}
     
     ----------- Version 1 : unboxed tuples ----------
--}
     fin1 = case withHas# (toHas t) go1 of
              (# acc, _ #) -> I# acc
                 
@@ -431,8 +433,6 @@ tr3 = unpackTree tr2
 {-
       
 s1 = sumTree tr2
-
-
 
 tr4 :: Packed Tree
 tr4 = fromHas $

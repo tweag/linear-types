@@ -27,6 +27,7 @@ module Cursors.PureStorable
     -- * Utilities for unboxed usage
     , Has#, withHas#, unsafeCastHas#
     , readIntHas#, readWord8Has#
+    , traceHas#
       
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
@@ -48,7 +49,7 @@ import Foreign.Storable
 import Foreign.Ptr ()
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr, mallocForeignPtr, castForeignPtr)
 -- import Foreign.Marshal.Alloc (alloca)
-import System.IO.Unsafe (unsafeDupablePerformIO)
+import System.IO.Unsafe (unsafeDupablePerformIO, unsafePerformIO)
 import Prelude as P 
 
 import GHC.Types(Type, TYPE, RuntimeRep)
@@ -91,11 +92,12 @@ newtype Packed a = Packed (Seq ByteString)
   deriving (Eq, NFData)
 
 instance Show (Packed a) where
-  show (Packed sq) = "Packed ["
+  show (Packed sq) = "Packed " ++ show (P.length ls)++" ["
                       ++ P.unwords (L.intersperse "|"
                          [ -- show (BS.length bs)++": "++
                            P.concat (L.intersperse "," [ show (ord c) | c <- BS.unpack bs])
-                         | bs <- P.foldr (:) [] sq ]) ++ "]"
+                         | bs <- ls ]) ++ "]"
+    where ls = P.foldr (:) [] sq
 
 
 -- Cursor interface
@@ -119,13 +121,13 @@ readC :: Storable a => Has (a ': rst) ⊸ (a, Has rst)
 readC (Has (bs :<| rst)) = (deserialize bs, Has rst)
 readC (Has Empty) = error "readC: impossible - read from empty cursor"
 
-{-# INLINE fstC #-}
+{-# INLINABLE fstC #-}
 -- | Equivalent to the first value returned by @readC@.
 fstC :: forall a rst . Storable a => Has (a ': rst) -> a
 fstC (Has (bs :<| _)) = deserialize bs
 fstC (Has Empty) = error "fstC: impossible - read from empty cursor"
 
-{-# INLINE rstC #-}
+{-# INLINABLE rstC #-}
 -- | Equivalent to the second value returned by @readC@.
 rstC :: forall a rst . Storable a => Has (a ': rst) -> Has rst
 rstC (Has (_ :<| rst)) = Has rst
@@ -186,26 +188,32 @@ withOutput fn =
 --------------------------------------------------------------------------------
                            
 newtype Has# (a :: [Type]) = Wrap (Has a)
+  deriving Show
 
-{-# INLINE unsafeCastHas# #-}
+traceHas# :: String -> Has# a ⊸ Has# a
+traceHas# str = unsafeCastLinear
+                (\x -> case unsafePerformIO (P.putStrLn (str++show x)) of
+                        () -> x)
+
+{-# INLINABLE unsafeCastHas# #-}
 unsafeCastHas# :: Has# a ⊸ Has# b
 unsafeCastHas# (Wrap (Has s)) = Wrap (Has s)
 
-{-# INLINE withHas# #-}
+{-# INLINABLE withHas# #-}
 -- | Use an unboxed representation of the Has-cursor for the duration
 -- of the given computation.
 withHas# :: forall (a :: [Type]) (rep :: RuntimeRep) (r :: TYPE rep) .
             Has a -> (Has# a -> r) -> r
 withHas# h f = f (Wrap h)
 
-{-# INLINE readIntHas# #-}
+{-# INLINABLE readIntHas# #-}
 readIntHas# :: Has# (Int ': r) ⊸ (# Int, Has# r #)
 readIntHas# (Wrap h) = unbox (readC h)
 
-{-# INLINE unbox #-}
+{-# INLINABLE unbox #-}
 unbox :: (a,Has b) ⊸ (# a, Has# b #)
 unbox (a,b) = (# a, Wrap b #)
 
-{-# INLINE readWord8Has# #-}
+{-# INLINABLE readWord8Has# #-}
 readWord8Has# :: Has# (Word8 ': r) ⊸ (# Word8, Has# r #)
 readWord8Has# (Wrap h) = unbox (readC h)

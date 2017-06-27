@@ -99,12 +99,12 @@ treebench = do
   putStr "Pack tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
 
-  print tr'
+  putStrLn $ "Resulting packed tree "++show tr'
          
   putStr "Sum packed tree: "; hFlush stdout
   s2 <- timePrint $ evaluate $ sumTree tr'
   putStrLn $ "    (sum was "++show s2++")"
-
+{-
   putStr "Unpack-then-sum: "
   _ <- timePrint $ evaluate $ force $ pureSum $ unpackTree tr'
 
@@ -116,7 +116,7 @@ treebench = do
 
   putStr "map-on-packed: "
   _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
-
+-}
   return ()
 
 

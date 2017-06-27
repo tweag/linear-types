@@ -27,6 +27,7 @@ module Cursors.Mutable
       -- * Utilities for unboxed usage
     , Has#, withHas#, unsafeCastHas#
     , readIntHas#, readWord8Has#
+    , traceHas#
       
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
@@ -35,6 +36,7 @@ module Cursors.Mutable
     where      
 
 import Linear.Std
+import Linear.Unsafe(unsafeCastLinear)
 import qualified ByteArray as ByteArray
 
 import Control.DeepSeq
@@ -46,10 +48,10 @@ import Foreign.Storable
 import Prelude hiding (($))
 import Cursors.UnboxedHas as UH
 import GHC.Types(RuntimeRep, Type)
-import GHC.Prim(TYPE, plusAddr#)
+import GHC.Prim(TYPE, plusAddr#, addr2Int#)
 import Data.ByteString.Internal (ByteString(..))
 import GHC.ForeignPtr (ForeignPtr(..))
-
+import System.IO.Unsafe (unsafePerformIO)
 
 readInt = ByteArray.headInt
     
@@ -198,6 +200,14 @@ readWord8Has# = UH.headWord8
 {-# INLINE unsafeCastHas# #-}
 unsafeCastHas# :: Has# a ⊸ Has# b
 unsafeCastHas# = UH.unsafeCast
+
+showHas# :: Has# a -> String
+showHas# addr = show (I# (addr2Int# addr))
+
+traceHas# :: String -> Has# a ⊸ Has# a
+traceHas# str = unsafeCastLinear
+                (\x -> case unsafePerformIO (putStrLn (str++showHas# x)) of
+                        () -> x)
 
 -- Tests:
 --------------------------------------------------------------------------------
