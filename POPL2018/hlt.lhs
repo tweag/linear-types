@@ -1273,7 +1273,7 @@ are handled straightforwardly by (m.abs) and (m.app).
 
 The handling of data constructors and case expressions is a
 distinctive aspect of our design.  For constructor applications, rule
-(con), everything is straightforward: we tread the data constructor in
+(con), everything is straightforward: we treat the data constructor in
 precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
@@ -1290,7 +1290,7 @@ the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
 that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
-specifies that is it consumed once if the constructor is (\fref{def:consumed}).
+specifies that is it consumed once if the constructor is (\fref{def:consume}).
 
 To put it another way, suppose one of the linear
 fields\footnote{
