@@ -1178,7 +1178,7 @@ For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with its multiplicity $q$.  Remember, this
-is an explicitly-typed intermediate language; in the source langauge
+is an explicitly-typed intermediate language; in the source language
 this multiplicity is inferred.
 
 The dual application rule (app) is more interesting:
