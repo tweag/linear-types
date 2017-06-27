@@ -828,6 +828,7 @@ course, not all functions are linear: a function may legitimately
 demand unrestricted input.  For example, the function |f| above
 consumed |ys| twice, and so
 |f| needs an unrestricted arrow for that argument.
+\label{sec:compatibility}
 
 % The type of |(++)| tells us that if we have a list |xs| with
 % multiplicity $1$, appending any other list to it will never duplicate
@@ -1096,11 +1097,9 @@ makes no claim on how often that argument is consumed (\fref{def:consume}).
 % that position, data which \emph{must} reside in the dynamic heap;
 % while a multiplicity of $1$ means that data at that position
 % \emph{can} reside in either heap.
-For simplicity's sake, we assume
-that the multiplicities $q_i$ must be concrete (\emph{i.e.} either $1$
-or $ω$) even though \HaskeLL{} has multiplicity-polymorphic data
-types (see \fref{sec:linear-io} for an example).
-\simon{I think we should allow multiplicity polymorphism, sinc we use it in examples}
+All the variables in the multiplicities $q_i$ must be among
+$π_1…π_n$; we write $q_i[p_1…p_n]$ for the substitution of $π_i$ by
+$p_i$.
 
 % For most purposes, $c_k$ behaves like a constant with the type
 % $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
@@ -1177,7 +1176,7 @@ For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with its multiplicity $q$.  Remember, this
-is an explicitly-typed intermediate language; in the source langauge
+is an explicitly-typed intermediate language; in the source language
 this multiplicity is inferred.
 
 The dual application rule (app) is more interesting:
@@ -1187,12 +1186,12 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by ``multiplying'' all the multiplicities in $\Delta$ by $q$,
+express this by ``scaling'' all the multiplicities in $\Delta$ by $q$,
 thus $q\Delta$.  Finally we need to add together all the
 multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
 conclusion of the rule.
 
-In writing this rule we needed to ``multiply'' a context by
+In writing this rule we needed to ``scale'' a context by
 a multiplicity, and ``add'' two contexts.  We pause to define these operations.
 \begin{definition}[Context addition]~
   \begin{align*}
@@ -1272,7 +1271,7 @@ are handled straightforwardly by (m.abs) and (m.app).
 
 The handling of data constructors and case expressions is a
 distinctive aspect of our design.  For constructor applications, rule
-(con), everything is straightforward: we tread the data constructor in
+(con), everything is straightforward: we treat the data constructor in
 precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
@@ -1285,17 +1284,17 @@ for |let|, we expect |p| to be inferred from an un-annotated |case| in
 the source language.
 
 The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
-the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
+the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
 that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
-specifies that is it consumed once if the constructor is (\fref{def:consumed}).
+specifies that is it consumed once if the constructor is (\fref{def:consume}).
 
 To put it another way, suppose one of the linear
 fields\footnote{
 Recall \fref{sec:non-linear-constructors}, which described
 how each constructor can have a mixture of linear and non-linear fields).}
-of $c_k$ is used non-linearly in $u_k$.  Then, $q_I=1$ (it is a linear field),
+of $c_k$ is used non-linearly in $u_k$.  Then, $q_i=1$ (it is a linear field),
 so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
 forces the strutinee to be used non-linearly, which is just what we want.
 Here are some concrete examples:
@@ -1310,6 +1309,9 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 |swap| a linear type.  (Actually its most general type is polymorphic:
 |swap :: forall p. (a,b) -> _ p (b,a)|.
 
+\subsection{Design choices \& trade-offs}
+
+\paragraph{Case rule}
 This particular formulation of the |case| rule is not implied by the
 rest of the system: only the case $p=1$ is actually necessary.
 \simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
@@ -1325,10 +1327,9 @@ libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
 backwards compatibility, which is a design goal of
 \HaskeLL{}.\improvement{Announce here what it means in terms of linear
-logic maybe?}
+  logic maybe?}
 
-\subsection{Discussion}
-
+\paragraph{Subtyping}
 \simon{What about polymorphism? See my email.}
 One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
@@ -1344,7 +1345,11 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
   f :: Int → Int
   g :: (Int -> Int) -> Bool
 \end{code}
-then the call |(g f)| is ill-typed, even though |f| provides more guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)| makes the expression typeable, as the reader may check.
+then the call |(g f)| is ill-typed, even though |f| provides more
+guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
+makes the expression typeable, as the reader may check.
+
+\paragraph{Polymorphism}
 
 
 \section{Applications}
@@ -1640,51 +1645,132 @@ logic — see \fref{sec:applications}; (c) and decisively, linear type systems
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
-\subsection{Linearity as a property of types vs. a property of bindings}
+\subsection{Linearity via arrows vs. linearity via kinds}
 
-In several presentations \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016}
-programming languages incorporate
-linearity by dividing types into two kinds. A type is either linear
-or unrestricted.
 
-In effect, this distinction imposes a clean separation between the linear world
-and the unrestricted world. An advantage of this approach is that it
-instantiates both to linear types and to uniqueness types depending on
-how they the two worlds relate, and even have characteristics of
-both~\cite{devries_linearity_2017}.
+In a type system capturing linearity, a design choice is which device
+to use to distinguish linear objects from regular ones.  Our choice is
+to extend the arrow type: the linear arrow introduces linear objects
+in the environment, while the unrestricted arrow introduces
+unrestricted objects. This choice is featured in the work of
+\cite{mcbride_rig_2016,ghica_bounded_2014} and is ultimately inspired
+by Girard's presentation of linear logic, which features only linear
+arrows, and where the unrestricted arrow $A → B$ is encoded as
+$!A ⊸ B$.
 
-Such approaches have been very successful for theory: see for instance
-the line of work on so-called \emph{mixed linear and non-linear logic}
-(usually abbreviated \textsc{lnl}) started by
-\citet{benton_mixed_1995}. However, for practical language design,
-code duplication between the linear an unrestricted worlds quickly
-becomes costly. So language designers try to create languages with some
-kind of kind polymorphism to overcome this limitation. This usually
-involves a subkinding relation and bounded polymorphism, and these kind
-polymorphic designs are complex. See \citet{morris_best_2016}
-for a recent example. We argue
-that by contrast, the type system of \calc{} is simpler.
+Another popular choice
+\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011} is
+to separate types themselves into two kinds: linear and
+unrestricted. Values with a type whose kind is linear will be linear,
+and unrestricted otherwise.  In such designs, every type constructor
+typically exists in two flavours: one constructing a linear type and
+one constructing an unrestricted type. (Thus in particular such systems
+feature ``linear arrows'', but have a completely different
+interpretation from ours.)
 
-The complexity introduced by kind polymorphism and subtyping relations
-makes retrofitting a rich core language such as \textsc{ghc}'s an
-arduous endeavour. \textsc{ghc} already supports impredicative
-dependent types and a wealth of unboxed or otherwise primitive types
-that cannot be substituted for polymorphic type arguments. It is not
-clear how to support linearity in \textsc{ghc} by extending its kind system.
-In contrast, our design inherits many features of \citeauthor{mcbride_rig_2016}'s,
-including its compatibility with dependent types, and
-such compatibility is pretty much necessary to accommodate the dependently-typed kinds of \textsc{ghc}.
+Advantages of ``linearity via kinds'' include:
 
-\subsection{Alms}
-Alms~\cite{tov_practical_2011} is an \textsc{ml}-like language based on affine types (a variant
-of linear types where values can be used \emph{at most} once). It is
-uses kinds to separate affine from unrestricted arguments.
 
-It is a case in point for kind-based systems being more complex: for
-the sake polymorphism, Alms deploys an elaborate dependent kind
-system. Even if such a kind system could be added to an existing
-language implementation, Alms does not attempt to be backwards
-compatible with an \textsc{ml} dialect.
+\begin{itemize}
+\item It is possible to express the linearity of an object even on the
+  right-hand-side of an arrow (and in fact even in absence of an arrow
+  type). In contrast, in our system if one wants to indicate that a
+  returned value is to be used linearly, we have to use a
+  double-negation trick. That is, given $f : A → (B ⊸ r) ⊸ r$, then
+  $B$ can be used a single time in the (single) continuation, and
+  effectively $f$ ``returns'' a single $B$.
+
+%   Two kinds is also more easily compatible with using different
+% representations for linear and non-linear values, though this would
+% require that the conversion between linear and non-linear type be
+% explicit, the sub-kinding of Fo would severely limit this option. At
+% any rate, I doubt that this is immensly useful except in DSLs (in
+% which it can be highly)
+
+% JP: I think that this is largely orthogonal. Indeed the polymorphism
+% of the implementation is only linked to the polymorphism of
+% linearity. So this discussion is subsumed by the upcoming discussion
+% on polymorphism.
+
+  
+
+\end{itemize}
+
+Advantages of ``Linearity via arrows'' include:
+
+\begin{itemize}
+\item Better subsumption properties.
+  When retrofitting linear types in an existing language, it is
+  important to share has much code as possible between linear and
+  non-linear code. In a system with linearity on arrows, the
+  subsumption relation (linear arrows subsume unrestricted arrows)
+  means that much linear code can be used as-is from unrestricted
+  code. This property is discussed at length in \fref{sec:compatibility}.
+
+\item Easier polymorphism.  In the cases where code-sharing requires
+  to use polymorphism, linearity on arrows is simpler to use.  Indeed,
+  linearity polymorphism can be supported by adding a special-purpose
+  quantification, which is syntactically separate and does not
+  interfere with any other aspect of the type-system. In contrast, if
+  linearity is encoded in kinds, one needs
+  kind-polymorphism. Furthermore, the subsumption property must be
+  encoded via a sub-kinding property, which is not easy to get right,
+  especially in the presence of ML-style polymorphism. The difficulty
+  is witnessed in the work of \citet{morris_best_2016}. Several of
+  applications (including monads) require bounded polymorphism, while
+  we can avoid it.
+
+\item Exensibility. 
+  It is easy to extend our system to any base set of multiplicities
+  with a ring structure (\fref{sec:extending-multiplicities}), which
+  is useful to support affine types and dependent linear types.
+  Supporting such extensions require ad-hoc work in a multiple-kind
+  system. Indeed, supporting affine types requires changes in the
+  subkinding system, which in turns impacts unification; and while
+  there are systems with two-kinds and dependent types, they are only
+  trivial in the sense that the dependent product is never linear.
+
+\item Easy conversion of existing code.  Linearity-on-arrow makes it
+  safe to change any first-order function to a linear arrow where it
+  applies, because of the subsumption property. In the two-kind
+  approach, this common case requires to introduce a polymorphism over
+  kinds.
+
+  % We also anticipate that we can leverage programmers’ annotation to
+  % make linear functions always inlinable.
+
+  % JP: probably not an
+  % advantage; the same can be done with kinds, probably. I believe
+  % the tradeoff is between unique/linear.
+
+  % We have applications where we implement something using unsafe
+  % primitive that are not linear we expose a safe API where the user
+  % has to use linear function. I don’t know how we could do the same
+  % using a two-kind system.
+  % JP: I do not understand this one.
+
+\item Easier implementation. We could implement a working prototype of
+  GHC linearity-on-arrow, and our patch is only a little over 1000loc.
+  While this is only anectodal evidence, we attribute the relative
+  simplicity of the implementation to the fact that we do not need to
+  keep track of the kind of types in the variables, which is a
+  daunting task in GHC's type-checker \jp{why?}.
+
+  \textsc{Ghc} already supports impredicative dependent types and a
+  wealth of unboxed or otherwise primitive types and kinds that cannot
+  be substituted for polymorphic type arguments.  Therefore is is not
+  clear how to support linearity in \textsc{ghc} by extending its kind
+  system.
+
+\end{itemize}
+
+% Such approaches have been very successful for theory: see for instance
+% the line of work on so-called \emph{mixed linear and non-linear logic}
+% (usually abbreviated \textsc{lnl}) started by
+% \citet{benton_mixed_1995}.
+
+% JP: I don't know what theory this refers to. Also I do not believe
+% that this is relevant for this paper.
 
 \subsection{Ownership typing à la Rust}
 
@@ -1911,6 +1997,7 @@ Formalising and implementing the integration of multiplicity
 annotation in the cardinality analysis is left as future work.
 
 \subsection{Extending multiplicities}
+\label{sec:extending-multiplicities}
 
 \improvement{This section could speak about the borrowing multiplicity.}
 For the sake of this article, we use only $1$ and $ω$ as
