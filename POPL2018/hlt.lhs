@@ -560,22 +560,10 @@ and return a new one; here |readLine| consumes the |File| and produces a new one
 and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
-operations with the IO monad. But in fact it is often very useful do to so,
-because we can use a phantom type to encode the state of the resource (similar to
-typestate).  For example
-\begin{code}
-data SocketState = Ready | Bound | Listening | Open
-data Socket (sock_state :: SocketState)  -- No data constructors
-newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
-listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
-...etc...
-\end{code}
-Here, the type argument to |Socket| records the state of the socket, and that
-state changes as execution proceeds.  Here it is very convenient to have
-a succession of linear variables representing the socket, where the type
-of the variable reflects the state the socket is in, and limits which
-operations can legally be applied to it.
+operations with the IO monad. But in fact it is often very useful do
+to so, as we will see in \fref{sec:sockets}, because we can use a
+phantom type to encode the state of the resource (similar to a
+typestate).
 
 % \subsection{Lifting files}
 %
@@ -1484,6 +1472,25 @@ to index our arrays by a type-level list\footnote{Haskell has
 
 \todo{copy actual \textsc{api}}
 
+\subsection{Sockets with type-level state}
+\label{sec:sockets}
+
+\begin{code}
+data SocketState = Ready | Bound | Listening | Open
+data Socket (sock_state :: SocketState)  -- No data constructors
+newSocket :: SocketType -> IOL 1 (Socket Ready)
+bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
+listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
+...etc...
+\end{code}
+Here, the type argument to |Socket| records the state of the socket, and that
+state changes as execution proceeds.  Here it is very convenient to have
+a succession of linear variables representing the socket, where the type
+of the variable reflects the state the socket is in, and limits which
+operations can legally be applied to it.
+
+\todo{The rest of the section}
+
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
 
@@ -1519,10 +1526,6 @@ where the impure \textsc{api} is a simple tree
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
-
-\subsection{Some protocol example}
-
-\todo{We're missing something here}
 
 \subsection{Feedback from industrial experience}
 
