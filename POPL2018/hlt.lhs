@@ -31,6 +31,10 @@
 %format allocT = "alloc_T"
 %format freeT = "free_T"
 %format copyT = "copy_T"
+%format IOL = "\varid{IO}_{\varid{L}}"
+%format returnIOL = "\varid{return}_{\varid{IO}_{\varid{L}}}"
+%format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
+%format unIOL = "\varid{unIO}_{\varid{L}}"
 %format __ = "\_"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
