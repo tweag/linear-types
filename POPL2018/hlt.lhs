@@ -567,7 +567,7 @@ typestate).  For example
 data SocketState = Ready | Bound | Listening | Open
 data Socket (sock_state :: SocketState)  -- No data constructors
 newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready -> Port ⊸ IOL 1 (Socket Bound)
+bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
 listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
 ...etc...
 \end{code}
@@ -691,8 +691,15 @@ operations can legally be applied to it.
 \label{sec:consumed}
 
 We have said informally that \emph{``a linear function consumes its argument
-exactly once''}. But what does ``consuming a value exactly once''
-mean, exactly?  Here is a more precise operational intuition:
+exactly once''}. But what exactly does that mean?
+
+\begin{quote}
+\emph{Meaning of the linear arrow}:
+|f :: s ⊸ t| guarantees that if |(f u)| is consumed exactly once,
+then the argument |u| is consumed exactly once.
+\end{quote}
+To make sense of this statement we need to know what ``consumed exactly once'' means.
+Our definition is based on the type of the value concerned:
 \begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
@@ -703,12 +710,12 @@ mean, exactly?  Here is a more precise operational intuition:
 \end{itemize}
 \end{definition}
 \noindent
-We can now give a more precise definition of what a linear function
-|f :: s ⊸ t| means: |f| guarantees that if |(f u)| is consumed exactly once,
-then |u| is consumed exactly once.
+This definition is enough to allow programmers to reason about the
+typing of their functions, and it drives the formal typing judgements in
+\fref{sec:statics}.
 
-Note that a linear arrow specifies how the function uses its argument. It does \emph{not}
-restrict the arguments to which the function can be applied.
+Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
+restrict \emph{the arguments to which the function can be applied}.
 In particular, a linear function cannot assume that it is given the
 unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
 this is fine:
@@ -843,8 +850,8 @@ type to contain linear values (such as mutable arrays) without
 compromising safety.  For example:
 \begin{code}
 upd :: (MArray Char, MArray Char) ⊸ Int -> (MArray Char, MArray Char)
-upd (a1, a2) n  | n >= 10   = (write a1 n 'x', a2)
-                | otherwise = (write a2 n 'o', a1)
+upd (a1, a2) n  | n >= 10    = (write a1 n 'x', a2)
+                | otherwise  = (write a2 n 'o', a1)
 \end{code}
 
 \subsection{Unrestricted data constructors}
@@ -1248,8 +1255,8 @@ Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts.
 
 Returning to the typing rules in \fref{fig:typing}, rule (let) is like
-a combination of (abs) and (app).  Again, the $\flet$ bindings are
-explicitly annotated with their multiplicities.
+a combination of (abs) and (app).  Again, each $\flet$ binding is
+explicitly annotated with its multiplicity.
 
 The variable rule (var) uses a standard idiom:
 $$\varrule$$
@@ -1276,10 +1283,10 @@ precisely the same way as an application of a function with that data constructo
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-First, notice that the |case| keyword is itself annotated with a
+First, notice that the |case| keyword is annotated with a
 multiplicity |p|; this is precisely analogous to the explicit
 multiplicity on a |let| binding.  It says how often the scrutinee (or,
-in the case of |let|, the right hand side) will be consumed.  Just as
+for a |let|, the right hand side) will be consumed.  Just as
 for |let|, we expect |p| to be inferred from an un-annotated |case| in
 the source language.
 
@@ -1307,27 +1314,29 @@ In |fst|, the second component of the pair is used non-linearly (by being
 discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear type
 for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
 |swap| a linear type.  (Actually its most general type is polymorphic:
-|swap :: forall p. (a,b) -> _ p (b,a)|.
+|swap :: forall p. (a,b) -> _ p (b,a)|.)
 
 \subsection{Design choices \& trade-offs}
 
-\paragraph{Case rule}
-This particular formulation of the |case| rule is not implied by the
-rest of the system: only the case $p=1$ is actually necessary.
-\simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
-  paragraph is opaque to me.}
-\jp{In short: $case_ω$ allows to type-check |fst| while keeping $(,)$ purely linear.}
-Yet, providing the case $p=ω$
-is the design choice which makes it possible to consider data-type
-constructors as linear by default, while preserving the semantics of
-the intuitionistic $λ$-calculus (as we already stated in
-\fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
-defined in libraries which are not aware of linear type (\emph{i.e.}
-libraries in pure Haskell) can nevertheless be immediately useful in a
-linear context. Inheritance of multiplicity is thus crucial for
-backwards compatibility, which is a design goal of
-\HaskeLL{}.\improvement{Announce here what it means in terms of linear
-  logic maybe?}
+\simon{I removed the discussion paragraph about $case_w$; it didn't seem to me to
+pay its way.  But it's only commented out.}
+% \paragraph{Case rule}
+% This particular formulation of the |case| rule is not implied by the
+% rest of the system: only the case $p=1$ is actually necessary.
+% \simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
+%  paragraph is opaque to me.}
+% \jp{In short: $case_ω$ allows to type-check |fst| while keeping $(,)$ purely linear.}
+% Yet, providing the case $p=ω$
+% is the design choice which makes it possible to consider data-type
+% constructors as linear by default, while preserving the semantics of
+% the intuitionistic $λ$-calculus (as we already stated in
+% \fref{sec:linear-constructors}). For \HaskeLL{}, it means that types
+% defined in libraries which are not aware of linear type (\emph{i.e.}
+% libraries in pure Haskell) can nevertheless be immediately useful in a
+% linear context. Inheritance of multiplicity is thus crucial for
+% backwards compatibility, which is a design goal of
+% \HaskeLL{}.\improvement{Announce here what it means in terms of linear
+%   logic maybe?}
 
 \paragraph{Subtyping}
 \simon{What about polymorphism? See my email.}
