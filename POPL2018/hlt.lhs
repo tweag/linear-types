@@ -1097,11 +1097,9 @@ makes no claim on how often that argument is consumed (\fref{def:consume}).
 % that position, data which \emph{must} reside in the dynamic heap;
 % while a multiplicity of $1$ means that data at that position
 % \emph{can} reside in either heap.
-For simplicity's sake, we assume
-that the multiplicities $q_i$ must be concrete (\emph{i.e.} either $1$
-or $ω$) even though \HaskeLL{} has multiplicity-polymorphic data
-types (see \fref{sec:linear-io} for an example).
-\simon{I think we should allow multiplicity polymorphism, sinc we use it in examples}
+All the variables in the multiplicities $q_i$ must be among
+$π_1…π_n$; we write $q_i[p_1…p_n]$ for the substitution of $π_i$ by
+$p_i$.
 
 % For most purposes, $c_k$ behaves like a constant with the type
 % $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
@@ -1286,7 +1284,7 @@ for |let|, we expect |p| to be inferred from an un-annotated |case| in
 the source language.
 
 The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
-the conclusion.  Now consider the bindings $(x_i :_{pq_i} A_i)$ in the
+the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
 that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
@@ -1296,7 +1294,7 @@ To put it another way, suppose one of the linear
 fields\footnote{
 Recall \fref{sec:non-linear-constructors}, which described
 how each constructor can have a mixture of linear and non-linear fields).}
-of $c_k$ is used non-linearly in $u_k$.  Then, $q_I=1$ (it is a linear field),
+of $c_k$ is used non-linearly in $u_k$.  Then, $q_i=1$ (it is a linear field),
 so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
 forces the strutinee to be used non-linearly, which is just what we want.
 Here are some concrete examples:
