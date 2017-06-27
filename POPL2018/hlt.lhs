@@ -1309,6 +1309,9 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 |swap| a linear type.  (Actually its most general type is polymorphic:
 |swap :: forall p. (a,b) -> _ p (b,a)|.
 
+\subsection{Design choices \& trade-offs}
+
+\paragraph{Case rule}
 This particular formulation of the |case| rule is not implied by the
 rest of the system: only the case $p=1$ is actually necessary.
 \simon{I don't understand.  What would we do without it?  Is it optional in |let| as well?  This whole
@@ -1324,10 +1327,9 @@ libraries in pure Haskell) can nevertheless be immediately useful in a
 linear context. Inheritance of multiplicity is thus crucial for
 backwards compatibility, which is a design goal of
 \HaskeLL{}.\improvement{Announce here what it means in terms of linear
-logic maybe?}
+  logic maybe?}
 
-\subsection{Discussion}
-
+\paragraph{Subtyping}
 \simon{What about polymorphism? See my email.}
 One might, thus, expect the type $A⊸B$ to be a subtype of $A→B$. This
 is however, not so, because there is no notion of subtyping in \calc{}. This
@@ -1343,7 +1345,11 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
   f :: Int → Int
   g :: (Int -> Int) -> Bool
 \end{code}
-then the call |(g f)| is ill-typed, even though |f| provides more guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)| makes the expression typeable, as the reader may check.
+then the call |(g f)| is ill-typed, even though |f| provides more
+guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
+makes the expression typeable, as the reader may check.
+
+\paragraph{Polymorphism}
 
 
 \section{Applications}
