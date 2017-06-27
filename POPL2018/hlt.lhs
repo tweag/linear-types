@@ -1032,7 +1032,7 @@ way we make precise much of the informal discussion above.
 
   \figuresection{Type declarations}
   \begin{align*}
-    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+    \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
   \end{align*}
 
   \figuresection{Types}
@@ -1040,7 +1040,7 @@ way we make precise much of the informal discussion above.
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
       & ||  ∀ρ. A &\text{multiplicity-dependent type}\\
-      & ||  D &\text{data type}
+      & ||  D~π_1~…~π_n &\text{data type}
   \end{align*}
 
   \figuresection{Terms}
@@ -1085,7 +1085,7 @@ We use the following abbreviations:
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
-  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 The above declaration means that \(D\) has \(m\) constructors \(c_k\)
 (where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
@@ -1127,9 +1127,9 @@ types (see \fref{sec:linear-io} for an example).
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
-\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
-      x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
-      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n_k-1}} A_{n_k} →_{q_{n_k}} D$}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~p_1~…~p_n \\ Δ, x₁:_{pq_i[p_1…p_n]} A_i, …,
+      x_{n_k}:_{pq_{n_k}[p_1…p_n]} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n_k-1}} A_{n_k} →_{q_{n_k}} D~π_1~…~π_n$}}
     {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
@@ -1143,8 +1143,8 @@ types (see \fref{sec:linear-io} for an example).
     \apprule
 
     \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
-        A_n →_{q_n} D$ constructor}}
-    {ωΓ+\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n : D}\text{con}
+        A_n →_{q_n} D~π_1~…~π_n$ constructor}}
+    {ωΓ+\sum_i q_i[p₁…p_n]Δ_i ⊢ c_k  t₁ … t_n : D~p₁~…~p_n}\text{con}
 
     \caserule
 
