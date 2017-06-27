@@ -1043,13 +1043,13 @@ way we make precise much of the informal discussion above.
   \begin{align*}
     e,s,t,u & ::= \\
             & ||  x & \text{variable} \\
-            & ||  λ(x:_qA). t & \text{abstraction} \\
+            & ||  λ_q (x{:}A). t & \text{abstraction} \\
             & ||  t s & \text{application} \\
             & ||  λπ. t & \text{multiplicity abstraction} \\
             & ||  t p & \text{multiplicity application} \\
             & ||  c t₁ … t_n & \text{data construction} \\
             & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-            & ||  \flet x_1 :_{q₁}A₁ = t₁ … x_n :_{q_n}A_n = t_n \fin u & \text{let}
+            & ||  \flet[q] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
   \end{align*}
 
   \caption{Syntax of the linear calculus}
@@ -1133,7 +1133,7 @@ types (see \fref{sec:linear-io} for an example).
     \varrule
 
     \inferrule{Γ, x :_{q} A  ⊢   t : B}
-    {Γ ⊢ λ(x:_q A). t  :  A  →_q  B}\text{abs}
+    {Γ ⊢ λ_q (x{:}A). t  :  A  →_q  B}\text{abs}
 
     \apprule
 
@@ -1143,8 +1143,8 @@ types (see \fref{sec:linear-io} for an example).
 
     \caserule
 
-    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q₁} A₁ …  x_n:_{q_{n}} A_n ⊢ u : C }
-    { Δ+\sum_i q_iΓ_i ⊢ \flet x_1 :_{q₁}A_1 = t₁  …  x_n :_{q_n}A_n = t_n  \fin u : C}\text{let}
+    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q} A₁ …  x_n:_{q} A_n ⊢ u : C }
+    { Δ+\sum_i qΓ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
     {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
@@ -1170,7 +1170,7 @@ inputs of the judgement, and the \emph{multiplicities} as outputs.
 
 For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
-Notice that in \calc{}, the lambda abstraction  $λ(x:_q A). t$
+Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with its multiplicity $q$.  Remember, this
 is an explicitly-typed intermediate language; in the source langauge
 this multiplicity is inferred.
@@ -1988,10 +1988,10 @@ probably fix this.}
 \begin{figure}
   \figuresection{Translation of typed terms}
   \begin{align*}
-    (λ(x:_qA). t)^* &= λ(x:_qA). (t)^* \\
+    (λ_q(x{:}A). t)^* &= λ_q(x{:}A). (t)^* \\
     x^*             &= x \\
     (t  x )^*     &= (t)^*  x \\
-    (t  u )^*     &= \flet y :_q A = (u)^* \fin (t)^*  y &
+    (t  u )^*     &= \flet[q] y : A = (u)^* \fin (t)^*  y &
     \text{with $Γ⊢ t : A →_q B$}
   \end{align*}
   \begin{align*}
@@ -2001,7 +2001,7 @@ probably fix this.}
   \end{align*}
   \begin{align*}
     (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-    (\flet x_1:_{q₁}A_1= t₁  …  x_n :_{q_n}A_n = t_n \fin u)^* & = \flet x₁:_{q₁}A_1 = (t₁)^*,…, x_n :_{q_n}A_n=_{q_n} (t_n)^* \fin (u)^*
+    (\flet[q] x_1: A_1= t₁  …  x_n : A_n = t_n \fin u)^* & = \flet[q] x₁:A_1 = (t₁)^*,…, x_n:A_n= (t_n)^* \fin (u)^*
   \end{align*}
 
   \caption{Syntax for the Launchbury-style semantics}
@@ -2010,10 +2010,10 @@ probably fix this.}
 
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λx:_pA. e ⇓ Γ : λx:_pA. e}\text{abs}
+    \inferrule{ }{Γ : λ_p(x{:}A). e ⇓ Γ : λ_p(x{:}A). e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓ Δ : λy:_pA.e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+    \inferrule{Γ : e ⇓ Δ : λ_p(y{:}A).e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
       e x ⇓ Θ : z} \text{application}
 
     \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A = z) :
@@ -2023,7 +2023,7 @@ probably fix this.}
     {(Γ,l :_1 A = z) : l ⇓ (Δ, l :_1 A = z) : l}\text{mutable cell}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
-    {Γ : \flet x₁ :_{q₁} A_1 = e₁ … x_n :_{q_n} A_n = e_n \fin e ⇓ Δ :
+    {Γ : \flet[q] x₁ : A_1 = e₁ … x_n : A_n = e_n \fin e ⇓ Δ :
       z}\text{let}
 
     \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
@@ -2058,7 +2058,7 @@ probably fix this.}
 
 \begin{figure}
   \begin{mathpar}
-\inferrule{ }{Ξ ⊢ (Γ || λx:_qA. e ⇓ Γ || λx:_qA. e) :_ρ A→_q B, Σ}\text{abs}
+\inferrule{ }{Ξ ⊢ (Γ || λ_q(x{:}A). e ⇓ Γ || λ_q (x{:}A). e) :_ρ A→_q B, Σ}\text{abs}
 
 \inferrule
     {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
@@ -2077,8 +2077,8 @@ probably fix this.}
 {\text{linear variable}}
 
 \inferrule
-  {Ξ ⊢ (Γ,       x_1 :_{ρq_1} A_1 = e_1 … x_n :_{pq_n} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
-  {Ξ ⊢ (Γ||\flet x_1 :_{q_1}  A_1 = e_1 … x_n :_{q_n} A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ,       x_1 :_{ρq} A_1 = e_1 … x_n :_{ρq} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet[q] x_1 :  A_1 = e_1 … x_n : A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
 {\text{let}}
 
 \inferrule
@@ -2139,7 +2139,7 @@ probably fix this.}
   Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
   $$
   Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
-  bindings, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  bindings\improvement{needs more effort in our restricted $\flet[q]$ calculus}, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
   for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
   $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
   $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
