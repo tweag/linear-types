@@ -31,6 +31,10 @@
 %format allocT = "alloc_T"
 %format freeT = "free_T"
 %format copyT = "copy_T"
+%format IOL = "\varid{IO}_{\varid{L}}"
+%format returnIOL = "\varid{return}_{\varid{IO}_{\varid{L}}}"
+%format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
+%format unIOL = "\varid{unIO}_{\varid{L}}"
 %format __ = "\_"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
@@ -949,8 +953,8 @@ And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
 
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
-  do  { f <- openFile s   -- openFile :: FilePath -> IO 1 (File ByteString)
-      ; d <- getData      -- getDate  :: IO ω Date
+  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+      ; d <- getData      -- |getDate  :: IO ω Date|
       ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
@@ -1028,7 +1032,7 @@ way we make precise much of the informal discussion above.
 
   \figuresection{Type declarations}
   \begin{align*}
-    \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+    \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
   \end{align*}
 
   \figuresection{Types}
@@ -1036,7 +1040,7 @@ way we make precise much of the informal discussion above.
   A,B &::=\\
       & ||  A →_q B &\text{function type}\\
       & ||  ∀ρ. A &\text{multiplicity-dependent type}\\
-      & ||  D &\text{data type}
+      & ||  D~π_1~…~π_n &\text{data type}
   \end{align*}
 
   \figuresection{Terms}
@@ -1068,6 +1072,7 @@ its type and multiplicity; and multiplicity abstraction and application
 are explicit.  The source language will use type inference to fill in
 much of this information, but we do not address the challenges of type
 inference here.
+\improvement{Though there are some thoughts in \fref{sec:implementation}}
 
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
 arrows (albeit multiplicity-annotated ones), data types, and
@@ -1080,7 +1085,7 @@ We use the following abbreviations:
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
-  \data D  \mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
 The above declaration means that \(D\) has \(m\) constructors \(c_k\)
 (where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
@@ -1122,9 +1127,9 @@ types (see \fref{sec:linear-io} for an example).
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
-\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D  \\ Δ, x₁:_{pq_i} A_i, …,
-      x_{n_k}:_{pq_{n_k}} A_{n_k} ⊢ u_k : C \\
-      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n-1}} A_{n_k} →_{q_{n_k}} D$}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~p_1~…~p_n \\ Δ, x₁:_{pq_i[p_1…p_n]} A_i, …,
+      x_{n_k}:_{pq_{n_k}[p_1…p_n]} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n_k-1}} A_{n_k} →_{q_{n_k}} D~π_1~…~π_n$}}
     {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
@@ -1138,8 +1143,8 @@ types (see \fref{sec:linear-io} for an example).
     \apprule
 
     \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
-        A_n →_{q_n} D$ constructor}}
-    {ωΓ+\sum_i q_iΔ_i ⊢ c_k  t₁ … t_n : D}\text{con}
+        A_n →_{q_n} D~π_1~…~π_n$ constructor}}
+    {ωΓ+\sum_i q_i[p₁…p_n]Δ_i ⊢ c_k  t₁ … t_n : D~p₁~…~p_n}\text{con}
 
     \caserule
 
@@ -1342,7 +1347,7 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
 then the call |(g f)| is ill-typed, even though |f| provides more guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)| makes the expression typeable, as the reader may check.
 
 
-\section{Evaluation}
+\section{Applications}
 \label{sec:evaluation}
 
 Implemented using our branch of the \textsc{ghc} compiler described in
