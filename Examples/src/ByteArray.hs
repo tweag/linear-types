@@ -14,7 +14,8 @@ module ByteArray
     ( WByteArray,
       alloc, freeze, headStorable, 
       withHeadStorable, withHeadStorable2,
-      writeStorable, writeByte,
+      writeStorable, writeStorableIO,
+      writeByte,
       -- * Monomorphic interface
       headWord8, headWord8',
       headInt,
@@ -166,12 +167,16 @@ writeStorable = unsafeCastLinear writeStorable'
 
 {-# INLINE writeStorable' #-}                 
 writeStorable' :: Storable a => a -> WByteArray -> WByteArray
-writeStorable' obj wbarr@WBA{offset,bytes} =
-    unsafeDupablePerformIO effect `seq` wbarr
-  where
-   effect = do i <- readCounter offset
-               poke (castPtr bytes `plusPtr` i) obj
-               incCounter offset (sizeOf obj)
+writeStorable' obj wbarr =
+    unsafeDupablePerformIO (writeStorableIO obj wbarr)
+      `seq` wbarr
+
+{-# INLINE writeStorableIO #-}
+writeStorableIO :: Storable a => a -> WByteArray -> IO ()
+writeStorableIO obj WBA{offset,bytes} =
+    do i <- readCounter offset
+       poke (castPtr bytes `plusPtr` i) obj
+       incCounter offset (sizeOf obj)
 
 {-# NOINLINE freeze #-}
 freeze :: WByteArray ⊸ Unrestricted ByteString

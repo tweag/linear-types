@@ -91,15 +91,13 @@ treebench = do
   [dep] <- getArgs
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
+  putStr "pack-tree: "
+  tr' <- timePrint $ evaluate $ force $ packTree tr
+  putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr')
 
   putStr "sumtree-boxed: "
   s1 <- timePrint $ evaluate $ pureSum tr
   putStrLn $ "    (sum was "++show s1++")"
-
-  putStr "pack-tree: "
-  tr' <- timePrint $ evaluate $ force $ packTree tr
-
-  putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr')
          
   putStr "sumtree-packed: "; hFlush stdout
   s2 <- timePrint $ evaluate $ sumTree tr'
