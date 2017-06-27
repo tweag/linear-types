@@ -39,6 +39,7 @@ library
 
         -- Exposed only for testing:
         PackedTree
+        PackedTree.Unsafe
 
         -- Unfinished:
         -- Protocol, InPlaceArrays, HaskellR, StorageServer, Network,
