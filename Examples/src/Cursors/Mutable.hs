@@ -25,7 +25,8 @@ module Cursors.Mutable
     , tup, untup
 
       -- * Utilities for unboxed usage
-    , withHas# 
+    , Has#, withHas#, unsafeCastHas#
+    , readIntHas#, readWord8Has#
       
       -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
@@ -39,14 +40,18 @@ import qualified ByteArray as ByteArray
 import Control.DeepSeq
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
+import Data.Word
 import GHC.Int
 import Foreign.Storable
 import Prelude hiding (($))
-import Cursors.UnboxedHas
+import Cursors.UnboxedHas as UH
 import GHC.Types(RuntimeRep, Type)
 import GHC.Prim(TYPE, plusAddr#)
 import Data.ByteString.Internal (ByteString(..))
 import GHC.ForeignPtr (ForeignPtr(..))
+
+
+readInt = ByteArray.headInt
     
 -- Hard-coded constant:
 --------------------------------------------------------------------------------
@@ -179,6 +184,20 @@ tup (Needs x) = Needs x
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput fn = ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
+
+--------------------------------------------------------------------------------
+
+{-# INLINE readIntHas# #-}
+readIntHas# :: forall rst . Has# (Int ': rst) ⊸ (# Int, Has# rst #)
+readIntHas# = UH.headInt
+
+{-# INLINE readWord8Has# #-}
+readWord8Has# :: forall rst . Has# (Word8 ': rst) ⊸ (# Word8, Has# rst #)
+readWord8Has# = UH.headWord8
+
+{-# INLINE unsafeCastHas# #-}
+unsafeCastHas# :: Has# a ⊸ Has# b
+unsafeCastHas# = UH.unsafeCast
 
 -- Tests:
 --------------------------------------------------------------------------------

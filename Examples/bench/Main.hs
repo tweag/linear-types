@@ -92,20 +92,24 @@ treebench = do
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
 
-  putStr "Boxed map: "
-  _ <- timePrint $ evaluate $ force $ pureMap (+1) tr
-
   putStr "Sum tree (unpacked): "
-  _ <- timePrint $ evaluate $ pureSum tr
+  s1 <- timePrint $ evaluate $ pureSum tr
+  putStrLn $ "    (sum was "++show s1++")"
 
   putStr "Pack tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
 
+  print tr'
+         
   putStr "Sum packed tree: "; hFlush stdout
-  _ <- timePrint $ evaluate $ sumTree tr'
+  s2 <- timePrint $ evaluate $ sumTree tr'
+  putStrLn $ "    (sum was "++show s2++")"
 
   putStr "Unpack-then-sum: "
   _ <- timePrint $ evaluate $ force $ pureSum $ unpackTree tr'
+
+  putStr "Boxed map: "
+  _ <- timePrint $ evaluate $ force $ pureMap (+1) tr
 
   putStr "unpack/map/repack: "
   _ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'

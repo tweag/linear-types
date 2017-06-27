@@ -23,9 +23,12 @@ module PackedTree
     ( Tree(..), TagTy
     , writeLeaf
     , writeBranch
-    , caseTree, toEither
+    , caseTree2
+--    , caseTree, toEither
     , packTree, unpackTree
-    , sumTree, mapTree, foldTree, unfoldTree
+    , sumTree, mapTree
+--    , foldTree, unfoldTree
+
     -- * Examples
     , tr1, tr2, tr3, pk0, pk1, pk2
     ) where
@@ -40,6 +43,8 @@ import Cursors.Mutable
 
 import Control.DeepSeq
 import Linear.Std
+-- import Linear.Unsafe (unsafeCastLinear2)
+import Unsafe.Coerce (unsafeCoerce)
 import Data.Word
 -- import qualified Data.ByteString as ByteString
 import Prelude hiding (($))
@@ -49,8 +54,6 @@ import GHC.Prim(ord#, Int#, (+#), TYPE)
 import GHC.Int(Int(..))
 import GHC.Types(RuntimeRep)
 import Data.Kind(Type)
-import Cursors.UnboxedHas (Has#)
-import qualified Cursors.UnboxedHas as UH
 ----------------------------------------
 
 -- | A very simple binary tree.
@@ -100,6 +103,7 @@ writeBranch oc = writeC branchTag (unsafeCastNeeds oc)
 --                             r <- get
 --                             return (Branch l r)
 
+#ifndef PUREMODE
 {-# INLINE caseTree #-}
 caseTree :: forall a b.
             Has (Tree ': b)
@@ -110,21 +114,27 @@ caseTree c@(Has bs) f1 f2 =
     case ord# (headWord8' bs) of
       100# -> f1 (unsafeDropBytes 1 c)
       _    -> f2 (unsafeDropBytes 1 c)
-
+#endif
 
 {-# INLINE caseTree2 #-}
 caseTree2 :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
              Has# (Tree ': b)
-          -> (Has# (Int ': b) -> res )
-          -> (Has# (Tree ': Tree ': b) -> res )
+          ⊸  (Has# (Int ': b) ⊸ res )
+          -> (Has# (Tree ': Tree ': b) ⊸ res )
           -> res
-caseTree2 h f1 f2 =
-    case UH.headWord8 h of
-      (# 100 , c2 #) -> f1 (UH.unsafeCast c2)
-      (# _   , c2 #) -> f2 (UH.unsafeCast c2)
+caseTree2 h f1 f2 = f (readWord8Has# (unsafeCastHas# h))
+ where
+   f :: (# Word8, Has# '[] #) ⊸ res
+   f (# 100 , c2 #) = f1 (unsafeCastHas# c2)
+   f (# 111 , c2 #) = f2 (unsafeCastHas# c2)
+   f (# x, c2 #) =       
+       ((error "impossible: got an invalid tag")
+            :: Word8 ⊸ Has# '[] ⊸ res) x c2
 
 type EitherTree b = Either (Has (Int ': b)) (Has (Tree ': Tree ': b))
 
+
+#ifndef PUREMODE
 {-# INLINE toEither #-}
 toEither :: forall b. Has (Tree ': b) -> EitherTree b
 toEither c =
@@ -160,11 +170,13 @@ caseTreeM c f1 f2 =
        if tg == leafTag
         then f1 (unsafeCastHas (rstC c2))
         else f2 (unsafeCastHas (rstC c2))
+#endif
              
 --------------------------------------------------------------------------------
 -- A bytestream-reader monad:
 --------------------------------------------------------------------------------
 
+#ifndef PUREMODE
 newtype ReadHasM (a :: [Type]) b = ReadHasM (ReadM b)
   deriving (Functor, Applicative, Monad)
 
@@ -198,7 +210,7 @@ caseTreeM' (ReadHasM m1) (ReadHasM m2) = ReadHasM $ do
   if tg == leafTag
     then m1
     else m2
-
+#endif
 
 ---------------------------
 -- END UNSAFE
@@ -227,14 +239,18 @@ packTree tr0 = fromHas $ getUnrestricted $
           go right (go left (writeBranch n))
 
 unpackTree :: Packed Tree -> Tree
+#ifdef PUREMODE
+unpackTree = error "FINISHME"
+#else
 unpackTree = foldTree Leaf Branch
+#endif
 
 ---------------------------------------------------
 
 -- Here we manually write functions agains the packed representation.
 
-_sumTree :: Packed Tree -> Int
-_sumTree = foldTree id (+)
+-- _sumTree :: Packed Tree -> Int
+-- _sumTree = foldTree id (+)
 
 -- | Optimizing away allocation.
 sumTree :: Packed Tree -> Int
@@ -307,7 +323,7 @@ sumTree t = fin1
     go1 h = caseTree2 h onLeaf onBranch
 
     onLeaf :: forall r. Has# (Int ': r) -> (# Int#, Has# r #)
-    onLeaf h = let !(# I# n, c #) = UH.headInt h in (# n, c #)
+    onLeaf h = let !(# I# n, c #) = readIntHas# h in (# n, c #)
 
     onBranch :: forall r. Has# (Tree ': Tree ': r) -> (# Int#, Has# r #)
     onBranch h =
@@ -316,7 +332,7 @@ sumTree t = fin1
         (# x +# y,  h'' #)
       } }
 
-
+#ifndef PUREMODE
 {-# INLINABLE foldTree #-}
 foldTree :: forall o. (Int -> o) -> (o -> o -> o) -> Packed Tree -> o
 foldTree leaf branch = snd . go . toHas
@@ -333,6 +349,7 @@ foldTree leaf branch = snd . go . toHas
           (h'', right) = go h'
       in
         (h'', branch left right)
+#endif
 
 {-# INLINABLE unfoldTree #-}
 unfoldTree :: forall s. (s -> Either Int (s,s)) -> s -> Packed Tree
@@ -345,44 +362,46 @@ unfoldTree step seed = fromHas $ getUnrestricted $
       go right (go left (writeBranch n))
     go _ y = linerror "unfoldTree: impossible" y
 
+-- | It is safe to drop read-only Has# pointers.
+dropHas :: Has# r ⊸ a ⊸ a
+dropHas = unsafeCoerce (\ _ x -> x)
+
+dropHas' :: Has# r ⊸ ()
+dropHas' = unsafeCoerce (\ _ -> ())
+
+-- | It is safe to drop numeric types.
+dropNum :: Num r => r ⊸ a ⊸ a
+-- dropNum :: forall r (rep :: RuntimeRep) (a :: TYPE rep) . Num r => r ⊸ a ⊸ a
+dropNum = unsafeCoerce (\ _ x -> x)
+
 {-# INLINABLE mapTree #-}
 mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
-mapTree f pt = fromHas $ getUnrestricted $
-    withOutput (\n -> finishMapDest (mapDest (toHas pt) n))
+mapTree f pt = fromHas $ getUnrestricted fin
   where
-    finishMapDest :: (Unrestricted (Has '[]), Needs '[] t) ⊸ Unrestricted (Has '[t])
-    finishMapDest (Unrestricted _, n) = finish n
+    fin = withHas# (toHas pt) $ \h -> 
+           withOutput (\n -> finishMapDest (mapDest h n))
 
-    mapDest :: Has(Tree ': r) -> Needs(Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
-    mapDest h = caseTree h onLeaf onBranch
+    finishMapDest :: (# Has# '[], Needs '[] t #) ⊸ Unrestricted (Has '[t])
+    finishMapDest (# h, n #) = dropHas h (finish n)
 
-    onBranch :: Has (Tree ': Tree ': r) -> Needs (Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
+    mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)
+    mapDest h = caseTree2 h onLeaf onBranch
+
+    onLeaf :: forall r t . Has# (Int ': r) ->
+              Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)
+    onLeaf h n =
+        let !(# x, h' #) = readIntHas# h in
+        (# h', writeLeaf (f x) n #)
+
+    onBranch :: forall r t . Has# (Tree ': Tree ': r) ->
+                Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)
     onBranch h n = onRightBranch (mapDest h (writeBranch n))
 
-    onRightBranch :: (Unrestricted (Has (Tree ': r)), Needs (Tree ': r) t) ⊸ (Unrestricted (Has r), Needs r t)
-    onRightBranch (Unrestricted h, n) = mapDest h n
+    onRightBranch :: (# Has# (Tree ': r), Needs (Tree ': r) t #)
+                   ⊸ (# Has# r, Needs r t #)
+    onRightBranch (# h, n #) = mapDest h n
 
-    onLeaf :: Has (Int ': r) -> Needs (Tree ': r) t ⊸ (Unrestricted (Has r), Needs r t)
-    onLeaf h n =
-      let (a, h') = readC h
-      in
-        (Unrestricted h', writeLeaf (f a) n)
 
-  -- This version uses linear read and write cursors.
-{- 
-  -- Polymorphic version that works with anything following the Tree in the buffer.
-  go :: forall b t . Has (Tree ': b) ⊸ Needs (Tree ': b) t ⊸
-                     (Has b ⊗ Needs b t)
-  go inC outC =
-       case caseTree' inC of
-         Left  c2 -> let (n,c3) = readC c2 in
-                     Tensor c3 (writeLeaf (n+1) outC)
-         Right c2 ->           
-            writeBranch outC (\oc2 ->
-              let Tensor c3 oc3 = go c2 oc2
-                  Tensor c4 oc4 = go c3 oc3 -- Bug? c4 etc should be weight 1
-              in Tensor c4 oc4)
--}
 
 -- Tree tests:
 ----------------------------------------

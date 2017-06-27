@@ -1,10 +1,19 @@
 {-# LANGUAGE GADTs #-}
 
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeInType #-}
+{-# LANGUAGE RankNTypes #-}
+
 module Linear.Unsafe where
 
 import Linear.Common
 import qualified Unsafe.Coerce as NonLinear
 
+import GHC.Types (Type, TYPE, RuntimeRep)
+
+    
 -- | Linearly typed @unsafeCoerce@
 unsafeCoerce :: a ⊸ b
 unsafeCoerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
@@ -26,5 +35,7 @@ unsafeUnrestricted x = unsafeCoerce $ NotUnrestricted x
 unsafeCastLinear2 :: (a -> b -> c) ⊸ (a ⊸ b ⊸ c)
 unsafeCastLinear2 = unsafeCoerce
 
-unsafeCastLinear :: (a -> b) ⊸ (a ⊸ b)
+unsafeCastLinear :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
+                           (a :: TYPE r1) (b :: TYPE r2) .
+                    (a -> b) ⊸ (a ⊸ b)
 unsafeCastLinear = unsafeCoerce
