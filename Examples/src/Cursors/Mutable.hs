@@ -37,24 +37,26 @@ module Cursors.Mutable
     where      
 
 import Linear.Std
-import Linear.Unsafe(unsafeCastLinear)
+import Linear.Unsafe(unsafeCastLinear, unsafeUnrestricted)
 import qualified ByteArray as ByteArray
 
 import Control.DeepSeq
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Unsafe as U
 import Data.Word
 import GHC.Int
 import Foreign.Storable
+import Foreign.Marshal.Alloc (mallocBytes)
+import Foreign.Ptr
+import Foreign.C.Types (CChar)
 import Prelude hiding (($))
 import Cursors.UnboxedHas as UH
 import GHC.Types(RuntimeRep, Type)
-import GHC.Prim(TYPE, plusAddr#, addr2Int#)
+import GHC.Prim(TYPE, plusAddr#, addr2Int#, coerce)
 import Data.ByteString.Internal (ByteString(..))
 import GHC.ForeignPtr (ForeignPtr(..))
-import System.IO.Unsafe (unsafePerformIO)
-
-readInt = ByteArray.headInt
+import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
     
 
 -- Cursor Types:
@@ -63,7 +65,7 @@ readInt = ByteArray.headInt
 -- | A "needs" cursor requires a list of fields be written to the
 -- bytestream before the data is fully initialized.  Once it is, a
 -- value of the (second) type parameter can be extracted.
-newtype Needs (l :: [Type]) t = Needs ByteArray.WByteArray
+data Needs (l :: [Type]) t = Needs !Int !(Ptr CChar)
 
 -- | A "has" cursor is a pointer to a series of consecutive,
 -- serialized values.  It can be read multiple times.
@@ -82,20 +84,15 @@ instance NFData (Packed a) where
 -- Cursor interface
 --------------------------------------------------------------------------------
 
-{-# INLINABLE writeC #-}           
-{-# INLINABLE fromHas #-}
-{-# INLINABLE toHas #-}
-{-# INLINE unsafeCastNeeds #-}
-{-# INLINE unsafeCastHas #-}
-{-# INLINABLE finish #-}
-{-# INLINABLE untup #-}
-{-# INLINABLE tup #-}
-{-# INLINABLE withOutput #-}
-
+{-# INLINABLE writeC #-}
 -- | Write a value to the cursor.  Write doesn't need to be linear in
 -- the value written, because that value is serialized and copied.
 writeC :: Storable a => a -> Needs (a ': rst) t ⊸ Needs rst t
-writeC a (Needs bld1) = Needs (ByteArray.writeStorable a bld1)
+writeC a = unsafeCastLinear f
+  where
+   f (Needs off ptr) = 
+     unsafeDupablePerformIO (poke (ptr `plusPtr` off) a) `seq` 
+      Needs (off + sizeOf a) ptr
 
 {-# INLINE readC #-}
 -- | Reading from a cursor scrolls past the read item and gives a
@@ -142,40 +139,58 @@ withC (Has bs) = ByteArray.withHeadStorable bs
 {-# INLINE withC2 #-}
 withC2 :: forall a b1 b2 rst . Storable a => Has (a ': rst) -> (a -> (# b1, b2 #)) -> (# b1, b2 #)
 withC2 (Has bs) = ByteArray.withHeadStorable2 bs
-                  
+
+{-# INLINABLE fromHas #-}
 -- | Safely "cast" a has-cursor to a packed value.
 fromHas :: Has '[a] ⊸ Packed a
 fromHas (Has b) = Packed b
 
+{-# INLINABLE toHas #-}
 -- | Safely cast a packed value to a has cursor.
 toHas :: Packed a ⊸ Has '[a]
 toHas (Packed b) = Has b
 
-                   
+{-# INLINE unsafeCastNeeds #-}                   
 -- | Perform an unsafe conversion reflecting knowledge about the
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
-unsafeCastNeeds (Needs b) = (Needs b)
+unsafeCastNeeds = coerce
 
+{-# INLINE unsafeCastHas #-}
 unsafeCastHas :: Has l1 ⊸ Has l2
 unsafeCastHas (Has b) = (Has b)
 
+{-# INLINABLE finish #-}
 -- | "Cast" a fully-initialized write cursor into a read one.
 finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
-finish (Needs bs) = Has `mapU` ByteArray.freeze bs
+finish = unsafeCastLinear f
+ where
+ f (Needs ix ptr) = unsafeUnrestricted
+                     (Has (unsafePerformIO (U.unsafePackMallocCStringLen (ptr,ix))))
 
+-- finish (Needs bs) = Has `mapU` ByteArray.freeze bs
+
+{-# INLINABLE untup #-}
 -- | We /could/ create a general approach to safe coercions for data
 -- with the same serialized layout, analogous to, but distinct from,
 -- the Coercable class.
 untup :: Needs ((a,b) ': c) d ⊸ Needs (a ': b ': c) d
-untup (Needs x) = Needs x
+untup = coerce
 
+{-# INLINABLE tup #-}
 tup :: Needs (a ': b ': c) d ⊸ Needs ((a,b) ': c) d
-tup (Needs x) = Needs x
-                    
+tup = coerce
+
+{-# NOINLINE withOutput #-}                    
 -- | Allocate a fresh output cursor and compute with it.
 withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-withOutput fn = ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
+withOutput = unsafeCastLinear f
+ where
+   f fn = unsafePerformIO $ do 
+            -- ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
+            -- DANGER: don't float out:
+            p <- mallocBytes regionSize
+            return $! fn $! Needs 0 p
 
 --------------------------------------------------------------------------------
 
