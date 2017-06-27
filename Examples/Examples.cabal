@@ -30,6 +30,7 @@ library
         Cursors.Mutable,
         Cursors.PureBinary,
         Cursors.PureStorable,
+        Cursors.ST,
         IO,
         FreezeArray,
         Linear.Std,

@@ -25,6 +25,9 @@ module PackedTree
     , sumTree, mapTree
 --    , foldTree, unfoldTree
 
+    -- * Safe but low-level operations
+    , writeLeaf, writeBranch
+
     -- * Examples
     , tr1, tr2, tr3, pk0, pk1, pk2
     ) where
@@ -225,6 +228,9 @@ mapTree f pt =
                    ⊸ (# Has# r, Needs r t #)
     onRightBranch (# h, !n #) = mapDest h n
 
+                                
+
+                                
 ---------------------------------------------------
 -- Tests/ Examples
 
