@@ -20,8 +20,8 @@
 
 module PackedTree.Unsafe 
     ( Tree(..), TagTy
-    , writeLeaf
-    , writeBranch
+    , writeLeaf, writeBranch
+    , leafTag, branchTag
     , caseTree2
 --    , caseTree, toEither
 

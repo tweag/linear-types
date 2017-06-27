@@ -26,7 +26,7 @@ module PackedTree
 --    , foldTree, unfoldTree
 
     -- * Safe but low-level operations
-    , writeLeaf, writeBranch
+    , writeLeaf, writeBranch, leafTag, branchTag
 
     -- * Examples
     , tr1, tr2, tr3, pk0, pk1, pk2

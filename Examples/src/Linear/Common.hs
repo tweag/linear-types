@@ -1,5 +1,5 @@
 -- | The root of the dependence hierarchy -- the most widely used bits
--- included everywhere else.
+-- included everywhere else.  This is reexported by Linear.Std.
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
@@ -40,3 +40,14 @@ forceUnrestricted (Unrestricted a) = Unrestricted a
 linerror :: forall (a :: Type) (r :: RuntimeRep) (b :: TYPE r)  .
             String -> a ⊸ b
 linerror = error
+
+-- Hard-coded constant:
+--------------------------------------------------------------------------------
+-- | Size allocated for each regions: 4KB.
+regionSize :: Int
+regionSize =
+  -- 4096 -- in Bytes
+  500 *1000*1000
+--  5 * 1000 * 1000 * 1000
+
+           

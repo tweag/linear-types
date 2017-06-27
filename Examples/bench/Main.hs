@@ -1,6 +1,10 @@
 -- |
 
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Main where
 
@@ -8,7 +12,7 @@ import qualified Data.ByteString as BS
 import qualified ByteArray as BA
 import PackedTree
 -- import Linear.Common
-import Linear.Std (getUnrestricted)
+import Linear.Std (getUnrestricted, regionSize)
 import Linear.Unsafe
 
 -- import Criterion
@@ -21,6 +25,8 @@ import Foreign.Storable (sizeOf)
 import System.Mem
 import System.IO (stdout, hFlush)
 import GHC.Stats
+import qualified Cursors.ST as S
+import Control.Monad.ST
 ----------------------------------------------
 
 timePrint :: IO a -> IO a
@@ -116,7 +122,16 @@ treebench = do
   putStr "map-packed: "; hFlush stdout
   _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
 
-  putStrLn "Done with benchmarks."
+  putStrLn "\nDone with linear-cursor benchmarks.  Now running ST ones."
+  putStrLn "----------------------------------------\n"
+
+  putStr "pack-tree-ST: "
+  tr'' <- timePrint $ evaluate $ packTreeST tr
+  putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr'')
+  putStr "sum-tree-ST: "
+  s3 <- timePrint $ evaluate $ sumTreeST tr''
+  putStrLn $ "    (sum was "++show s3++")"
+
   return ()
 
 
@@ -134,4 +149,34 @@ pureMap f (Branch x y) = Branch (pureMap f x) (pureMap f y)
 pureSum :: Tree -> Int
 pureSum (Leaf n)     = n
 pureSum (Branch x y) = pureSum x + pureSum y
+
+packTreeST :: Tree -> S.Packed Tree
+packTreeST tr = S.finish (do buf <- S.allocC regionSize
+                             go tr buf)
+  where
+    go :: Tree -> S.Needs s (Tree ': r) Tree -> ST s (S.Needs s r Tree)
+    go (Leaf n) buf = S.writeLeaf n buf
+    go (Branch x y) buf1 =
+        do buf2 <- S.writeBranchTag buf1
+           buf3 <- go x buf2
+           go y buf3
+
+sumTreeST :: S.Packed Tree -> Int
+sumTreeST pkd = runST (fmap fst (go (S.toHas pkd)))
+  where
+    go :: forall s r . S.Has s (Tree ': r) -> ST s (Int, S.Has s r)
+    go h = S.caseTree h onLeaf onBranch
+
+    onLeaf :: forall s r. S.Has s (Int ': r) -> ST s ( Int, S.Has s r)
+    onLeaf h = S.readC h
+
+    onBranch :: forall s r. S.Has s (Tree ': Tree ': r) -> ST s ( Int, S.Has s r )
+    onBranch h1 = do (x,h2) <- go h1
+                     (y,h3) <- go h2
+                     return $! (,h3) $! x+y
+
+----------------------------------------
+
+
+-- sumTreeST :: Packed Tree -> ST s Int
 

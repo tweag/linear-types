@@ -56,14 +56,6 @@ import System.IO.Unsafe (unsafePerformIO)
 
 readInt = ByteArray.headInt
     
--- Hard-coded constant:
---------------------------------------------------------------------------------
--- | Size allocated for each regions: 4KB.
-regionSize :: Int
-regionSize =
-  -- 4096 -- in Bytes
-  500 *1000*1000
---  5 * 1000 * 1000 * 1000
 
 -- Cursor Types:
 --------------------------------------------------------------------------------
