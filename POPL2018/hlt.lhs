@@ -342,7 +342,7 @@ channels and other resources.  Our particular contributions are these
 \item We formalise our system in a small, statically-typed core
       calculus that exhibits all these features (\fref{sec:calculus}).
       It enjoys the usual properties of progress and preservation.
-\item We have implemented a prototype of system in as a modest extension to GHC
+\item We have implemented a prototype of system in as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
       Our prototype type performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
@@ -363,7 +363,7 @@ to two questions:
 That depends on whether there
 are aliases to the value; update-in-place is OK if there are no other pointers to it.
 Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
-\item \emph{Am I obeying the usage protocol of this external resource?}
+\item \emph{Am I obeying the usage protocol of this external resource}
 (\fref{sec:io-protocols})?
 For example, an open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
@@ -389,7 +389,7 @@ subsequent subsections.
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
   runST :: (forall a. ST s a) -> a
 \end{code}
-\caption{Type signatures for array primitives (currrent GHC)}
+\caption{Type signatures for array primitives (currrent \textsc{ghc})}
 \label{fig:array-sigs}
 \end{figure}
 
@@ -413,7 +413,7 @@ paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
 array :: (Int,Int) -> [(Int,a)] -> Array a
 \end{code}
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
-But in reality GHC implements |array| using more primitive pieces, so that library authors
+But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement variations (which they certainly do).  Here is the
 definition of |array|, using library functions whose types are given
 in \fref{fig:array-sigs}:
@@ -435,7 +435,7 @@ immutable array, but to avoid an unnecessary copy,
 the two are actually \emph{the same array}.  The intention is, of course, that
 that |unsafeFreeze| should be the last use of the mutable array; but
 nothing stops us continuing to mutate it further, with quite undefined semantics.
-The ``unsafe'' in the function name is a GHC convention meaning ``the programmer
+The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the programmer
 has a proof obligation here that the compiler cannot check''.
 
 The other unsatisfactory thing about the monadic approach to array
@@ -968,7 +968,7 @@ behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requ
 |-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
 be worth considering a more robust solution.
 
-Internally, hidden from clients, GHC actually implements |IO| as a function,
+Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
 and that implementation too is illuminated by linearity.  Here it is:
 \begin{code}
 data World
@@ -1875,10 +1875,10 @@ Advantages of ``linearity via arrows'' include:
   % JP: I do not understand this one.
 
 \item Easier implementation. We managed to implement a working
-  prototype of GHC linearity-on-arrow, and our patch is only a little
+  prototype of \textsc{ghc} linearity-on-arrow, and our patch is only a little
   over 1000loc. We attribute its relative simplicity to two factors.
   First, we could avoid tracking of the kind of types in the
-  variables, which is a daunting task in GHC's type-checker \jp{why?}.
+  variables, which is a daunting task in \textsc{ghc}'s type-checker \jp{why?}.
 
   Second, \textsc{Ghc} already supports impredicative dependent types
   and a wealth of unboxed or otherwise primitive types and kinds that
