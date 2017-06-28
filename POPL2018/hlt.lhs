@@ -2461,6 +2461,34 @@ for the \emph{shared variable} and \emph{let} rules.
 \begin{proof}
   By liveness (\fref{lem:liveness}) it is sufficient to prove the case
   of the denotational semantics.
+
+  Let us also note that if we erase all multiplicity from the
+  denotational semantics, then we get a completely standard semantics
+  for simply typed $λ$-calculus, in which progress is known to
+  hold. So we it suffices to show that multiplicity annotations do not prevent the
+  head of the partial derivation to match a rule.
+
+  For instance, we need to check that the head of the partial
+  derivation is not $Ξ⊢(Γ,x:_1 B = e||x ⇓ ?) :_ω A,Σ$ or
+  $Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$, which match no rule because
+  of their multiplicities.
+  \begin{itemize}
+  \item $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed state because
+    it reduces to $x:_1B = x:_{ωp} B$ for some $p$, which never
+    holds. By type preservation (\fref{lem:type-safety}),  $Ξ⊢Γ,x:_1 B
+    = e||x :_ω A,Σ$ cannot be the head of a partial derivation.
+  \item The case of $Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$
+    is similar, if a little more subtle. For it to be well-typed, we
+    need that $Γ$ contains a binding $x :_ω \varid{MArray}~a$. We need
+    the following intermediate lemma:
+    \begin{itemize}
+    \item If $Γ,x:_1a||u :_p A,Σ$ is the head of a partial proof, then
+      $p=1$ (by type preservation)
+    \item If
+    \end{itemize}
+
+  \end{itemize}
+
 \end{proof}
 
 \end{document}
