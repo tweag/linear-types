@@ -2011,7 +2011,8 @@ to integrate to an existing, mature compiler with a large ecosystem.
 We have developed a prototype implementation extending
 \textsc{ghc} with multiplicities. The main difference between the
 implementation and \calc is that the implementation is adapted to
-bidirectionality: typing contexts go in, inferred multiplicities come
+bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is not a difference}
+typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
 design integrates very well in \textsc{ghc}.
 
@@ -2028,33 +2029,38 @@ since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 
 \todo{Section on the |newtype Unrestricted| problem. I guess?}
 
-\subsection{Fusion}
+\subsection{Inlining}
 \label{sec:fusion}
 
-\improvement{This section seems to be unclear. Either too long or too short.}
-Inlining is a staple of program optimisation, exposing opportunities
-for many program transformation including fusion. Not every function
-can be inlined without negative effects on performance: inlining a
-function with two use sites of the argument may result in duplicating
-a computation.
+\improvement{This section seems to be unclear. Either too long or too
+  short.}  Inlining is a staple of program optimisation, exposing
+opportunities for many program transformations including fusion. Not
+every function can be inlined without negative effects on performance:
+inlining a function with more than one use sites of the argument may
+result in duplicating a computation. For example one should avoid the
+following reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++
+expensive|.
 
-In order to discover inlining opportunities \textsc{ghc} deploys a
-cardinality analysis~\cite{sergey_cardinality_2014} which determines
-how many times functions use their arguments. The limitation of such
-an analysis is that it is necessarily heuristic (the problem is
-undecidable). Consequently, it can be hard for the programmer to rely
-on such optimisations: a small, seemingly innocuous change can prevent
-a critical inlining opportunity and have rippling effects throughout
-the program. Hunting down such a performance regression proves
-painful in practice.
+Many compilers can discover safe inlining opportunities by analysing
+the source code in order to determine how many times functions use
+their arguments.  (In \textsc{ghc} this analysis is called a
+cardinality analysis~\cite{sergey_cardinality_2014}). The limitation
+of such an analysis is that it is necessarily heuristic (the problem
+is undecidable). Because inlining is crucial to efficiency,
+programmers find themselves in the uncomfortable position of relying
+on a heuristic to obtain efficient programs. A small, seemingly
+innocuous change can prevent a critical inlining opportunity and have
+rippling effects throughout the program.  Thus folklore is that
+high-level languages should be abandonned if one wants control over
+the performance.
 
-Linear types address this issue and serve as a programmer-facing
+Linear types address this issue by serving as a programmer-facing
 interface to inlining: because it is always safe to inline a linear
 function, we can make it part of the \emph{semantics} of linear
 functions that they are always inlined. In fact, the system of
 multiplicity annotation of \calc{} can be faithfully embedded the
 abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence in the fact that multiplicity annotation can serve as
+gives confidence in that linear arrows can serve as
 cardinality \emph{declarations}.
 
 Formalising and implementing the integration of multiplicity
