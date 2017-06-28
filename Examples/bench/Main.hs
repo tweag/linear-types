@@ -74,30 +74,52 @@ helpMsg = unlines
   , " For a more systematic approach, try arguments:"
   , "  <bench-name> <variant> <tree-depth> "
   , " Where bench-name is: sumtree, maptree"
-  , " And variant is: boxed packed unboxrebox ST "
+  , " And variant is: packed boxed unpack-repack ST-packed "
   , " The same tree-depth is used for all batches "
   , " of benchmark repetitions."
   , "-----------------------------------------------" ]
 
+-- | Prevent the compiler from optimizing away the benchmark.
 {-# NOINLINE ignoreMe #-}
 ignoreMe :: Int -> a -> a
 ignoreMe _ a = a
 
+-- | Run a single benchmark in the request/response interactive mode.
 runBench :: String -> String -> Int -> IO ()
 runBench name variant dep = do
   tr  <- evaluate $ force $ mkTree dep
   putFlushLn $ "Generated a tree of depth "++show dep
-  case variant of
-    "ST" -> do tr' <- timePrint $ evaluate $ packTreeST tr
-               weAreReady
-               case name of
-                 "sumtree" ->
-                     benchLoop $ \reps -> 
-                        forM_ [1..reps] $ \ix ->
-                          void $ evaluate $ sumTreeST (ignoreMe ix tr')
 
---    tr' <- evaluate $ force $ packTree tr
- 
+  let {-# INLINE mkBenchs #-}
+      mkBenchs sumBody mapBody = do 
+        weAreReady
+        case name of
+          "sumtree" ->
+              benchLoop $ \reps -> 
+                 forM_ [1..reps] $ \ix ->
+                   void $ evaluate (sumBody ix)
+          "maptree" ->
+              benchLoop $ \reps -> 
+                 forM_ [1..reps] $ \ix ->
+                   void $ evaluate (mapBody ix)
+
+  case variant of
+    "boxed" -> do mkBenchs (\ix -> pureSum (ignoreMe ix tr))
+                           (\ix -> force $ pureMap (+1) (ignoreMe ix tr))
+
+    "packed" -> do tr' <- evaluate $ force $ packTree tr
+                   mkBenchs (\ix -> sumTree (ignoreMe ix tr'))
+                            (\ix -> mapTree (+1) (ignoreMe ix tr'))
+
+    "ST-packed" -> do tr' <- timePrint $ evaluate $ packTreeST tr
+                      mkBenchs (\ix -> sumTreeST (ignoreMe ix tr'))
+                               (\ix -> mapTreeST (+1) (ignoreMe ix tr'))
+
+    "unpack-repack" -> do tr' <- evaluate $ force $ packTree tr
+                          mkBenchs (\ix -> pureSum  $ unpackTree (ignoreMe ix tr'))
+                                   (\ix -> packTree $ pureMap (+1) $ unpackTree (ignoreMe ix tr'))
+
+    _ -> error $ "Unrecognized 'variant': "++variant
   return ()
  where
    benchLoop fn = do mreps <- startBatch
@@ -162,7 +184,8 @@ bytearray = do
 
 treebench :: IO ()
 treebench = do 
-  [dep] <- getArgs
+  -- [dep] <- getArgs
+  let dep = "17"
   putStr "\nGenerate tree: "
   tr <- timePrint $ evaluate $ force $ mkTree (read dep)
   putStr "pack-tree: "

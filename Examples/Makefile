@@ -16,7 +16,10 @@ debug:
 	mkdir -p ./bin
 	cd ./criterion-external; stack install --local-bin-path=../bin
 
+
+# Just an example of ONE benchmark you might run:
 bench: ./bin/criterion-interactive
+	stack bench --no-run-benchmarks
 #	./bin/criterion-interactive ./criterion-external/time_interactive.sh
 #	./bin/criterion-interactive ./go_bench.sh sumtree ST 5 -- -o report.h
 	./bin/criterion-interactive stack exec -- bench-cursor sumtree ST 5 -- -o report.h
