@@ -30,6 +30,14 @@ const x _ = x
 swap :: (a,b) ⊸ (b,a)
 swap (x,y) = (y,x)
 
+-- TODO: make strict
+-- | As long as this function is only for the sake of demonstration, let's give
+-- it a different name than the prelude one so that it doesn't force hiding
+-- Prelude's foldl.
+foldlL :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a
+foldlL _reduce acc [] = acc
+foldlL reduce acc (a:l) = foldlL reduce (reduce acc a) l
+
 -- * Comonoids and data types
 
 -- | The laws of comonoids are dual to that of monoid:

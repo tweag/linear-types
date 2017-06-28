@@ -35,6 +35,7 @@
 %format returnIOL = "\varid{return}_{\varid{IO}_{\varid{L}}}"
 %format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
 %format unIOL = "\varid{unIO}_{\varid{L}}"
+%format forM_ = "\varid{forM}\_"
 %format __ = "\_"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
@@ -72,12 +73,17 @@
 \def\Frefdefname{Definition}
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
+\def\frefappendixname{Appendix}
+\def\Frefappendixname{Appendix}
 \def\fancyrefdeflabelprefix{def}
 \frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1}
 \def\fancyreflemlabelprefix{lem}
 \frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1}
+\def\fancyrefappendixlabelprefix{appendix}
+\frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
+\Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -106,7 +112,8 @@
 % Peanut gallery comments by Ryan:
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
-\newcommandx{\jp}[1]{\todo[]{JPB: #1}}
+\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{#1}{}}
+\newenvironment{alt}{\color{red}}{}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -312,11 +319,9 @@ even though linearity has inspired uniqueness typing in Clean, and
 ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-\jp{I suppose that the next paragraph wants to say that we support many things, but
-  here we evaluate our language on two use-cases? I propose to move
-  this paragraph into the list: ``Even though our design supports many
+\jp{What about ``Even though our design supports many
   applications for linear types, we demonstrate that our design
-  supports two typical use-cases. [...]}  Linear types can do many
+  supports two typical use-cases.''}  Linear types can do many
 things, but we focus on two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
 enforcing access protocols for external APIs, such as files, sockets,
@@ -341,7 +346,7 @@ channels and other resources.  Our particular contributions are these
 \item We formalise our system in a small, statically-typed core
       calculus that exhibits all these features (\fref{sec:calculus}).
       It enjoys the usual properties of progress and preservation.
-\item We have implemented a prototype of system in as a modest extension to GHC
+\item We have implemented a prototype of system in as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
       Our prototype type performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
@@ -362,7 +367,7 @@ to two questions:
 That depends on whether there
 are aliases to the value; update-in-place is OK if there are no other pointers to it.
 Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
-\item \emph{Am I obeying the usage protocol of this external resource?}
+\item \emph{Am I obeying the usage protocol of this external resource}
 (\fref{sec:io-protocols})?
 For example, an open file should be closed, and should not be used after it it has been closed;
 a socket should be opened, then bound, and only then used for reading; a malloc'd memory
@@ -372,6 +377,7 @@ Here, linearity does not affect efficiency, but rather eliminates many bugs.
 We introduce our extension to Haskell, which we call \HaskeLL, by focusing on these
 two use-cases.   In doing so, we introduce a number of ideas that we flesh out in
 subsequent subsections.
+
 
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
@@ -388,7 +394,7 @@ subsequent subsections.
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
   runST :: (forall a. ST s a) -> a
 \end{code}
-\caption{Type signatures for array primitives (currrent GHC)}
+\caption{Type signatures for array primitives (currrent \textsc{ghc})}
 \label{fig:array-sigs}
 \end{figure}
 
@@ -412,7 +418,7 @@ paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
 array :: (Int,Int) -> [(Int,a)] -> Array a
 \end{code}
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
-But in reality GHC implements |array| using more primitive pieces, so that library authors
+But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement variations (which they certainly do).  Here is the
 definition of |array|, using library functions whose types are given
 in \fref{fig:array-sigs}:
@@ -434,7 +440,7 @@ immutable array, but to avoid an unnecessary copy,
 the two are actually \emph{the same array}.  The intention is, of course, that
 that |unsafeFreeze| should be the last use of the mutable array; but
 nothing stops us continuing to mutate it further, with quite undefined semantics.
-The ``unsafe'' in the function name is a GHC convention meaning ``the programmer
+The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the programmer
 has a proof obligation here that the compiler cannot check''.
 
 The other unsatisfactory thing about the monadic approach to array
@@ -536,7 +542,7 @@ to |readLine| returns an |a| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using this we can write a simple file-handling program:
+Using it we can write a simple file-handling program:
 \begin{code}
 firstLine :: FilePath -> Bytestring
 firstLine fp = do  { f <- open fp
@@ -551,8 +557,8 @@ I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
 \item We generalise the IO monad so that it expresses whether or not the
 returned value is linear.  We add an extra type parameter |p| to the monad |IOL|,
-where |p| can be |1| or |ω|.\jp{multiplicities are under-defined at this point}  Now |openFile| returns |IO 1 (File ByteString)|,
-the ``|1|'' indicating that the returned |File| must be used linearly.
+where |p| can be |1| or |ω|.  Now |openFile| returns |IO 1 (File ByteString)|,
+the ``|1|'' indicating that the returned |File| must be used linearly.\footnote{Using |ω| indicates on the contrary that a result can be used in an unrestricted fashion.}
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 \item As before, operations on linear values must consume their input
 and return a new one; here |readLine| consumes the |File| and produces a new one.
@@ -705,7 +711,7 @@ typing of their functions, and it drives the formal typing judgements in
 Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
 restrict \emph{the arguments to which the function can be applied}.
 In particular, a linear function cannot assume that it is given the
-unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
+unique pointer to its argument.  For example, if |f :: s ⊸ t|, then\
 this is fine:
 \begin{code}
 g :: s -> t
@@ -713,7 +719,6 @@ g x = f x
 \end{code}
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
 in particular, |g| can pass that argument to |f|.
-\simon{Can we pass a function of type |s ⊸ t| where a function of type |s->t| is needed?}
 
 % A consequence of this definition is that an \emph{unrestricted} value,
 % \emph{i.e.} one which is not guaranteed to be used exactly once, such
@@ -780,11 +785,11 @@ In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactl
 then indeed |t| is consumed exactly once.
 
 The key point here is that \emph{the same pair constructor works in both functions;
-we do not need a special linear pair}.
+we do not need a special non-linear pair}.
 
 The same idea applies to all existing Haskell data types: we (re)-define
 their constuctors to use a linear arrow.  For example here is a declaration
-of Haskell's list type:
+of \HaskeLL{}'s list type:
 \begin{code}
 data [a] where
   []   :: [a]
@@ -821,7 +826,7 @@ For an existing language, being able to strengthen |(++)|, and similar
 functions, in a {\em backwards-compatible} way is a huge boon.  Of
 course, not all functions are linear: a function may legitimately
 demand unrestricted input.  For example, the function |f| above
-consumed |ys| twice, and so
+consumes |ys| twice, and so
 |f| needs an unrestricted arrow for that argument.
 \label{sec:compatibility}
 
@@ -859,7 +864,7 @@ able to declare data constructors with non-linear types, like this:
 
   f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
-Here we use GADT-style syntax to give an explicit type signature to the data
+Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
 constructor |PLU|, with mixed linearity.
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
@@ -901,18 +906,18 @@ It can be given the two following incomparable types:
 %
   Thus, \HaskeLL{} features quantification over multiplicities and
   parameterised arrows (|A → _ q B|).  Using these, |map| can be given
-  the following most general type: |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ
+  the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
 Likewise, function composition can be given the following general type:
 \begin{code}
-(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p q) c
 (f ∘ g) x = f (g x)
 \end{code}
 That is: two functions that accept arguments of arbitrary
-multiplicities ($ρ$ and $π$ respectively) can be composed to form a
-function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
-product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
+multiplicities (|p| and |q| respectively) can be composed to form a
+function accepting arguments of multiplicity |pq| (\emph{i.e.} the
+product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
 subscripts and binders for multiplicity polymorphism can be
@@ -942,10 +947,37 @@ computation that returns a linear value of type |t|.  But what does it mean to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
 the continuation arrow.  More precisely, in an application |m >>= k|,
-where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ t'|. \jp{perhaps |k :: t ⊸ IO q t'|}
-And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
+where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
+And that is captured by the linearity-polymorphic type of |(>>=)|.
 
 |IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
+\jp{but it is not a monad: $join :: IOL p (IOL q a) ⊸ IOL (pq) a$ and we do not have the law $pp = p$.
+Even $(>>=)  = bindIOL$ is incorrect because the multiplicity changes.
+}
+\begin{alt}
+  |IOL| is a generalized monad: its bind and return combinators can be
+  used in the familiar way, even though they have a different type
+  than usual. The difference with the usual monad is that
+  multiplicities may be mixed, but this poses no problem
+  in practice.  Consider
+\begin{code}
+  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+      ; d <- getData      -- |getDate  :: IO ω Date|
+      ; e[f,d] }
+\end{code}
+Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
+an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
+Nevertheless, the we can combine them with |bindIOL| in the usual way:
+\begin{code}
+  openFile s `bindIOL` \f ->
+  getData    `bindIOL` \d ->
+  e[f,d]
+\end{code}
+Such an interpretation of the |do|-notation requires the
+\texttt{-XRebindableSyntax} extension, but if linear I/O becomes
+commonplace it would be worth considering a more robust solution.
+
+\end{alt}
 
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
@@ -967,7 +999,7 @@ behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requ
 |-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
 be worth considering a more robust solution.
 
-Internally, hidden from clients, GHC actually implements |IO| as a function,
+Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
 and that implementation too is illuminated by linearity.  Here it is:
 \begin{code}
 data World
@@ -981,13 +1013,10 @@ bindIOL (IOL m) k = IOL (\w -> case m w of
 \end{code}
 A value of type |World| represents the state of the world, and is
 threaded linearly through I/O computations.  The linearity of the
-result of the computation is described by the |p| parameter of |IOL|,
+result of the computation is captured by the |p| parameter of |IOL|,
 which is inherited by the specialised form of pair, |IORes| that an
-|IOL| computation returns.  All this code is can be statically
-typechecked, further reducing the size of the trusted code base.
-\todo{note that making bind linear in its first and second argument prevents certain existing use of monads; typically
-  lists can no longer be used as a non-determinism monad---but there is an easy way out in the long run: we can re-use the
-multiplicity parameter to introduce a dynamic multiplicity (we have forbidden dynamic multiplicities in constructors though.)}
+|IOL| computation returns.  All linearity checks are verified by the
+compiler, further reducing the size of the trusted code base.
 \subsection{Linearity and strictness}
 
 It is tempting to suppose that, since a linear function consumes its
@@ -1065,7 +1094,7 @@ we omit ordinary type polymorphism.
 
 \calc{} is an explicitly-typed language: each binder is annotated with
 its type and multiplicity; and multiplicity abstraction and application
-are explicit.  The source language will use type inference to fill in
+are explicit.  \HaskeLL{} will use type inference to fill in
 much of this information, but we do not address the challenges of type
 inference here.
 \improvement{Though there are some thoughts in \fref{sec:implementation}}
@@ -1093,8 +1122,8 @@ makes no claim on how often that argument is consumed (\fref{def:consume}).
 % while a multiplicity of $1$ means that data at that position
 % \emph{can} reside in either heap.
 All the variables in the multiplicities $q_i$ must be among
-$π_1…π_n$; we write $q_i[p_1…p_n]$ for the substitution of $π_i$ by
-$p_i$.
+$π_1…π_n$; we write $q[p_1…p_n]$ for the substitution of $π_i$ by
+$p_i$ in $q$.
 
 % For most purposes, $c_k$ behaves like a constant with the type
 % $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
@@ -1143,7 +1172,7 @@ $p_i$.
     \caserule
 
     \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q} A₁ …  x_n:_{q} A_n ⊢ u : C }
-    { Δ+\sum_i qΓ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+    { Δ+q\sum_i Γ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
     {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
@@ -1164,14 +1193,14 @@ be read as follows
  \(Γ ⊢ t : A\) asserts that consuming the term $t : A$ exactly once will
   consume each binding $(x :_{q} A)$ in $Γ$ with its multiplicity $q$.
 \end{quote}
-You may want to think of the \emph{types} in $Γ$ as
+One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
 For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with its multiplicity $q$.  Remember, this
-is an explicitly-typed intermediate language; in the source language
+is an explicitly-typed intermediate language; in \HaskeLL{}
 this multiplicity is inferred.
 
 The dual application rule (app) is more interesting:
@@ -1276,7 +1305,7 @@ multiplicity |p|; this is precisely analogous to the explicit
 multiplicity on a |let| binding.  It says how often the scrutinee (or,
 for a |let|, the right hand side) will be consumed.  Just as
 for |let|, we expect |p| to be inferred from an un-annotated |case| in
-the source language.
+\HaskeLL{}.
 
 The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
 the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
@@ -1303,62 +1332,75 @@ discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear ty
 for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
 |swap| a linear type.
 
-\subsection{Design choices \& trade-offs}
+\subsection{Metatheory}
+\label{sec:metatheory}
 
+The details of meta-theory of \calc{} are deferred to the appendix
+(\fref{appendix:dynamics}). Our goal is to establish two properties:
+\begin{itemize}
+\item That a pure linear interface can be implemented using mutations
+  under the hood.
+\item That the ``typestate'' of data is enforced by the type system\jp{what does this mean? what is a typestate?}
+\end{itemize}
+
+To that effect we introduce two semantics: a semantic with
+mutation where type-states are enforced dynamically and a pure semantics
+that tracks linearity carefully, but where ``mutations'' are
+implemented as copying. Both semantics are big step operational
+semantics with laziness in the style of \citet{launchbury_natural_1993}.
+
+The semantics are instantiated with the arrays of
+\fref{sec:freezing-arrays}. They can be easily extended to support,
+for instance, a real-world token and file handles like in
+\fref{sec:io-protocols}.
+
+We then prove the two semantics to be bisimilar from which we can
+deduce:
+\begin{theorem}
+  The implementation of the array primitives with in-place mutation is
+  observationally equivalent to a pure implementation.
+\end{theorem}
+\begin{theorem}
+  Neither semantics can block on typestates. Therefore typestates need
+  not be tracked dynamically.
+\end{theorem}
+
+The complete proof of both of these statements can be found in
+\fref{appendix:dynamics}.
+
+\subsection{Design choices \& trade-offs}
 Let us review the design space allowed by \calc{}, the points that we
-chose, and the dimension that we have left opened.
+chose, and the generalizations that we have left open.
 
 \paragraph{Case rule}\unsure{While I was writing this new version,
   Simon suggested that we canned the discussion on $\varid{case}_ω$
   altogether. Let's discuss that soon.}
-The particular formulation of the \varid{case} rule in \calc{}, where
-\varid{case} is annotated by a multiplicity is not implied by the rest
-of the system. In fact, only the case $p=1$ is actually necessary: it
-is the case which makes it possible to consume data-types exactly once
-(see \fref{def:consume}).
+It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
+Consider |fst| again.  We could instead have
+\begin{code}
+data (,) p q a b where
+  (,) :: a → _ p b → _ q (,) p q a b
 
-Yet, providing the case $p=ω$ is a deliberate design choice. It is
-thanks to $\varid{case}_ω$ that we can turn existing Haskell
-data types into linear data types as we've described in
-\fref{sec:linear-constructors}.
+fst :: (,) 1 ω a b ⊸ a
+fst x = case_1 x of (,) a b -> a
+\end{code}
+But now linearity polymorphism infects all basic data types (such as pairs), and it
+it hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
+reasonable to annotate |case| in the same way.
 
-The original linear logic~\cite{girard_linear_1987}, for instance,
-does not have an equivalent of $\varid{case}_ω$. Which means in
-particular that if we have an unrestricted value of type $(a,b)$, we
-will have to consume $a$ and $b$ \emph{the same number of times}. In
-Haskell, that would mean having twp pair data types: one that supports
-|fst :: (a,b) ⊸ a| and one that supports |(,) :: a ⊸ b ⊸ (a,b)|.
-Alternatively, we could have one linearity-parametric data
-type, but that would be more intrusive and run afoul of our goal to
-blend in Haskell.
+To put it another way, our design choice allows to meaningfully inhabit
+|Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
+forbids that.
 
-It boils down to the definition of ``consume arbitrarily many times''
-that we are interested in. Without $\varid{case}_ω$, ``consuming a
-value $v$ arbitrarily many times'' means ``choosing an arbitrary
-number of time $n$, and consuming $v$ exactly once, $n$ times''. With
-$\varid{case}_ω$, we choose it to mean ``evaluate $v$ arbitrarily many
-times, and consume its components aribtrarily many time''.
-
-In more theoretical terms, there is a natural function
-|(Unrestrict a, Unrestricted b) ⊸ Unrestricted (a,b)|. With
-$\varid{case}_ω$, this function is an isomorphism. In linear logic,
-this is not the case.
 \unsure{aspiwack: we could add that, interestingly, the regular tensor
 product of linear logic, where the components must be consumed the
 same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
 
 \paragraph{Subtyping}
 Because the type $A⊸B$ only strengthens the contract of its elements
-compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$. This
-is however, not so, because there is no notion of subtyping in \calc{}. This
-is a salient choice in our design. Our objective is to integrate with
-existing typed functional languages such as Haskell and the
-\textsc{ml} family, which are based on Hindley-Milner-style
-polymorphism. Hindley-Milner-style polymorphism, however, does not
-mesh well with subtyping as the extensive exposition by
-\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
-multiplicity polymorphism for the purpose of reuse of higher-order
-function as we described in \fref{sec:lin-poly}.  So, for example, if
+compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$.
+But while \calc{} has \emph{polymorphism}, it does not have \emph{subtyping}.
+For example, if
 \begin{code}
   f :: Int ⊸ Int
   g :: (Int -> Int) -> Bool
@@ -1366,42 +1408,37 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
 then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
+Alternatively, |g| might well be multiplicity-polymorphic, with type
+|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed typeable.
+\jp{I feel that the eta-expansion thing is enough discussion. I
+  suggest that we can say that extending subtyping is future work.}
 
-\paragraph{Polymorphism} Could |f| be given the polymorphic type
-|f :: Int -> _ π Int| instead? Usually not. For instance, consider the
-identity function and note that $λ_π (x:Int). x$ because, in the
-variable rule, it reduces to $π = 1 + ωπ'$ which the system cannot
-prove. Instead we rely on |g| being polymorphic with type
-|(Int -> _ π) -> Bool|, which is often the case. In which case |(g f)|
-is, indeed typeable.
+The lack of subtyping is a deliberate choice in our design: it is well
+known that Hindley-Milner-style type inference does not mesh well with
+subtyping (see, for example, the extensive exposition by
+\citet{pottier_subtyping_1998}).
 
-This reduces the amount of library reuse that we can have because
-higher-order functions in linearity-unaware libraries are likely to
-have overly-monormorphic types. But it makes it possible to freely
-extend the multiplicity semi-ring.
+\paragraph{Polymorphism} Consider the definition
+\begin{code}
+id x = x
+\end{code}
+Our typing rules would validate both |id :: Int → Int| and |id :: Int ⊸ Int|.
+So, since we think of multiplicities ranging over $\{1,ω\}$, surely we should
+also have |id :: forall π. Int → _ π Int|?  But as it stands, our rules do
+not accept it. To do so we would need $x :_π Int ⊢ x : Int$.  Looking
+at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
+trying $π=1$ and $π=ω$.
+\simon{I could not work out what your $π$ and $π'$ were.... so I ended up with case analysis.  What am I missing?}
+But if we had a richer domain of multiplicities, including
+$0$\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
+in a dependently typed system}
+or $2$ for example, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
+so becuase it is not the case that |id :: Int → _ 0 Int|.
 
-In order to make the identity polymorphic, we would only need to add a
-new law to the multiplicity semi-ring adding that $π = 1 + ωπ'$ for
-any variable (or,to be more general, we would add an ordering to the
-semi-ring and impose that $1 \leqslant π$, and change the variable
-rule to use the ordering instead of sums). That is, for any
-muliplicity $q$ that $π$, consuming a value $q$ times includes
-consuming said value exactly once.
-
-This precludes multiplicities such as $2$ which imposes that a value
-is consumed exactly twice. But the examples of multiplicity we
-consider in this article are all compatible with the above law. That
-is, with the exception of $0$ (the value cannot be consumed at all),
-which, in accordance with \citet{mcbride_rig_2016}, we may need to use
-to extend the design to \textsc{ghc}'s dependent types. However, it is
-preferable to restrict multiplicity variables to range over non-$0$
-multiplicities: allowing $\varid{case}_0$ would be quite incorrect
-(for instance given a list with multiplicity $0$ we would be able
-to compute its length).
-
-Experience will tell whether it is best to add said law and make
-first-order function polymorphic, or keep the design open for more
-exotic multiplicities.
+For now, we accept more conservative rules, in order to hold open the possiblity
+of extending the multiplicity domain later.  But there is an up-front cost,
+of somewhat less polymorphism than we might expect.  We hope the experience will
+lead us to a better assessment of the costs/benefit tradeoff here.
 
 \section{Applications}
 \label{sec:evaluation}
@@ -1615,14 +1652,44 @@ comes at the cost of strong limitations in practice:
 % "disappear" a value, at which time we can take the opportunity to
 % close it. It is hard, however to pinpoint a case where it is
 % critical not to use stack-allocation.
-% \item |ST|-like regions confine to a stack-like allocation discipline.
-%   Scopes cannot intersect arbitrarily, limiting the applicability of
-%   this technique.
+
+% jp: In many pipeline applications one has conceptually n
+% buffers used sequentially, but only two of them are live
+% simultaneously.
+
+\item |ST|-like regions confine to a stack-like allocation discipline,
+  because freeing resources coincide with the static scope of |runST|.
+  Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
+  this technique. This factor is a limitating for any long-lived
+  program, but in particular, in many pipeline applications one has
+  conceptually |n| buffers used sequentially, but only two of them are
+  live simultaneously.
+
+  In our system, even though the lifetimes of linear variables is
+  checked statically, we can make use of continuation-passing style
+  (or Monads) to implement dynamic lifetimes for objects in the linear
+  heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
+|free  : A ⊸ r ⊸ r|.
+We can write code such as the following, where the lifetimes of |x|, |y|
+and |z| overlap in a non-stack fashion:
+\begin{code}
+alloc  (\x ->
+{- manipulate x -}
+alloc  (\y ->
+{- manipulate x and y -}
+free x (
+alloc  (\z ->
+{- manipulate y and z -}
+free y (
+{- manipulate z -}
+free z)))))
+\end{code}
+
 \item |ST| actions cannot be interleaved with |IO| actions. So in our
   mutable array examples, for instance, it is not possible to provide
   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
   a)| which will also make it possible to use |IO| actions to fill in
-  the array.
+  the array.\jp{I do not understand this item.}
 \item \citet{kiselyov_regions_2008} show that it is possible to
   promote resources in parent regions to resources in a subregion. But
   this is an explicit and monadic operation, forcing an unnatural
@@ -1634,52 +1701,21 @@ comes at the cost of strong limitations in practice:
   values shared between two different garbage collectors for two
   different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
   writing code at an interactive prompt difficult, compromises code
-  reuse, force otherwise pure functions to be written monadically and
-  rule out useful syntactic facilities like view patterns. In
+  reuse, forces otherwise pure functions to be written monadically and
+  rules out useful syntactic facilities like view patterns. In
   contrast, with linear types, values in two regions (in our running
   example packets from different mailboxes) have the same type hence
   can safely be mixed: any data structure containing packet of
   a mailbox will be forced to be consumed before the mailbox is
-  closed.
+  closed.\jp{FIXME: running example is now gone.}
 \end{itemize}
 
-\paragraph{Non-LIFO behavior}
-
-In our system, even though the lifetimes of linear variables is
-checked statically, we can make use of continuation-passing style to
-implement dynamic lifetimes for objects in the linear heap.
-
-Consider the primitives:
-
-\begin{code}
-alloc : (A ⊸ r) ⊸ r
-free  : A ⊸ r ⊸ r
-\end{code}
-We can write code such as the following, where the lifetimes of x, y
-and z overlap in a non-LIFO fashion:
-
-\begin{code}
-alloc  (\x ->
-alloc  (\y ->
--- copy f(x) to y
-free x (
-alloc  (\z ->
--- copy g(y) to z
-free y (
--- print z
-free z)))))
-\end{code}
-
-Such a property is infeasible in region-based systems, where the
-dynamic lifetime necessarily coincides with the static scope: the
-|free| primitive is built into |alloc|.
-
-
-\subsection{Uniqueness types}
+\subsection{Uniqueness and ownership typing}
 
 The literature is awash with enforcing linearity not via linear types,
-but via uniqueness (or ownership) types. The most prominent representatives of
-languages with such uniqueness types are perhaps Clean~\cite{barendsen_uniqueness_1993} and
+but via uniqueness (or ownership) types. The most prominent
+representatives of languages with uniqueness types are perhaps
+Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
@@ -1691,8 +1727,8 @@ pleases, a uniqueness type ensures that the argument of a function is
 not used anywhere else in the expressions context even if the function
 can work with the argument as it pleases.
 
-From a compiler's perspective, uniqueness type provide a {\em non-aliasing
-analysis} while linear types provides a {\em cardinality analysis}. The
+Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
+analysis} while linear typing provides a {\em cardinality analysis}. The
 former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
@@ -1700,7 +1736,7 @@ of linear types in relation with fusion can be found
 in~\citet{bernardy_composable_2015}, see also the discussion in
 \fref{sec:fusion}.\unsure{The discussion on fusion may well disappear}
 
-Because of this weak duality, we perhaps could as well have
+Because of this weak duality, we could have
 retrofitted uniqueness types to Haskell. But several points
 guided our choice of designing \HaskeLL{} around linear
 logic rather than uniqueness types: (a) functional languages have more use
@@ -1711,140 +1747,13 @@ logic — see \fref{sec:applications}; (c) and decisively, linear type systems
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
-\subsection{Linearity via arrows vs. linearity via kinds}
-
-
-In a type system capturing linearity, a design choice is which device
-to use to distinguish linear objects from regular ones.  Our choice is
-to extend the arrow type: the linear arrow introduces linear objects
-in the environment, while the unrestricted arrow introduces
-unrestricted objects. This choice is featured in the work of
-\cite{mcbride_rig_2016,ghica_bounded_2014} and is ultimately inspired
-by Girard's presentation of linear logic, which features only linear
-arrows, and where the unrestricted arrow $A → B$ is encoded as
-$!A ⊸ B$.
-
-Another popular choice
-\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011} is
-to separate types themselves into two kinds: linear and
-unrestricted. Values with a type whose kind is linear will be linear,
-and unrestricted otherwise.  In such designs, every type constructor
-typically exists in two flavours: one constructing a linear type and
-one constructing an unrestricted type. (Thus in particular such systems
-feature ``linear arrows'', but have a completely different
-interpretation from ours.)
-
-Advantages of ``linearity via kinds'' include:
-
-
-\begin{itemize}
-\item It is possible to express the linearity of an object even on the
-  right-hand-side of an arrow (and in fact even in absence of an arrow
-  type). In contrast, in our system if one wants to indicate that a
-  returned value is to be used linearly, we have to use a
-  double-negation trick. That is, given $f : A → (B ⊸ r) ⊸ r$, then
-  $B$ can be used a single time in the (single) continuation, and
-  effectively $f$ ``returns'' a single $B$.
-
-%   Two kinds is also more easily compatible with using different
-% representations for linear and non-linear values, though this would
-% require that the conversion between linear and non-linear type be
-% explicit, the sub-kinding of Fo would severely limit this option. At
-% any rate, I doubt that this is immensly useful except in DSLs (in
-% which it can be highly)
-
-% JP: I think that this is largely orthogonal. Indeed the polymorphism
-% of the implementation is only linked to the polymorphism of
-% linearity. So this discussion is subsumed by the upcoming discussion
-% on polymorphism.
-
-
-
-\end{itemize}
-
-Advantages of ``Linearity via arrows'' include:
-
-\begin{itemize}
-\item Better subsumption properties.
-  When retrofitting linear types in an existing language, it is
-  important to share has much code as possible between linear and
-  non-linear code. In a system with linearity on arrows, the
-  subsumption relation (linear arrows subsume unrestricted arrows)
-  means that much linear code can be used as-is from unrestricted
-  code. This property is discussed at length in \fref{sec:compatibility}.
-
-\item Easier polymorphism.  In the cases where code-sharing requires
-  to use polymorphism, linearity on arrows is simpler to use.  Indeed,
-  linearity polymorphism can be supported by adding a special-purpose
-  quantification, which is syntactically separate and does not
-  interfere with any other aspect of the type-system. In contrast, if
-  linearity is encoded in kinds, one needs
-  kind-polymorphism. Furthermore, the subsumption property must be
-  encoded via a sub-kinding property, which is not easy to get right,
-  especially in the presence of ML-style polymorphism. The difficulty
-  is witnessed in the work of \citet{morris_best_2016}. Several of
-  applications (including monads) require bounded polymorphism, while
-  we can avoid it.
-
-\item Exensibility.
-  It is easy to extend our system to any base set of multiplicities
-  with a ring structure (\fref{sec:extending-multiplicities}), which
-  is useful to support affine types and dependent linear types.
-  Supporting such extensions require ad-hoc work in a multiple-kind
-  system. Indeed, supporting affine types requires changes in the
-  subkinding system, which in turns impacts unification; and while
-  there are systems with two-kinds and dependent types, they are only
-  trivial in the sense that the dependent product is never linear.
-
-\item Easy conversion of existing code.  Linearity-on-arrow makes it
-  safe to change any first-order function to a linear arrow where it
-  applies, because of the subsumption property. In the two-kind
-  approach, this common case requires to introduce a polymorphism over
-  kinds.
-
-  % We also anticipate that we can leverage programmers’ annotation to
-  % make linear functions always inlinable.
-
-  % JP: probably not an
-  % advantage; the same can be done with kinds, probably. I believe
-  % the tradeoff is between unique/linear.
-
-  % We have applications where we implement something using unsafe
-  % primitive that are not linear we expose a safe API where the user
-  % has to use linear function. I don’t know how we could do the same
-  % using a two-kind system.
-  % JP: I do not understand this one.
-
-\item Easier implementation. We could implement a working prototype of
-  GHC linearity-on-arrow, and our patch is only a little over 1000loc.
-  While this is only anectodal evidence, we attribute the relative
-  simplicity of the implementation to the fact that we do not need to
-  keep track of the kind of types in the variables, which is a
-  daunting task in GHC's type-checker \jp{why?}.
-
-  \textsc{Ghc} already supports impredicative dependent types and a
-  wealth of unboxed or otherwise primitive types and kinds that cannot
-  be substituted for polymorphic type arguments.  Therefore is is not
-  clear how to support linearity in \textsc{ghc} by extending its kind
-  system.
-
-\end{itemize}
-
-% Such approaches have been very successful for theory: see for instance
-% the line of work on so-called \emph{mixed linear and non-linear logic}
-% (usually abbreviated \textsc{lnl}) started by
-% \citet{benton_mixed_1995}.
-
-% JP: I don't know what theory this refers to. Also I do not believe
-% that this is relevant for this paper.
-
-\subsection{Ownership typing à la Rust}
-
-Rust \cite{matsakis_rust_2014} features ownership (aka uniqueness)
-types. But like the original formulation of linear logic, in Rust \texttt{A}
+\paragraph{Rust}
+Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called ownership
+typing. Like the original formulation of linear logic, in Rust \texttt{A}
 stands for linear values, unrestricted values at type \texttt{A} are denoted
 \texttt{RC<A>}, and duplication is explicit.
 
+\jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
 Rust addresses the problem of being mindful about
 memory, resources, and latency, but this comes at a price: Rust,
 as a programming language, is specifically optimised for writing
@@ -1860,11 +1769,12 @@ sound. This is because resource liberation must be triggered when the
 tail call returns.
 
 \HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm yet gracefully scaling up
-to latency-sensitive and resource starved programs is still
+regular non-linear expressions are the norm, yet gracefully scaling up
+to latency-sensitive and resource-sensitive programs is still
 possible.\improvement{Change depending on what we put in the
   evaluation section}
 
+\paragraph{Borrowing}
 How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
 lifetime of references using a special system, one can simply give
 each reference a multiplicity of one, and explicitly pass them around.
@@ -1882,9 +1792,9 @@ borrower : Reference ⊸ A -> (Reference, B)
 \end{code}
 \paragraph{Borrowing references in data structures}
 In an imperative language, one often walks data structure, extract
-references and pass them around. In Rust, the borrowing system will
-ensure that the passed reference does not outlive the datastructure
-that it point to.
+references and pass them around. In Rust, the borrowing system
+ensures that the passed reference does not outlive the datastructure
+that it points to.
 
 In a functional language, instead of extracting references, one will
 use lenses to lift a modification function from a local subtree to a
@@ -1899,6 +1809,143 @@ local linear modifications to global linear modifications. Note that,
 if the original object lives in the GC heap (and thus can be shared),
 the same lens library can be used, but individual lifting of
 modifications cannot be implemented by in-place update.
+
+\subsection{Linearity via arrows vs. linearity via kinds}
+
+There are two possible choices to indicate the distinction between
+linear and unrestricted objects.  Our choice is to use the arrow
+type. That is, we have both a linear arrow to introduce linear objects
+in the environment, and an unrestricted arrow to introduce
+unrestricted objects. This choice is featured in the work of
+\citet{mcbride_rig_2016} and \citet{ghica_bounded_2014} and is
+ultimately inspired by Girard's presentation of linear logic, which
+features only linear arrows, and where the unrestricted arrow $A → B$
+is encoded as $!A ⊸ B$.
+
+Another popular choice
+\cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011}
+is to separate types into two kinds: a linear kind and an unrestricted
+kind. Values with a type whose kind is linear are be linear, and the
+others are unrestricted.  In a typical design making this choice,
+every type constructor exists in two flavours: one which constructs a
+linear type and one which constructs an unrestricted type. (Thus in
+particular such systems feature ``linear arrows'', but they have a
+completely different interpretation from ours.)
+
+An advantage of ``linearity via kinds'' is the possibility to directly
+declare the linearity of values returned by a function---not just that
+of the argument of a function. In contrast, in our system if one wants
+to indicate that a returned value is to be used linearly, we have to
+use a double-negation trick. That is, given $f : A → (B ⊸ !r) ⊸ r$,
+then $B$ can be used a single time in the (single) continuation, and
+effectively $f$ ``returns'' a single $B$. One can obviously declare a
+type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
+|Linear|-returning functions with appropriate combinators.  In fact,
+as explained in \fref{sec:linear-io}, the cost of the double negation
+almost entirely vanishes in the presence of an ambient monad.
+
+%   Two kinds is also more easily compatible with using different
+% representations for linear and non-linear values, though this would
+% require that the conversion between linear and non-linear type be
+% explicit, the sub-kinding of Fo would severely limit this option. At
+% any rate, I doubt that this is immensly useful except in DSLs (in
+% which it can be highly)
+
+% JP: I think that this is largely orthogonal. Indeed the polymorphism
+% of the implementation is only linked to the polymorphism of
+% linearity. So this discussion is subsumed by the upcoming discussion
+% on polymorphism.
+
+Advantages of ``linearity via arrows'' include:
+
+\begin{itemize}
+\item Better subsumption properties.  When retrofitting linear types
+  in an existing language, it is important to share has much code as
+  possible between linear and non-linear code. In a system with
+  linearity on arrows, the subsumption relation (linear arrows subsume
+  unrestricted arrows) and the scaling of context in the application
+  rule mean that much linear code can be used as-is from unrestricted
+  code, and be properly promoted. Indeed, assuming lists as defined in
+  \fref{sec:compatibility} and:
+  \begin{code}
+    (++) :: [a] ⊸ [a] ⊸ [a]
+    cycle :: [a] → [a]
+  \end{code}
+  The following definition type-checks, even though |++| is applied to
+  unrestricted values and used in an unrestricted context.
+  \begin{code}
+    f :: [a] → [a] → [a]
+    f xs ys = cycle (xs ++ ys)
+  \end{code}
+  In contrast, in a two-kind system, a function must declare
+  the \emph{exact} linearity of its return value. Consequently, to make a function
+  promotable from linear to unrestriced, its declaration must use
+  polymorphism over kinds.
+
+\item Easier polymorphism.  Even in the cases where code-sharing requires
+  to use polymorphism, linearity on arrows is simpler to use.  Indeed,
+  linearity polymorphism can be supported by adding a special-purpose
+  quantification, which is syntactically separate and does not
+  interfere with any other aspect of the type-system. In contrast, if
+  linearity is encoded in kinds, one needs
+  kind-polymorphism. Furthermore, the subsumption property must be
+  encoded via a sub-kinding property, which is not easy to get right,
+  especially in the presence of ML-style polymorphism. The difficulty
+  is witnessed in the work of \citet{morris_best_2016}: several of
+  applications (including monads) require bounded polymorphism, while
+  we can avoid it here.
+
+\item Exensibility.  It is easy to extend our system to any set of
+  ground multiplicities with a ring structure
+  (\fref{sec:extending-multiplicities}), which is useful to support
+  for example affine types and dependent linear types.  In contrast,
+  in a multiple-kind system, such extensions require \textit{ad-hoc}
+  support. Indeed, affine types require changes in the subkinding
+  system, which in turns may impact unification. While there exists
+  systems with two-kinds and dependent types, they are only trivial in
+  the sense that no linear arrow can be dependent.
+
+% Linearity-on-arrow makes it possible to constrain any function to
+% use its arguments linearly, this is useful for the function writer,
+% similarly to how parametricity can be. We also anticipate that we
+% can leverage programmers’ annotation to make linear functions always
+% inlinable.
+
+% JP: isn't so also for a kinding system?
+
+  % We also anticipate that we can leverage programmers’ annotation to
+  % make linear functions always inlinable.
+
+  % JP: probably not an
+  % advantage; the same can be done with kinds, probably. I believe
+  % the tradeoff is between unique/linear.
+
+  % We have applications where we implement something using unsafe
+  % primitive that are not linear we expose a safe API where the user
+  % has to use linear function. I don’t know how we could do the same
+  % using a two-kind system.
+  % JP: I do not understand this one.
+
+\item Easier implementation. We managed to implement a working
+  prototype of \textsc{ghc} linearity-on-arrow, and our patch is only a little
+  over 1000loc. We attribute its relative simplicity to two factors.
+  First, we could avoid tracking of the kind of types in the
+  variables, which is a daunting task in \textsc{ghc}'s type-checker \jp{why?}.
+
+  Second, \textsc{ghc} already supports impredicative dependent types
+  and a wealth of unboxed or otherwise primitive types and kinds that
+  cannot be substituted for polymorphic type arguments. Further extending
+  the kind system is a complex endeavour which we could avoid entirely.
+\end{itemize}
+
+% Such approaches have been very successful for theory: see for instance
+% the line of work on so-called \emph{mixed linear and non-linear logic}
+% (usually abbreviated \textsc{lnl}) started by
+% \citet{benton_mixed_1995}.
+
+% JP: I don't know what theory this refers to. Also I do not believe
+% that this is relevant for this paper.
+
 
 
 \subsection{Related type systems}
@@ -1917,20 +1964,17 @@ represents the multiplicity of $t$. So, in
 required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
 results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
-This derivation is not desirable: it means that there cannot be
+This derivation is not desirable: it implies that there cannot be
 reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
 \citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
 into an isomorphism.
-
 In that respect, our system is closer to
-\citeauthor{ghica_bounded_2014}'s. What we keep from
-\citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
-\fref{sec:statics}), which can be phrased in terms of linear logic as
-making the natural function of type $!A⊗!B ⟹ !(A⊗B)$ into an
-isomorphism. This choice is unusual from a linear logic perspective,
-but it is the key to be able to use types both linearly an
-unrestrictedly without intrusive multiplicity polymorphic annotation
-on all the relevant types.
+\citeauthor{ghica_bounded_2014}'s.
+
+% What we keep from
+% \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+% \fref{sec:statics})
+% JP: nope, there is no 'case' rule in mcbride_rig_2016
 
 The literature on so-called
 coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
@@ -1939,7 +1983,7 @@ with a linear arrow and multiplicities carried by the exponential
 modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
 develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
-it is not directly applicable to \calc.
+this work is not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
@@ -1951,7 +1995,7 @@ we present in the evaluation section}
 \Citet{wakeling_linearity_1991} produced a complete implementation of
 a language with linear types, with the goal of improving the
 performance. Their implementation features a separate linear heap, as
-\fref{sec:dynamics} where they allocate as much as possible in the
+\fref{appendix:dynamics} where they allocate as much as possible in the
 linear heap, as modelled by the strengthened semantics. However,
 \citeauthor{wakeling_linearity_1991} did not manage to obtain
 consistent performance gains. On the other hand, they still manage to
@@ -1986,7 +2030,7 @@ is opposite to ours: while we aim to keep linear values
 completely outside of garbage collection, they use the type
 information at runtime to ensure that the GC does not follow dangling
 pointers.
-% How can that even work?
+% JP: How can that even work?
 
 \section{Conclusion and future work}
 
@@ -2013,7 +2057,9 @@ to integrate to an existing, mature compiler with a large ecosystem.
 We have developed a prototype implementation extending
 \textsc{ghc} with multiplicities. The main difference between the
 implementation and \calc is that the implementation is adapted to
-bidirectionality: typing contexts go in, inferred multiplicities come
+bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is not a difference. In fact it says above ``One may want to think of the \emph{types} in $Γ$ as
+inputs of the judgement, and the \emph{multiplicities} as outputs.''}
+typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
 design integrates very well in \textsc{ghc}.
 
@@ -2030,33 +2076,38 @@ since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 
 \todo{Section on the |newtype Unrestricted| problem. I guess?}
 
-\subsection{Fusion}
+\subsection{Inlining}
 \label{sec:fusion}
 
-\improvement{This section seems to be unclear. Either too long or too short.}
-Inlining is a staple of program optimisation, exposing opportunities
-for many program transformation including fusion. Not every function
-can be inlined without negative effects on performance: inlining a
-function with two use sites of the argument may result in duplicating
-a computation.
+\improvement{This section seems to be unclear. Either too long or too
+  short.}  Inlining is a staple of program optimisation, exposing
+opportunities for many program transformations including fusion. Not
+every function can be inlined without negative effects on performance:
+inlining a function with more than one use sites of the argument may
+result in duplicating a computation. For example one should avoid the
+following reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++
+expensive|.
 
-In order to discover inlining opportunities \textsc{ghc} deploys a
-cardinality analysis~\cite{sergey_cardinality_2014} which determines
-how many times functions use their arguments. The limitation of such
-an analysis is that it is necessarily heuristic (the problem is
-undecidable). Consequently, it can be hard for the programmer to rely
-on such optimisations: a small, seemingly innocuous change can prevent
-a critical inlining opportunity and have rippling effects throughout
-the program. Hunting down such a performance regression proves
-painful in practice.
+Many compilers can discover safe inlining opportunities by analysing
+the source code in order to determine how many times functions use
+their arguments.  (In \textsc{ghc} this analysis is called a
+cardinality analysis~\cite{sergey_cardinality_2014}). The limitation
+of such an analysis is that it is necessarily heuristic (the problem
+is undecidable). Because inlining is crucial to efficiency,
+programmers find themselves in the uncomfortable position of relying
+on a heuristic to obtain efficient programs. A small, seemingly
+innocuous change can prevent a critical inlining opportunity and have
+rippling effects throughout the program.  Thus folklore is that
+high-level languages should be abandonned if one wants control over
+the performance.
 
-Linear types address this issue and serve as a programmer-facing
+Linear types address this issue by serving as a programmer-facing
 interface to inlining: because it is always safe to inline a linear
 function, we can make it part of the \emph{semantics} of linear
 functions that they are always inlined. In fact, the system of
 multiplicity annotation of \calc{} can be faithfully embedded the
 abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence in the fact that multiplicity annotation can serve as
+gives confidence in that linear arrows can serve as
 cardinality \emph{declarations}.
 
 Formalising and implementing the integration of multiplicity
@@ -2065,32 +2116,29 @@ annotation in the cardinality analysis is left as future work.
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
 
-\improvement{This section could speak about the borrowing multiplicity.}
-For the sake of this article, we use only $1$ and $ω$ as
-possibilities.  But in fact \calc{} can readily be extended to more
-multiplicities: we can follow \citet{ghica_bounded_2014} and
-\citet{mcbride_rig_2016}, which work with abstract sets of
-multiplicities.  In particular, in order to support dependent types,
-we additionally need a $0$ multiplicity.
+% Applications of multiplicities beyond linear logic seem to often have
+% too narrow a focus to have their place in a general purpose language
+% such as Haskell. \Citet{ghica_bounded_2014} propose to use
+% multiplicities to represent real time annotations, and
+% \citet{petricek_coeffects_2013} show how to use multiplicities to
+% track either implicit parameters (\emph{i.e.} dynamically scoped
+% variables) or the size of the history that a dataflow program needs to
+% remember. \jp{I think that it would be enough to list the useful extensions (dependent and affine types.)}
 
-Applications of multiplicities beyond linear logic seem to often have
-too narrow a focus to have their place in a general purpose language
-such as Haskell. \Citet{ghica_bounded_2014} propose to use
-multiplicities to represent real time annotations, and
-\citet{petricek_coeffects_2013} show how to use multiplicities to
-track either implicit parameters (\emph{i.e.} dynamically scoped
-variables) or the size of the history that a dataflow program needs to
-remember.
+\improvement{This section could speak about the borrowing
+  multiplicity.}  For the sake of this article, we use only $1$ and
+$ω$ as possibilities.  But in fact \calc{} can readily be extended to
+more multiplicities: we can follow \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016}. The general setting for \calc{} is an
+ordered-semiring of multiplicities (with a join operation for type
+inference).  In particular, in order to support dependent types, we
+additionally need a $0$ multiplicity. We may may want to add a
+multiplicity for affine arguments (\emph{i.e.}  arguments which can be
+used \emph{at most once}).
 
-To go further still, more multiplicities may prove useful. For instance we
-may want to consider a multiplicity for affine arguments (\emph{i.e.}
-arguments which can be used \emph{at most once}).
-
-The general setting for \calc{} is an ordered-semiring of
-multiplicities (with a join operation for type inference). The rules
-are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
-must exclude $q=0$ (in particular we see that we cannot
-substitute multiplicity variables by $0$). The variable rule is
+The typing rules are mostly unchanged with the \emph{caveat} that
+$\mathsf{case}_q$ must exclude $q=0$ (in particular we see that we
+cannot substitute multiplicity variables by $0$). The variable rule is
 modified as:
 $$
 \inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
@@ -2116,7 +2164,7 @@ on multiplicities.
 %% Appendix
 \appendix
 \section{Semantics and soundness of \calc{}}
-\label{sec:dynamics}
+\label{appendix:dynamics}
 
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
@@ -2142,6 +2190,24 @@ probably fix this.}
   reuse the variable carrying the array in the left-hand side
   (currently omitted, see above) to avoid the complication of creating
   a new variable? I think so.}
+\improvement{aspiwack: we at least need a |read| primitive on frozen
+|Array|-s.}
+
+Following \citet{gunter_partial-big-step_1993}, we consider not only
+standard big-step derivation but also partial derivations. This
+require some additional setup compared to standard presentation of
+big-step semantics (in particular compared to
+\citet{launchbury_natural_1993}): schematically, to ensure that the
+right-hand side of the reduction relation never is never
+pattern-matched, we introduce, in addition to the usual big-step
+relation $a⇓b$ an additional relation, that we write $a⇒b$, whose role
+is to reduce one redex.\improvement{aspiwack: actually do that in the
+  rules}
+
+The reason to consider partial derivation is that they make it
+possible to express properties such as \emph{progress}: we say that a
+partial proof is blocked if it is not total and can't be extended, we
+want to prove that this cannot happens.
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -2387,4 +2453,5 @@ for the \emph{shared variable} and \emph{let} rules.
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
 
-%  LocalWords:  sequentialised supremum
+%  LocalWords:  sequentialised supremum bisimilar observationally
+%  LocalWords:  typestates
