@@ -1375,20 +1375,20 @@ chose, and the generalizations that we have left open.
 \paragraph{Case rule}\unsure{While I was writing this new version,
   Simon suggested that we canned the discussion on $\varid{case}_ω$
   altogether. Let's discuss that soon.}
-The particular formulation of the \varid{case} rule in \calc{}, where
-\varid{case} is annotated by a multiplicity $p$ is not implied by the
-rest of the system: only the case $p=1$ is necessary to embed
-linear logic.  Yet, providing the case $p=ω$ is a deliberate
-design choice. It is thanks to $\varid{case}_ω$ that we can simultaneously inhabit
-|fst :: (a,b) -> a| and retain a single pair constructor with type
-|(,) :: a ⊸ b ⊸ (a,b)|. In general, our choice allows modifing existing Haskell data types
-into linear data types as we have described in
-\fref{sec:linear-constructors}.
-Alternatively, we could have one linearity-parametric data
-type, but that would be more intrusive and run afoul of our goal to
-blend in Haskell.
+It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
+Consider |fst| again.  We could instead have
+\begin{code}
+data (,) p q a b where
+  (,) :: a → _ p b → _ q (,) p q a b
 
-In other words, our design choice allows to meaningfully inhabit
+fst :: (,) 1 ω a b ⊸ a
+fst x = case_1 x of (,) a b -> a
+\end{code}
+But now linearity polymorphism infects all basic data types (such as pairs), and it
+it hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
+reasonable to annotate |case| in the same way.
+
+To put it another way, our design choice allows to meaningfully inhabit
 |Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
 forbids that.
 
@@ -1398,16 +1398,9 @@ same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)�
 
 \paragraph{Subtyping}
 Because the type $A⊸B$ only strengthens the contract of its elements
-compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$. This
-is however, not so, because there is no notion of subtyping in \calc{}. This
-is a salient choice in our design. Our objective is to integrate with
-existing typed functional languages such as Haskell and the
-\textsc{ml} family, which are based on Hindley-Milner-style
-polymorphism. Hindley-Milner-style polymorphism, however, does not
-mesh well with subtyping as the extensive exposition by
-\citet{pottier_subtyping_1998} witnesses.  Therefore \calc{} uses
-multiplicity polymorphism for the purpose of reuse of higher-order
-function as we described in \fref{sec:lin-poly}.  So, for example, if
+compared to $A→B$, one might expect the type $A⊸B$ to be a subtype of $A→B$.
+But while \calc{} has \emph{polymorphism}, it does not have \emph{subtyping}.
+For example, if
 \begin{code}
   f :: Int ⊸ Int
   g :: (Int -> Int) -> Bool
@@ -1415,46 +1408,37 @@ function as we described in \fref{sec:lin-poly}.  So, for example, if
 then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
-
+Alternatively, |g| might well be multiplicity-polymorphic, with type
+|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed typeable.
 \jp{I feel that the eta-expansion thing is enough discussion. I
   suggest that we can say that extending subtyping is future work.}
-\paragraph{Polymorphism} Could |f| be given the polymorphic type
-|f :: Int -> _ π Int| instead? No. For instance, consider the
-identity function $λ_π (x:Int). x$ and note that it does not have the polymorphic type.
-Indeed, to use the variable rule we would need
-the equality $π = 1 + ωπ'$, which the system cannot
-prove.
 
-Instead, to typecheck |g f|, we could make |g| polymorphic with type
-|(Int -> _ π Int) -> Bool|, which is often possible.
+The lack of subtyping is a deliberate choice in our design: it is well
+known that Hindley-Milner-style type inference does not mesh well with
+subtyping (see, for example, the extensive exposition by
+\citet{pottier_subtyping_1998}).
 
-This design limits the amount of library reuse that we can have because
-higher-order functions in linearity-unaware libraries are likely to
-have overly-monormorphic types. But it makes it possible to freely
-extend the multiplicity semi-ring.
+\paragraph{Polymorphism} Consider the definition
+\begin{code}
+id x = x
+\end{code}
+Our typing rules would validate both |id :: Int → Int| and |id :: Int ⊸ Int|.
+So, since we think of multiplicities ranging over $\{1,ω\}$, surely we should
+also have |id :: forall π. Int → _ π Int|?  But as it stands, our rules do
+not accept it. To do so we would need $x :_π Int ⊢ x : Int$.  Looking
+at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
+trying $π=1$ and $π=ω$.
+\simon{I could not work out what your $π$ and $π'$ were.... so I ended up with case analysis.  What am I missing?}
+But if we had a richer domain of multiplicities, including
+$0$\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
+in a dependently typed system}
+or $2$ for example, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
+so becuase it is not the case that |id :: Int → _ 0 Int|.
 
-In order to make the identity polymorphic, we would only need to add a
-new law to the multiplicity semi-ring adding that $π = 1 + ωπ'$ for
-any variable $π$ (or, to be more general, we would add an ordering to the
-semi-ring and impose that $1 \leqslant π$, and change the variable
-rule to use the ordering instead of sums). That is, for any
-muliplicity $q$ that $π$, consuming a value $q$ times includes
-consuming said value exactly once.
-
-This precludes multiplicities such as $2$ which imposes that a value
-is consumed exactly twice. But the examples of multiplicity we
-consider in this article are all compatible with the above law. That
-is, with the exception of $0$ (the value cannot be consumed at all),
-which, in accordance with \citet{mcbride_rig_2016}, we may need to use
-to extend the design to \textsc{ghc}'s dependent types. However, it is
-preferable to restrict multiplicity variables to range over non-$0$
-multiplicities: allowing $\varid{case}_0$ would be quite incorrect
-(for instance given a list with multiplicity $0$ we would be able
-to compute its length).
-
-Experience will tell whether it is best to add said law and make
-first-order function polymorphic, or keep the design open for more
-exotic multiplicities.
+For now, we accept more conservative rules, in order to hold open the possiblity
+of extending the multiplicity domain later.  But there is an up-front cost,
+of somewhat less polymorphism than we might expect.  We hope the experience will
+lead us to a better assessment of the costs/benefit tradeoff here.
 
 \section{Applications}
 \label{sec:evaluation}
