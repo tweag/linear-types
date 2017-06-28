@@ -112,7 +112,7 @@
 % Peanut gallery comments by Ryan:
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
-\newcommandx{\jp}[1]{\todo[]{JPB: #1}}
+\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{#1}{}}
 \newenvironment{alt}{\color{red}}{}
 
 % Link in bibliography interpreted as hyperlinks.
@@ -319,11 +319,9 @@ even though linearity has inspired uniqueness typing in Clean, and
 ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-\jp{I suppose that the next paragraph wants to say that we support many things, but
-  here we evaluate our language on two use-cases? I propose to move
-  this paragraph into the list: ``Even though our design supports many
+\jp{What about ``Even though our design supports many
   applications for linear types, we demonstrate that our design
-  supports two typical use-cases. [...]}  Linear types can do many
+  supports two typical use-cases.''}  Linear types can do many
 things, but we focus on two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
 enforcing access protocols for external APIs, such as files, sockets,
@@ -1895,9 +1893,8 @@ Advantages of ``linearity via arrows'' include:
     f :: [a] → [a] → [a]
     f xs ys = cycle (xs ++ ys)
   \end{code}
-
-  In contrast, in a two-kind system, a function \emph{must} declare
-  the linearity of its return value. Consequently, to make a function
+  In contrast, in a two-kind system, a function must declare
+  the \emph{exact} linearity of its return value. Consequently, to make a function
   promotable from linear to unrestriced, its declaration must use
   polymorphism over kinds.
 
@@ -2076,7 +2073,8 @@ to integrate to an existing, mature compiler with a large ecosystem.
 We have developed a prototype implementation extending
 \textsc{ghc} with multiplicities. The main difference between the
 implementation and \calc is that the implementation is adapted to
-bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is not a difference}
+bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is not a difference. In fact it says above ``One may want to think of the \emph{types} in $Γ$ as
+inputs of the judgement, and the \emph{multiplicities} as outputs.''}
 typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
 design integrates very well in \textsc{ghc}.
