@@ -12,11 +12,13 @@ data Multiplicity = One | Omega | Multiplicity :× Multiplicity
 -- In this file we evaluate what could Monad look like with linear types.
 -- the contender is:
 
-class Monad' (p :: Multiplicity) m where
+-- Constraint: (forall p. Functor (m p)) => Monad' m
+
+class Monad' m where
   join :: m p (m q a) -> m (p:×q) a
-  fmap :: (a ⊸ b) -> m p a ⊸ m p b
-  bind :: m p a ⊸ (a ->{-p-} m q b) -> m (p:×q) b
-  -- bind m f = join (fmap f m)
+  fmap' :: (a ⊸ b) -> (m p) a ⊸ (m p) b
+  bind :: m p a ⊸ ((a ->{-p-} m q b) -> m (p:×q) b)
+  bind m f = join (fmap' f m)
 
 type a ⊸ b = a -> b
 
