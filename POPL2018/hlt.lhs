@@ -953,9 +953,8 @@ where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q
 And that is captured by the linearity-polymorphic type of |(>>=)|.
 
 |IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
-\jp{but it is not a monad: |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law |pp = p|.
-Even |(>>=)  = bindIOL| is incorrect because the multiplicity changes.
-
+\jp{but it is not a monad: $join :: IOL p (IOL q a) ⊸ IOL (pq) a$ and we do not have the law $pp = p$.
+Even $(>>=)  = bindIOL$ is incorrect because the multiplicity changes.
 }
 \begin{alt}
   |IOL| is a generalized monad: its bind and return combinators can be
