@@ -1915,16 +1915,13 @@ This derivation is not desirable: it means that there cannot be
 reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
 \citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
 into an isomorphism.
-
 In that respect, our system is closer to
-\citeauthor{ghica_bounded_2014}'s. What we keep from
-\citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
-\fref{sec:statics}), which can be phrased in terms of linear logic as
-making the natural function of type $!A⊗!B ⟹ !(A⊗B)$ into an
-isomorphism. This choice is unusual from a linear logic perspective,
-but it is the key to be able to use types both linearly an
-unrestrictedly without intrusive multiplicity polymorphic annotation
-on all the relevant types.
+\citeauthor{ghica_bounded_2014}'s.
+
+% What we keep from
+% \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+% \fref{sec:statics})
+% JP: nope, there is no 'case' rule in mcbride_rig_2016
 
 The literature on so-called
 coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
