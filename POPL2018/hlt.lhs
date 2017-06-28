@@ -2208,6 +2208,24 @@ probably fix this.}
   reuse the variable carrying the array in the left-hand side
   (currently omitted, see above) to avoid the complication of creating
   a new variable? I think so.}
+\improvement{aspiwack: we at least need a |read| primitive on frozen
+|Array|-s.}
+
+Following \citet{gunter_partial-big-step_1993}, we consider not only
+standard big-step derivation but also partial derivations. This
+require some additional setup compared to standard presentation of
+big-step semantics (in particular compared to
+\citet{launchbury_natural_1993}): schematically, to ensure that the
+right-hand side of the reduction relation never is never
+pattern-matched, we introduce, in addition to the usual big-step
+relation $a⇓b$ an additional relation, that we write $a⇒b$, whose role
+is to reduce one redex.\improvement{aspiwack: actually do that in the
+  rules}
+
+The reason to consider partial derivation is that they make it
+possible to express properties such as \emph{progress}: we say that a
+partial proof is blocked if it is not total and can't be extended, we
+want to prove that this cannot happens.
 
 \begin{figure}
   \figuresection{Translation of typed terms}
