@@ -930,16 +930,15 @@ extension is not turned on.
 
 \subsection{Linear input/output} \label{sec:linear-io}
 
-In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how does it work?
-|IOL| is just a generalisation of the |IO| monad, thus:
+In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how
+does it work?  |IOL| is just a generalisation of the |IO|
+monad\footnote{Yet |IOL p| is not a monad, because
+  |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law
+  |pp = p|. We believe that it is a relative monad~\cite{altenkirch_monads_2010}.}, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
   bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
-
-  instance Monad (IOL p) where
-    return = returnIOL
-    (>>=)  = bindIOL
 \end{code}
 The idea is that if |m :: IO 1 t|, then |m| is a input/output
 computation that returns a linear value of type |t|.  But what does it mean to
@@ -950,16 +949,10 @@ the continuation arrow.  More precisely, in an application |m >>= k|,
 where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
 And that is captured by the linearity-polymorphic type of |(>>=)|.
 
-|IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
-\jp{but it is not a monad: $join :: IOL p (IOL q a) ⊸ IOL (pq) a$ and we do not have the law $pp = p$.
-Even $(>>=)  = bindIOL$ is incorrect because the multiplicity changes.
-}
-\begin{alt}
-  |IOL| is a generalized monad: its bind and return combinators can be
-  used in the familiar way, even though they have a different type
-  than usual. The difference with the usual monad is that
-  multiplicities may be mixed, but this poses no problem
-  in practice.  Consider
+Even though they have a different type than usual, the bind and return
+combinators of |IOL| can be used in the familiar way, The difference
+with the usual monad is that multiplicities may be mixed, but this
+poses no problem in practice.  Consider
 \begin{code}
   do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
       ; d <- getData      -- |getDate  :: IO ω Date|
@@ -976,28 +969,6 @@ Nevertheless, the we can combine them with |bindIOL| in the usual way:
 Such an interpretation of the |do|-notation requires the
 \texttt{-XRebindableSyntax} extension, but if linear I/O becomes
 commonplace it would be worth considering a more robust solution.
-
-\end{alt}
-
-A slight bump in the road is the treatment of the |do|-notation.  Consider
-\begin{code}
-  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-      ; d <- getData      -- |getDate  :: IO ω Date|
-      ; e[f,d] }
-\end{code}
-Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
-an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-Nevertheless, we can easily combine them with |bindIOL| thus:
-\begin{code}
-  openFile s `bindIOL` \f ->
-  getData    `bindIOL` \d ->
-  e[f,d]
-\end{code}
-because, crucially, |bindIOL| does not require uniform linearity: it has two
-linearity parameters |p| and |q|, not just one.  We simply need |do|-notation to
-behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requires the
-|-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
-be worth considering a more robust solution.
 
 Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
 and that implementation too is illuminated by linearity.  Here it is:
