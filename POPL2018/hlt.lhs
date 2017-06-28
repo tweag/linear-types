@@ -2188,7 +2188,7 @@ A \emph{partial} derivation of $a⇓?$ (the question mark is part of the
 syntax: the right-hand value is the result of the evaluation, it is
 not yet known for a partial derivation!) is either:
 \begin{itemize}
-\item the empty tree,
+\item just a root labelled with $a⇓?$,
 \item or an application of a rule matching $a$ where exactly one of
   the premises, $a'⇓?$ has a partial derivation, all the premises to
   the left of $a'⇓?$ have a total derivation, and the premises to the
@@ -2196,6 +2196,13 @@ not yet known for a partial derivation!) is either:
   value $?$ to know what the root of the next premise is).
 \end{itemize}
 
+Remark that, by definition, in a partial derivation, there is exactly one
+$b⇓?$ with no sub-derivation. Let us call $b$ the \emph{head} of the
+partial derivation. And let us write $a⇓^*b$ for the relation which
+holds when $b$ is the head of some partial derivation with root
+$a⇓?$. We call $a⇓^*b$ the \emph{partial evaluation relation}, and, by
+contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
+  evaluation relation}.
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -2402,14 +2409,22 @@ not yet known for a partial derivation!) is either:
 
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
   The denotaion assignment relation defines a simulation of the
-  ordinary reduction by the denotational reduction.
+  ordinary evaluation by the denotational evaluation, both in the
+  complete and partial case.
 
-  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
-  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
-  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  That is:
+  \begin{itemize}
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+    there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+    $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓^*Δ:z$,
+    there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+    $Ξ ⊢ (Γ||t ⇓^* Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \end{itemize}
 \end{lemma}
 \begin{proof}
-  By induction on the derivation of $Γ:e⇓Δ:z$:
+  Both simulations are proved by a similar induction on the derivation
+  of $Γ:e⇓Δ:z$ (resp. $Γ:e⇓Δ:z$):
   \begin{itemize}
   \item The properties of the substitution of |MArray| in the
     definition of denotation assignments are crafted to make the
@@ -2420,11 +2435,18 @@ not yet known for a partial derivation!) is either:
 
 \begin{lemma}[Liveness]\label{lem:liveness}
   The refinement relation defines a simulation of the strengthened
-  reduction by the ordinary reduction.
+  reduction by the ordinary reduction, both in the complete and
+  partial case.
 
-  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
-  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
-  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  That is:
+  \begin{itemize}
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+    $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+    that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+    $Ξ ⊢ (Γ'||e ⇓^* Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+    that $Γ:e⇓^*Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \end{itemize}
 \end{lemma}
 \begin{proof}
   This is proved by a straightforward induction over the derivation of
