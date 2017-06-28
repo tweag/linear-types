@@ -1330,7 +1330,7 @@ type, but that would be more intrusive and run afoul of our goal to
 blend in Haskell.
 
 In other words, our design choice allows to meaningfully inhabit
-|Unrestricted (a,b) ⊸ (Unrestrict a, Unrestricted b)|, while linear logic
+|Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
 forbids that.
 
 \unsure{aspiwack: we could add that, interestingly, the regular tensor
@@ -1357,22 +1357,26 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 
+\jp{I feel that the eta-expansion thing is enough discussion. I
+  suggest that we can say that extending subtyping is future work.}
 \paragraph{Polymorphism} Could |f| be given the polymorphic type
-|f :: Int -> _ π Int| instead? Usually not. For instance, consider the
-identity function and note that $λ_π (x:Int). x$ because, in the
-variable rule, it reduces to $π = 1 + ωπ'$ which the system cannot
-prove. Instead we rely on |g| being polymorphic with type
-|(Int -> _ π) -> Bool|, which is often the case. In which case |(g f)|
-is, indeed typeable.
+|f :: Int -> _ π Int| instead? No. For instance, consider the
+identity function $λ_π (x:Int). x$ and note that it does not have the polymorphic type.
+Indeed, to use the variable rule we would need
+the equality $π = 1 + ωπ'$, which the system cannot
+prove.
 
-This reduces the amount of library reuse that we can have because
+Instead, to typecheck |g f|, we could make |g| polymorphic with type
+|(Int -> _ π Int) -> Bool|, which is often possible.
+
+This design limits the amount of library reuse that we can have because
 higher-order functions in linearity-unaware libraries are likely to
 have overly-monormorphic types. But it makes it possible to freely
 extend the multiplicity semi-ring.
 
 In order to make the identity polymorphic, we would only need to add a
 new law to the multiplicity semi-ring adding that $π = 1 + ωπ'$ for
-any variable (or,to be more general, we would add an ordering to the
+any variable $π$ (or, to be more general, we would add an ordering to the
 semi-ring and impose that $1 \leqslant π$, and change the variable
 rule to use the ordering instead of sums). That is, for any
 muliplicity $q$ that $π$, consuming a value $q$ times includes
