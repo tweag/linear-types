@@ -1659,11 +1659,12 @@ dynamic lifetime necessarily coincides with the static scope: the
 |free| primitive is built into |alloc|.
 
 
-\subsection{Uniqueness types}
+\subsection{Uniqueness and ownership typing}
 
 The literature is awash with enforcing linearity not via linear types,
-but via uniqueness (or ownership) types. The most prominent representatives of
-languages with such uniqueness types are perhaps Clean~\cite{barendsen_uniqueness_1993} and
+but via uniqueness (or ownership) types. The most prominent
+representatives of languages with such uniqueness types are perhaps
+Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
@@ -1675,8 +1676,8 @@ pleases, a uniqueness type ensures that the argument of a function is
 not used anywhere else in the expressions context even if the function
 can work with the argument as it pleases.
 
-From a compiler's perspective, uniqueness type provide a {\em non-aliasing
-analysis} while linear types provides a {\em cardinality analysis}. The
+Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
+analysis} while linear typing provides a {\em cardinality analysis}. The
 former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
@@ -1684,7 +1685,7 @@ of linear types in relation with fusion can be found
 in~\citet{bernardy_composable_2015}, see also the discussion in
 \fref{sec:fusion}.\unsure{The discussion on fusion may well disappear}
 
-Because of this weak duality, we perhaps could as well have
+Because of this weak duality, we may have
 retrofitted uniqueness types to Haskell. But several points
 guided our choice of designing \HaskeLL{} around linear
 logic rather than uniqueness types: (a) functional languages have more use
@@ -1694,6 +1695,66 @@ wealth of literature detailing the applications of linear
 logic — see \fref{sec:applications}; (c) and decisively, linear type systems are
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
+
+Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called ownership
+typing. Like the original formulation of linear logic, in Rust \texttt{A}
+stands for linear values, unrestricted values at type \texttt{A} are denoted
+\texttt{RC<A>}, and duplication is explicit.
+
+Rust addresses the problem of being mindful about
+memory, resources, and latency, but this comes at a price: Rust,
+as a programming language, is specifically optimised for writing
+programs that are structured using the RAII
+pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens. For instance, tail-call optimization, crucial to the
+operational behaviour of many functional programs, is not usually
+sound. This is because resource liberation must be triggered when the
+tail call returns.
+
+\HaskeLL{} aims to hit a different point in the design space where
+regular non-linear expressions are the norm yet gracefully scaling up
+to latency-sensitive and resource starved programs is still
+possible.\improvement{Change depending on what we put in the
+  evaluation section}
+
+How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
+lifetime of references using a special system, one can simply give
+each reference a multiplicity of one, and explicitly pass them around.
+
+A function can be declared to destroy a reference simply by taking it
+as a (linear) parameter.  For example the following signature is that
+of a function from |A| to |B| which also destroys a reference:
+\begin{code}
+destroyer : Reference ⊸ A -> B
+\end{code}
+A function which borrows a reference can take it as input and return
+it.
+\begin{code}
+borrower : Reference ⊸ A -> (Reference, B)
+\end{code}
+\paragraph{Borrowing references in data structures}
+In an imperative language, one often walks data structure, extract
+references and pass them around. In Rust, the borrowing system
+ensures that the passed reference does not outlive the datastructure
+that it points to.
+
+In a functional language, instead of extracting references, one will
+use lenses to lift a modification function from a local subtree to a
+global one. Thanks to garbage collection, there is already no risk of
+dangling references, but one has to pay a runtime cost. By using
+linear types one can avoid this cost.
+
+Indeed, we can ensure that a modification function can have the type:
+|Reference ⊸ Reference| and thus can be implemented with no need for
+GC. At the same time, the lens library will use linear types and lift
+local linear modifications to global linear modifications. Note that,
+if the original object lives in the GC heap (and thus can be shared),
+the same lens library can be used, but individual lifting of
+modifications cannot be implemented by in-place update.
 
 \subsection{Linearity via arrows vs. linearity via kinds}
 
@@ -1832,67 +1893,6 @@ Advantages of ``linearity via arrows'' include:
 % JP: I don't know what theory this refers to. Also I do not believe
 % that this is relevant for this paper.
 
-\subsection{Ownership typing à la Rust}
-
-Rust \cite{matsakis_rust_2014} features ownership (aka uniqueness)
-types. But like the original formulation of linear logic, in Rust \texttt{A}
-stands for linear values, unrestricted values at type \texttt{A} are denoted
-\texttt{RC<A>}, and duplication is explicit.
-
-Rust addresses the problem of being mindful about
-memory, resources, and latency, but this comes at a price: Rust,
-as a programming language, is specifically optimised for writing
-programs that are structured using the RAII
-pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-(where resource lifetimes are tied directly or indirectly to stack
-allocated objects that are freed when the control flow exits the
-current lexical scope). Ordinary functional programs seldom fit this
-particular resource acquisition pattern so end up being second class
-citizens. For instance, tail-call optimization, crucial to the
-operational behaviour of many functional programs, is not usually
-sound. This is because resource liberation must be triggered when the
-tail call returns.
-
-\HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm yet gracefully scaling up
-to latency-sensitive and resource starved programs is still
-possible.\improvement{Change depending on what we put in the
-  evaluation section}
-
-How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
-lifetime of references using a special system, one can simply give
-each reference a multiplicity of one, and explicitly pass them around.
-
-A function can be declared to destroy a reference simply by taking it
-as a (linear) parameter.  For example the following signature is that
-of a function from |A| to |B| which also destroys a reference:
-\begin{code}
-destroyer : Reference ⊸ A -> B
-\end{code}
-A function which borrows a reference can take it as input and return
-it.
-\begin{code}
-borrower : Reference ⊸ A -> (Reference, B)
-\end{code}
-\paragraph{Borrowing references in data structures}
-In an imperative language, one often walks data structure, extract
-references and pass them around. In Rust, the borrowing system will
-ensure that the passed reference does not outlive the datastructure
-that it point to.
-
-In a functional language, instead of extracting references, one will
-use lenses to lift a modification function from a local subtree to a
-global one. Thanks to garbage collection, there is already no risk of
-dangling references, but one has to pay a runtime cost. By using
-linear types one can avoid this cost.
-
-Indeed, we can ensure that a modification function can have the type:
-|Reference ⊸ Reference| and thus can be implemented with no need for
-GC. At the same time, the lens library will use linear types and lift
-local linear modifications to global linear modifications. Note that,
-if the original object lives in the GC heap (and thus can be shared),
-the same lens library can be used, but individual lifting of
-modifications cannot be implemented by in-place update.
 
 
 \subsection{Related type systems}
