@@ -1096,7 +1096,7 @@ we omit ordinary type polymorphism.
 
 \calc{} is an explicitly-typed language: each binder is annotated with
 its type and multiplicity; and multiplicity abstraction and application
-are explicit.  The source language will use type inference to fill in
+are explicit.  \HaskeLL{} will use type inference to fill in
 much of this information, but we do not address the challenges of type
 inference here.
 \improvement{Though there are some thoughts in \fref{sec:implementation}}
@@ -1124,8 +1124,8 @@ makes no claim on how often that argument is consumed (\fref{def:consume}).
 % while a multiplicity of $1$ means that data at that position
 % \emph{can} reside in either heap.
 All the variables in the multiplicities $q_i$ must be among
-$π_1…π_n$; we write $q_i[p_1…p_n]$ for the substitution of $π_i$ by
-$p_i$.
+$π_1…π_n$; we write $q[p_1…p_n]$ for the substitution of $π_i$ by
+$p_i$ in $q$.
 
 % For most purposes, $c_k$ behaves like a constant with the type
 % $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
@@ -1174,7 +1174,7 @@ $p_i$.
     \caserule
 
     \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q} A₁ …  x_n:_{q} A_n ⊢ u : C }
-    { Δ+\sum_i qΓ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+    { Δ+q\sum_i Γ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
     {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
@@ -1195,14 +1195,14 @@ be read as follows
  \(Γ ⊢ t : A\) asserts that consuming the term $t : A$ exactly once will
   consume each binding $(x :_{q} A)$ in $Γ$ with its multiplicity $q$.
 \end{quote}
-You may want to think of the \emph{types} in $Γ$ as
+One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
 For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with its multiplicity $q$.  Remember, this
-is an explicitly-typed intermediate language; in the source language
+is an explicitly-typed intermediate language; in \HaskeLL{}
 this multiplicity is inferred.
 
 The dual application rule (app) is more interesting:
@@ -1307,7 +1307,7 @@ multiplicity |p|; this is precisely analogous to the explicit
 multiplicity on a |let| binding.  It says how often the scrutinee (or,
 for a |let|, the right hand side) will be consumed.  Just as
 for |let|, we expect |p| to be inferred from an un-annotated |case| in
-the source language.
+\HaskeLL{}.
 
 The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
 the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
@@ -1340,9 +1340,9 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 The details of meta-theory of \calc{} are deferred to the appendix
 (\fref{appendix:dynamics}). Our goal is to establish two properties:
 \begin{itemize}
-\item That pure linear interface can be implemented using mutations
+\item That a pure linear interface can be implemented using mutations
   under the hood.
-\item That the ``typestate'' of data is enforced by the type system
+\item That the ``typestate'' of data is enforced by the type system\jp{what does this mean? what is a typestate?}
 \end{itemize}
 
 To that effect we introduce two semantics: a semantic with
