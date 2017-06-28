@@ -1645,14 +1645,14 @@ We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
 \begin{code}
 alloc  (\x ->
-{- manipulate x -}
+{- x live -}
 alloc  (\y ->
-{- manipulate x and y -}
+{- x and y live -}
 free x (
 alloc  (\z ->
-{- manipulate y and z -}
+{- y and z live -}
 free y (
-{- manipulate z -}
+{- z live -}
 free z)))))
 \end{code}
 
