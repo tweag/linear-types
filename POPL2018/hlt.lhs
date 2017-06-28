@@ -73,12 +73,17 @@
 \def\Frefdefname{Definition}
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
+\def\frefappendixname{Appendix}
+\def\Frefappendixname{Appendix}
 \def\fancyrefdeflabelprefix{def}
 \frefformat{plain}{\fancyrefdeflabelprefix}{{\frefdefname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefdeflabelprefix}{{\Frefdefname}\fancyrefdefaultspacing#1}
 \def\fancyreflemlabelprefix{lem}
 \frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1}
+\def\fancyrefappendixlabelprefix{appendix}
+\frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
+\Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
 
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -1309,6 +1314,42 @@ discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear ty
 for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case}_1$, giving
 |swap| a linear type.
 
+\subsection{Metatheory}
+\label{sec:metatheory}
+
+The details of meta-theory of \calc{} are deferred to the appendix
+(\fref{appendix:dynamics}). Our goal is to establish two properties:
+\begin{itemize}
+\item That pure linear interface can be implemented using mutations
+  under the hood.
+\item That the ``typestate'' of data is enforced by the type system
+\end{itemize}
+
+To that effect we introduce two semantics: a semantic with
+mutation where type-states are enforced dynamically and a pure semantics
+that tracks linearity carefully, but where ``mutations'' are
+implemented as copying. Both semantics are big step operational
+semantics with laziness in the style of \citet{launchbury_natural_1993}.
+
+The semantics are instantiated with the arrays of
+\fref{sec:freezing-arrays}. They can be easily extended to support,
+for instance, a real-world token and file handles like in
+\fref{sec:io-protocols}.
+
+We then prove the two semantics to be bisimilar from which we can
+deduce:
+\begin{theorem}
+  The implementation of the array primitives with in-place mutation is
+  observationally equivalent to a pure implementation.
+\end{theorem}
+\begin{theorem}
+  Neither semantics can block on typestates. Therefore typestates need
+  not be tracked dynamically.
+\end{theorem}
+
+The complete proof of both of these statements can be found in
+\fref{appendix:dynamics}.
+
 \subsection{Design choices \& trade-offs}
 Let us review the design space allowed by \calc{}, the points that we
 chose, and the generalizations that we have left open.
@@ -1953,7 +1994,7 @@ we present in the evaluation section}
 \Citet{wakeling_linearity_1991} produced a complete implementation of
 a language with linear types, with the goal of improving the
 performance. Their implementation features a separate linear heap, as
-\fref{sec:dynamics} where they allocate as much as possible in the
+\fref{appendix:dynamics} where they allocate as much as possible in the
 linear heap, as modelled by the strengthened semantics. However,
 \citeauthor{wakeling_linearity_1991} did not manage to obtain
 consistent performance gains. On the other hand, they still manage to
@@ -2121,7 +2162,7 @@ on multiplicities.
 %% Appendix
 \appendix
 \section{Semantics and soundness of \calc{}}
-\label{sec:dynamics}
+\label{appendix:dynamics}
 
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
@@ -2392,4 +2433,4 @@ for the \emph{shared variable} and \emph{let} rules.
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
 
-%  LocalWords:  sequentialised supremum
+%  LocalWords:  sequentialised supremum bisimilar
