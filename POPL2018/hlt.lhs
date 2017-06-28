@@ -2470,21 +2470,36 @@ for the \emph{shared variable} and \emph{let} rules.
 
   For instance, we need to check that the head of the partial
   derivation is not $Ξ⊢(Γ,x:_1 B = e||x ⇓ ?) :_ω A,Σ$ or
-  $Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$, which match no rule because
+  $Ξ⊢Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$, which match no rule because
   of their multiplicities.
   \begin{itemize}
   \item $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed state because
     it reduces to $x:_1B = x:_{ωp} B$ for some $p$, which never
     holds. By type preservation (\fref{lem:type-safety}),  $Ξ⊢Γ,x:_1 B
     = e||x :_ω A,Σ$ cannot be the head of a partial derivation.
-  \item The case of $Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$
+  \item The case of $Ξ⊢Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$
     is similar, if a little more subtle. For it to be well-typed, we
     need that $Γ$ contains a binding $x :_ω \varid{MArray}~a$. We need
-    the following intermediate lemma:
+    the following intermediate lemmas:
     \begin{itemize}
-    \item If $Γ,x:_1a||u :_p A,Σ$ is the head of a partial proof, then
+    \item If $Ξ⊢Γ,x:_1A = e_x||u :_p B,Σ$ is the head of a partial proof, then
       $p=1$ (by type preservation)
-    \item If
+    \item If $Ξ⊢Γ,x:_1A = e_x||u :_1 B,Σ$ is the head of a partial
+      proof, then none of the $y:_ωC=e_y$ are such that $x$ is a free
+      variable of $e_y$ (by type preservation).
+    \item If $Ξ⊢Γ||u :_p A, Σ$ is the head of a partial proof, and
+      contains an $x :_q \varid{MArray}~a$ binding, then $q=1$ (which,
+      by the above lemma implies that $p=1$). This is proved by
+      induction in the partial derivation, noting that the only rule
+      which could introduce such a binding with $q=ω$ is the $\flet$
+      rule either because the binding has multiplicity $ω$ or because
+      $p=ω$\unsure{This property is not true in presence of recursive
+        definition. And in fact, I can trigger the write rule in an ω
+        environment using |undefined| for the |MArray|. So I'm
+        guessing I should relax this rule to take arbitrary
+        multiplicity. It seems that the bisimulation is left
+        unchanged. It would simplify progress, because then, we would
+        only have the linear variable rule to deal with.}
     \end{itemize}
 
   \end{itemize}
