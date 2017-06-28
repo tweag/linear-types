@@ -2176,9 +2176,8 @@ is to reduce one redex.\improvement{aspiwack: actually do that in the
   rules, or maybe I don't actually need it}
 
 The reason to consider partial derivation is that they make it
-possible to express properties such as \emph{progress}: we say that a
-partial derivation is blocked if it is not total and can't be extended, an
-evaluation relation has the progress property when it cannot happen.
+possible to express properties such as \emph{progress}: all partial
+derivations can be extended.
 
 Given a number of rules defining $a⇓b$ with ordered premises (we will
 use the ordering of premises shortly), we
@@ -2381,7 +2380,7 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \end{definition}
 
 \begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
-  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ then
   $$
   Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
   $$
