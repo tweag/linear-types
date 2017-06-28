@@ -559,8 +559,8 @@ I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
 \item We generalise the IO monad so that it expresses whether or not the
 returned value is linear.  We add an extra type parameter |p| to the monad |IOL|,
-where |p| can be |1| or |ω|.\jp{multiplicities are under-defined at this point}  Now |openFile| returns |IO 1 (File ByteString)|,
-the ``|1|'' indicating that the returned |File| must be used linearly.
+where |p| can be |1| or |ω|.  Now |openFile| returns |IO 1 (File ByteString)|,
+the ``|1|'' indicating that the returned |File| must be used linearly.\footnote{Using |ω| indicates on the contrary that a result can be used in an unrestricted fashion.}
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 \item As before, operations on linear values must consume their input
 and return a new one; here |readLine| consumes the |File| and produces a new one.
@@ -949,10 +949,38 @@ computation that returns a linear value of type |t|.  But what does it mean to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
 the continuation arrow.  More precisely, in an application |m >>= k|,
-where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ t'|. \jp{perhaps |k :: t ⊸ IO q t'|}
-And that is captured beautifully by the linearity-polymorphic type of |(>>=)|.
+where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
+And that is captured by the linearity-polymorphic type of |(>>=)|.
 
 |IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
+\jp{but it is not a monad: |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law |pp = p|.
+Even |(>>=)  = bindIOL| is incorrect because the multiplicity changes.
+
+}
+\begin{alt}
+  |IOL| is a generalized monad: its bind and return combinators can be
+  used in the familiar way, even though they have a different type
+  than usual. The difference with the usual monad is that
+  multiplicities may be mixed, but this poses no problem
+  in practice.  Consider
+\begin{code}
+  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
+      ; d <- getData      -- |getDate  :: IO ω Date|
+      ; e[f,d] }
+\end{code}
+Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
+an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
+Nevertheless, the we can combine them with |bindIOL| in the usual way:
+\begin{code}
+  openFile s `bindIOL` \f ->
+  getData    `bindIOL` \d ->
+  e[f,d]
+\end{code}
+Such an interpretation of the |do|-notation requires the
+\texttt{-XRebindableSyntax} extension, but if linear I/O becomes
+commonplace it would be worth considering a more robust solution.
+
+\end{alt}
 
 A slight bump in the road is the treatment of the |do|-notation.  Consider
 \begin{code}
