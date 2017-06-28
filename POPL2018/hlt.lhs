@@ -1605,14 +1605,44 @@ comes at the cost of strong limitations in practice:
 % "disappear" a value, at which time we can take the opportunity to
 % close it. It is hard, however to pinpoint a case where it is
 % critical not to use stack-allocation.
-% \item |ST|-like regions confine to a stack-like allocation discipline.
-%   Scopes cannot intersect arbitrarily, limiting the applicability of
-%   this technique.
+
+% jp: In many pipeline applications one has conceptually n
+% buffers used sequentially, but only two of them are live
+% simultaneously.
+
+\item |ST|-like regions confine to a stack-like allocation discipline,
+  because freeing resources coincide with the static scope of |runST|.
+  Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
+  this technique. This factor is a limitating for any long-lived
+  program, but in particular, in many pipeline applications one has
+  conceptually |n| buffers used sequentially, but only two of them are
+  live simultaneously.
+
+  In our system, even though the lifetimes of linear variables is
+  checked statically, we can make use of continuation-passing style
+  (or Monads) to implement dynamic lifetimes for objects in the linear
+  heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
+|free  : A ⊸ r ⊸ r|.
+We can write code such as the following, where the lifetimes of |x|, |y|
+and |z| overlap in a non-stack fashion:
+\begin{code}
+alloc  (\x ->
+{- manipulate x -}
+alloc  (\y ->
+{- manipulate x and y -}
+free x (
+alloc  (\z ->
+{- manipulate y and z -}
+free y (
+{- manipulate z -}
+free z)))))
+\end{code}
+
 \item |ST| actions cannot be interleaved with |IO| actions. So in our
   mutable array examples, for instance, it is not possible to provide
   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
   a)| which will also make it possible to use |IO| actions to fill in
-  the array.
+  the array.\jp{I do not understand this item.}
 \item \citet{kiselyov_regions_2008} show that it is possible to
   promote resources in parent regions to resources in a subregion. But
   this is an explicit and monadic operation, forcing an unnatural
@@ -1624,52 +1654,20 @@ comes at the cost of strong limitations in practice:
   values shared between two different garbage collectors for two
   different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
   writing code at an interactive prompt difficult, compromises code
-  reuse, force otherwise pure functions to be written monadically and
-  rule out useful syntactic facilities like view patterns. In
+  reuse, forces otherwise pure functions to be written monadically and
+  rules out useful syntactic facilities like view patterns. In
   contrast, with linear types, values in two regions (in our running
   example packets from different mailboxes) have the same type hence
   can safely be mixed: any data structure containing packet of
   a mailbox will be forced to be consumed before the mailbox is
-  closed.
+  closed.\jp{FIXME: running example is now gone.}
 \end{itemize}
-
-\paragraph{Non-LIFO behavior}
-
-In our system, even though the lifetimes of linear variables is
-checked statically, we can make use of continuation-passing style to
-implement dynamic lifetimes for objects in the linear heap.
-
-Consider the primitives:
-
-\begin{code}
-alloc : (A ⊸ r) ⊸ r
-free  : A ⊸ r ⊸ r
-\end{code}
-We can write code such as the following, where the lifetimes of x, y
-and z overlap in a non-LIFO fashion:
-
-\begin{code}
-alloc  (\x ->
-alloc  (\y ->
--- copy f(x) to y
-free x (
-alloc  (\z ->
--- copy g(y) to z
-free y (
--- print z
-free z)))))
-\end{code}
-
-Such a property is infeasible in region-based systems, where the
-dynamic lifetime necessarily coincides with the static scope: the
-|free| primitive is built into |alloc|.
-
 
 \subsection{Uniqueness and ownership typing}
 
 The literature is awash with enforcing linearity not via linear types,
 but via uniqueness (or ownership) types. The most prominent
-representatives of languages with such uniqueness types are perhaps
+representatives of languages with uniqueness types are perhaps
 Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
@@ -1691,7 +1689,7 @@ of linear types in relation with fusion can be found
 in~\citet{bernardy_composable_2015}, see also the discussion in
 \fref{sec:fusion}.\unsure{The discussion on fusion may well disappear}
 
-Because of this weak duality, we may have
+Because of this weak duality, we could have
 retrofitted uniqueness types to Haskell. But several points
 guided our choice of designing \HaskeLL{} around linear
 logic rather than uniqueness types: (a) functional languages have more use
@@ -1702,11 +1700,13 @@ logic — see \fref{sec:applications}; (c) and decisively, linear type systems
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
+\paragraph{Rust}
 Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called ownership
 typing. Like the original formulation of linear logic, in Rust \texttt{A}
 stands for linear values, unrestricted values at type \texttt{A} are denoted
 \texttt{RC<A>}, and duplication is explicit.
 
+\jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
 Rust addresses the problem of being mindful about
 memory, resources, and latency, but this comes at a price: Rust,
 as a programming language, is specifically optimised for writing
@@ -1722,11 +1722,12 @@ sound. This is because resource liberation must be triggered when the
 tail call returns.
 
 \HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm yet gracefully scaling up
-to latency-sensitive and resource starved programs is still
+regular non-linear expressions are the norm, yet gracefully scaling up
+to latency-sensitive and resource-sensitive programs is still
 possible.\improvement{Change depending on what we put in the
   evaluation section}
 
+\paragraph{Borrowing}
 How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
 lifetime of references using a special system, one can simply give
 each reference a multiplicity of one, and explicitly pass them around.
@@ -1917,7 +1918,7 @@ represents the multiplicity of $t$. So, in
 required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
 results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
-This derivation is not desirable: it means that there cannot be
+This derivation is not desirable: it implies that there cannot be
 reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
 \citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
 into an isomorphism.
@@ -1936,7 +1937,7 @@ with a linear arrow and multiplicities carried by the exponential
 modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
 develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
-it is not directly applicable to \calc.
+this work is not directly applicable to \calc.
 
 \subsection{Operational aspects of linear languages}
 
@@ -1983,7 +1984,7 @@ is opposite to ours: while we aim to keep linear values
 completely outside of garbage collection, they use the type
 information at runtime to ensure that the GC does not follow dangling
 pointers.
-% How can that even work?
+% JP: How can that even work?
 
 \section{Conclusion and future work}
 
