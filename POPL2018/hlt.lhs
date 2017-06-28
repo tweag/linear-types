@@ -1015,19 +1015,10 @@ bindIOL (IOL m) k = IOL (\w -> case m w of
 \end{code}
 A value of type |World| represents the state of the world, and is
 threaded linearly through I/O computations.  The linearity of the
-result of the computation is described by the |p| parameter of |IOL|,
+result of the computation is captured by the |p| parameter of |IOL|,
 which is inherited by the specialised form of pair, |IORes| that an
-|IOL| computation returns.  All this code is can be statically
-typechecked, further reducing the size of the trusted code base.
-\todo{note that making bind linear in its first and second argument prevents certain existing use of monads; typically
-  lists can no longer be used as a non-determinism monad---but there is an easy way out in the long run: we can re-use the
-multiplicity parameter to introduce a dynamic multiplicity (we have
-forbidden dynamic multiplicities in constructors though.) -- [aspiwack]:
-I would even say that the bind on list cannot have this particular
-type (we need to reuse the continuation several times, in general, to
-map over the previous list of results), we
-are sort of bound to have several notions of monad-like things, or a heavily
-parametrised one.}
+|IOL| computation returns.  All linearity checks are verified by the
+compiler, further reducing the size of the trusted code base.
 \subsection{Linearity and strictness}
 
 It is tempting to suppose that, since a linear function consumes its
