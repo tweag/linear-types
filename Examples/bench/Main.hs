@@ -19,15 +19,20 @@ import Linear.Unsafe
 import Data.Word
 import Data.Time.Clock
 import System.Environment
+import Control.Monad
 import Control.Exception (evaluate)
 import Control.DeepSeq (force)
 import Foreign.Storable (sizeOf)
 import System.Mem
-import System.IO (stdout, hFlush)
+import System.IO (stdout, stderr, hFlush, hPutStrLn, isEOF)
+import System.Exit
 import GHC.Stats
 import qualified Cursors.ST as S
 import Control.Monad.ST
 ----------------------------------------------
+
+putFlushLn :: String -> IO ()
+putFlushLn s = do hPutStrLn stdout s; hFlush stdout 
 
 timePrint :: IO a -> IO a
 timePrint act = do
@@ -53,9 +58,73 @@ comma n = reverse (go (reverse (show n)))
 
 main :: IO ()
 main = do
-  bytearray
-  treebench
+  args <- getArgs
+  case args of
+    [] ->  do putStrLn " Running a default benchmark set with human-readable output."
+              putStrLn helpMsg
+              bytearray
+              treebench
+    [name, variant, depth] -> runBench name variant (read depth)
+    oth -> error$ "benchmark expects three command line arguments, not: "++show args
+              ++ "\n\n Help:\n"++ helpMsg
 
+helpMsg :: String
+helpMsg = unlines
+  [ "-----------------------------------------------"
+  , " For a more systematic approach, try arguments:"
+  , "  <bench-name> <variant> <tree-depth> "
+  , " Where bench-name is: sumtree, maptree"
+  , " And variant is: boxed packed unboxrebox ST "
+  , " The same tree-depth is used for all batches "
+  , " of benchmark repetitions."
+  , "-----------------------------------------------" ]
+
+{-# NOINLINE ignoreMe #-}
+ignoreMe :: Int -> a -> a
+ignoreMe _ a = a
+
+runBench :: String -> String -> Int -> IO ()
+runBench name variant dep = do
+  tr  <- evaluate $ force $ mkTree dep
+  putFlushLn $ "Generated a tree of depth "++show dep
+  case variant of
+    "ST" -> do tr' <- timePrint $ evaluate $ packTreeST tr
+               weAreReady
+               case name of
+                 "sumtree" ->
+                     benchLoop $ \reps -> 
+                        forM_ [1..reps] $ \ix ->
+                          void $ evaluate $ sumTreeST (ignoreMe ix tr')
+
+--    tr' <- evaluate $ force $ packTree tr
+ 
+  return ()
+ where
+   benchLoop fn = do mreps <- startBatch
+                     case mreps of
+                       Nothing   -> do hPutStrLn stderr "Benchmark shutting down cleanly..."
+                                       exitSuccess
+                       Just reps -> do _ <- fn reps
+                                       doneBatch
+                                       benchLoop fn
+   weAreReady :: IO ()
+   weAreReady = do performGC
+                   putFlushLn "READY"
+                   putFlushLn "Now waiting for START_BENCH command from harness... (or EXIT)"
+   
+   startBatch :: IO (Maybe Int)
+   startBatch = do
+                   b <- isEOF
+                   if b then return Nothing
+                     else do 
+                      ln <- getLine
+                      case words ln of                     
+                        ["START_BENCH", reps] -> return (Just (read reps))
+                        ["EXIT"] -> return Nothing
+                        oth -> error$ "Bad command from benchmark harness: "++show oth
+   doneBatch = putFlushLn "END_BENCH"
+   
+         
 bytearray :: IO () 
 bytearray = do
   let nbytes = 10000
@@ -132,7 +201,7 @@ treebench = do
   putStrLn $ "    (sum was "++show s3++")"
 
   putStr "map-packed-tree-ST: "
-  s3 <- timePrint $ evaluate $ mapTreeST (+1) tr''
+  _ <- timePrint $ evaluate $ mapTreeST (+1) tr''
 
   return ()
 
@@ -169,15 +238,12 @@ sumTreeST :: S.Packed Tree -> Int
 sumTreeST pkd = runST (fmap fst (go (S.toHas pkd)))
   where
     go :: forall s r . S.Has s (Tree ': r) -> ST s (Int, S.Has s r)
-    go h = S.caseTree h onLeaf onBranch
-
-    onLeaf :: forall s r. S.Has s (Int ': r) -> ST s ( Int, S.Has s r)
-    onLeaf h = S.readC h
-
-    onBranch :: forall s r. S.Has s (Tree ': Tree ': r) -> ST s ( Int, S.Has s r )
-    onBranch h1 = do (x,h2) <- go h1
+    go h = S.caseTree h 
+               S.readC -- Leaf
+               (\h1 -> -- Branch
+                  do (x,h2) <- go h1
                      (y,h3) <- go h2
-                     return $! (,h3) $! x+y
+                     return $! (,h3) $! x+y)
 
 {-# INLINE mapTreeST #-}
 mapTreeST :: (Int -> Int) -> S.Packed Tree -> S.Packed Tree 

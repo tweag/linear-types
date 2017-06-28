@@ -5,5 +5,5 @@
 	path = deps/hyperion
 	url = https://github.com/tweag/hyperion.git
 [submodule "criterion-external"]
-	path = criterion-external
+	path = Examples/criterion-external
 	url = git@github.com:rrnewton/criterion-external.git

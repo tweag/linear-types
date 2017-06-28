@@ -1,7 +1,8 @@
 
 
-all:
+all: ./bin/criterion-interactive
 	stack docker pull
+# quick test:
 	stack test
 
 # The Dockerfile in this directory is for debugging
@@ -11,8 +12,19 @@ debug:
 	stack --docker-image debug/linear-types test --no-run-tests
 	stack --docker-image debug/linear-types exec bash
 
+./bin/criterion-interactive:
+	mkdir -p ./bin
+	cd ./criterion-external; stack install --local-bin-path=../bin
+
+bench: ./bin/criterion-interactive
+#	./bin/criterion-interactive ./criterion-external/time_interactive.sh
+	./bin/criterion-interactive ./go_bench.sh sumtree ST 5 -- -o report.h
+
 test:
 	stack test --flag Examples:pure
 	stack test --flag Examples:-pure
 
-.PHONY: all test debug
+clean:
+	rm -rf bin/*
+
+.PHONY: all test debug bench clean
