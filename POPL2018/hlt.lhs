@@ -1885,7 +1885,7 @@ Advantages of ``linearity via arrows'' include:
   First, we could avoid tracking of the kind of types in the
   variables, which is a daunting task in \textsc{ghc}'s type-checker \jp{why?}.
 
-  Second, \textsc{Ghc} already supports impredicative dependent types
+  Second, \textsc{ghc} already supports impredicative dependent types
   and a wealth of unboxed or otherwise primitive types and kinds that
   cannot be substituted for polymorphic type arguments. Further extending
   the kind system is a complex endeavour which we could avoid entirely.
