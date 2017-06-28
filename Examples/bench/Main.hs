@@ -65,7 +65,7 @@ main = do
               bytearray
               treebench
     [name, variant, depth] -> runBench name variant (read depth)
-    oth -> error$ "benchmark expects three command line arguments, not: "++show args
+    _ -> error$ "benchmark expects three command line arguments, not: "++show args
               ++ "\n\n Help:\n"++ helpMsg
 
 helpMsg :: String
@@ -91,6 +91,7 @@ runBench name variant dep = do
   putFlushLn $ "Generated a tree of depth "++show dep
 
   let {-# INLINE mkBenchs #-}
+      mkBenchs :: (Int -> a) -> (Int -> b) -> IO ()
       mkBenchs sumBody mapBody = do 
         weAreReady
         case name of
@@ -102,6 +103,7 @@ runBench name variant dep = do
               benchLoop $ \reps -> 
                  forM_ [1..reps] $ \ix ->
                    void $ evaluate (mapBody ix)
+          _ -> error $ "Unknown benchmark name: "++name
 
   case variant of
     "boxed" -> do mkBenchs (\ix -> pureSum (ignoreMe ix tr))
@@ -141,11 +143,19 @@ runBench name variant dep = do
                      else do 
                       ln <- getLine
                       case words ln of                     
-                        ["START_BENCH", reps] -> return (Just (read reps))
+                        ["START_BENCH", reps] ->
+                           return $ Just $ 
+                             parseInt "Failed to parse repetitions as a number: " reps
                         ["EXIT"] -> return Nothing
                         oth -> error$ "Bad command from benchmark harness: "++show oth
    doneBatch = putFlushLn "END_BENCH"
-   
+
+
+parseInt :: String -> String -> Int
+parseInt msg str = 
+  case reads str of
+    ((n,_):_) -> n
+    _ -> error$ msg++" "++str
          
 bytearray :: IO () 
 bytearray = do
@@ -187,7 +197,8 @@ treebench = do
   -- [dep] <- getArgs
   let dep = "17"
   putStr "\nGenerate tree: "
-  tr <- timePrint $ evaluate $ force $ mkTree (read dep)
+  tr <- timePrint $ evaluate $ force $ mkTree
+        (parseInt "Failed to parse tree-depth number: " dep)
   putStr "pack-tree: "
   tr' <- timePrint $ evaluate $ force $ packTree tr
   putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr')

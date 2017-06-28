@@ -22,7 +22,7 @@ bench: ./bin/criterion-interactive
 	stack bench --no-run-benchmarks
 #	./bin/criterion-interactive ./criterion-external/time_interactive.sh
 #	./bin/criterion-interactive ./go_bench.sh sumtree ST 5 -- -o report.h
-	./bin/criterion-interactive stack exec -- bench-cursor sumtree ST 5 -- -o report.h
+	./bin/criterion-interactive stack exec -- bench-cursor sumtree packed 5 -- -o report.h
 
 test:
 	stack test --flag Examples:pure
