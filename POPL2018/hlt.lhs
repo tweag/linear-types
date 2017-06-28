@@ -1854,10 +1854,10 @@ An advantage of ``linearity via kinds'' is the possibility to directly
 declare the linearity of values returned by a function---not just that
 of the argument of a function. In contrast, in our system if one wants
 to indicate that a returned value is to be used linearly, we have to
-use a double-negation trick. That is, given $f : A → (B ⊸ r) ⊸ r$,
+use a double-negation trick. That is, given $f : A → (B ⊸ !r) ⊸ r$,
 then $B$ can be used a single time in the (single) continuation, and
 effectively $f$ ``returns'' a single $B$. One can obviously declare a
-type for linear values |Linear a = (a ⊸ r) ⊸ r| and chain
+type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
 |Linear|-returning functions with appropriate combinators.  In fact,
 as explained in \fref{sec:linear-io}, the cost of the double negation
 almost entirely vanishes in the presence of an ambient monad.
