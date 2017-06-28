@@ -2173,12 +2173,29 @@ right-hand side of the reduction relation never is never
 pattern-matched, we introduce, in addition to the usual big-step
 relation $a⇓b$ an additional relation, that we write $a⇒b$, whose role
 is to reduce one redex.\improvement{aspiwack: actually do that in the
-  rules}
+  rules, or maybe I don't actually need it}
 
 The reason to consider partial derivation is that they make it
 possible to express properties such as \emph{progress}: we say that a
-partial proof is blocked if it is not total and can't be extended, we
-want to prove that this cannot happens.
+partial derivation is blocked if it is not total and can't be extended, an
+evaluation relation has the progress property when it cannot happen.
+
+Given a number of rules defining $a⇓b$ with ordered premises (we will
+use the ordering of premises shortly), we
+define a \emph{total derivation} of $a⇓b$ as a tree in the standard
+fashion. As usual $a⇓b$ holds if there is a total derivation for it.
+A \emph{partial} derivation of $a⇓?$ (the question mark is part of the
+syntax: the right-hand value is the result of the evaluation, it is
+not yet known for a partial derivation!) is either:
+\begin{itemize}
+\item the empty tree,
+\item or an application of a rule matching $a$ where exactly one of
+  the premises, $a'⇓?$ has a partial derivation, all the premises to
+  the left of $a'⇓?$ have a total derivation, and the premises to the
+  right of $a'⇓?$ are not known yet (since we would need to know the
+  value $?$ to know what the root of the next premise is).
+\end{itemize}
+
 
 \begin{figure}
   \figuresection{Translation of typed terms}
