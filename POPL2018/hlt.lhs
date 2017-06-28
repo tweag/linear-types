@@ -706,7 +706,7 @@ typing of their functions, and it drives the formal typing judgements in
 Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
 restrict \emph{the arguments to which the function can be applied}.
 In particular, a linear function cannot assume that it is given the
-unique pointer to its argument.  For example, if |f :: s ⊸ t|, then
+unique pointer to its argument.  For example, if |f :: s ⊸ t|, then\
 this is fine:
 \begin{code}
 g :: s -> t
@@ -859,7 +859,7 @@ able to declare data constructors with non-linear types, like this:
 
   f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
-Here we use GADT-style syntax to give an explicit type signature to the data
+Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
 constructor |PLU|, with mixed linearity.
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
