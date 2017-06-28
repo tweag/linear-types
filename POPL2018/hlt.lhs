@@ -714,7 +714,6 @@ g x = f x
 \end{code}
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
 in particular, |g| can pass that argument to |f|.
-\simon{Can we pass a function of type |s ⊸ t| where a function of type |s->t| is needed?}
 
 % A consequence of this definition is that an \emph{unrestricted} value,
 % \emph{i.e.} one which is not guaranteed to be used exactly once, such
