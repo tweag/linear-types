@@ -24,9 +24,15 @@ do
     do
         echo "Variant: $variant"
         echo "-----------------"
+        echo "START_BENCHMARK"
+        echo "PROGNAME: $name"
+        echo "VARIANT: $variant"
+        echo "ARGS: $depth"
         set -x
         $CRIT $EXE $name $variant $depth -- -o report_${variant}_${depth}.html
         set +x
+        echo "END_BENCHMARK"
+        echo
     done;
   done;
 done;
