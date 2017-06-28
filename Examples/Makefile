@@ -18,7 +18,7 @@ debug:
 
 
 # Just an example of ONE benchmark you might run:
-bench: ./bin/criterion-interactive
+bench: ./bin/criterion-interactive docker
 	stack bench --no-run-benchmarks
 #	./bin/criterion-interactive ./criterion-external/time_interactive.sh
 #	./bin/criterion-interactive ./go_bench.sh sumtree ST 5 -- -o report.h
@@ -28,7 +28,10 @@ test:
 	stack test --flag Examples:pure
 	stack test --flag Examples:-pure
 
+docker:
+	stack docker pull
+
 clean:
 	rm -rf bin/*
 
-.PHONY: all test debug bench clean
+.PHONY: all test debug bench clean docker
