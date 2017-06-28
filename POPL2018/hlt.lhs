@@ -2453,4 +2453,5 @@ for the \emph{shared variable} and \emph{let} rules.
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
 
-%  LocalWords:  sequentialised supremum bisimilar
+%  LocalWords:  sequentialised supremum bisimilar observationally
+%  LocalWords:  typestates
