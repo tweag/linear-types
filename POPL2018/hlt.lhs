@@ -2063,32 +2063,29 @@ annotation in the cardinality analysis is left as future work.
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
 
-\improvement{This section could speak about the borrowing multiplicity.}
-For the sake of this article, we use only $1$ and $ω$ as
-possibilities.  But in fact \calc{} can readily be extended to more
-multiplicities: we can follow \citet{ghica_bounded_2014} and
-\citet{mcbride_rig_2016}, which work with abstract sets of
-multiplicities.  In particular, in order to support dependent types,
-we additionally need a $0$ multiplicity.
+% Applications of multiplicities beyond linear logic seem to often have
+% too narrow a focus to have their place in a general purpose language
+% such as Haskell. \Citet{ghica_bounded_2014} propose to use
+% multiplicities to represent real time annotations, and
+% \citet{petricek_coeffects_2013} show how to use multiplicities to
+% track either implicit parameters (\emph{i.e.} dynamically scoped
+% variables) or the size of the history that a dataflow program needs to
+% remember. \jp{I think that it would be enough to list the useful extensions (dependent and affine types.)}
 
-Applications of multiplicities beyond linear logic seem to often have
-too narrow a focus to have their place in a general purpose language
-such as Haskell. \Citet{ghica_bounded_2014} propose to use
-multiplicities to represent real time annotations, and
-\citet{petricek_coeffects_2013} show how to use multiplicities to
-track either implicit parameters (\emph{i.e.} dynamically scoped
-variables) or the size of the history that a dataflow program needs to
-remember.
+\improvement{This section could speak about the borrowing
+  multiplicity.}  For the sake of this article, we use only $1$ and
+$ω$ as possibilities.  But in fact \calc{} can readily be extended to
+more multiplicities: we can follow \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016}. The general setting for \calc{} is an
+ordered-semiring of multiplicities (with a join operation for type
+inference).  In particular, in order to support dependent types, we
+additionally need a $0$ multiplicity. We may may want to add a
+multiplicity for affine arguments (\emph{i.e.}  arguments which can be
+used \emph{at most once}).
 
-To go further still, more multiplicities may prove useful. For instance we
-may want to consider a multiplicity for affine arguments (\emph{i.e.}
-arguments which can be used \emph{at most once}).
-
-The general setting for \calc{} is an ordered-semiring of
-multiplicities (with a join operation for type inference). The rules
-are mostly unchanged with the \emph{caveat} that $\mathsf{case}_q$
-must exclude $q=0$ (in particular we see that we cannot
-substitute multiplicity variables by $0$). The variable rule is
+The typing rules are mostly unchanged with the \emph{caveat} that
+$\mathsf{case}_q$ must exclude $q=0$ (in particular we see that we
+cannot substitute multiplicity variables by $0$). The variable rule is
 modified as:
 $$
 \inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
