@@ -2453,6 +2453,16 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \end{proof}
 By induction, using the restrictions on substituting |MArray| pointers
 for the \emph{shared variable} and \emph{let} rules.
+
+\begin{theorem}[Progress]
+  For any partial derivation of $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the
+  derivation can be extended.
+\end{theorem}
+\begin{proof}
+  By liveness (\fref{lem:liveness}) it is sufficient to prove the case
+  of the denotational semantics.
+\end{proof}
+
 \end{document}
 
 % safety proves that the mutable semantics is equivalent to a pure
@@ -2463,4 +2473,4 @@ for the \emph{shared variable} and \emph{let} rules.
 % semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum bisimilar observationally
-%  LocalWords:  typestates
+%  LocalWords:  typestates denotational
