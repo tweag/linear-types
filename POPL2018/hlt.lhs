@@ -930,16 +930,15 @@ extension is not turned on.
 
 \subsection{Linear input/output} \label{sec:linear-io}
 
-In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how does it work?
-|IOL| is just a generalisation of the |IO| monad, thus:
+In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how
+does it work?  |IOL| is just a generalisation of the |IO|
+monad\footnote{Yet |IOL p| is not a monad, because
+  |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law
+  |pp = p|. We believe that it is a relative monad~\cite{altenkirch_monads_2010}.}, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
   bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
-
-  instance Monad (IOL p) where
-    return = returnIOL
-    (>>=)  = bindIOL
 \end{code}
 The idea is that if |m :: IO 1 t|, then |m| is a input/output
 computation that returns a linear value of type |t|.  But what does it mean to
@@ -950,16 +949,10 @@ the continuation arrow.  More precisely, in an application |m >>= k|,
 where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
 And that is captured by the linearity-polymorphic type of |(>>=)|.
 
-|IOL p| is a monad, and so will work nicely with all Haskell's existing monad combinators.
-\jp{but it is not a monad: $join :: IOL p (IOL q a) ⊸ IOL (pq) a$ and we do not have the law $pp = p$.
-Even $(>>=)  = bindIOL$ is incorrect because the multiplicity changes.
-}
-\begin{alt}
-  |IOL| is a generalized monad: its bind and return combinators can be
-  used in the familiar way, even though they have a different type
-  than usual. The difference with the usual monad is that
-  multiplicities may be mixed, but this poses no problem
-  in practice.  Consider
+Even though they have a different type than usual, the bind and return
+combinators of |IOL| can be used in the familiar way, The difference
+with the usual monad is that multiplicities may be mixed, but this
+poses no problem in practice.  Consider
 \begin{code}
   do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
       ; d <- getData      -- |getDate  :: IO ω Date|
@@ -976,28 +969,6 @@ Nevertheless, the we can combine them with |bindIOL| in the usual way:
 Such an interpretation of the |do|-notation requires the
 \texttt{-XRebindableSyntax} extension, but if linear I/O becomes
 commonplace it would be worth considering a more robust solution.
-
-\end{alt}
-
-A slight bump in the road is the treatment of the |do|-notation.  Consider
-\begin{code}
-  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-      ; d <- getData      -- |getDate  :: IO ω Date|
-      ; e[f,d] }
-\end{code}
-Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
-an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-Nevertheless, we can easily combine them with |bindIOL| thus:
-\begin{code}
-  openFile s `bindIOL` \f ->
-  getData    `bindIOL` \d ->
-  e[f,d]
-\end{code}
-because, crucially, |bindIOL| does not require uniform linearity: it has two
-linearity parameters |p| and |q|, not just one.  We simply need |do|-notation to
-behave exactly like this sequence of |bindIOL| calls.  In \textsc{ghc} that requires the
-|-XRebindableSyntax| extension, but if linear I/O becomes commonplace it would
-be worth considering a more robust solution.
 
 Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
 and that implementation too is illuminated by linearity.  Here it is:
@@ -1674,14 +1645,14 @@ We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
 \begin{code}
 alloc  (\x ->
-{- manipulate x -}
+{- x live -}
 alloc  (\y ->
-{- manipulate x and y -}
+{- x and y live -}
 free x (
 alloc  (\z ->
-{- manipulate y and z -}
+{- y and z live -}
 free y (
-{- manipulate z -}
+{- z live -}
 free z)))))
 \end{code}
 
@@ -2202,12 +2173,29 @@ right-hand side of the reduction relation never is never
 pattern-matched, we introduce, in addition to the usual big-step
 relation $a⇓b$ an additional relation, that we write $a⇒b$, whose role
 is to reduce one redex.\improvement{aspiwack: actually do that in the
-  rules}
+  rules, or maybe I don't actually need it}
 
 The reason to consider partial derivation is that they make it
 possible to express properties such as \emph{progress}: we say that a
-partial proof is blocked if it is not total and can't be extended, we
-want to prove that this cannot happens.
+partial derivation is blocked if it is not total and can't be extended, an
+evaluation relation has the progress property when it cannot happen.
+
+Given a number of rules defining $a⇓b$ with ordered premises (we will
+use the ordering of premises shortly), we
+define a \emph{total derivation} of $a⇓b$ as a tree in the standard
+fashion. As usual $a⇓b$ holds if there is a total derivation for it.
+A \emph{partial} derivation of $a⇓?$ (the question mark is part of the
+syntax: the right-hand value is the result of the evaluation, it is
+not yet known for a partial derivation!) is either:
+\begin{itemize}
+\item the empty tree,
+\item or an application of a rule matching $a$ where exactly one of
+  the premises, $a'⇓?$ has a partial derivation, all the premises to
+  the left of $a'⇓?$ have a total derivation, and the premises to the
+  right of $a'⇓?$ are not known yet (since we would need to know the
+  value $?$ to know what the root of the next premise is).
+\end{itemize}
+
 
 \begin{figure}
   \figuresection{Translation of typed terms}
