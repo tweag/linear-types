@@ -113,6 +113,7 @@
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
 \newcommandx{\jp}[1]{\todo[]{JPB: #1}}
+\newenvironment{alt}{\color{red}}{}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -379,6 +380,7 @@ We introduce our extension to Haskell, which we call \HaskeLL, by focusing on th
 two use-cases.   In doing so, we introduce a number of ideas that we flesh out in
 subsequent subsections.
 
+
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
 \begin{figure}
@@ -542,7 +544,7 @@ to |readLine| returns an |a| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using this we can write a simple file-handling program:
+Using it we can write a simple file-handling program:
 \begin{code}
 firstLine :: FilePath -> Bytestring
 firstLine fp = do  { f <- open fp
@@ -785,11 +787,11 @@ In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactl
 then indeed |t| is consumed exactly once.
 
 The key point here is that \emph{the same pair constructor works in both functions;
-we do not need a special linear pair}.
+we do not need a special non-linear pair}.
 
 The same idea applies to all existing Haskell data types: we (re)-define
 their constuctors to use a linear arrow.  For example here is a declaration
-of Haskell's list type:
+of \HaskeLL{}'s list type:
 \begin{code}
 data [a] where
   []   :: [a]
@@ -826,7 +828,7 @@ For an existing language, being able to strengthen |(++)|, and similar
 functions, in a {\em backwards-compatible} way is a huge boon.  Of
 course, not all functions are linear: a function may legitimately
 demand unrestricted input.  For example, the function |f| above
-consumed |ys| twice, and so
+consumes |ys| twice, and so
 |f| needs an unrestricted arrow for that argument.
 \label{sec:compatibility}
 
