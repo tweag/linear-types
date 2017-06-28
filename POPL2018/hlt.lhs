@@ -2449,8 +2449,8 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   \end{itemize}
 \end{lemma}
 \begin{proof}
-  This is proved by a straightforward induction over the derivation of
-  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$.
+  Both are proved by a straightforward induction over the derivation of
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$ (resp. $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$).
 \end{proof}
 By induction, using the restrictions on substituting |MArray| pointers
 for the \emph{shared variable} and \emph{let} rules.
