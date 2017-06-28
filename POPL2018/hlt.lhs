@@ -908,18 +908,18 @@ It can be given the two following incomparable types:
 %
   Thus, \HaskeLL{} features quantification over multiplicities and
   parameterised arrows (|A → _ q B|).  Using these, |map| can be given
-  the following most general type: |∀ρ. (a -> _ ρ b) -> [a] -> _ ρ
+  the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
 Likewise, function composition can be given the following general type:
 \begin{code}
-(∘) :: forall π ρ. (b → _ π c) ⊸ (a → _ ρ b) → _ π a → _ (ρ π) c
+(∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p q) c
 (f ∘ g) x = f (g x)
 \end{code}
 That is: two functions that accept arguments of arbitrary
-multiplicities ($ρ$ and $π$ respectively) can be composed to form a
-function accepting arguments of multiplicity $ρπ$ (\emph{i.e.} the
-product of $ρ$ and $π$ --- see \fref{def:equiv-multiplicity}).
+multiplicities (|p| and |q| respectively) can be composed to form a
+function accepting arguments of multiplicity |pq| (\emph{i.e.} the
+product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
 subscripts and binders for multiplicity polymorphism can be
