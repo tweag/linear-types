@@ -908,9 +908,10 @@ it may be consumed many times or not at all.
 
 \subsection{Linearity polymorphism}
 \label{sec:lin-poly}
-
+\rn{If we call it linearity polymorphism, should we banish the term
+  ``multiplicity'' polymorphism?}
 A linear function provides more guarantees to its caller than
-a non-linear one -- it is more general.  But the higher-order
+a non-linear one~---~it is more general.  But the higher-order
 case thickens the plot. Consider the standard |map| function over
 (linear) lists:
 \begin{code}
@@ -939,7 +940,7 @@ product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
 Finally, from a backwards-compatibility perspective, all of these
 subscripts and binders for multiplicity polymorphism can be
 ignored. Indeed, in a context where client code does not use
-linearity, all inputs will have multiplicity $ω$, and transitively all
+linearity, all inputs will have unlimited multiplicity, $ω$, and transitively all
 expressions can be promoted to $ω$. Thus in such a context the
 compiler, or indeed documentation tools, can even altogether hide
 linearity annotations from the programmer when this language
@@ -958,7 +959,7 @@ is just a generalisation of the |IO| monad, thus:
   returnIOL :: a -> _ p IOL p a
   bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 \end{code}
-The idea is that if |m :: IO 1 t|, then |m| is a input/output
+The idea is that if |m :: IO 1 t|, then |m| is an input/output
 computation that returns a linear value of type |t|.  But what does it mean to
 ``return a linear value'' in a world where linearity applies only to
 function arrows?  Fortunately, in the world of monads each computation
@@ -973,7 +974,7 @@ with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
   do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-      ; d <- getData      -- |getDate  :: IO ω Date|
+      ; d <- getDate      -- |getDate  :: IO ω Date|
       ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
@@ -984,7 +985,7 @@ Nevertheless, the we can combine them with |bindIOL| in the usual way:
   getData    `bindIOL` \d ->
   e[f,d]
 \end{code}
-Such an interpretation of the |do|-notation requires the
+Such an interpretation of the |do|-notation requires Haskell's
 \texttt{-XRebindableSyntax} extension, but if linear I/O becomes
 commonplace it would be worth considering a more robust solution.
 
@@ -1016,10 +1017,11 @@ f :: a ⊸ (a, Bool)
 f x = (x, True)
 \end{code}
 Here |f| is certainly linear according to \fref{sec:consumed}, and
-given the type of |(,)| in \fref{sec:linear-constructors}. If |(f x)|
+given the type of |(,)| in \fref{sec:linear-constructors}. That is, if |(f x)|
 is consumed exactly once, then each component of its result pair is
 consumed exactly once, and hence |x| is consumed exactly once.
 But |f| is certainly not strict: |f undefined| is not |undefined|.
+
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
@@ -1186,7 +1188,8 @@ be read as follows
 One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
-For example\jp{example of what?}, the rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
+%For example\jp{example of what?},
+The rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
 is explicitly annotated with multiplicity $q$.  Remember, this
@@ -1200,7 +1203,7 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by multiplying all the multiplicities in $\Delta$ by $q$,
+express this by taking the {\em product} of the multiplicities in $\Delta$ and $q$,
 thus $q\Delta$.  Finally we need to add together all the
 multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
 conclusion of the rule.
@@ -1240,7 +1243,10 @@ These operations depend, in turn, on addition and multiplication of multipliciti
 The syntax of multiplicities is given in \fref{fig:syntax}.
 We need the concrete multiplicities $1$ and $ω$ and, to support polymorphism,
 multiplicity variables (ranged over by the metasyntactic
-variables \(π\) and \(ρ\)).  Because we
+variables \(π\) and \(ρ\)).
+\rn{Objection: $\rho$ does not occur in the  grammar.  Also having both $p$ and
+  $\rho$ is painful...}
+Because we
 need to multiply and add multiplicities,
 we also need formal sums and products of multiplicities.
 %
@@ -1264,8 +1270,9 @@ module structure on typing contexts.
 Returning to the typing rules in \fref{fig:typing}, the rule (let) is like
 a combination of (abs) and (app).  Again, each $\flet$ binding is
 explicitly annotated with its multiplicity.
-
+%
 The variable rule (var) uses a standard idiom:
+\vspace{-3mm}
 $$\varrule$$
 This rule allows us to ignore variables with
 multiplicity $ω$ (usually called weakening),
