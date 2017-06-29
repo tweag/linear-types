@@ -2239,7 +2239,10 @@ pure interface, and that type-level state are indeed enforced.
 We introduce two dynamic semantics for \calc{}: a semantics with
 mutation which model the implementation but blocks on incorrect
 type-states, and a pure semantics, which we dub \emph{denotational} as
-it represents the intended meaning of the program.
+it represents the intended meaning of the program. We consider array
+primitives like in \fref{sec:freezing-arrays}, but we could extend to
+any number of other examples such as the files of
+\fref{sec:io-protocols}.
 
 We prove the two semantics bisimilar, so that type-safety and progress
 can be lifted from the denotational semantics to the ordinary
@@ -2290,6 +2293,22 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 
 \subsection{Ordinary semantics}
 
+Our semantics, which we often call \emph{ordinary} to constrast it
+with the denotational semantics of \fref{sec:denotational}, follows
+closely the semantics of \citet{launchbury_natural_1993}. The main
+differences is that we keep the type annotation, and that we have
+primitives for proper mutation.
+
+Mixing mutation and laziness is not usual, as the unspecified
+evaluation order of lazy languages would make mutation order
+unpredicable, hence programs non-deterministic. It is our goal to show
+that the linear type discipline ensures that, despite the mutations,
+the evaluation is pure.
+
+Just like \citet{launchbury_natural_1993}, the terms must be in a
+constrained form before evaluation. \Fref{fig:launchbury:syntax} shows
+the translation of abtrary term to terms in the constrained form.
+
 \begin{figure}
   \figuresection{Translation of typed terms}
   \begin{align*}
@@ -2313,6 +2332,35 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   \label{fig:launchbury:syntax}
 \end{figure}
 
+The evaluation relation is of the form $Γ : e ⇓ Δ : z$ where $e$ is an
+expression, $z$ a value $Γ$ and $Δ$ are \emph{environments} with
+bindings of the form $x :_ω A = e$ assigning the expression $e$ the the
+variable $x$ of type $A$. Compared to the pure semantic of
+\citeauthor{launchbury_natural_1993}, we have one additional kind of
+values, $l$ for names of arrays. Array names are given semantics by
+additional bindings in environments which we write, suggestively, $l
+:_1 A = arr$. The $1$ is here to remind us that arrays cannot be used
+arbitrarily, however, it does not mean they are always used in a
+linear fashion: frozen arrays are not necessarily linear, but they
+still appear as array names.
+
+The details of the ordinary evaluation relation are given in
+\fref{fig:dynamics}. Let us describe the noteworthy rules:
+\begin{description}
+\item[mutable cell] array names are values, hence are not
+  reduced. In that they differ from variables.
+\item[newMArray] allocates a fresh array of the given size. Note that
+  the default value is not evaluated: arrays in the environment are
+  a concrete list of (not necessarily distinct) variables.
+\item[writeArray] Mutates its array argument
+\item[freezeArray] Mutates \emph{the type} of its argument to |Array|
+  before wrapping it in $\varid{Unrestricted}$, so that we cannot call
+  $\varid{write}$ on it anymore: $\varid{write}$ would block because
+  the type of $l$ is not |MArray|. Of course, in an implementation
+  this would not be checked because progress ensures that the case
+  never arises.
+\end{description}
+
 \begin{figure}
   \begin{mathpar}
     \inferrule{ }{Γ : λ_p(x{:}A). e ⇓ Γ : λ_p(x{:}A). e}\text{abs}
@@ -2325,7 +2373,7 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
       z}\text{variable}
 
     \inferrule{ }
-    {(Γ,l :_1 A = z) : l ⇓ (Δ, l :_1 A = z) : l}\text{mutable cell}
+    {(Γ,l :_1 A = arr) : l ⇓ (Γ, l :_1 A = arr) : l}\text{mutable cell}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
     {Γ : \flet[q] x₁ : A_1 = e₁ … x_n : A_n = e_n \fin e ⇓ Δ :
@@ -2362,6 +2410,7 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \end{figure}
 
 \subsection{Denotational semantics}
+\label{sec:denotational}
 
 \begin{figure}
   \begin{mathpar}
@@ -2421,23 +2470,55 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   \label{fig:typed-semop}
 \end{figure}
 
+The ordinary semantics, if a good model of what we are implementing in
+practice, is not very convenient to reason about directly. First the
+mutations are a complication in itself, but it is also difficult to
+recover type or even multiplicity annotation from a particular
+evaluation state.
+
+To remedy this we introduce a denotational semantics where the states
+are annotated with types and linearity. The denotational semantics
+also does not perform mutations: arrays are seen as ordinary values
+which we modify by copy.
+
 \begin{definition}[Annotated state]
-  \improvement{Maybe change the name from ``annotated''. Also, the
-    values are a bit different as we have values for arrays, whereas
-    previously they were only in linear bindings of the }
 
   An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
   \begin{itemize}
   \item $Ξ$ is a typing context
-  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+  \item $Γ$ is a \emph{typed environment}, \emph{i.e.} a collection of
     bindings of the form $x :_ρ A = e$
   \item $t$ is a term
   \item $ρ∈\{1,ω\}$ is a multiplicity
   \item $A$ is a type
-  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ρ A$ of
     a term, a multiplicity and an annotation.
   \end{itemize}
+
+  Terms are extended with array expressions: $[a_1, …, a_n]$ where the
+  $a_i$ are variables.
+
 \end{definition}
+
+Let us introduce a notation which will be needed in the definition of
+well-typed state.
+\begin{definition}[Weighted pairs]
+  We define a type of left-weighted pairs:
+
+  $$\data a~{}_π\!⊗ a = ({}_π\!,) : a ->_π b ⊸ a~{}_π\!⊗ b$$
+
+  Let us remark that
+  \begin{itemize}
+  \item We have not introduced type parameters in data types, but it
+    is straightforward to do so
+  \item We annotate the data constructor with the multiplicity $π$,
+    which is not mandated by the syntax. It will make things simpler.
+  \end{itemize}
+
+\end{definition}
+Weighted pairs are used to internalise a notion of stack that keeps
+track of multiplicities for the sake of the following definition, which
+introduces the states of the strengthened evaluation relation.
 
 \begin{definition}[Well-typed state]
   We say that an annotated state is well-typed if the following
