@@ -19,7 +19,7 @@ function go() {
     
   for name in sumtree maptree;
   do
-    for (( depth=1; depth <= 20; depth++ ))
+    for (( depth=1; depth <= 24; depth++ ))
     do
       echo
       echo "Benchmarking tree depth $depth"

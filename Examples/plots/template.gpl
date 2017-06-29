@@ -73,7 +73,7 @@ set style line 12 lt 2 lc rgb "#00BBA9" lw 2 pt 1
 # set key on bmargin center horizontal Right noreverse enhanced autotitles nobox
 # set key left top noreverse enhanced autotitles nobox
 # set key on outside below
-set key on inside right bottom
+set key on inside left top
 
 #set log y
 #set log x

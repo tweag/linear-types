@@ -12,7 +12,7 @@ import qualified Data.ByteString as BS
 import qualified ByteArray as BA
 import PackedTree
 -- import Linear.Common
-import Linear.Std (getUnrestricted, regionSize)
+import Linear.Std (getUnrestricted)
 import Linear.Unsafe
 
 -- import Criterion
