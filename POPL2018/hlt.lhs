@@ -930,11 +930,12 @@ extension is not turned on.
 
 \subsection{Linear input/output} \label{sec:linear-io}
 
-In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how
-does it work?  |IOL| is just a generalisation of the |IO|
-monad\footnote{Yet |IOL p| is not a monad, because
+In \fref{sec:io-protocols} we introduced the |IOL|
+monad.\footnote{|IOL p| is not a monad in the strict sense, because
   |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law
-  |pp = p|. We believe that it is a relative monad~\cite{altenkirch_monads_2010}.}, thus:
+  |pp = p|. We believe that it is a relative
+  monad~\cite{altenkirch_monads_2010}.}  But how does it work?  |IOL|
+is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
@@ -945,12 +946,12 @@ computation that returns a linear value of type |t|.  But what does it mean to
 ``return a linear value'' in a world where linearity applies only to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
-the continuation arrow.  More precisely, in an application |m >>= k|,
+the continuation arrow.  More precisely, in an application |m `bindIOL` k|
 where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
-And that is captured by the linearity-polymorphic type of |(>>=)|.
+And that is captured by the linearity-polymorphic type of |bindIOL|.
 
 Even though they have a different type than usual, the bind and return
-combinators of |IOL| can be used in the familiar way, The difference
+combinators of |IOL| can be used in the familiar way. The difference
 with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
