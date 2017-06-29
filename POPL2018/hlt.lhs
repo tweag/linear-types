@@ -1431,7 +1431,7 @@ trying $π=1$ and $π=ω$.
 But if we had a richer domain of multiplicities, including
 $0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
 in a dependently typed system}, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
-so becuase it is not the case that |id :: Int → _ 0 Int|.
+so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
 of extending the multiplicity domain later.  But there is an up-front cost,
