@@ -2101,36 +2101,35 @@ since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 \subsection{Inlining}
 \label{sec:fusion}
 
-\improvement{This section seems to be unclear. Either too long or too
-  short.}  Inlining is a staple of program optimisation, exposing
-opportunities for many program transformations including fusion. Not
-every function can be inlined without negative effects on performance:
-inlining a function with more than one use sites of the argument may
-result in duplicating a computation. For example one should avoid the
-following reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++
-expensive|.
+\jp{Let me know if this section looks ok or not.}  Inlining is a
+cornerstone of program optimisation, exposing opportunities for many
+program transformations including fusion. Not every function can be
+inlined without negative effects on performance: inlining a function
+with more than one use sites of the argument may result in duplicating
+a computation. For example one should avoid the following reduction:
+|(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
 Many compilers can discover safe inlining opportunities by analysing
-the source code in order to determine how many times functions use
-their arguments.  (In \textsc{ghc} this analysis is called a
-cardinality analysis~\cite{sergey_cardinality_2014}). The limitation
-of such an analysis is that it is necessarily heuristic (the problem
-is undecidable). Because inlining is crucial to efficiency,
-programmers find themselves in the uncomfortable position of relying
-on a heuristic to obtain efficient programs. A small, seemingly
+source code and determine how many times functions use their
+arguments.  (In \textsc{ghc} this analysis is called a cardinality
+analysis~\cite{sergey_cardinality_2014}). The limitation of such an
+analysis is that it is necessarily heuristic (the problem is
+undecidable). Because inlining is crucial to efficiency, programmers
+find themselves in the uncomfortable position of relying on a
+heuristic to obtain efficient programs. That is, a small, seemingly
 innocuous change can prevent a critical inlining opportunity and have
-rippling effects throughout the program.  Thus folklore is that
-high-level languages should be abandonned if one wants control over
-the performance.
+rippling catastrophic effects throughout the program.  Due to this
+impredictability, folklore is that high-level languages should be
+abandonned if one wants control over the performance.
 
-Linear types address this issue by serving as a programmer-facing
+Linear types can address this issue by serving as a programmer-facing
 interface to inlining: because it is always safe to inline a linear
 function, we can make it part of the \emph{semantics} of linear
 functions that they are always inlined. In fact, the system of
-multiplicity annotation of \calc{} can be faithfully embedded the
+multiplicity annotation of \calc{} can be faithfully embed the
 abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence in that linear arrows can serve as
-cardinality \emph{declarations}.
+gives confidence that linear arrows can serve as cardinality
+\emph{declarations}.
 
 Formalising and implementing the integration of multiplicity
 annotation in the cardinality analysis is left as future work.
