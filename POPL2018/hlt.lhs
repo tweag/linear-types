@@ -1457,14 +1457,43 @@ possible.
 \label{sec:cursors}
 
 While we covered simple mutable arrays in \fref{sec:freezing-arrays}, we now
-consider a more complicated application---operating directly on binary,
+consider a related but more complicated application: operating directly on binary,
 serialised representations of algebraic data-types
 (inspired by \citet{vollmer_gibbon_2017}, and \cite{yang_compact_2015}).
 %
-Whereas mutable arrays are
-homogenous, with evenly-spaced, aligned, elements, serialised data structures
-contain primitive values of various widths, at unaligned locations, as well as
-``tags'' that indicate which variant of a sum type is coming next on the stream.
+Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
+--- binary-serialised data structures contain primitive values of various
+widths, at unaligned byte-offsets, as well as small ``tags'' that indicate which
+variant of a sum type is coming next on the stream.
+
+%% Modern service-oriented software, running in data-centers, spends a great deal
+%% of time (de)serialising data received over the network.  
+
+As computation migrates to the cloud, programs are increasingly decoupled into
+separate services that communicate via serialized data in text or binary formats
+(e.g., remote procedure calls between services).  The standard approach, in all
+languages, is to deserialize data into an in-memory representation (Haskell
+values, Java objects, etc), process it, and then serialize the results for
+transmission.
+%
+This process is exceedingly inefficient, but tolerated because the alternative
+--- computing directly with serialized data --- is far to difficult to program.
+
+
+\begin{code}
+  data Tree = Leaf Int | Branch Tree Tree
+\end{code}
+
+\begin{figure}
+  \hspace{-2mm}%
+  \begin{minipage}{1.04 \textwidth}
+  \hspace{-2mm}%
+  \includegraphics[width=0.5 \textwidth]{figures/sumtree_all_plot_baseline_unpack-repack.pdf}
+  \includegraphics[width=0.5 \textwidth]{figures/maptree_plot_baseline_unpack-repack.pdf}    
+  \end{minipage}
+\caption{FINISHME}
+\label{}
+\end{figure}
 
 % -------------------------------
 \subsection*{old}

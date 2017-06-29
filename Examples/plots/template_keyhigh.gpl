@@ -5,7 +5,8 @@
 
 # Make it logically smaller for bigger fonts/lines:
 # set terminal pdfcairo linewidth 3 rounded dashed size 4in,2.5in
-set terminal pdfcairo linewidth 3 rounded dashed size 4.5in,3.2in
+# set terminal pdfcairo linewidth 3 rounded dashed size 4.5in,3.0in
+set terminal pdfcairo linewidth 3 rounded dashed size 4in,2.8in
 
 
 # Can't get this to look right atm:
@@ -39,18 +40,18 @@ set style line 99 lt rgb "#FF0000" lw 1 pt 1
 # Make the lines thick so they're easy to see in small plots in
 # papers.
 
-set style line 1 lt rgb "#AA0000" lw 2 pt 6
-set style line 2 lt rgb "#00A000" lw 2 pt 1
-set style line 3 lt rgb "#5060D0" lw 2 pt 2
-set style line 4 lt rgb "#F25900" lw 2 pt 9
-set style line 5 lt rgb "#5050A0" lw 2 pt 4
-set style line 6 lt rgb "#0050A9" lw 2 pt 7
-set style line 7 lt rgb "#445111" lw 2 pt 6
-set style line 8 lt rgb "#035009" lw 2 pt 4
-set style line 9 lt 3 lc rgb "#406030" lw 2 pt 8
-set style line 10 lt 4 lc rgb "#5020F0" lw 2 pt 5
-set style line 11 lt 1 lc rgb "#BB50A9" lw 2 pt 3
-set style line 12 lt 2 lc rgb "#00BBA9" lw 2 pt 1
+set style line 1 lt rgb "#AA0000" lw 1.5 pt 6
+set style line 2 lt rgb "#00A000" lw 1.5 pt 1
+set style line 3 lt rgb "#5060D0" lw 1.5 pt 2
+set style line 4 lt rgb "#F25900" lw 1.5 pt 9
+set style line 5 lt rgb "#5050A0" lw 1.5 pt 4
+set style line 6 lt rgb "#0050A9" lw 1.5 pt 7
+set style line 7 lt rgb "#445111" lw 1.5 pt 6
+set style line 8 lt rgb "#035009" lw 1.5 pt 4
+set style line 9 lt 3 lc rgb "#406030" lw 1.5 pt 8
+set style line 10 lt 4 lc rgb "#5020F0" lw 1.5 pt 5
+set style line 11 lt 1 lc rgb "#BB50A9" lw 1.5 pt 3
+set style line 12 lt 2 lc rgb "#00BBA9" lw 1.5 pt 1
 
 # # Need gnuplot 5.0 for controlling the dashed lines:
 
@@ -75,6 +76,7 @@ set style line 12 lt 2 lc rgb "#00BBA9" lw 2 pt 1
 #set log x
 
 # set xrange[0:*]
+set yrange[0.5:*]
 
 # CSV-style data:
 set datafile separator ","
