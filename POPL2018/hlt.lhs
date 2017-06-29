@@ -2463,23 +2463,55 @@ The details of the ordinary evaluation relation are given in
   \label{fig:typed-semop}
 \end{figure}
 
+The ordinary semantics, if a good model of what we are implementing in
+practice, is not very convenient to reason about directly. First the
+mutations are a complication in itself, but it is also difficult to
+recover type or even multiplicity annotation from a particular
+evaluation state.
+
+To remedy this we introduce a denotational semantics where the states
+are annotated with types and linearity. The denotational semantics
+also does not perform mutations: arrays are seen as ordinary values
+which we modify by copy.
+
 \begin{definition}[Annotated state]
-  \improvement{Maybe change the name from ``annotated''. Also, the
-    values are a bit different as we have values for arrays, whereas
-    previously they were only in linear bindings of the }
 
   An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
   \begin{itemize}
   \item $Ξ$ is a typing context
-  \item $Γ$ is a \emph{typed heap}, \emph{i.e.} a collection of
+  \item $Γ$ is a \emph{typed environment}, \emph{i.e.} a collection of
     bindings of the form $x :_ρ A = e$
   \item $t$ is a term
   \item $ρ∈\{1,ω\}$ is a multiplicity
   \item $A$ is a type
-  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ω A$ of
+  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ρ A$ of
     a term, a multiplicity and an annotation.
   \end{itemize}
+
+  Terms are extended with array expressions: $[a_1, …, a_n]$ where the
+  $a_i$ are variables.
+
 \end{definition}
+
+Let us introduce a notation which will be needed in the definition of
+well-typed state.
+\begin{definition}[Weighted pairs]
+  We define a type of left-weighted pairs:
+
+  $$\data a~{}_π\!⊗ a = ({}_π\!,) : a ->_π b ⊸ a~{}_π\!⊗ b$$
+
+  Let us remark that
+  \begin{itemize}
+  \item We have not introduced type parameters in data types, but it
+    is straightforward to do so
+  \item We annotate the data constructor with the multiplicity $π$,
+    which is not mandated by the syntax. It will make things simpler.
+  \end{itemize}
+
+\end{definition}
+Weighted pairs are used to internalise a notion of stack that keeps
+track of multiplicities for the sake of the following definition, which
+introduces the states of the strengthened evaluation relation.
 
 \begin{definition}[Well-typed state]
   We say that an annotated state is well-typed if the following
