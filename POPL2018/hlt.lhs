@@ -2286,6 +2286,22 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 
 \subsection{Ordinary semantics}
 
+Our semantics, which we often call \emph{ordinary} to constrast it
+with the denotational semantics of \fref{sec:denotational}, follows
+closely the semantics of \citet{launchbury_natural_1993}. The main
+differences is that we keep the type annotation, and that we have
+primitives for proper mutation.
+
+Mixing mutation and laziness is not usual, as the unspecified
+evaluation order of lazy languages would make mutation order
+unpredicable, hence programs non-deterministic. It is our goal to show
+that the linear type discipline ensures that, despite the mutations,
+the evaluation is pure.
+
+Just like \citet{launchbury_natural_1993}, the terms must be in a
+constrained form before evaluation. \Fref{fig:launchbury:syntax} shows
+the translation of abtrary term to terms in the constrained form.
+
 \begin{figure}
   \figuresection{Translation of typed terms}
   \begin{align*}
@@ -2309,6 +2325,35 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   \label{fig:launchbury:syntax}
 \end{figure}
 
+The evaluation relation is of the form $Γ : e ⇓ Δ : z$ where $e$ is an
+expression, $z$ a value $Γ$ and $Δ$ are \emph{environments} with
+bindings of the form $x :_ω A = e$ assigning the expression $e$ the the
+variable $x$ of type $A$. Compared to the pure semantic of
+\citeauthor{launchbury_natural_1993}, we have one additional kind of
+values, $l$ for names of arrays. Array names are given semantics by
+additional bindings in environments which we write, suggestively, $l
+:_1 A = arr$. The $1$ is here to remind us that arrays cannot be used
+arbitrarily, however, it does not mean they are always used in a
+linear fashion: frozen arrays are not necessarily linear, but they
+still appear as array names.
+
+The details of the ordinary evaluation relation are given in
+\fref{fig:dynamics}. Let us describe the noteworthy rules:
+\begin{description}
+\item[mutable cell] array names are values, hence are not
+  reduced. In that they differ from variables.
+\item[newMArray] allocates a fresh array of the given size. Note that
+  the default value is not evaluated: arrays in the environment are
+  a concrete list of (not necessarily distinct) variables.
+\item[writeArray] Mutates its array argument
+\item[freezeArray] Mutates \emph{the type} of its argument to |Array|
+  before wrapping it in $\varid{Unrestricted}$, so that we cannot call
+  $\varid{write}$ on it anymore: $\varid{write}$ would block because
+  the type of $l$ is not |MArray|. Of course, in an implementation
+  this would not be checked because progress ensures that the case
+  never arises.
+\end{description}
+
 \begin{figure}
   \begin{mathpar}
     \inferrule{ }{Γ : λ_p(x{:}A). e ⇓ Γ : λ_p(x{:}A). e}\text{abs}
@@ -2321,7 +2366,7 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
       z}\text{variable}
 
     \inferrule{ }
-    {(Γ,l :_1 A = z) : l ⇓ (Δ, l :_1 A = z) : l}\text{mutable cell}
+    {(Γ,l :_1 A = arr) : l ⇓ (Γ, l :_1 A = arr) : l}\text{mutable cell}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
     {Γ : \flet[q] x₁ : A_1 = e₁ … x_n : A_n = e_n \fin e ⇓ Δ :
@@ -2358,6 +2403,7 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \end{figure}
 
 \subsection{Denotational semantics}
+\label{sec:denotational}
 
 \begin{figure}
   \begin{mathpar}
