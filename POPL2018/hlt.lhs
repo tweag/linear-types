@@ -2392,12 +2392,12 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \inferrule
 { }
 {Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~x~i~a
-  ⇓ Γ||[a_1,…,a,…,a_n]) :_1 \varid{MArray}~a, Σ)}\text{write}
+  ⇓ Γ||[a_1,…,a,…,a_n]) :_ρ \varid{MArray}~a, Σ)}\text{write}
 
 \inferrule
 { }
 {Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n]||\varid{freeze}~a ⇓ Γ||\varid{Unrestricted}
-  [a_1,…,a_n]) :_1 \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
+  [a_1,…,a_n]) :_ρ \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
 
 %%%% /Arrays
   \end{mathpar}
