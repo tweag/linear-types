@@ -254,7 +254,8 @@
   backwards-compatibility and code reuse across linear and non-linear
   users of a library. Only then can the benefits of linear types
   permeate conventional functional programming.  Rather than bifurcate
-  data types into linear and non-linear counterparts, we instead
+  % not just data; functions must also be bifurcated due to closures.
+  types into linear and non-linear counterparts, we instead
   attach linearity to {\em binders}.  Linear function types can
   receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
@@ -334,10 +335,15 @@ channels and other resources.  Our particular contributions are these
 \item The key to this non-invasiveness is that, in contrast most other
       approaches, we focus on \emph{linarity on the function arrow}
       rather than \emph{linearity on the types} (\fref{sec:lin-arrow}).
-\item Linearity on the function arrow alone is not enough: a linear
-      function must be able return both linear and non-linear results.
-      We make a simple extension to algebraic data type declarations to
-      support this need (\fref{sec:datattypes}).
+    \item Linearity on the function arrow alone is not enough: a
+      linear function must be able to return both linear and
+      non-linear results.  \jp{I am not sure what this means nor how
+        it connects with the next sentence.  Do you intend the following? ``Linear
+        functions are not sufficient on their own. Data types must
+        also be adjusted, so that they can be used to store linear and
+        unrestricted values.'' } We make a simple extension to
+      algebraic data type declarations to support this need
+      (\fref{sec:data-types}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
@@ -469,7 +475,7 @@ size, and passes it to the function supplied as the second argument to |newMArra
 \item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
 lollipop arrow says that the function guarantees to consume the mutable array
 exactly once; it will neither discard it nor use it twice.  We will define
-``consume'' more precisely in \fref{sec:consume}.
+``consume'' more precisely in \fref{sec:consumed}.
 \item Since |ma| is a linear array, we cannot pass it to many calls to
 |write|.  Instead, each call to |write| returns a new array, so that the
 array is single-threaded, by |foldl|, through the sequence of writes.
@@ -752,6 +758,7 @@ in particular, |g| can pass that argument to |f|.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
+\label{sec:data-types}
 
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
@@ -930,11 +937,12 @@ extension is not turned on.
 
 \subsection{Linear input/output} \label{sec:linear-io}
 
-In \fref{sec:io-protocols} we introduced the |IOL| monad.  But how
-does it work?  |IOL| is just a generalisation of the |IO|
-monad\footnote{Yet |IOL p| is not a monad, because
+In \fref{sec:io-protocols} we introduced the |IOL|
+monad.\footnote{|IOL p| is not a monad in the strict sense, because
   |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law
-  |pp = p|. We believe that it is a relative monad~\cite{altenkirch_monads_2010}.}, thus:
+  |pp = p|. We believe that it is a relative
+  monad~\cite{altenkirch_monads_2010}.}  But how does it work?  |IOL|
+is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
@@ -945,12 +953,12 @@ computation that returns a linear value of type |t|.  But what does it mean to
 ``return a linear value'' in a world where linearity applies only to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
-the continuation arrow.  More precisely, in an application |m >>= k|,
+the continuation arrow.  More precisely, in an application |m `bindIOL` k|
 where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
-And that is captured by the linearity-polymorphic type of |(>>=)|.
+And that is captured by the linearity-polymorphic type of |bindIOL|.
 
 Even though they have a different type than usual, the bind and return
-combinators of |IOL| can be used in the familiar way, The difference
+combinators of |IOL| can be used in the familiar way. The difference
 with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
@@ -971,7 +979,7 @@ Such an interpretation of the |do|-notation requires the
 commonplace it would be worth considering a more robust solution.
 
 Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
-and that implementation too is illuminated by linearity.  Here it is:
+and that implementation too is illuminated by linearity, like so:
 \begin{code}
 data World
 newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
@@ -1005,6 +1013,7 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
+\label{sec:calculus}
 
 It would be impractical to formalise all of \HaskeLL{}, so instead we
 formalise a core calculus, \calc{}, which exhibits all the key features
@@ -1057,7 +1066,7 @@ way we make precise much of the informal discussion above.
   \label{fig:contexts}
 \end{figure}
 
-The term syntax of \calc{} is that of a type-annotated (\emph{à la}
+The term syntax of \calc{} is that of a type-annotated (\textit{à la}
 Church) simply-typed $λ$-calculus with let-definitions
 (\fref{fig:syntax}).  It includes linearity polymorphism, but to avoid clutter
 we omit ordinary type polymorphism.
@@ -1083,8 +1092,8 @@ Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
   \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
-The above declaration means that \(D\) has \(m\) constructors \(c_k\)
-(where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
+The above declaration means that \(D\) is parameterized over \(n\) multiplicities $π_i$ and has \(m\) constructors \(c_k\),
+each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions: an
 argument of multiplicity $ω$ means that consuming the data constructor once
 makes no claim on how often that argument is consumed (\fref{def:consume}).
@@ -1167,10 +1176,10 @@ be read as follows
 One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
-For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
+For example\jp{example of what?}, the rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
-is explicitly annotated with its multiplicity $q$.  Remember, this
+is explicitly annotated with multiplicity $q$.  Remember, this
 is an explicitly-typed intermediate language; in \HaskeLL{}
 this multiplicity is inferred.
 
@@ -1181,7 +1190,7 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by ``scaling'' all the multiplicities in $\Delta$ by $q$,
+express this by multiplying all the multiplicities in $\Delta$ by $q$,
 thus $q\Delta$.  Finally we need to add together all the
 multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
 conclusion of the rule.
@@ -1242,7 +1251,7 @@ relation:
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts.
 
-Returning to the typing rules in \fref{fig:typing}, rule (let) is like
+Returning to the typing rules in \fref{fig:typing}, the rule (let) is like
 a combination of (abs) and (app).  Again, each $\flet$ binding is
 explicitly annotated with its multiplicity.
 
@@ -1250,7 +1259,7 @@ The variable rule (var) uses a standard idiom:
 $$\varrule$$
 This rule allows us to ignore variables with
 multiplicity $ω$ (usually called weakening),
-so that, for example $x :_1 A, y :_ω B ⊢ x : A$
+so that, for example $x :_1 A, y :_ω B ⊢ x : A$ holds
 \footnote{Pushing weakening to the variable rule is
   classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
@@ -1265,20 +1274,20 @@ are handled straightforwardly by (m.abs) and (m.app).
 \label{sec:typing-rules}
 
 The handling of data constructors and case expressions is a
-distinctive aspect of our design.  For constructor applications, rule
+distinctive aspect of our design.  For constructor applications, the rule
 (con), everything is straightforward: we treat the data constructor in
 precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-First, notice that the |case| keyword is annotated with a
-multiplicity |p|; this is precisely analogous to the explicit
-multiplicity on a |let| binding.  It says how often the scrutinee (or,
-for a |let|, the right hand side) will be consumed.  Just as
-for |let|, we expect |p| to be inferred from an un-annotated |case| in
+First, notice that the $\mathsf{case}$ keyword is annotated with a
+multiplicity $p$; this is analogous to the explicit
+multiplicity on a $\mathsf{let}$ binding.  It says how often the scrutinee (or,
+for a $\mathsf{let}$, the right hand side) will be consumed.  Just as
+for $\mathsf{let}$, we expect $p$ to be inferred from an un-annotated $\mathsf{case}$ in
 \HaskeLL{}.
 
-The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
+The scrutinee $t$ is consumed $p$ times, which accounts for the $pΓ$ in
 the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
@@ -1306,8 +1315,8 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 \subsection{Metatheory}
 \label{sec:metatheory}
 
-The details of meta-theory of \calc{} are deferred to the appendix
-(\fref{appendix:dynamics}). Our goal is to establish two properties:
+The details of meta-theory of \calc{} are deferred to
+\fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
 \item That a pure linear interface can be implemented using mutations
   under the hood.
@@ -1380,7 +1389,7 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 Alternatively, |g| might well be multiplicity-polymorphic, with type
-|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed typeable.
+|forall π. (Int -> _ π Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
 \jp{I feel that the eta-expansion thing is enough discussion. I
   suggest that we can say that extending subtyping is future work.}
 
@@ -1408,11 +1417,12 @@ so becuase it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
 of extending the multiplicity domain later.  But there is an up-front cost,
-of somewhat less polymorphism than we might expect.  We hope the experience will
+of somewhat less polymorphism than we might expect.  We hope that experience will
 lead us to a better assessment of the costs/benefit tradeoff here.
 
 \section{Applications}
 \label{sec:evaluation}
+\label{sec:applications}
 
 Implemented using our branch of the \textsc{ghc} compiler described in
 \fref{sec:implementation}\improvement{Needs an introductory paragraph}
@@ -1466,7 +1476,7 @@ directly in \HaskeLL{}. The challenges are:
   immutable.
 \end{itemize}
 We recognise similar problems to the array-freezing example of
-\fref{sec:freezing-array}. However, there are further things to
+\fref{sec:freezing-arrays}. However, there are further things to
 consider: first, we cannot freeze a binary array before we have
 completely initialised it, otherwise we would have an incomplete tree,
 which would probably yield a dreaded \texttt{segfault}; also at any
@@ -1483,21 +1493,60 @@ to index our arrays by a type-level list\footnote{Haskell has
 \subsection{Sockets with type-level state}
 \label{sec:sockets}
 
-\begin{code}
-data SocketState = Ready | Bound | Listening | Open
-data Socket (sock_state :: SocketState)  -- No data constructors
-newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
-listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
-...etc...
-\end{code}
-Here, the type argument to |Socket| records the state of the socket, and that
-state changes as execution proceeds.  Here it is very convenient to have
-a succession of linear variables representing the socket, where the type
-of the variable reflects the state the socket is in, and limits which
-operations can legally be applied to it.
+The \textsc{bsd} socket \textsc{api} is a standard, if not \emph{the}
+standard, through which computer connect over networks. It involves a
+series of actions which must be performed in order: on the
+server-side, a freshly created socket must be \emph{bound} to an
+address, then start \emph{listening} incoming traffic, then
+\emph{accept} connection requests, said connection is returned as a
+new socket, this new socket can now \emph{receive} traffic. One reason
+for having that many actions to do is that the precise sequence of
+action is protocol-dependent. For \textsc{tcp} traffic you would do as
+described, but for \textsc{udp}, which does not need connections, you
+would not accept connection but receive messages directly. The
+\texttt{socket} library for Haskell, exposes precisely this sequence
+of actions.
 
-\todo{The rest of the section}
+It is a bit clumsy to program with: with each action, not only the
+state of the socket changes, but also the actions permissible on
+this. Used as we are to typed programming languages, we like to use
+type to predicate what actions can be taken on an object. So the state
+of sockets should be tracked in the type. This is akin to a typestate
+analysis~\cite{strom_typestate_1983}.
+
+In the |File| \textsc{api} of \fref{sec:io-protocols}, we made files
+safer to use at the cost of having to thread a file handle
+explicitely: each function consumes a file handle and returns a fresh
+one. We can make this cost into an opporunity: we have the option of
+returning a handle \emph{with a different type} from that of the
+handle we consumed! So by adjoining a phantom type to sockets to track
+their state, we can effectively encode the proper sequencing of socket
+actions.
+
+As an illustration, we implemented wrapper around the \textsc{api} of the
+\texttt{socket} library. For the sake of simplicity this wrapper is
+specialised for the case of \textsc{tcp}.
+
+\begin{code}
+data State = Unbound | Bound | Listening | Ingress | Egress
+data Socket (s :: State)
+data SocketAddress
+
+socket ::  IOL 1 (Socket Unbound)
+bind ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Bound)
+listen :: Socket Bound ⊸ IOL 1 (Socket Listening)
+accept ::  Socket Listening ⊸ IOL 1 (Socket Listening, Socket Egress)
+connect ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Ingress)
+send :: Socket Ingress ⊸ ByteString -> IOL 1 (Socket Ingress, Unrestricted Int)
+receive :: Socket Egress ⊸ IOL 1 (Socket Egress, Unrestricted ByteString)
+close :: forall s. Socket s -> IOL ω ()
+\end{code}
+
+This linear socket \textsc{api} is very similar to files': we use the
+|IO_L| monad in order to enforce linear use of sockets. The difference
+is the argument to |Socket|, which represent the current state of the
+socket and is used to limit the functions which can apply to a socket
+at a given time.
 
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
@@ -1542,6 +1591,7 @@ where the impure \textsc{api} is a simple tree
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
+\label{sec:impl}
 
 We are implementing \HaskeLL{} as a branch over the 8.2 version
 \textsc{ghc}, the leading Haskell compiler. At time of writing this
@@ -1782,6 +1832,7 @@ the same lens library can be used, but individual lifting of
 modifications cannot be implemented by in-place update.
 
 \subsection{Linearity via arrows vs. linearity via kinds}
+\label{sec:lin-arrow}
 
 There are two possible choices to indicate the distinction between
 linear and unrestricted objects.  Our choice is to use the arrow
@@ -2050,36 +2101,35 @@ since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 \subsection{Inlining}
 \label{sec:fusion}
 
-\improvement{This section seems to be unclear. Either too long or too
-  short.}  Inlining is a staple of program optimisation, exposing
-opportunities for many program transformations including fusion. Not
-every function can be inlined without negative effects on performance:
-inlining a function with more than one use sites of the argument may
-result in duplicating a computation. For example one should avoid the
-following reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++
-expensive|.
+\jp{Let me know if this section looks ok or not.}  Inlining is a
+cornerstone of program optimisation, exposing opportunities for many
+program transformations including fusion. Not every function can be
+inlined without negative effects on performance: inlining a function
+with more than one use sites of the argument may result in duplicating
+a computation. For example one should avoid the following reduction:
+|(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
 Many compilers can discover safe inlining opportunities by analysing
-the source code in order to determine how many times functions use
-their arguments.  (In \textsc{ghc} this analysis is called a
-cardinality analysis~\cite{sergey_cardinality_2014}). The limitation
-of such an analysis is that it is necessarily heuristic (the problem
-is undecidable). Because inlining is crucial to efficiency,
-programmers find themselves in the uncomfortable position of relying
-on a heuristic to obtain efficient programs. A small, seemingly
+source code and determine how many times functions use their
+arguments.  (In \textsc{ghc} this analysis is called a cardinality
+analysis~\cite{sergey_cardinality_2014}). The limitation of such an
+analysis is that it is necessarily heuristic (the problem is
+undecidable). Because inlining is crucial to efficiency, programmers
+find themselves in the uncomfortable position of relying on a
+heuristic to obtain efficient programs. That is, a small, seemingly
 innocuous change can prevent a critical inlining opportunity and have
-rippling effects throughout the program.  Thus folklore is that
-high-level languages should be abandonned if one wants control over
-the performance.
+rippling catastrophic effects throughout the program.  Due to this
+impredictability, folklore is that high-level languages should be
+abandonned if one wants control over the performance.
 
-Linear types address this issue by serving as a programmer-facing
+Linear types can address this issue by serving as a programmer-facing
 interface to inlining: because it is always safe to inline a linear
 function, we can make it part of the \emph{semantics} of linear
 functions that they are always inlined. In fact, the system of
-multiplicity annotation of \calc{} can be faithfully embedded the
+multiplicity annotation of \calc{} can be faithfully embed the
 abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence in that linear arrows can serve as
-cardinality \emph{declarations}.
+gives confidence that linear arrows can serve as cardinality
+\emph{declarations}.
 
 Formalising and implementing the integration of multiplicity
 annotation in the cardinality analysis is left as future work.
@@ -2176,9 +2226,8 @@ is to reduce one redex.\improvement{aspiwack: actually do that in the
   rules, or maybe I don't actually need it}
 
 The reason to consider partial derivation is that they make it
-possible to express properties such as \emph{progress}: we say that a
-partial derivation is blocked if it is not total and can't be extended, an
-evaluation relation has the progress property when it cannot happen.
+possible to express properties such as \emph{progress}: all partial
+derivations can be extended.
 
 Given a number of rules defining $a⇓b$ with ordered premises (we will
 use the ordering of premises shortly), we
@@ -2188,7 +2237,7 @@ A \emph{partial} derivation of $a⇓?$ (the question mark is part of the
 syntax: the right-hand value is the result of the evaluation, it is
 not yet known for a partial derivation!) is either:
 \begin{itemize}
-\item the empty tree,
+\item just a root labelled with $a⇓?$,
 \item or an application of a rule matching $a$ where exactly one of
   the premises, $a'⇓?$ has a partial derivation, all the premises to
   the left of $a'⇓?$ have a total derivation, and the premises to the
@@ -2196,6 +2245,13 @@ not yet known for a partial derivation!) is either:
   value $?$ to know what the root of the next premise is).
 \end{itemize}
 
+Remark that, by definition, in a partial derivation, there is exactly one
+$b⇓?$ with no sub-derivation. Let us call $b$ the \emph{head} of the
+partial derivation. And let us write $a⇓^*b$ for the relation which
+holds when $b$ is the head of some partial derivation with root
+$a⇓?$. We call $a⇓^*b$ the \emph{partial evaluation relation}, and, by
+contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
+  evaluation relation}.
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -2374,7 +2430,7 @@ not yet known for a partial derivation!) is either:
 \end{definition}
 
 \begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
-  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, then
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ then
   $$
   Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
   $$
@@ -2402,14 +2458,22 @@ not yet known for a partial derivation!) is either:
 
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
   The denotaion assignment relation defines a simulation of the
-  ordinary reduction by the denotational reduction.
+  ordinary evaluation by the denotational evaluation, both in the
+  complete and partial case.
 
-  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
-  there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
-  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  That is:
+  \begin{itemize}
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓Δ:z$,
+    there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+    $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that $Γ:e⇓^*Δ:z$,
+    there exists a well-typed state $Ξ ⊢ (Δ'||z) :_ρ A,Σ$ such that
+    $Ξ ⊢ (Γ||t ⇓^* Δ||z) :_ρ A, Σ$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \end{itemize}
 \end{lemma}
 \begin{proof}
-  By induction on the derivation of $Γ:e⇓Δ:z$:
+  Both simulations are proved by a similar induction on the derivation
+  of $Γ:e⇓Δ:z$ (resp. $Γ:e⇓Δ:z$):
   \begin{itemize}
   \item The properties of the substitution of |MArray| in the
     definition of denotation assignments are crafted to make the
@@ -2420,18 +2484,78 @@ not yet known for a partial derivation!) is either:
 
 \begin{lemma}[Liveness]\label{lem:liveness}
   The refinement relation defines a simulation of the strengthened
-  reduction by the ordinary reduction.
+  reduction by the ordinary reduction, both in the complete and
+  partial case.
 
-  That is for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
-  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
-  that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  That is:
+  \begin{itemize}
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+    $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+    that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
+    $Ξ ⊢ (Γ'||e ⇓^* Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
+    that $Γ:e⇓^*Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+  \end{itemize}
 \end{lemma}
 \begin{proof}
-  This is proved by a straightforward induction over the derivation of
-  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$.
+  Both are proved by a straightforward induction over the derivation of
+  $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$ (resp. $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$).
 \end{proof}
 By induction, using the restrictions on substituting |MArray| pointers
 for the \emph{shared variable} and \emph{let} rules.
+
+\begin{theorem}[Progress]
+  For any partial derivation of $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the
+  derivation can be extended.
+\end{theorem}
+\begin{proof}
+  By liveness (\fref{lem:liveness}) it is sufficient to prove the case
+  of the denotational semantics.
+
+  Let us also note that if we erase all multiplicity from the
+  denotational semantics, then we get a completely standard semantics
+  for simply typed $λ$-calculus, in which progress is known to
+  hold. So we it suffices to show that multiplicity annotations do not prevent the
+  head of the partial derivation to match a rule.
+
+  For instance, we need to check that the head of the partial
+  derivation is not $Ξ⊢(Γ,x:_1 B = e||x ⇓ ?) :_ω A,Σ$ or
+  $Ξ⊢Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$, which match no rule because
+  of their multiplicities.
+  \begin{itemize}
+  \item $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed state because
+    it reduces to $x:_1B = x:_{ωp} B$ for some $p$, which never
+    holds. By type preservation (\fref{lem:type-safety}),  $Ξ⊢Γ,x:_1 B
+    = e||x :_ω A,Σ$ cannot be the head of a partial derivation.
+  \item The case of $Ξ⊢Γ||\varid{write}~x~i~a :_ω \varid{MArray}~a, Σ$
+    is similar, if a little more subtle. For it to be well-typed, we
+    need that $Γ$ contains a binding $x :_ω \varid{MArray}~a$. We need
+    the following intermediate lemmas:
+    \begin{itemize}
+    \item If $Ξ⊢Γ,x:_1A = e_x||u :_p B,Σ$ is the head of a partial proof, then
+      $p=1$ (by type preservation)
+    \item If $Ξ⊢Γ,x:_1A = e_x||u :_1 B,Σ$ is the head of a partial
+      proof, then none of the $y:_ωC=e_y$ are such that $x$ is a free
+      variable of $e_y$ (by type preservation).
+    \item If $Ξ⊢Γ||u :_p A, Σ$ is the head of a partial proof, and
+      contains an $x :_q \varid{MArray}~a$ binding, then $q=1$ (which,
+      by the above lemma implies that $p=1$). This is proved by
+      induction in the partial derivation, noting that the only rule
+      which could introduce such a binding with $q=ω$ is the $\flet$
+      rule either because the binding has multiplicity $ω$ or because
+      $p=ω$\unsure{This property is not true in presence of recursive
+        definition. And in fact, I can trigger the write rule in an ω
+        environment using |undefined| for the |MArray|. So I'm
+        guessing I should relax this rule to take arbitrary
+        multiplicity. It seems that the bisimulation is left
+        unchanged. It would simplify progress, because then, we would
+        only have the linear variable rule to deal with.}
+    \end{itemize}
+
+  \end{itemize}
+
+\end{proof}
+
 \end{document}
 
 % safety proves that the mutable semantics is equivalent to a pure
@@ -2442,4 +2566,4 @@ for the \emph{shared variable} and \emph{let} rules.
 % semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum bisimilar observationally
-%  LocalWords:  typestates
+%  LocalWords:  typestates denotational
