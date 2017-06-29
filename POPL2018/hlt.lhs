@@ -2341,9 +2341,11 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
     %%%% /Arrays
   \end{mathpar}
 
-  \caption{Dynamic semantics}
+  \caption{Ordinary dynamic semantics}
   \label{fig:dynamics}
 \end{figure}
+
+\subsection{Denotational semantics}
 
 \begin{figure}
   \begin{mathpar}
@@ -2459,6 +2461,8 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 \begin{proof}
   By induction on the typed-reduction.
 \end{proof}
+
+\subsection{Bisimulation and all that}
 
 \begin{definition}[Denotation assignment]
   A well-typed state is said to be a denotation assignment for an ordinary
