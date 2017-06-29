@@ -109,19 +109,20 @@ runBench name variant dep = do
     "boxed" -> do mkBenchs (\ix -> pureSum (ignoreMe ix tr))
                            (\ix -> force $ pureMap (+1) (ignoreMe ix tr))
 
-    "packed" -> do tr' <- evaluate $ force $ packTree tr
+    "packed" -> do tr' <- evaluate $ force $ packTree dep tr
                    mkBenchs (\ix -> sumTree (ignoreMe ix tr'))
-                            (\ix -> mapTree (+1) (ignoreMe ix tr'))
+                            (\ix -> mapTree dep (+1) (ignoreMe ix tr'))
 
-    "ST-packed" -> do tr' <- timePrint $ evaluate $ packTreeST tr
+    "ST-packed" -> do tr' <- timePrint $ evaluate $ packTreeST dep tr
                       mkBenchs (\ix -> sumTreeST (ignoreMe ix tr'))
-                               (\ix -> mapTreeST (+1) (ignoreMe ix tr'))
+                               (\ix -> mapTreeST dep (+1) (ignoreMe ix tr'))
 
-    "unpack-repack" -> do tr' <- evaluate $ force $ packTree tr
+    "unpack-repack" -> do tr' <- evaluate $ force $ packTree dep tr
                           mkBenchs (\ix -> pureSum  $ unpackTree (ignoreMe ix tr'))
-                                   (\ix -> packTree $ pureMap (+1) $ unpackTree (ignoreMe ix tr'))
+                                   (\ix -> packTree dep $ pureMap (+1) $ unpackTree (ignoreMe ix tr'))
 
     _ -> error $ "Unrecognized 'variant': "++variant
+
   return ()
  where
    benchLoop fn = do mreps <- startBatch
@@ -194,13 +195,14 @@ bytearray = do
 
 treebench :: IO ()
 treebench = do 
-  -- [dep] <- getArgs
-  let dep = "17"
+  -- [dep_] <- getArgs
+  -- let dep = (parseInt "Failed to parse tree-depth number: " dep_)
+  let dep = 17 
   putStr "\nGenerate tree: "
-  tr <- timePrint $ evaluate $ force $ mkTree
-        (parseInt "Failed to parse tree-depth number: " dep)
+  tr <- timePrint $ evaluate $ force $ mkTree dep
+        
   putStr "pack-tree: "
-  tr' <- timePrint $ evaluate $ force $ packTree tr
+  tr' <- timePrint $ evaluate $ force $ packTree dep tr
   putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr')
 
   putStr "sumtree-boxed: "
@@ -219,23 +221,23 @@ treebench = do
   _ <- timePrint $ evaluate $ force $ pureMap (+1) tr
 
   putStr "unpack-map-repack: "
-  _ <- timePrint $ evaluate $ force $ packTree $ pureMap (+1) $ unpackTree tr'
+  _ <- timePrint $ evaluate $ force $ packTree dep $ pureMap (+1) $ unpackTree tr'
 
   putStr "map-packed: "; hFlush stdout
-  _ <- timePrint $ evaluate $ force $ mapTree (+1) tr'
+  _ <- timePrint $ evaluate $ force $ mapTree dep (+1) tr'
 
   putStrLn "\nDone with linear-cursor benchmarks.  Now running ST ones."
   putStrLn "----------------------------------------\n"
 
   putStr "pack-tree-ST: "
-  tr'' <- timePrint $ evaluate $ packTreeST tr
+  tr'' <- timePrint $ evaluate $ packTreeST dep tr
   putStrLn $ "Prefix of resulting packed tree "++take 80 (show tr'')
   putStr "sum-tree-ST: "
   s3 <- timePrint $ evaluate $ sumTreeST tr''
   putStrLn $ "    (sum was "++show s3++")"
 
   putStr "map-packed-tree-ST: "
-  _ <- timePrint $ evaluate $ mapTreeST (+1) tr''
+  _ <- timePrint $ evaluate $ mapTreeST dep (+1) tr''
 
   return ()
 
@@ -257,9 +259,9 @@ pureSum :: Tree -> Int
 pureSum (Leaf n)     = n
 pureSum (Branch x y) = pureSum x + pureSum y
 
-packTreeST :: Tree -> S.Packed Tree
-packTreeST tr = S.finish (do buf <- S.allocC regionSize
-                             go tr buf)
+packTreeST :: Depth -> Tree -> S.Packed Tree
+packTreeST dep tr = S.finish (do buf <- S.allocC (treeMaxByteSize dep)
+                                 go tr buf)
   where
     go :: Tree -> S.Needs s (Tree ': r) Tree -> ST s (S.Needs s r Tree)
     go (Leaf n) buf = S.writeLeaf n buf
@@ -280,9 +282,9 @@ sumTreeST pkd = runST (fmap fst (go (S.toHas pkd)))
                      return $! (,h3) $! x+y)
 
 {-# INLINE mapTreeST #-}
-mapTreeST :: (Int -> Int) -> S.Packed Tree -> S.Packed Tree 
-mapTreeST fn pkd = S.finish
-                   (do n0 <- S.allocC regionSize
+mapTreeST :: Depth -> (Int -> Int) -> S.Packed Tree -> S.Packed Tree 
+mapTreeST dep fn pkd = S.finish
+                   (do n0 <- S.allocC (treeMaxByteSize dep)
                        (_,n1) <- go (S.toHas pkd) n0
                        return n1)
  where

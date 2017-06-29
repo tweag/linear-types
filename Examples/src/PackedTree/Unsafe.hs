@@ -242,15 +242,15 @@ tr1 = Branch (Leaf 3) (Leaf 4)
 
 pk0 :: Packed TagTy
 pk0 = fromHas $ getUnrestricted $
-      withOutput (\c -> finish (writeC leafTag c))
+      withOutput 1000 (\c -> finish (writeC leafTag c))
 
 pk1 :: Packed (TagTy, TagTy)
 pk1 = fromHas $ getUnrestricted $
-      withOutput (\(c :: Needs '[(TagTy,TagTy)] (TagTy,TagTy)) ->
-                      finish (writeC leafTag (writeC leafTag (untup c))))
+      withOutput 1000 (\(c :: Needs '[(TagTy,TagTy)] (TagTy,TagTy)) ->
+                       finish (writeC leafTag (writeC leafTag (untup c))))
 
 pk2 :: Packed Tree
 pk2 = fromHas $ getUnrestricted $
-      withOutput (\c -> finish (writeLeaf 33 c))
+      withOutput 1000 (\c -> finish (writeLeaf 33 c))
       
 

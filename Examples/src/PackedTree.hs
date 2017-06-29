@@ -27,7 +27,8 @@ module PackedTree
 
     -- * Safe but low-level operations
     , writeLeaf, writeBranch, leafTag, branchTag
-
+    , treeMaxByteSize, Depth
+      
     -- * Examples
     , tr1, tr2, tr3, pk0, pk1, pk2
     ) where
@@ -67,11 +68,19 @@ _packTree1 = unfoldTree viewTree
     viewTree (Leaf a) = Left a
     viewTree (Branch left right) = Right (left,right)
 
+type Depth = Int
+
+treeMaxByteSize :: Depth -> Int
+treeMaxByteSize depth =
+   (2^depth * (sizeOf(undefined::Int) + 1)) -- Space for leaves.
+   + 2^depth                       -- Space for the Branch tags.
+
 -- | Impressively, this one goes no faster.  GHC is doing well on this
 -- one.
-packTree :: Tree -> Packed Tree
-packTree tr0 = fromHas $ getUnrestricted $
-               withOutput (\n -> finish (go tr0 n))
+packTree :: Depth -> Tree -> Packed Tree
+packTree dep tr0 = fromHas $ getUnrestricted $
+                   withOutput (treeMaxByteSize dep)
+                              (\n -> finish (go tr0 n))
   where
       go :: Tree -> Needs (Tree ': r) t ⊸ Needs r t
       go (Leaf a) n = writeLeaf a n
@@ -189,7 +198,7 @@ foldTree leaf branch tr =
 {-# INLINABLE unfoldTree #-}
 unfoldTree :: forall s. (s -> Either Int (s,s)) -> s -> Packed Tree
 unfoldTree step seed = fromHas $ getUnrestricted $
-    withOutput (\n -> finish (go seed n))
+    withOutput regionSize (\n -> finish (go seed n))
   where
     go :: s -> Needs (Tree ': r) t ⊸ Needs r t
     go (step -> Left a) n = writeLeaf a n
@@ -199,14 +208,15 @@ unfoldTree step seed = fromHas $ getUnrestricted $
 
 
 {-# INLINE mapTree #-}
-mapTree :: (Int->Int) -> Packed Tree -> Packed Tree
-mapTree f pt =
+mapTree :: Depth -> (Int->Int) -> Packed Tree -> Packed Tree
+mapTree dep f pt =
 --    trace ("mapTree over packed of size "++show (hasByteSize (toHas pt))) $ 
 --    trace ("result tree size is "++show (hasByteSize (getUnrestricted fin)))
     (fromHas (getUnrestricted fin))
   where
     fin = withHas# (toHas pt) $ \h -> 
-           withOutput (\n -> finishMapDest (mapDest h n))
+           withOutput (treeMaxByteSize dep)
+                      (\n -> finishMapDest (mapDest h n))
 
     finishMapDest :: (# Has# '[], Needs '[] t #) ⊸ Unrestricted (Has '[t])
     finishMapDest (# h, n #) = dropHas h (finish n)
@@ -235,7 +245,7 @@ mapTree f pt =
 -- Tests/ Examples
 
 tr2 :: Packed Tree
-tr2 = packTree tr1
+tr2 = packTree 1 tr1
 
 tr3 :: Tree
 tr3 = unpackTree tr2

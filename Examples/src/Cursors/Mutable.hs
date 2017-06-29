@@ -189,13 +189,13 @@ tup x = x
 
 {-# NOINLINE withOutput #-}                    
 -- | Allocate a fresh output cursor and compute with it.
-withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-withOutput = unsafeCastLinear f
+withOutput :: Int -> (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
+withOutput sz = unsafeCastLinear f
  where
    f fn = unsafePerformIO $ do 
             -- ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
             -- DANGER: don't float out:
-            Ptr p <- mallocBytes regionSize
+            Ptr p <- mallocBytes sz
             return $! fn (# 0#, p #)
 
 --------------------------------------------------------------------------------
