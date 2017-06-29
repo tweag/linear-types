@@ -2559,7 +2559,7 @@ introduces the states of the strengthened evaluation relation.
   By induction on the typed-reduction.
 \end{proof}
 
-\subsection{Bisimulation and all that}
+\subsection{Bisimilarity and all that}
 
 \begin{definition}[Denotation assignment]
   A well-typed state is said to be a denotation assignment for an ordinary
