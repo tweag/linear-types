@@ -112,8 +112,10 @@
 % Peanut gallery comments by Ryan:
 \newcommandx{\rn}[1]{\todo[]{RRN: #1}}
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
-\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{#1}{}}
+\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
 \newenvironment{alt}{\color{red}}{}
+
+\newcommand{\Red}[1]{{\color{red}{#1}}}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -1332,7 +1334,7 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 \subsection{Metatheory}
 \label{sec:metatheory}
 
-The details of meta-theory of \calc{} are deferred to
+The details of the meta-theory of \calc{} are deferred to
 \fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
 \item That a pure linear interface can be implemented using mutations
@@ -1340,7 +1342,7 @@ The details of meta-theory of \calc{} are deferred to
 \item That the ``typestate'' of data is enforced by the type system\jp{what does this mean? what is a typestate?}
 \end{itemize}
 
-To that effect we introduce two semantics: a semantic with
+To that effect we introduce two semantics: a semantics with
 mutation where type-states are enforced dynamically and a pure semantics
 that tracks linearity carefully, but where ``mutations'' are
 implemented as copying. Both semantics are big step operational
@@ -1348,7 +1350,7 @@ semantics with laziness in the style of \citet{launchbury_natural_1993}.
 
 The semantics are instantiated with the arrays of
 \fref{sec:freezing-arrays}. They can be easily extended to support,
-for instance, a real-world token and file handles like in
+for instance, a real-world token and file handles as in
 \fref{sec:io-protocols}.
 
 We then prove the two semantics to be bisimilar from which we can
@@ -1366,8 +1368,8 @@ The complete proof of both of these statements can be found in
 \fref{appendix:dynamics}.
 
 \subsection{Design choices \& trade-offs}
-Let us review the design space allowed by \calc{}, the points that we
-chose, and the generalizations that we have left open.
+Let us review the design space allowed by \calc{}, the points in the space that
+we chose, and the generalizations that we have left open.
 
 \paragraph{Case rule}\unsure{While I was writing this new version,
   Simon suggested that we canned the discussion on $\varid{case}_ω$
@@ -1375,17 +1377,17 @@ chose, and the generalizations that we have left open.
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
 Consider |fst| again.  We could instead have
 \begin{code}
-data (,) p q a b where
-  (,) :: a → _ p b → _ q (,) p q a b
+data Pair p q a b where
+  Pair :: a → _ p b → _ q Pair p q a b
 
-fst :: (,) 1 ω a b ⊸ a
-fst x = case_1 x of (,) a b -> a
+fst :: Pair 1 ω a b ⊸ a
+fst x = case_1 x of Pair a b -> a
 \end{code}
 But now linearity polymorphism infects all basic data types (such as pairs), and it
 it hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
 reasonable to annotate |case| in the same way.
 
-To put it another way, our design choice allows to meaningfully inhabit
+To put it another way, our design choice allows us to meaningfully inhabit
 |Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
 forbids that.
 
@@ -1415,10 +1417,10 @@ known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}).
 
-\paragraph{Polymorphism} Consider the definition
-\begin{code}
-id x = x
-\end{code}
+\paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
+%% \begin{code}
+%% id x = x  
+%% \end{code}
 Our typing rules would validate both |id :: Int → Int| and |id :: Int ⊸ Int|.
 So, since we think of multiplicities ranging over $\{1,ω\}$, surely we should
 also have |id :: forall π. Int → _ π Int|?  But as it stands, our rules do
@@ -1427,9 +1429,8 @@ at the (var) rule in \fref{fig:typing}, we can prove that premise by case analys
 trying $π=1$ and $π=ω$.
 \simon{I could not work out what your $π$ and $π'$ were.... so I ended up with case analysis.  What am I missing?}
 But if we had a richer domain of multiplicities, including
-$0$\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
-in a dependently typed system}
-or $2$ for example, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
+$0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
+in a dependently typed system}, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
 so becuase it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
@@ -1437,18 +1438,39 @@ of extending the multiplicity domain later.  But there is an up-front cost,
 of somewhat less polymorphism than we might expect.  We hope that experience will
 lead us to a better assessment of the costs/benefit tradeoff here.
 
-\section{Applications}
+% \section{Applications}
+\section{Case Studies}
 \label{sec:evaluation}
 \label{sec:applications}
 
-Implemented using our branch of the \textsc{ghc} compiler described in
-\fref{sec:implementation}\improvement{Needs an introductory paragraph}
+With a linear type system for a mature language such as Haskell, we have the
+opportunity to implement non-trivial applications mixing linear and non-linear
+code, and to observe how the linear vs. non-linear API's interact with the
+optimizer of a mature compiler.
+%
+In this section, we describe two such applications; in \fref{sec:implementation}
+we describe the modified version of the \textsc{ghc} compiler that makes this
+possible.
 
-\subsection{Serialised tree traversals}
+% \subsection{Serialised tree traversals}
+\subsection{Traversals of serialised data}
 \label{sec:cursors}
 
+While we covered simple mutable arrays in \fref{sec:freezing-arrays}, we now
+consider a more complicated application---operating directly on binary,
+serialised representations of algebraic data-types
+(inspired by \citet{vollmer_gibbon_2017}, and \cite{yang_compact_2015}).
+%
+Whereas mutable arrays are
+homogenous, with evenly-spaced, aligned, elements, serialised data structures
+contain primitive values of various widths, at unaligned locations, as well as
+``tags'' that indicate which variant of a sum type is coming next on the stream.
+
+% -------------------------------
+\subsection*{old}
+
 Let us look back to the array-freezing \textsc{api} of
-\fref{sec:freezing-arrays}. An push the boundaries to a new range of
+\fref{sec:freezing-arrays}. And push the boundaries to a new range of
 applications inspired by \citet{vollmer_gibbon_2017}.
 
 \improvement{aspiwack: I've spent too much time being abstract about
@@ -1458,6 +1480,7 @@ The problem is the following: representing recursive data structure
 not as linked data-structures but as a compact representation in a
 binary array. There are various reasons for being interested in such a
 representation:
+
 \begin{itemize}
 \item if data needs to be serialised and deserialised a lot (for
   instance because it transits on the network) then it can be more
@@ -1506,6 +1529,8 @@ to index our arrays by a type-level list\footnote{Haskell has
   $(a_1, (…, (a_n,())))$.}
 
 \todo{copy actual \textsc{api}}
+
+
 
 \subsection{Sockets with type-level state}
 \label{sec:sockets}
