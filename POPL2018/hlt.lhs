@@ -1092,8 +1092,8 @@ Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
   \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
 \end{align*}
-The above declaration means that \(D\) has \(m\) constructors \(c_k\)
-(where \(k ∈ 1…m\)), each with \(n_k\) arguments. Arguments of
+The above declaration means that \(D\) is parameterized over \(n\) multiplicities $π_i$ and has \(m\) constructors \(c_k\),
+each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions: an
 argument of multiplicity $ω$ means that consuming the data constructor once
 makes no claim on how often that argument is consumed (\fref{def:consume}).
@@ -1176,10 +1176,10 @@ be read as follows
 One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
-For example, rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
+For example\jp{example of what?}, the rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
-is explicitly annotated with its multiplicity $q$.  Remember, this
+is explicitly annotated with multiplicity $q$.  Remember, this
 is an explicitly-typed intermediate language; in \HaskeLL{}
 this multiplicity is inferred.
 
@@ -1190,7 +1190,7 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by ``scaling'' all the multiplicities in $\Delta$ by $q$,
+express this by multiplying all the multiplicities in $\Delta$ by $q$,
 thus $q\Delta$.  Finally we need to add together all the
 multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
 conclusion of the rule.
@@ -1251,7 +1251,7 @@ relation:
 Thus, multiplicities form a semi-ring (without a zero), which extends to a
 module structure on typing contexts.
 
-Returning to the typing rules in \fref{fig:typing}, rule (let) is like
+Returning to the typing rules in \fref{fig:typing}, the rule (let) is like
 a combination of (abs) and (app).  Again, each $\flet$ binding is
 explicitly annotated with its multiplicity.
 
@@ -1259,7 +1259,7 @@ The variable rule (var) uses a standard idiom:
 $$\varrule$$
 This rule allows us to ignore variables with
 multiplicity $ω$ (usually called weakening),
-so that, for example $x :_1 A, y :_ω B ⊢ x : A$
+so that, for example $x :_1 A, y :_ω B ⊢ x : A$ holds
 \footnote{Pushing weakening to the variable rule is
   classic in many $λ$-calculi, and in the case of linear logic,
   dates back at least to Andreoli's work on
@@ -1274,20 +1274,20 @@ are handled straightforwardly by (m.abs) and (m.app).
 \label{sec:typing-rules}
 
 The handling of data constructors and case expressions is a
-distinctive aspect of our design.  For constructor applications, rule
+distinctive aspect of our design.  For constructor applications, the rule
 (con), everything is straightforward: we treat the data constructor in
 precisely the same way as an application of a function with that data constructor's type.
 This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
-First, notice that the |case| keyword is annotated with a
-multiplicity |p|; this is precisely analogous to the explicit
-multiplicity on a |let| binding.  It says how often the scrutinee (or,
-for a |let|, the right hand side) will be consumed.  Just as
-for |let|, we expect |p| to be inferred from an un-annotated |case| in
+First, notice that the $\mathsf{case}$ keyword is annotated with a
+multiplicity $p$; this is analogous to the explicit
+multiplicity on a $\mathsf{let}$ binding.  It says how often the scrutinee (or,
+for a $\mathsf{let}$, the right hand side) will be consumed.  Just as
+for $\mathsf{let}$, we expect $p$ to be inferred from an un-annotated $\mathsf{case}$ in
 \HaskeLL{}.
 
-The scrutinee |t| is consumed $p$ times, which accounts for the $pΓ$ in
+The scrutinee $t$ is consumed $p$ times, which accounts for the $pΓ$ in
 the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
@@ -1315,8 +1315,8 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 \subsection{Metatheory}
 \label{sec:metatheory}
 
-The details of meta-theory of \calc{} are deferred to the appendix
-(\fref{appendix:dynamics}). Our goal is to establish two properties:
+The details of meta-theory of \calc{} are deferred to
+\fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
 \item That a pure linear interface can be implemented using mutations
   under the hood.
@@ -1389,7 +1389,7 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 Alternatively, |g| might well be multiplicity-polymorphic, with type
-|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed typeable.
+|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed, typeable.
 \jp{I feel that the eta-expansion thing is enough discussion. I
   suggest that we can say that extending subtyping is future work.}
 
@@ -1417,7 +1417,7 @@ so becuase it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
 of extending the multiplicity domain later.  But there is an up-front cost,
-of somewhat less polymorphism than we might expect.  We hope the experience will
+of somewhat less polymorphism than we might expect.  We hope that experience will
 lead us to a better assessment of the costs/benefit tradeoff here.
 
 \section{Applications}
