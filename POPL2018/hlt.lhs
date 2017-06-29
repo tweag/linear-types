@@ -1484,21 +1484,60 @@ to index our arrays by a type-level list\footnote{Haskell has
 \subsection{Sockets with type-level state}
 \label{sec:sockets}
 
-\begin{code}
-data SocketState = Ready | Bound | Listening | Open
-data Socket (sock_state :: SocketState)  -- No data constructors
-newSocket :: SocketType -> IOL 1 (Socket Ready)
-bind :: Socket Ready ⊸ Port -> IOL 1 (Socket Bound)
-listen :: Socket Bound ⊸ IOL 1 (Sock Listening)
-...etc...
-\end{code}
-Here, the type argument to |Socket| records the state of the socket, and that
-state changes as execution proceeds.  Here it is very convenient to have
-a succession of linear variables representing the socket, where the type
-of the variable reflects the state the socket is in, and limits which
-operations can legally be applied to it.
+The \textsc{bsd} socket \textsc{api} is a standard, if not \emph{the}
+standard, through which computer connect over networks. It involves a
+series of actions which must be performed in order: on the
+server-side, a freshly created socket must be \emph{bound} to an
+address, then start \emph{listening} incoming traffic, then
+\emph{accept} connection requests, said connection is returned as a
+new socket, this new socket can now \emph{receive} traffic. One reason
+for having that many actions to do is that the precise sequence of
+action is protocol-dependent. For \textsc{tcp} traffic you would do as
+described, but for \textsc{udp}, which does not need connections, you
+would not accept connection but receive messages directly. The
+\texttt{socket} library for Haskell, exposes precisely this sequence
+of actions.
 
-\todo{The rest of the section}
+It is a bit clumsy to program with: with each action, not only the
+state of the socket changes, but also the actions permissible on
+this. Used as we are to typed programming languages, we like to use
+type to predicate what actions can be taken on an object. So the state
+of sockets should be tracked in the type. This is akin to a typestate
+analysis~\cite{strom_typestate_1983}.
+
+In the |File| \textsc{api} of \fref{sec:io-protocols}, we made files
+safer to use at the cost of having to thread a file handle
+explicitely: each function consumes a file handle and returns a fresh
+one. We can make this cost into an opporunity: we have the option of
+returning a handle \emph{with a different type} from that of the
+handle we consumed! So by adjoining a phantom type to sockets to track
+their state, we can effectively encode the proper sequencing of socket
+actions.
+
+As an illustration, we implemented wrapper around the \textsc{api} of the
+\texttt{socket} library. For the sake of simplicity this wrapper is
+specialised for the case of \textsc{tcp}.
+
+\begin{code}
+data State = Unbound | Bound | Listening | Ingress | Egress
+data Socket (s :: State)
+data SocketAddress
+
+socket ::  IOL 1 (Socket Unbound)
+bind ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Bound)
+listen :: Socket Bound ⊸ IOL 1 (Socket Listening)
+accept ::  Socket Listening ⊸ IOL 1 (Socket Listening, Socket Egress)
+connect ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Ingress)
+send :: Socket Ingress ⊸ ByteString -> IOL 1 (Socket Ingress, Unrestricted Int)
+receive :: Socket Egress ⊸ IOL 1 (Socket Egress, Unrestricted ByteString)
+close :: forall s. Socket s -> IOL ω ()
+\end{code}
+
+This linear socket \textsc{api} is very similar to files': we use the
+|IO_L| monad in order to enforce linear use of sockets. The difference
+is the argument to |Socket|, which represent the current state of the
+socket and is used to limit the functions which can apply to a socket
+at a given time.
 
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
