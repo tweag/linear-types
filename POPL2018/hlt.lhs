@@ -313,6 +313,7 @@
 
 
 \section{Introduction}
+\label{sec:introduction}
 
 Despite their obvious promise, and a huge research literature, linear
 type systems have not made it into mainstream programming languages,
@@ -2212,19 +2213,37 @@ probably fix this.}
   (currently omitted, see above) to avoid the complication of creating
   a new variable? I think so.}
 \improvement{aspiwack: we at least need a |read| primitive on frozen
-|Array|-s.}
+  |Array|-s.}
 
-Following \citet{gunter_partial-big-step_1993}, we consider not only
-standard big-step derivation but also partial derivations. This
-require some additional setup compared to standard presentation of
-big-step semantics (in particular compared to
-\citet{launchbury_natural_1993}): schematically, to ensure that the
-right-hand side of the reduction relation never is never
-pattern-matched, we introduce, in addition to the usual big-step
-relation $a⇓b$ an additional relation, that we write $a⇒b$, whose role
-is to reduce one redex.\improvement{aspiwack: actually do that in the
-  rules, or maybe I don't actually need it}
+In accordance with our stated goals in \fref{sec:introduction}, we are
+interested in two key properties of our system: that we can implement
+linear \textsc{api} with mutation under the hood, while exposing a
+pure interface, and that type-level state are indeed enforced.
 
+We introduce two dynamic semantics for \calc{}: a semantics with
+mutation which model the implementation but blocks on incorrect
+type-states, and a pure semantics, which we dub \emph{denotational} as
+it represents the intended meaning of the program.
+
+We prove the two semantics bisimilar, so that type-safety and progress
+can be lifted from the denotational semantics to the ordinary
+semantics with mutation. The bisimilarity itself ensures that the
+mutations are not observable and the semantics is correct in exposing
+a pure semantics, progress proves that type-level states need not be
+tracked dynamically.
+
+\subsection{Preliminaries}
+
+Our operational semantics are big-step semantics with laziness in the
+style of \citet{launchbury_natural_1993}. In such semantics, sharing
+is expressed by mutating the environment assigning value to
+variables. Terms are transformed ahead of execution in order to
+reflect the amount of sharing that a language like Haskell would
+offer. In particular the arguments of an application are always
+variables.
+
+Following \citet{gunter_partial-big-step_1993}, however, we consider
+not only standard big-step derivations but also partial derivations.
 The reason to consider partial derivation is that they make it
 possible to express properties such as \emph{progress}: all partial
 derivations can be extended.
@@ -2252,6 +2271,8 @@ holds when $b$ is the head of some partial derivation with root
 $a⇓?$. We call $a⇓^*b$ the \emph{partial evaluation relation}, and, by
 contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   evaluation relation}.
+
+\subsection{Ordinary semantics}
 
 \begin{figure}
   \figuresection{Translation of typed terms}
