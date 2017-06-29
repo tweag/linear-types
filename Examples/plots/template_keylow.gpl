@@ -1,0 +1,5 @@
+#!/usr/bin/env gnuplot
+
+load 'template_keyhigh.gpl'
+
+# set key on inside left below

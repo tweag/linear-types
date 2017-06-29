@@ -31,7 +31,7 @@ function go() {
           echo "START_BENCHMARK"
           echo "PROGNAME: $name"
           echo "VARIANT: $variant"
-          echo "ARGS: $depth"
+          echo "ARGS:" \"${depth}\"
           set -x
           $CRIT $EXE $name $variant $depth -- \
                 -o     $RUNDIR/report_${variant}_${depth}.html \

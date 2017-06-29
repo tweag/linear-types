@@ -4,7 +4,8 @@
 # set terminal pdfcairo linewidth 3 rounded dashed size 5in,3.25in
 
 # Make it logically smaller for bigger fonts/lines:
-set terminal pdfcairo linewidth 3 rounded dashed size 4in,2.5in
+# set terminal pdfcairo linewidth 3 rounded dashed size 4in,2.5in
+set terminal pdfcairo linewidth 3 rounded dashed size 4.5in,3.2in
 
 
 # Can't get this to look right atm:
@@ -70,11 +71,6 @@ set style line 12 lt 2 lc rgb "#00BBA9" lw 2 pt 1
 # set style line 18 dt 3 lc rgb "#445111" lw 2 pt 6
 # set style line 19 dt 3 lc rgb "#035009" lw 2 pt 4
 
-# set key on bmargin center horizontal Right noreverse enhanced autotitles nobox
-# set key left top noreverse enhanced autotitles nobox
-# set key on outside below
-set key on inside left top
-
 #set log y
 #set log x
 
@@ -83,6 +79,7 @@ set key on inside left top
 # CSV-style data:
 set datafile separator ","
 
-set xlabel "Threads"
-set ylabel "Parallel Speedup"
-
+# set key on bmargin center horizontal Right noreverse enhanced autotitles nobox
+# set key left top noreverse enhanced autotitles nobox
+# set key on outside below
+set key on inside left top
