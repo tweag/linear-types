@@ -1319,7 +1319,7 @@ Recall \fref{sec:non-linear-constructors}, which described
 how each constructor can have a mixture of linear and non-linear fields).}
 of $c_k$ is used non-linearly in $u_k$.  Then, $q_i=1$ (it is a linear field),
 so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
-forces the strutinee to be used non-linearly, which is just what we want.
+forces the scrutinee to be used non-linearly, which is just what we want.
 Here are some concrete examples:
 \begin{code}
   fst  ::  (a,b) →  a     bigSpace    swap ::  (a,b) ⊸ (b,a)
