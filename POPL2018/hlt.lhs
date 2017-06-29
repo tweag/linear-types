@@ -98,7 +98,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-\setlength{\marginparwidth}{2.5cm} % Here's a size that matches the new PACMPL format -RRN
+\setlength{\marginparwidth}{1.5cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
@@ -354,7 +354,7 @@ channels and other resources.  Our particular contributions are these
       It enjoys the usual properties of progress and preservation.
 \item We have implemented a prototype of system in as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
-      Our prototype type performs linearity \emph{inference}, but a systematic
+      Our prototype performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
 There is a rich literature on linear type systems, as we discuss in a long
@@ -400,7 +400,7 @@ subsequent subsections.
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
   runST :: (forall a. ST s a) -> a
 \end{code}
-\caption{Type signatures for array primitives (currrent \textsc{ghc})}
+\caption{Type signatures for array primitives (current \textsc{ghc})}
 \label{fig:array-sigs}
 \end{figure}
 
@@ -457,7 +457,9 @@ be done in parallel, but the |ST| monad would serialise them.
 Linear types allow a more secure and less sequential interface.
 \HaskeLL{} introduces a new kind of function type: the \emph{linear
 arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
-\emph{exactly once}. This new arrow is used in
+\emph{exactly once}.
+%
+This new arrow is used in
 a new array \textsc{api}, given in \fref{fig:linear-array-sigs}.  Using
 this \textsc{api}  we can define |array| thus:
 \begin{code}
@@ -487,7 +489,7 @@ But in our system, \emph{linearity is a property of function arrows,
 not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
 type does.  However, |Unrestricted| is just a library type; it does not have to
-be built-in (See \fref{sec:data-types}).
+be built-in (\fref{sec:data-types}).
 \item The function |foldl| has the type
 \begin{code}
 foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a
@@ -497,7 +499,8 @@ which expresses that it consumes its second argument linearly
 its first argument (in this case |write|) must be linear.
 As we shall see in \fref{sec:lin-poly} this is not new |foldl|, but
 just an instance of a more general, multiplicity-polymorphic version of
-a single |foldl|.
+a single |foldl| (where ``multiplicity'' refers to how many times a function
+consumes its input).
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
