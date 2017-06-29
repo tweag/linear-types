@@ -1445,39 +1445,54 @@ lead us to a better assessment of the costs/benefit tradeoff here.
 
 With a linear type system for a mature language such as Haskell, we have the
 opportunity to implement non-trivial applications mixing linear and non-linear
-code, and to observe how the linear vs. non-linear API's interact with the
-optimizer of a mature compiler.
+code, and to observe how linear vs. non-linear libraries interact with 
+optimizer of a sophisticated compiler.
 %
 In this section, we describe two such applications; in \fref{sec:implementation}
 we describe the modified version of the \textsc{ghc} compiler that makes this
 possible.
 
 % \subsection{Serialised tree traversals}
-\subsection{Traversals of serialised data}
+\subsection{Application 1: Traversals of serialised data}
 \label{sec:cursors}
 
 While we covered simple mutable arrays in \fref{sec:freezing-arrays}, we now
 consider a related but more complicated application: operating directly on binary,
-serialised representations of algebraic data-types
-(inspired by \citet{vollmer_gibbon_2017}, and \cite{yang_compact_2015}).
+serialised representations of algebraic data-types,
+inspired by \citet{vollmer_gibbon_2017}.
+% and \cite{yang_compact_2015}.
+%
+%% Modern service-oriented software, running in data-centers, spends a great deal
+%% of time (de)serialising data received over the network.  
+%
+The idea is that, as computation migrates to the cloud, programs are
+increasingly decoupled into separate services that communicate via serialized
+data in text or binary formats (and remote procedure calls between services).
+The standard approach, in all languages, is to deserialize data into an
+in-memory representation (Haskell values, Java objects, etc), process it, and
+then serialize the results for transmission.
+%
+This process is exceedingly inefficient, but tolerated, because the alternative
+--- computing directly with serialized data --- is far to difficult to program.
+%
+Nevertheless, the potential performance gain of working directly with serialized
+data has motivated small steps in this direction:
+libraries like ``Cap'N Proto'', which enable unifying in-memory and on-the-wire
+formats for simple product types (protobufs).
+
+This is a case where type-safety can {\em yield performance} by making it
+practical to write in a style previously infeasible.  Linearity and typestate
+are both key to to a safe API for serialised data.
 %
 Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
 --- binary-serialised data structures contain primitive values of various
-widths, at unaligned byte-offsets, as well as small ``tags'' that indicate which
-variant of a sum type is coming next on the stream.
-
-%% Modern service-oriented software, running in data-centers, spends a great deal
-%% of time (de)serialising data received over the network.  
-
-As computation migrates to the cloud, programs are increasingly decoupled into
-separate services that communicate via serialized data in text or binary formats
-(e.g., remote procedure calls between services).  The standard approach, in all
-languages, is to deserialize data into an in-memory representation (Haskell
-values, Java objects, etc), process it, and then serialize the results for
-transmission.
+widths, at unaligned byte-offsets.  These primitive values include small
+(one-byte) ``tags'' that indicate which variant of a sum type is coming next on
+the stream.
 %
-This process is exceedingly inefficient, but tolerated because the alternative
---- computing directly with serialized data --- is far to difficult to program.
+A pointer into a buffer containing serialised output is similar to a constructor
+function for an in-memory object.  It must ensure all fields are initialised, in
+the right places and with the right types of values.
 
 
 \begin{code}
