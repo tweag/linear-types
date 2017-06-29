@@ -2299,7 +2299,7 @@ any number of other examples such as the files of
 \fref{sec:io-protocols}.
 
 We prove the two semantics bisimilar, so that type-safety and progress
-can be lifted from the denotational semantics to the ordinary
+can be transported from the denotational semantics to the ordinary
 semantics with mutation. The bisimilarity itself ensures that the
 mutations are not observable and the semantics is correct in exposing
 a pure semantics, progress proves that type-level states need not be
@@ -2570,9 +2570,10 @@ well-typed state.
   \end{itemize}
 
 \end{definition}
+
 Weighted pairs are used to internalise a notion of stack that keeps
-track of multiplicities for the sake of the following definition, which
-introduces the states of the strengthened evaluation relation.
+track of multiplicities in the following definition, which defines
+when annotated states are well-typed.
 
 \begin{definition}[Well-typed state]
   We say that an annotated state is well-typed if the following
@@ -2601,10 +2602,33 @@ introduces the states of the strengthened evaluation relation.
 
   The denotational reduction relation is defined inductively by the
   rules of \fref{fig:typed-semop}.
+
+  A few rules of notice:
+  \begin{description}
+  \item[linear variable] linear variables are removed from the
+    environment when they are evaluated: they are no longer accessible
+    (if the state is well-typed)
+  \item[let] even we are evaluating a $\flet_1$m we may have to
+    introduce non-linear binding in the environemnt: if the value we
+    are currently computing will be used as the argument of a
+    non-linear function, the newly introduce variables may be forced
+    several times (or not at all). An example is
+    $\flet_ω x = \flet_1 y = \varid{True} in y in (x,x)$: if evaluating
+    this example yielded the binding $y :_1 Bool = True$, then the
+    intermediate state would be ill-typed. So for the sake of proofs,
+    instead we add $y :_ω Bool = True$ to the environment
+  \item[write] No mutation is performed in array write: we just return
+    a new copy of the array.
+  \end{description}
+
 \end{definition}
 
-\begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
-  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ then
+The denotation semantics preserves the well-typedness of annotated
+states throughout the evaluation. As proved next. From then on, we
+will only consider the evaluation of well-typed states.
+
+\begin{lemma}[Denotational evaluation preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓^* Δ||z) :_ρ A, Σ$ then
   $$
   Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
   $$
@@ -2613,7 +2637,15 @@ introduces the states of the strengthened evaluation relation.
   By induction on the typed-reduction.
 \end{proof}
 
-\subsection{Bisimulation and all that}
+\subsection{Bisimilarity and all that}
+
+The crux of our meta-theory is that the two semantics are
+bisimilar. Bisimilarity allows to tranport properties from the
+denational semantics, on which it is easy to reason, and the ordinary
+semantics which is close to the implementation. It also makes it
+possible to prove observational equality results. Our first definition
+is the relation between the states of the ordinary evaluation and
+those of the denotational evaluation which witnesses the bisimulation.
 
 \begin{definition}[Denotation assignment]
   A well-typed state is said to be a denotation assignment for an ordinary
@@ -2630,7 +2662,10 @@ introduces the states of the strengthened evaluation relation.
   and, when substituting the body of a $let$-binding, either in $Γ'$
   or in $e$, the $let$ binding must have multiplicity $1$. If
   there are |MArray| pointers in $Γ$, we additionally require that $ρ=1$.
+  \improvement{Does this need to be made more precise?}
 \end{definition}
+
+\improvement{A sentence or two on each of the lemmas and theorems below}
 
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
   The denotaion assignment relation defines a simulation of the
@@ -2731,6 +2766,16 @@ for the \emph{shared variable} and \emph{let} rules.
   \end{itemize}
 
 \end{proof}
+
+\begin{theorem}[Observational equivalence]
+  For all $\ta{⋅:e}{⊢ (⋅||e) :_ρ Bool,⋅}$, if $⋅:e ⇓ Δ:z$ and
+  $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ Bool, ⋅ $, then $z=z'$
+\end{theorem}
+\begin{proof}
+  Because the semantics are deterministic, this is a direct
+  consequence of bisimilarity.
+\end{proof}
+
 
 \end{document}
 
