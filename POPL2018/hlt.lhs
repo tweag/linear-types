@@ -98,7 +98,7 @@
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-\setlength{\marginparwidth}{1.5cm} % Here's a size that matches the new PACMPL format -RRN
+\setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
@@ -510,8 +510,12 @@ the unnecessary sequentialisation that we mentioned earlier.
 Compared to the status quo (using |ST| and |unsafeFreeze|), the main gain
 is in shrinking the trusted code base, because more library code (and it
 can be particularly gnarly code) is statically typechecked.  Clients who
-use immutable arrays do not see the inner workings of the library, and will
+use only immutable arrays do not see the inner workings of the library, and will
 be unaffected.  Our second use-case has a much more direct impact on library clients.
+%
+%% \rn{I have mixed feelings about this.  What about the client of the mutable
+%%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
+%%   freezing like ``create''.}
 
 \subsection{I/O protocols} \label{sec:io-protocols}
 
@@ -566,8 +570,10 @@ Notice several things
 I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
 \item We generalise the IO monad so that it expresses whether or not the
-returned value is linear.  We add an extra type parameter |p| to the monad |IOL|,
-where |p| can be |1| or |ω|.  Now |openFile| returns |IO 1 (File ByteString)|,
+returned value is linear.  We add an extra {\em multiplicity} type parameter |p| to the monad |IOL|,
+where |p| can be |1| or |ω|, indicating linear or non-linear, respectively.
+%
+Now |openFile| returns |IO 1 (File ByteString)|,
 the ``|1|'' indicating that the returned |File| must be used linearly.\footnote{Using |ω| indicates on the contrary that a result can be used in an unrestricted fashion.}
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 \item As before, operations on linear values must consume their input
@@ -850,7 +856,7 @@ consumes |ys| twice, and so
 %  Likewise to copy them.}.
 
 Finally, we can use the very same pairs and lists
-type to contain linear values (such as mutable arrays) without
+types to contain linear values (such as mutable arrays) without
 compromising safety.  For example:
 \begin{code}
 upd :: (MArray Char, MArray Char) ⊸ Int -> (MArray Char, MArray Char)
