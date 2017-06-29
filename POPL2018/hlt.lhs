@@ -2245,7 +2245,7 @@ any number of other examples such as the files of
 \fref{sec:io-protocols}.
 
 We prove the two semantics bisimilar, so that type-safety and progress
-can be lifted from the denotational semantics to the ordinary
+can be transported from the denotational semantics to the ordinary
 semantics with mutation. The bisimilarity itself ensures that the
 mutations are not observable and the semantics is correct in exposing
 a pure semantics, progress proves that type-level states need not be
@@ -2585,6 +2585,14 @@ will only consider the evaluation of well-typed states.
 
 \subsection{Bisimilarity and all that}
 
+The crux of our meta-theory is that the two semantics are
+bisimilar. Bisimilarity allows to tranport properties from the
+denational semantics, on which it is easy to reason, and the ordinary
+semantics which is close to the implementation. It also makes it
+possible to prove observational equality results. Our first definition
+is the relation between the states of the ordinary evaluation and
+those of the denotational evaluation which witnesses the bisimulation.
+
 \begin{definition}[Denotation assignment]
   A well-typed state is said to be a denotation assignment for an ordinary
   state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
@@ -2600,7 +2608,10 @@ will only consider the evaluation of well-typed states.
   and, when substituting the body of a $let$-binding, either in $Γ'$
   or in $e$, the $let$ binding must have multiplicity $1$. If
   there are |MArray| pointers in $Γ$, we additionally require that $ρ=1$.
+  \improvement{Does this need to be made more precise?}
 \end{definition}
+
+\improvement{A sentence or two on each of the lemmas and theorems below}
 
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
   The denotaion assignment relation defines a simulation of the
@@ -2701,6 +2712,16 @@ for the \emph{shared variable} and \emph{let} rules.
   \end{itemize}
 
 \end{proof}
+
+\begin{theorem}[Observational equivalence]
+  For all $\ta{⋅:e}{⊢ (⋅||e) :_ρ Bool,⋅}$, if $⋅:e ⇓ Δ:z$ and
+  $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ Bool, ⋅ $, then $z=z'$
+\end{theorem}
+\begin{proof}
+  Because the semantics are deterministic, this is a direct
+  consequence of bisimilarity.
+\end{proof}
+
 
 \end{document}
 
