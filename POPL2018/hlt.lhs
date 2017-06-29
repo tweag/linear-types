@@ -2516,9 +2516,10 @@ well-typed state.
   \end{itemize}
 
 \end{definition}
+
 Weighted pairs are used to internalise a notion of stack that keeps
-track of multiplicities for the sake of the following definition, which
-introduces the states of the strengthened evaluation relation.
+track of multiplicities in the following definition, which defines
+when annotated states are well-typed.
 
 \begin{definition}[Well-typed state]
   We say that an annotated state is well-typed if the following
@@ -2547,10 +2548,33 @@ introduces the states of the strengthened evaluation relation.
 
   The denotational reduction relation is defined inductively by the
   rules of \fref{fig:typed-semop}.
+
+  A few rules of notice:
+  \begin{description}
+  \item[linear variable] linear variables are removed from the
+    environment when they are evaluated: they are no longer accessible
+    (if the state is well-typed)
+  \item[let] even we are evaluating a $\flet_1$m we may have to
+    introduce non-linear binding in the environemnt: if the value we
+    are currently computing will be used as the argument of a
+    non-linear function, the newly introduce variables may be forced
+    several times (or not at all). An example is
+    $\flet_ω x = \flet_1 y = \varid{True} in y in (x,x)$: if evaluating
+    this example yielded the binding $y :_1 Bool = True$, then the
+    intermediate state would be ill-typed. So for the sake of proofs,
+    instead we add $y :_ω Bool = True$ to the environment
+  \item[write] No mutation is performed in array write: we just return
+    a new copy of the array.
+  \end{description}
+
 \end{definition}
 
-\begin{lemma}[Denotational reduction preserves typing]\label{lem:type-safety}
-  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$ then
+The denotation semantics preserves the well-typedness of annotated
+states throughout the evaluation. As proved next. From then on, we
+will only consider the evaluation of well-typed states.
+
+\begin{lemma}[Denotational evaluation preserves typing]\label{lem:type-safety}
+  If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓^* Δ||z) :_ρ A, Σ$ then
   $$
   Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
   $$
