@@ -2232,7 +2232,10 @@ pure interface, and that type-level state are indeed enforced.
 We introduce two dynamic semantics for \calc{}: a semantics with
 mutation which model the implementation but blocks on incorrect
 type-states, and a pure semantics, which we dub \emph{denotational} as
-it represents the intended meaning of the program.
+it represents the intended meaning of the program. We consider array
+primitives like in \fref{sec:freezing-arrays}, but we could extend to
+any number of other examples such as the files of
+\fref{sec:io-protocols}.
 
 We prove the two semantics bisimilar, so that type-safety and progress
 can be lifted from the denotational semantics to the ordinary
