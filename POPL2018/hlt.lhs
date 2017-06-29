@@ -343,7 +343,7 @@ channels and other resources.  Our particular contributions are these
         also be adjusted, so that they can be used to store linear and
         unrestricted values.'' } We make a simple extension to
       algebraic data type declarations to support this need
-      (\fref{sec:datattypes}).
+      (\fref{sec:data-types}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
@@ -475,7 +475,7 @@ size, and passes it to the function supplied as the second argument to |newMArra
 \item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
 lollipop arrow says that the function guarantees to consume the mutable array
 exactly once; it will neither discard it nor use it twice.  We will define
-``consume'' more precisely in \fref{sec:consume}.
+``consume'' more precisely in \fref{sec:consumed}.
 \item Since |ma| is a linear array, we cannot pass it to many calls to
 |write|.  Instead, each call to |write| returns a new array, so that the
 array is single-threaded, by |foldl|, through the sequence of writes.
@@ -688,7 +688,7 @@ typestate).
 % entire file.
 
 \subsection{Operational intuitions}
-\label{sec:consume}
+\label{sec:consumed}
 
 We have said informally that \emph{``a linear function consumes its argument
 exactly once''}. But what exactly does that mean?
@@ -758,7 +758,7 @@ in particular, |g| can pass that argument to |f|.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
-\label{sec:datattypes}
+\label{sec:data-types}
 
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
@@ -1389,7 +1389,7 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 Alternatively, |g| might well be multiplicity-polymorphic, with type
-|forall π. (Int -> _ π) -> Bool|; in which case |(g f)| is, indeed, typeable.
+|forall π. (Int -> _ π Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
 \jp{I feel that the eta-expansion thing is enough discussion. I
   suggest that we can say that extending subtyping is future work.}
 
@@ -1422,6 +1422,7 @@ lead us to a better assessment of the costs/benefit tradeoff here.
 
 \section{Applications}
 \label{sec:evaluation}
+\label{sec:applications}
 
 Implemented using our branch of the \textsc{ghc} compiler described in
 \fref{sec:implementation}\improvement{Needs an introductory paragraph}
@@ -1475,7 +1476,7 @@ directly in \HaskeLL{}. The challenges are:
   immutable.
 \end{itemize}
 We recognise similar problems to the array-freezing example of
-\fref{sec:freezing-array}. However, there are further things to
+\fref{sec:freezing-arrays}. However, there are further things to
 consider: first, we cannot freeze a binary array before we have
 completely initialised it, otherwise we would have an incomplete tree,
 which would probably yield a dreaded \texttt{segfault}; also at any
