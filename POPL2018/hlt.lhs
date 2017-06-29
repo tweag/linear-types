@@ -254,7 +254,8 @@
   backwards-compatibility and code reuse across linear and non-linear
   users of a library. Only then can the benefits of linear types
   permeate conventional functional programming.  Rather than bifurcate
-  data types into linear and non-linear counterparts, we instead
+  % not just data; functions must also be bifurcated due to closures.
+  types into linear and non-linear counterparts, we instead
   attach linearity to {\em binders}.  Linear function types can
   receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
@@ -334,10 +335,15 @@ channels and other resources.  Our particular contributions are these
 \item The key to this non-invasiveness is that, in contrast most other
       approaches, we focus on \emph{linarity on the function arrow}
       rather than \emph{linearity on the types} (\fref{sec:lin-arrow}).
-\item Linearity on the function arrow alone is not enough: a linear
-      function must be able return both linear and non-linear results.
-      We make a simple extension to algebraic data type declarations to
-      support this need (\fref{sec:datattypes}).
+    \item Linearity on the function arrow alone is not enough: a
+      linear function must be able to return both linear and
+      non-linear results.  \jp{I am not sure what this means nor how
+        it connects with the next sentence.  Do you intend the following? ``Linear
+        functions are not sufficient on their own. Data types must
+        also be adjusted, so that they can be used to store linear and
+        unrestricted values.'' } We make a simple extension to
+      algebraic data type declarations to support this need
+      (\fref{sec:datattypes}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
@@ -682,7 +688,7 @@ typestate).
 % entire file.
 
 \subsection{Operational intuitions}
-\label{sec:consumed}
+\label{sec:consume}
 
 We have said informally that \emph{``a linear function consumes its argument
 exactly once''}. But what exactly does that mean?
@@ -752,6 +758,7 @@ in particular, |g| can pass that argument to |f|.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
+\label{sec:datattypes}
 
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
@@ -972,7 +979,7 @@ Such an interpretation of the |do|-notation requires the
 commonplace it would be worth considering a more robust solution.
 
 Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a function,
-and that implementation too is illuminated by linearity.  Here it is:
+and that implementation too is illuminated by linearity, like so:
 \begin{code}
 data World
 newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
@@ -1006,6 +1013,7 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 
 \section{\calc{}: a core calculus for \HaskeLL}
 \label{sec:statics}
+\label{sec:calculus}
 
 It would be impractical to formalise all of \HaskeLL{}, so instead we
 formalise a core calculus, \calc{}, which exhibits all the key features
@@ -1058,7 +1066,7 @@ way we make precise much of the informal discussion above.
   \label{fig:contexts}
 \end{figure}
 
-The term syntax of \calc{} is that of a type-annotated (\emph{à la}
+The term syntax of \calc{} is that of a type-annotated (\textit{à la}
 Church) simply-typed $λ$-calculus with let-definitions
 (\fref{fig:syntax}).  It includes linearity polymorphism, but to avoid clutter
 we omit ordinary type polymorphism.
@@ -1582,6 +1590,7 @@ where the impure \textsc{api} is a simple tree
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
+\label{sec:impl}
 
 We are implementing \HaskeLL{} as a branch over the 8.2 version
 \textsc{ghc}, the leading Haskell compiler. At time of writing this
@@ -1822,6 +1831,7 @@ the same lens library can be used, but individual lifting of
 modifications cannot be implemented by in-place update.
 
 \subsection{Linearity via arrows vs. linearity via kinds}
+\label{sec:lin-arrow}
 
 There are two possible choices to indicate the distinction between
 linear and unrestricted objects.  Our choice is to use the arrow
