@@ -1331,7 +1331,7 @@ services that communicate via serialised data in text or binary formats, carried
 by remote procedure calls.
 %
 The standard approach is to deserialise data into an in-heap representation
-(e.g. Java objects),
+(that is, a recursive Haskell data type),
 process it, and then serialise the result for transmission.
 %
 This process is exceedingly inefficient, but tolerated, because the alternative
@@ -1456,6 +1456,8 @@ Indeed, in our current Haskell implementation ``|map (+1) tree|'' touches {\em
 % 
 % mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)  
 
+\improvement{This section should assert that the abstraction is
+  practical to program with, even comfortable.}
 
 % \subsubsection{Linear vs. non-linear and compiler optimisations}
 \subsubsection{A version without linear types}
@@ -1468,10 +1470,10 @@ writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)
 \end{code}
 
 Here we use the same typestate associated with a |Needs| pointer, while also
-associating its mutable state with the ST session indexed by |s|.
+associating its mutable state with the |ST| session indexed by |s|.
 %
 Unfortunately, not only do we have the same trouble with freezing in the absence
-of linearity (|unsafeFreeze| or freeze at the end of the ST session), we also
+of linearity (|unsafeFreeze| or freeze at the end of the |ST| session), we also
 have an additional problem not present with arrays:
 %
 namely, a non-linear use of a |Needs| pointer can result in type-safety
@@ -1490,9 +1492,10 @@ interleaved ``alternate future''.
 Fixing this problem would require switching to an indexed monad with additional
 type-indices that model the typestate of all accessible pointers, which would in
 turn need to have static, type-level identifiers.  That is, it would require
-encoding linearity, and would break compatibility with the existing |ST| type
-and |Monad| type class.
+encoding linearity in a way which would become very cumbersome as soon as several
+buffers are involved.
 
+\subsubsection{Compiler optimisations}
 
 \begin{figure}
   \hspace{-2mm}%
@@ -1509,8 +1512,6 @@ and |Monad| type class.
   if (de)serialisation were instantaneous.}
 \label{fig:pack-bench}
 \end{figure}
-
-\subsubsection{Compiler optimisations}
 
 Finally, as shown in \fref{fig:pack-bench}, there are some unexpected
 performance consequences from using a linear versus a monadic, ST style in
@@ -1534,7 +1535,8 @@ directly express unboxed values such as a tuple |(# Int#, Double# #)|, which
 occupy distinct kinds.
 %
 In fact, the type of a combinator like |caseTree| is a good fit for the recent
-``levity polymorphism'' addition to \ghc{}~\cite{levity-polymorphism}.  We can
+``levity polymorphism'' addition to
+\ghc{}~\cite{levity-polymorphism}\improvement{actual citation}.  We can
 thus allow the branches of the case to return types with different {\em physical
 representations}:
 
@@ -1705,6 +1707,9 @@ This linear socket \textsc{api} is very similar to files': we use the
 is the argument to |Socket|, which represent the current state of the
 socket and is used to limit the functions which can apply to a socket
 at a given time.
+
+\improvement{Compare with Idris's dependent typestate in the |ST|
+  monad}
 
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
