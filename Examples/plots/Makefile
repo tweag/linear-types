@@ -16,7 +16,7 @@ sumtree_all_plot.pdf:
           --ylabel="Speedup over regular/boxed version" \
           --ylog -x ARGS -y MEDIANTIME --key VARIANT --filtEq=PROGNAME,sumtree \
           --lines --GPL -o sumtree_all_plot.csv --template template_keyhigh.gpl \
-          --factor=${BASELINE} --inverse
+          --factor=${BASELINE} --inverse --renames=renames.txt
 
 maptree_plot.pdf:
 	hsbencher-graph ${DATA} \
@@ -25,7 +25,7 @@ maptree_plot.pdf:
           --ylabel="Speedup over regular/boxed version" \
           --ylog -x ARGS -y MEDIANTIME --key VARIANT --filtEq=PROGNAME,maptree \
           --lines --GPL -o maptree_plot.csv --template template_keyhigh.gpl \
-          --factor=${BASELINE} --inverse
+          --factor=${BASELINE} --inverse --renames=renames.txt
 
 clean:
 	rm -f *_plot.csv *_plot.gpl *_plot.pdf

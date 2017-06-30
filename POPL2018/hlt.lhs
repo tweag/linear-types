@@ -117,6 +117,8 @@
 
 \newcommand{\Red}[1]{{\color{red}{#1}}}
 
+\newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
+
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
 
@@ -1443,10 +1445,13 @@ lead us to a better assessment of the costs/benefit tradeoff here.
 \label{sec:evaluation}
 \label{sec:applications}
 
-With a linear type system for a mature language such as Haskell, we have the
-opportunity to implement non-trivial applications mixing linear and non-linear
-code, and to observe how linear vs. non-linear libraries interact with 
-optimizer of a sophisticated compiler.
+% In contrast with many proposed linear type systems,
+While many linear type systems have been proposed,
+%
+a {\em retrofitted} linear type system for a mature language like Haskell offers
+the opportunity to implement non-trivial applications mixing linear and
+non-linear code, I/O, etc, and observe how linear vs. non-linear libraries
+interact with optimiser of a sophisticated compiler.
 %
 In this section, we describe two such applications; in \fref{sec:implementation}
 we describe the modified version of the \textsc{ghc} compiler that makes this
@@ -1456,48 +1461,141 @@ possible.
 \subsection{Application 1: Traversals of serialised data}
 \label{sec:cursors}
 
-While we covered simple mutable arrays in \fref{sec:freezing-arrays}, we now
-consider a related but more complicated application: operating directly on binary,
-serialised representations of algebraic data-types,
-inspired by \citet{vollmer_gibbon_2017}.
+While \fref{sec:freezing-arrays} covered simple mutable arrays, we now
+turn to a related but more complicated application: operating directly on binary,
+serialised representations of algebraic data-types
+(as in \citet{vollmer_gibbon_2017}).
 % and \cite{yang_compact_2015}.
 %
 %% Modern service-oriented software, running in data-centers, spends a great deal
 %% of time (de)serialising data received over the network.  
 %
-The idea is that, as computation migrates to the cloud, programs are
-increasingly decoupled into separate services that communicate via serialized
-data in text or binary formats (and remote procedure calls between services).
-The standard approach, in all languages, is to deserialize data into an
-in-memory representation (Haskell values, Java objects, etc), process it, and
-then serialize the results for transmission.
+The motivation is that programs are increasingly decoupled into separate (cloud)
+services that communicate via serialised data in text or binary formats, carried
+by remote procedure calls.
+%
+The standard approach is to deserialise data into an in-heap representation
+(e.g. Java objects),
+process it, and then serialise the result for transmission.
 %
 This process is exceedingly inefficient, but tolerated, because the alternative
---- computing directly with serialized data --- is far to difficult to program.
+--- computing directly with serialised data --- is far too difficult to program.
 %
-Nevertheless, the potential performance gain of working directly with serialized
+Nevertheless, the potential performance gain of working directly with serialised
 data has motivated small steps in this direction:
-libraries like ``Cap'N Proto'', which enable unifying in-memory and on-the-wire
-formats for simple product types (protobufs).
+%
+libraries like ``Cap'N Proto''~\footnote{{\url{https://capnproto.org/}}} enable unifying
+in-memory and on-the-wire formats for simple product types (protobufs).
 
-This is a case where type-safety can {\em yield performance} by making it
-practical to write in a style previously infeasible.  Linearity and typestate
+
+Here is an unusual case where type-safety can {\em yield performance} by making it
+practical to write in a style previously infeasible.  Indeed, linearity and \Red{typestate}
 are both key to to a safe API for serialised data.
 %
 Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
 --- binary-serialised data structures contain primitive values of various
-widths, at unaligned byte-offsets.  These primitive values include small
-(one-byte) ``tags'' that indicate which variant of a sum type is coming next on
-the stream.
+widths, at unaligned byte-offsets.  
 %
 A pointer into a buffer containing serialised output is similar to a constructor
-function for an in-memory object.  It must ensure all fields are initialised, in
-the right places and with the right types of values.
+method for a regular heap object.  It must ensure all fields are initialised, at
+the proper addresses and with values of the correct type.
+%
+Linear use of the write pointer can ensure exactly this.  We use a type
+``|Needs|'' for these writable output pointers, expecting to receive serialised
+data:
+\begin{code}
+  p :: Needs [Int, Double] Foo 
+\end{code}
+%
+Here |Needs| is parameterised both by {\em obligations}, that an |Int| and
+then a |Double| must be written, and by the resulting, immutable value (|Foo|)
+that will be available upon completing those writes.
+%
+A |write| function for primitive types shaves one element off the type-level
+list of obligations:
 
+\begin{code}
+  write  :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
+  
+  write 4.4 (write 3 p) :: Needs [] Foo
+\end{code}
+%
+After writing the two fields to |p| in this example, we need a way to finalize
+the operation and convert the write pointer to a read pointer:
 
+\begin{code}  
+  finish :: Needs [] t ⊸ Unrestricted (Has [t])
+\end{code}
+%
+Just as when we converted mutable arrays to immutable arrays, here the immutable
+|Foo| can be read multiple times.
+%
+It is not, however, a {\em normal}, pointer-based heap representation of |Foo|,
+but rather an isomorphic, serialised representation: |Has [Foo]|.  Nevertheless,
+everything in a |Foo| can be read in a type-safe way directly from the
+serialised buffer.
+
+As a concrete example consider this simple datatype:
 \begin{code}
   data Tree = Leaf Int | Branch Tree Tree
 \end{code}
+%
+From the data-type, we can derive a safe interface for writing and reading
+values of this type:
+%
+\begin{code}
+startLeaf   :: Needs (Tree : r) t ⊸ Needs (Int : r) t
+startBranch :: Needs (Tree : r) t ⊸ Needs (Tree : Tree : r) t
+caseTree :: Has (Tree:r) -> (Has (Int:r) -> a) -> (Has (Tree:Tree:r) -> a) -> a
+\end{code}
+
+These operations themselves go into the trusted codebase.  Internally, we choose
+a one-byte representation for the |Leaf|/|Branch| tags, and write these to the
+output stream, preceding the left-to-right serialised fields.  Yet
+``|write leafTag|'' would not suffice; it has a different type from |startLeaf| above.
+% it would be |Needs (Tag:r) t ⊸ Needs r t`
+A coercion is needed internally to reify the knowledge
+that ``a tag plus an integer equals a leaf record, and thus a tree''.
+%
+On top of the safe interface, writing a complete |Leaf| is simple:
+
+\begin{code}
+writeLeaf n p = write n (startLeaf p)
+\end{code}
+
+To read |Tree| values, we pass continuations to the |caseTree| combinator.  That
+is, |caseTree t k1 k2| reads the next tag byte in the stream, and calls |k1| if the
+tree is a leaf, or |k2| if it is a branch.
+%
+Using |caseTree|, as well as a read operation for primitive values, we can sum
+the leaves of a tree:
+
+\begin{code}
+sum h = caseTree h read
+           (\h2 -> let (n,h3) = sum h2; (m,h4) = sum h3
+                   in (n+m,h4))
+
+read :: Storable a => Has (a:r) -> (a, Has r)
+\end{code}
+
+Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
+and then we have what we need to build a map function that reads directly from
+an input buffer and writes directly to an output buffer.
+%
+Indeed, ``|map (+1) tree|'' touches only these buffers --- it performs zero heap
+allocation in our current Haskell implementation!
+
+% withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
+% 
+% mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)  
+
+\subsubsection{Optimization challenges}
+
+\note{Multiple return values above}
+
+\note{Implementation details -- memory manager}
+
+
 
 \begin{figure}
   \hspace{-2mm}%
@@ -1511,69 +1609,68 @@ the right places and with the right types of values.
 \end{figure}
 
 % -------------------------------
-\subsection*{old}
+{\if{0}
+    Let us look back to the array-freezing \textsc{api} of
+    \fref{sec:freezing-arrays}. And push the boundaries to a new range of
+    applications inspired by \citet{vollmer_gibbon_2017}.
 
-Let us look back to the array-freezing \textsc{api} of
-\fref{sec:freezing-arrays}. And push the boundaries to a new range of
-applications inspired by \citet{vollmer_gibbon_2017}.
+    \improvement{aspiwack: I've spent too much time being abstract about
+      the data-structure, I should have just gone with trees and rolled
+      with it}
+    The problem is the following: representing recursive data structure
+    not as linked data-structures but as a compact representation in a
+    binary array. There are various reasons for being interested in such a
+    representation:
 
-\improvement{aspiwack: I've spent too much time being abstract about
-  the data-structure, I should have just gone with trees and rolled
-  with it}
-The problem is the following: representing recursive data structure
-not as linked data-structures but as a compact representation in a
-binary array. There are various reasons for being interested in such a
-representation:
+    \begin{itemize}
+    \item if data needs to be serialised and deserialised a lot (for
+      instance because it transits on the network) then it can be more
+      efficient to manage data in a serialised form (in this we can see
+      such a representation as an extension on the idea of \emph{compact
+        region}~\cite{yang_compact_2015})
+    \item such data representation also has a much smaller memory
+      footprint than a linked data structure
+      (\citeauthor{vollmer_gibbon_2017} report a $50\%$ to $70\%$
+      improvement on binary trees), linked representations are also less
+      cache-friendly
+    \item in such a data representation, there is no outgoing pointer, so
+      the garbage collector is free to treat the entire data structure as
+      binary data and not traverse the data
+    \end{itemize}
 
-\begin{itemize}
-\item if data needs to be serialised and deserialised a lot (for
-  instance because it transits on the network) then it can be more
-  efficient to manage data in a serialised form (in this we can see
-  such a representation as an extension on the idea of \emph{compact
-    region}~\cite{yang_compact_2015})
-\item such data representation also has a much smaller memory
-  footprint than a linked data structure
-  (\citeauthor{vollmer_gibbon_2017} report a $50\%$ to $70\%$
-  improvement on binary trees), linked representations are also less
-  cache-friendly
-\item in such a data representation, there is no outgoing pointer, so
-  the garbage collector is free to treat the entire data structure as
-  binary data and not traverse the data
-\end{itemize}
+    \Citeauthor{vollmer_gibbon_2017} realise such an implementation scheme
+    in a compiler for an \textsc{ml}-like language. Data structures are
+    compiled to a compact form, and traversal are transformed in
+    destination-passing style~\cite{larus_destination_1998}: building a
+    new data-structure is done by writing binary data left-to-right in an
+    array. \Citeauthor{vollmer_gibbon_2017}'s compiler targets a typed
+    language. With linear types we can represent their type system
+    directly in \HaskeLL{}. The challenges are:
+    \begin{itemize}
+    \item Taking the example of binary trees: we have to traverse the tree
+      in a particular order, indeed supposing that the tree is stored as
+      its prefix-traversal, the size of the left sub-tree is not known, so
+      it is not possible to access the right sub-tree without traversing
+      the left sub-tree.
+    \item It does not make sense to read from an array of binary data
+      until it is fully initialised. After it is initialised, data becomes
+      immutable.
+    \end{itemize}
+    We recognise similar problems to the array-freezing example of
+    \fref{sec:freezing-arrays}. However, there are further things to
+    consider: first, we cannot freeze a binary array before we have
+    completely initialised it, otherwise we would have an incomplete tree,
+    which would probably yield a dreaded \texttt{segfault}; also at any
+    given point we may have more than one data-structure to fill in (for
+    instance both branches of a tree may have yet to be filled) so we need
+    to index our arrays by a type-level list\footnote{Haskell has
+      type-level lists, which we use in the following. But in any language
+      with \textsc{ml}-style polymorphism, the type level list
+      $[a_1, …, a_n]$ can be represented by the type
+      $(a_1, (…, (a_n,())))$.}
 
-\Citeauthor{vollmer_gibbon_2017} realise such an implementation scheme
-in a compiler for an \textsc{ml}-like language. Data structures are
-compiled to a compact form, and traversal are transformed in
-destination-passing style~\cite{larus_destination_1998}: building a
-new data-structure is done by writing binary data left-to-right in an
-array. \Citeauthor{vollmer_gibbon_2017}'s compiler targets a typed
-language. With linear types we can represent their type system
-directly in \HaskeLL{}. The challenges are:
-\begin{itemize}
-\item Taking the example of binary trees: we have to traverse the tree
-  in a particular order, indeed supposing that the tree is stored as
-  its prefix-traversal, the size of the left sub-tree is not known, so
-  it is not possible to access the right sub-tree without traversing
-  the left sub-tree.
-\item It does not make sense to read from an array of binary data
-  until it is fully initialised. After it is initialised, data becomes
-  immutable.
-\end{itemize}
-We recognise similar problems to the array-freezing example of
-\fref{sec:freezing-arrays}. However, there are further things to
-consider: first, we cannot freeze a binary array before we have
-completely initialised it, otherwise we would have an incomplete tree,
-which would probably yield a dreaded \texttt{segfault}; also at any
-given point we may have more than one data-structure to fill in (for
-instance both branches of a tree may have yet to be filled) so we need
-to index our arrays by a type-level list\footnote{Haskell has
-  type-level lists, which we use in the following. But in any language
-  with \textsc{ml}-style polymorphism, the type level list
-  $[a_1, …, a_n]$ can be represented by the type
-  $(a_1, (…, (a_n,())))$.}
-
-\todo{copy actual \textsc{api}}
-
+    \todo{copy actual \textsc{api}}
+\fi{}}
 
 
 \subsection{Sockets with type-level state}
