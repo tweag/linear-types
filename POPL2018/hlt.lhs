@@ -848,7 +848,7 @@ computation that returns a linear value of type |t|.  But what does it mean to
 function arrows?  Fortunately, in the world of monads each computation
 has an explicit continuation, so we just need to control the linearity of
 the continuation arrow.  More precisely, in an application |m `bindIOL` k|
-where |m :: IO 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IO q t'|.
+where |m :: IOL 1 t|, we need the continuation |k| to be linear, |k :: t ⊸ IOL q t'|.
 And that is captured by the multiplicity-polymorphic type of |bindIOL|.
 
 Even though they have a different type than usual, the bind and return
