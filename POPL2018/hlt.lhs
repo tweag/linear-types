@@ -1775,13 +1775,15 @@ have not yet implemented, but which motivate this work.
 \label{sec:implementation}
 \label{sec:impl}
 
-We are implementing \HaskeLL{} as a branch of the 8.2 version
-\textsc{ghc}, the leading Haskell compiler. This branch only modifies
-the type inference of the compiler, neither the intermediate language
-(Core\improvement{citation for Core}) nor the run-time system are
-affected. This would be enough to support the examples of this paper,
-but we have only implemented monomorphic multiplicities so far. Our
-\HaskeLL{} implementation is compatible with most, but not all, of
+We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
+\textsc{ghc}, version 8.2.  This branch only modifies type inference and
+type-checking in the compiler, neither the intermediate language
+(Core\improvement{citation for Core}) nor the run-time system are affected.
+%
+Our implementation of multiplicity polymorphism is incomplete, but the current
+prototype is sufficient for the examples and case studies of this paper.
+%
+Our \HaskeLL{} implementation is compatible with most, but not all, of
 \textsc{ghc}'s extension (one notable incompatible extension is
 pattern-synonyms, the details of which have yet to be worked out).
 
@@ -1789,21 +1791,25 @@ In order to implement the linear arrow, we followed the design of
 \calc{} and added a multiplicity annotation to arrows, as an
 additional argument of the type constructor for arrows of
 \textsc{ghc}'s type checker. The constructor for arrow types is
-constructed and destructed a lot in \textsc{ghc}'s type checker, and this
+constructed and destructed frequently in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
-Where the implementation differs from \calc{} is the way multiplicity
-are computed: whereas in the \calc{} multiplicities are inputs of the
-type-checking algorithm, in the implementation multiplicities are
-outputs of type inference.\jp{the typing rules do not dictate an
-  algorithm, so this is not a difference. In fact it says above ``One
-  may want to think of the \emph{types} in $Γ$ as inputs of the
-  judgement, and the \emph{multiplicities} as outputs.''} The main
-reason for this choice is that it makes prevents us from having to
-split the context along multiplicities (for instance in the
-application rule), which would have been achieved, in practice, by
-extending the semi-ring structure with partial operations for
-subtraction and division.
+Where the implementation goes beyond \calc{} is that it extends type inference
+to compute multiplicities.
+%% in how multiplicities are
+%% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
+%% algorithm, in the implementation multiplicities are outputs of type inference.
+%% \jp{the typing rules do not dictate an algorithm, so this is not a
+%%   difference. In fact it says above ``One may want to think of the \emph{types}
+%%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
+%%   outputs.''}
+%
+\Red{The main reason for leaving multiplicities explicit in the calculus, not
+inferred}, is that it prevents us from needing to split the context along
+multiplicities (for instance in the application rule), which would have been
+achieved, in practice, by extending the semi-ring structure with partial
+operations for subtraction and division.
+\rn{I don't follow this atm -- but how is it ``implementation''}
 
 Instead, in the application rule, we get the multiplicities of the
 variables in each of the operands as inputs and we can add them
@@ -1823,13 +1829,12 @@ file responsible for multiplicity operations as well the files
 responsible for the environment manipulation and type inference of
 patterns account for almost half of the affected lines. The rest spans
 over a 100 files, most of which have 2 or 3 lines modified to account
-for the extra multiplicity argument of the arrow constructor. This work
-required roughly 1 man-month to complete.
+for the extra multiplicity argument of the arrow constructor.
+%% This work required roughly 1 man-month to complete.
 
-These figures vindicate our claim that \HaskeLL{} is easy to integrate
-into an existing implementation: despite \textsc{ghc} being 25 years
-old, we could implement a first version of \HaskeLL{} with relatively
-low effort.
+These figures vindicate our claim that \HaskeLL{} is easy to integrate into an
+existing implementation: despite \textsc{ghc} being 25 years old, we could
+implement a first version of \HaskeLL{} with reasonable effort.
 
 \section{Related work}
 \label{sec:related}
