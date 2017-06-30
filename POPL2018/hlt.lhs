@@ -1212,6 +1212,7 @@ for instance, a real-world token and file handles as in
 
 We then prove the two semantics to be bisimilar from which we can
 deduce:
+\todo{make sure that the theorem titles are exactly the same in the appendix.}
 \begin{theorem}
   The implementation of the array primitives with in-place mutation is
   observationally equivalent to a pure implementation.
