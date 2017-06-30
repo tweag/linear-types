@@ -432,7 +432,7 @@ array :: (Int,Int) -> [(Int,a)] -> Array a
 \end{code}
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
-can readily implement variations (which they certainly do).  Here is the
+can readily implement variations (and certainly do implement more complex variations, see for example \fref{sec:cursors}).  Here is the
 definition of |array|, using library functions whose types are given
 in \fref{fig:array-sigs}:
 \begin{code}
