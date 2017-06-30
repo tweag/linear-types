@@ -562,10 +562,10 @@ I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
 \item We generalise the |IO| monad so that it expresses whether or not the
 returned value is linear.  We add an extra {\em multiplicity} type parameter |p| to the monad |IOL|,
-where |p| can be |1| or |ω|, indicating linear or non-linear, respectively.
+where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respectively.
 %
 Now |openFile| returns |IO 1 (File ByteString)|,
-the ``|1|'' indicating that the returned |File| must be used linearly.\footnote{Using |ω| indicates on the contrary that a result can be used in an unrestricted fashion.}
+the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 \item As before, operations on linear values must consume their input
 and return a new one; here |readLine| consumes the |File| and produces a new one.
@@ -1307,7 +1307,7 @@ While many linear type systems have been proposed,
 %
 a {\em retrofitted} linear type system for a mature language like Haskell offers
 the opportunity to implement non-trivial applications mixing linear and
-non-linear code, I/O, etc, and observe how linear vs. non-linear libraries
+non-linear code, I/O, etc., and observe how linear vs. non-linear libraries
 interact with optimiser of a sophisticated compiler.
 %
 In this section, we describe two such applications; in \fref{sec:implementation}
