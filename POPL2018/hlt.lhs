@@ -332,7 +332,7 @@ Haskell with linear types.
   supports two typical use-cases.''}  Linear types can do many
 things, but we focus on two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
-enforcing access protocols for external APIs, such as files, sockets,
+enforcing access protocols for external \textsc{api}s, such as files, sockets,
 channels and other resources.  Our particular contributions are these
 \begin{itemize}
 \item Our extension to Haskell, dubbed \HaskeLL, is
@@ -378,7 +378,7 @@ to two questions:
 \begin{itemize}
 \item \emph{Is it safe to update this value in-place} (\fref{sec:freezing-arrays})?
 That depends on whether there
-are aliases to the value; update-in-place is OK if there are no other pointers to it.
+are aliases to the value; update-in-place is \textsc{ok} if there are no other pointers to it.
 Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
 \item \emph{Am I obeying the usage protocol of this external resource}
 (\fref{sec:io-protocols})?
@@ -1492,7 +1492,7 @@ in-memory and on-the-wire formats for simple product types (protobufs).
 
 Here is an unusual case where type-safety can {\em yield performance} by making it
 practical to write in a style previously infeasible.  Indeed, linearity and \Red{typestate}
-are both key to to a safe API for serialised data.
+are both key to to a safe \textsc{api} for serialised data.
 %
 Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
 --- binary-serialised data structures contain primitive values of various
