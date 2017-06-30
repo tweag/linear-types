@@ -1811,30 +1811,35 @@ time again in a variety of other projects.
 \label{sec:implementation}
 \label{sec:impl}
 
-We are implementing \HaskeLL{} as a branch over the 8.2 version
-\textsc{ghc}, the leading Haskell compiler. At time of writing this
-branch only modifies the type inference of the compiler, neither the
-intermediate language (Core\improvement{citation for Core}) nor the
-run-time system are affected. We have only implemented monomorphic
-multiplicities so far. Our \HaskeLL{} most, but not all, of \textsc{ghc}'s extension
-(one notable incompatible extension is pattern-synonyms, the details
-of which have yet to be worked out).
+We are implementing \HaskeLL{} as a branch of the 8.2 version
+\textsc{ghc}, the leading Haskell compiler. This branch only modifies
+the type inference of the compiler, neither the intermediate language
+(Core\improvement{citation for Core}) nor the run-time system are
+affected. This would be enough to support the examples of this paper,
+but we have only implemented monomorphic multiplicities so far. Our
+\HaskeLL{} implementation is compatible with most, but not all, of
+\textsc{ghc}'s extension (one notable incompatible extension is
+pattern-synonyms, the details of which have yet to be worked out).
 
 In order to implement the linear arrow, we followed the design of
 \calc{} and added a multiplicity annotation to arrows, as an
 additional argument of the type constructor for arrows of
 \textsc{ghc}'s type checker. The constructor for arrow types is
-constructed and destructed a lot in \textsc{ghc}'s type checker, this
+constructed and destructed a lot in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
-Where the implementation defers from \calc{} is the way multiplicity
+Where the implementation differs from \calc{} is the way multiplicity
 are computed: whereas in the \calc{} multiplicities are inputs of the
 type-checking algorithm, in the implementation multiplicities are
-outputs of type inference. The main reason for this choice is that it
-makes prevents us from having to split the context along
-multiplicities (for instance in the application rule), which would
-have been achieved, in practice, by extending the semi-ring structure
-with partial operations for subtraction and division.
+outputs of type inference.\jp{the typing rules do not dictate an
+  algorithm, so this is not a difference. In fact it says above ``One
+  may want to think of the \emph{types} in $Γ$ as inputs of the
+  judgement, and the \emph{multiplicities} as outputs.''} The main
+reason for this choice is that it makes prevents us from having to
+split the context along multiplicities (for instance in the
+application rule), which would have been achieved, in practice, by
+extending the semi-ring structure with partial operations for
+subtraction and division.
 
 Instead, in the application rule, we get the multiplicities of the
 variables in each of the operands as inputs and we can add them
@@ -1842,7 +1847,7 @@ together. We still need to require more than just a semi-ring though:
 we need an ordering of the multiplicity semi-ring (such that
 $1\leqslant ω$) in order to check that the computed multiplicity is
 correct with respect to multiplicity annotations. In addition to the
-ordering, we need to be able to join the multiplicity computed in the
+ordering, we need to be able to join the multiplicities computed in the
 branches of a |case|. To that effect, we need a supremum
 operation. Therefore the multiplicities need to form a
 join-semi-lattice-ordered semi-ring.
@@ -1851,11 +1856,11 @@ Implementing this branch affects 1122 lines of \textsc{ghc} (for
 comparison the parts of the compiler that were affected by \HaskeLL{}
 total about 100000 lines of code), including 436 net extra lines. A new
 file responsible for multiplicity operations as well the files
-responsible for type environment manipulation and type inference of
+responsible for the environment manipulation and type inference of
 patterns account for almost half of the affected lines. The rest spans
-over a 100 files most of which have 2 or 3 lines modified to account
-for the extra multiplicity argument of the arrow constructor. This
-required roughly 1 man-month to implement.
+over a 100 files, most of which have 2 or 3 lines modified to account
+for the extra multiplicity argument of the arrow constructor. This work
+required roughly 1 man-month to complete.
 
 These figures vindicate our claim that \HaskeLL{} is easy to integrate
 into an existing implementation: despite \textsc{ghc} being 25 years
