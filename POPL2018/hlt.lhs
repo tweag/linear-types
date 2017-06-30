@@ -446,7 +446,7 @@ Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
-as described in \cite{launchbury-pj:state-in-haskell}.
+as described in \cite{launchbury-pj:state-in-haskell}.\improvement{fix reference}
 
 Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
 immutable array, but to avoid an unnecessary copy,
@@ -695,9 +695,7 @@ data [a] where
 \end{code}
 Just as with pairs, this is not a new, linear list type: this \emph{is}
 \HaskeLL{}'s list type, and all existing Haskell functions will work
-over it perfectly well.\improvement{I don't know whether we should be
-  clearer that it means that non-gadt-syntax data declaration are
-  interpreted in this fashion. Or maybe we could do that in \fref{sec:implementation}?}
+over it perfectly well.
 Even better, many list-based functions are in fact linear, and
 can be given a more precise type. For example we can write |(++)| as
 follows:
@@ -765,7 +763,8 @@ able to declare data constructors with non-linear types, like this:
   f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
 Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
-constructor |PLU|, with mixed linearity.
+constructor |PLU|, with mixed linearity.\improvement{Explain here that
+non-linearity syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
 when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
@@ -1704,7 +1703,7 @@ close :: forall s. Socket s -> IOL ω ()
 \end{code}
 
 This linear socket \textsc{api} is very similar to files': we use the
-|IO_L| monad in order to enforce linear use of sockets. The difference
+|IOL| monad in order to enforce linear use of sockets. The difference
 is the argument to |Socket|, which represent the current state of the
 socket and is used to limit the functions which can apply to a socket
 at a given time.
