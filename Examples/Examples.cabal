@@ -37,6 +37,7 @@ library
         Linear.Unsafe,
         Purify,
         Socket,
+        Socket.Generic,
 
         -- Exposed only for testing:
         PackedTree
