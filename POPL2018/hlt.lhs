@@ -85,6 +85,8 @@
 \frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
 
+\newcommand{\ghc}{\textsc{ghc}}
+
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
 \newcommand{\where}{ \mathsf{where} }
@@ -1632,26 +1634,10 @@ interleaved ``alternate future''.
 
 % Rehabilitating an ST-based formulation
 Fixing this problem would require switching to an indexed monad with additional
-type-indices that model the typestate of all accessible pointers, which would
-need to have static, type-level identifiers.  That is, it would require encoding
-linearity, and would break compatibility with the existing |ST| type and |Monad|
-type class.
-
-
-\subsubsection{Compiler optimisations}
-
-
-\begin{code}
-caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
-  Has (Tree:b) -> (Has (Int:b) ⊸ res) -> (Has (Tree:Tree:b) ⊸ res) -> res
-\end{code}
-
-
-\note{Multiple return values above}
-
-\note{Implementation details -- memory manager}
-
-\note{Xeon(R) CPU E5-2699 at 2.30GHz}
+type-indices that model the typestate of all accessible pointers, which would in
+turn need to have static, type-level identifiers.  That is, it would require
+encoding linearity, and would break compatibility with the existing |ST| type
+and |Monad| type class.
 
 
 \begin{figure}
@@ -1667,8 +1653,81 @@ caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
   included, which doesn't operate on serialised data at all, but instead normal
   heap objects; it represents the hypothetical performance of ``unpack-repack''
   if (de)serialisation were instantaneous.}
-\label{}
+\label{fig:pack-bench}
 \end{figure}
+
+\subsubsection{Compiler optimisations}
+
+Finally, as shown in \fref{fig:pack-bench}, there are some unexpected
+performance consequences from using a linear versus a monadic, ST style in
+\ghc.
+%
+Achieving allocation-free loops in \ghc{} is always a challenge --- the built-in
+tuple types, and even numeric types are lazy and ``boxed'' as heap objects.
+%
+As we saw above in the |sum| example, each call to the function returned a tuple
+of a result and a new pointer.  In a monadic formulation, an expression of type
+|m a|, for |Monad m|, implies that type-variable |a| (of kind |*|) must be a
+{\em lifted} type.  Nevertheless, in some situations, for some monads, the
+optimiser is able to deforest values returned by monadic actions.
+%
+However, in the particular case of fold and map operations over binary trees, we
+are currently unable to eliminate all allocation from |ST|-based implementations
+of the algorithms.
+
+For the linearly-typed code, we have more options.  \ghc{} has the ability to
+directly express unboxed values such as a tuple |(# Int#, Double# #)|, which
+occupy distinct kinds.
+%
+In fact, the type of a combinator like |caseTree| is a good fit for the recent
+``levity polymorphism'' addition to \ghc{}~\cite{levity-polymorphism}.  We can
+thus allow the branches of the case to return types with different {\em physical
+representations}:
+
+\begin{code}
+caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
+  Has (Tree:b) -> (Has (Int:b) ⊸ res) -> (Has (Tree:Tree:b) ⊸ res) -> res
+\end{code}
+
+This works because we do not need to call a function with |res| as argument
+(which would take an unknown number of registers) only return it.
+%
+Using this approach we were able to ensure by construction that the
+``linear/packed'' implementations in \fref{fig:pack-bench} were completely
+non-allocating, rather than depending on the optimiser.
+%
+This results in better performance for the linear, compared to monadic version
+of the serialised-data transformations.
+
+The basic premise of \fref{fig:pack-bench} is that machine in the network
+receives, processes, and transmits serialized data (trees).
+%
+We consider two simple benchmarks, a fold and map respectively: (1) summing the
+leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
+tree.
+%
+The baseline is the time required to deserialize, transform, and reserialize,
+which is the ``unpack-repack'' line in the plots.  Compared to this baseline,
+processing the data directly in its serialised form results in speedups of over
+20$\times$ on large trees.
+
+The experiment was conducted on a Xeon E5-2699 CPU (2.30GHz, 64GB memory) using
+a modified version of GHC 8.2 (\fref{sec:impl}).  As tree size was varied, each
+data point was measured by performing many trials and taking a linear regression
+of iteration count against time (criterion library).
+%
+This allows for accurate measurements of both small and large times.  The
+baseline unpack-repack tree-summing times vary from 25ns to 1.9 seconds at
+depths 1 and 24 respectively.  Likewise, the baseline mapping times vary from
+215ns to 2.93 seconds.
+%
+We use a simple contiguous implementation of buffers for
+serialisation\footnote{A full, practical implementation should include growable
+  or doubling buffers.}.
+%
+At depth 20, one copy of the tree takes around 10MB, and towards the right half
+of the plot we see tree size exceeding cache size.
+
 
 % -------------------------------
 {\if{0}
