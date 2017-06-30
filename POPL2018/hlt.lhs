@@ -1761,10 +1761,9 @@ We are implementing \HaskeLL{} as a branch over the 8.2 version
 branch only modifies the type inference of the compiler, neither the
 intermediate language (Core\improvement{citation for Core}) nor the
 run-time system are affected. We have only implemented monomorphic
-multiplicities so far. Our \HaskeLL{} implementation is not compatible
-with every \textsc{ghc} extension yet, but is compatible with
-standardised Haskell\unsure{This ought to be checked} as well as many
-extensions.
+multiplicities so far. Our \HaskeLL{} most, but not all, of \textsc{ghc}'s extension
+(one notable incompatible extension is pattern-synonyms, the details
+of which have yet to be worked out).
 
 In order to implement the linear arrow, we followed the design of
 \calc{} and added a multiplicity annotation to arrows, as an
@@ -1807,8 +1806,6 @@ These figures vindicate our claim that \HaskeLL{} is easy to integrate
 into an existing implementation: despite \textsc{ghc} being 25 years
 old, we could implement a first version of \HaskeLL{} with relatively
 low effort.
-
-\improvement{Our branch has been used to implement…}
 
 \section{Related work}
 \label{sec:related}
