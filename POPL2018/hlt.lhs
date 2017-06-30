@@ -1330,8 +1330,8 @@ The motivation is that programs are increasingly decoupled into separate (cloud)
 services that communicate via serialised data in text or binary formats, carried
 by remote procedure calls.
 %
-The standard approach is to deserialise data into an in-heap representation
-(that is, a recursive Haskell data type),
+The standard approach is to deserialise data into an in-heap, pointer-based representation,
+% (that is, a recursive Haskell data type),
 process it, and then serialise the result for transmission.
 %
 This process is exceedingly inefficient, but tolerated, because the alternative
@@ -1364,8 +1364,8 @@ data:
 \end{code}
 %
 Here |Needs| is parameterised both by {\em obligations}, that an |Int| and
-then a |Double| must be written, and by the resulting, immutable value (|Foo|)
-that will be available upon completing those writes.
+then a |Double| must be written, and by the resulting, immutable value 
+that will be available upon completing those writes (|Foo|).
 %
 A |write| function for primitive types shaves one element off the type-level
 list of obligations:
@@ -1386,7 +1386,7 @@ the operation and convert the write pointer to a read pointer:
 Just as when we converted mutable arrays to immutable arrays, here the immutable
 |Foo| can be read multiple times.
 %
-It is not, however, a {\em normal}, pointer-based heap representation of |Foo|,
+It is not, however, a {\em normal} heap representation of |Foo|,
 but rather an isomorphic, serialised representation: |Has [Foo]|.  Nevertheless,
 everything in a |Foo| can be read in a type-safe way directly from the
 serialised buffer.
@@ -1421,7 +1421,7 @@ writeLeaf n p = write n (startLeaf p)
 
 Using an |newBuffer| primitive similar to |newMArray|
 (\fref{sec:freezing-arrays}), we can allocate and initialize a complete tree,
-|Branch (Leaf 3) (Leaf 4)| with:
+|Branch (Leaf 3) (Leaf 4)|, with:
 
 \begin{code}
 newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Has [Tree]
@@ -1436,9 +1436,10 @@ Using |caseTree| together with a read for primitive values, we sum the leaves
 of a tree like so:
 
 \begin{code}
-sum h = caseTree h read
-           (\h2 -> let (n,h3) = sum h2; (m,h4) = sum h3
-                       in (n+m,h4))
+sum h =   caseTree h read
+            (\h2 ->  let  (n,h3) = sum h2
+                          (m,h4) = sum h3
+                     in (n+m,h4))
 
 read :: Storable a => Has (a:r) -> (a, Has r)
 \end{code}
@@ -1472,13 +1473,15 @@ writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)
 Here we use the same typestate associated with a |Needs| pointer, while also
 associating its mutable state with the |ST| session indexed by |s|.
 %
+% As in \fref{sec:freezing-arrays}, we rely on using an unsafe
+% ... must extend the trusted code base.
 Unfortunately, not only do we have the same trouble with freezing in the absence
-of linearity (|unsafeFreeze| or freeze at the end of the |ST| session), we also
+of linearity (|unsafeFreeze|), we also
 have an additional problem not present with arrays:
 %
 namely, a non-linear use of a |Needs| pointer can result in type-safety
 violations.
-
+%
 For example, we can write a |Leaf| and a |Branch| to the same pointer in an
 interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
 an integer in bytes 1-9, while the branch will place another tag at byte 1.
@@ -1517,27 +1520,27 @@ Finally, as shown in \fref{fig:pack-bench}, there are some unexpected
 performance consequences from using a linear versus a monadic, ST style in
 \ghc.
 %
-Achieving allocation-free loops in \ghc{} is always a challenge --- the built-in
-tuple types, and even numeric types are lazy and ``boxed'' as heap objects.
+Achieving allocation-free loops in \ghc{} is always a challenge --- 
+tuple types and numeric types are lazy and ``boxed'' as heap objects by default.
 %
-As we saw above in the |sum| example, each call to the function returned a tuple
+As we saw above in the |sum| example, each recursive call returned a tuple
 of a result and a new pointer.  In a monadic formulation, an expression of type
-|m a|, for |Monad m|, implies that type-variable |a| (of kind |*|) must be a
+|m a|, for |Monad m|, implies that the type-variable |a| (of kind |*|) must be a
 {\em lifted} type.  Nevertheless, in some situations, for some monads, the
-optimiser is able to deforest values returned by monadic actions.
+optimiser is able to deforest data constructors returned by monadic actions.
 %
-However, in the particular case of fold and map operations over binary trees, we
-are currently unable to eliminate all allocation from |ST|-based implementations
-of the algorithms.
+In the particular case of fold and map operations over serialised trees,
+unfortunately, we are currently unable to eliminate all allocation from
+|ST|-based implementations of the algorithms.
 
-For the linearly-typed code, we have more options.  \ghc{} has the ability to
+For the linearly-typed code, however, we have more options.  \ghc{} has the ability to
 directly express unboxed values such as a tuple |(# Int#, Double# #)|, which
-occupy distinct kinds.
+fills two registers and inhabits an unboxed kind (distinct from |*|).
 %
 In fact, the type of a combinator like |caseTree| is a good fit for the recent
 ``levity polymorphism'' addition to
-\ghc{}~\cite{levity-polymorphism}\improvement{actual citation}.  We can
-thus allow the branches of the |case| to return types with different {\em physical
+\ghc{}~\cite{levity-polymorphism}\improvement{actual citation}.  Using it,
+we can permit the branches of the |case| to return types with different {\em physical
 representations}:
 
 \begin{code}
@@ -1545,10 +1548,10 @@ caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
   Has (Tree:b) -> (Has (Int:b) ⊸ res) -> (Has (Tree:Tree:b) ⊸ res) -> res
 \end{code}
 
-This works because we do not need to call a function with |res| as argument
-(which would take an unknown number of registers) only return it.
+This works because we do not need to {\em call} a function with |res| as
+argument (and thus unknown calling conventions) only return it.
 %
-Using this approach we were able to ensure by construction that the
+Using this approach, we were able to ensure by construction that the
 ``linear/packed'' implementations in \fref{fig:pack-bench} were completely
 non-allocating, rather than depending on the optimiser.
 %
@@ -1562,13 +1565,15 @@ We consider two simple benchmarks, a |fold| and a |map| respectively: (1) summin
 leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
 tree.
 %
-The baseline is the time required to deserialize, transform, and reserialize,
-which is the ``unpack-repack'' line in the plots.  Compared to this baseline,
-processing the data directly in its serialised form results in speedups of over
-20$\times$ on large trees.
+The baseline is the time required to deserialize, transform, and reserialize:
+the ``unpack-repack'' line in the plots.  Compared to this baseline,
+{\bf processing the data directly in its serialised form results in speedups of over
+20$\times$ on large trees}.
+%
+What linear types makes safe, is also efficient.
 
 The experiment was conducted on a Xeon E5-2699 CPU (2.30GHz, 64GB memory) using
-a modified version of GHC 8.2 (\fref{sec:impl}).  As tree-size was varied, each
+a modified version of GHC 8.2 (\fref{sec:impl}).  Each
 data point was measured by performing many trials and taking a linear regression
 of iteration count against time (using the criterion library~\cite{osullivan_criterion_2013}).
 %
