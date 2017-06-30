@@ -1309,9 +1309,9 @@ the opportunity to implement non-trivial applications mixing linear and
 non-linear code, I/O, etc., and observe how linear vs. non-linear libraries
 interact with optimiser of a sophisticated compiler.
 %
-In this section, we describe two such applications; in \fref{sec:implementation}
-we describe the modified version of the \textsc{ghc} compiler that makes this
-possible.
+In this section, we describe a few case study implementations; in
+\fref{sec:implementation} we describe the modified version of the \textsc{ghc}
+compiler that makes them possible.
 
 % \subsection{Serialised tree traversals}
 \subsection{Application 1: Traversals of serialised data}
@@ -1663,22 +1663,23 @@ standard, through which computers connect over networks. It involves a
 series of actions which must be performed in order: on the
 server-side, a freshly created socket must be \emph{bound} to an
 address, then start \emph{listening} incoming traffic, then
-\emph{accept} connection requests, said connection is returned as a
+\emph{accept} connection requests; said connection is returned as a
 new socket, this new socket can now \emph{receive} traffic. One reason
 for having that many steps is that the precise sequence of
-action is protocol-dependent. For \textsc{tcp} traffic you would do as
+actions is protocol-dependent. For \textsc{tcp} traffic you would do as
 described, but for \textsc{udp}, which does not need connections, you
-would not accept aa connection but receive messages directly. The
-\texttt{socket} library for Haskell, exposes precisely this sequence
-of actions.
+would not accept a connection but receive messages directly.
 
-It is a bit clumsy to program with: with each action, not only the
-state of the socket changes, but also the permissible actions.
-Used as we are to typed programming languages, we like to use
-the type to predicate what actions can be taken on an object. So the state
-of sockets should be tracked in the type. This is akin to a typestate
+The \texttt{socket} library for Haskell, exposes precisely this sequence of
+actions.
+%
+Programming with it is exactly as clumsy as socket libraries for other
+languages: after each action, the state of the socket changes, as do the
+permissible actions, but these states are invisible in the types.
+%
+Better is to track the state of sockets in the type, akin to a typestate
 analysis~\cite{strom_typestate_1983}.
-
+%
 In the |File| \textsc{api} of \fref{sec:io-protocols}, we made files
 safer to use at the cost of having to thread a file handle
 explicitely: each function consumes a file handle and returns a fresh
@@ -1710,40 +1711,52 @@ close :: forall s. Socket s -> IOL ω ()
 This linear socket \textsc{api} is very similar to that of files: we use the
 |IOL| monad in order to enforce linear use of sockets. The difference
 is the argument to |Socket|, which represents the current state of the
-socket and is used to limit the functions which can apply to a socket
+socket and is used to limit the functions which apply to a socket
 at a given time.
 
 \improvement{Compare with Idris's dependent typestate in the |ST|
   monad}
 
+\note{Is there anything to say about the implementation?  Conclusions to draw from
+it?}
+
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
-\jp{This section feels handwavy, it would require showing a bit more technical stuff. Do we have access to implementation?}
+%% \jp{This section feels handwavy, it would require showing a bit more technical stuff. Do we have access to implementation?}
+% \rn{Maybe partially addressed?}
 
-\Citet{chakravarty_spritekit_2017} have a different kind of
-problem. They are building a pure
-interface for graphical interfaces, in the same style as the Elm
-programming language\improvement{citation}, but are implementing it in
-terms of an existing imperative graphical interface engine.
+In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
+of problem. They are building a pure interface for graphics, in the same style
+as the Elm programming language\improvement{citation}, but implement it in terms
+of an existing imperative graphical interface engine.
 
-Basically, the pure interface takes an update function |Scene ->
-Scene| which is tasked with returning the next state that the
-interface will display. In order to efficiently map this pure
-interface to the imperative engine, the new |Scene| must not destroy
-the entire imperative scene and re-create it, but must be rendered
-using imperative updates. To achieve this result, the nodes in the
-|Scene| data-type contain pointers to the imperative nodes that they
-represent, so that changing the children of a node |np| will be
-effected as an imperative update of the corresponding imperative node
-|ni|.\jp{what is the relationship between np and ni?}
-
-But if the update function duplicates |ni|, the imperative update will
-mutate |ni| twice, and thus break the pure semantics. In the
-current state of the implementation, the programmer must be careful of
-not duplicating |ni|. Linear types offer a solution where the
-programmer cannot inadvertently break that promise: we take the update
-function to be of type |Scene ⊸ Scene|. With such a linear update
-function no duplication of |ni| is possible, and if a |np| must be
+Basically, the pure interface takes an update function |Scene -> Scene| which is
+tasked with returning the next state that the interface will display.
+%
+Yet it would be too expensive to dredge out and copy the {\em full} state of the
+imperative graphics engine, reproducing it as a pure |Scene| value.  The
+SpriteKit authors instead use a form of lazy marshalling, where each imperative
+scene object (|ni|) may or may not be represented by a pure proxy object (|np|).
+%
+On each frame, the update function translates functional updates on these pure
+proxies back into imperative updates.
+%
+%% In order to efficiently map this pure interface to the imperative engine, the
+%% new |Scene| must not destroy the entire imperative scene and re-create it, but
+%% must be rendered using imperative updates. To achieve this result, the nodes in
+%% the |Scene| data-type contain pointers to the imperative nodes that they
+%% represent, so that changing the children of a node |np| will be effected as an
+%% imperative update of the corresponding imperative node |ni|.\jp{what is the
+%%   relationship between np and ni?}
+%
+But if the update function {\em duplicates} a proxy node |np|, sharing the
+same reference to a foreign, imperative object |ni|, then the engine
+will mutate |ni| twice, and break the pure semantics.
+%
+In the current state of the implementation, the programmer must be careful of
+not duplicating. Linear types offer a solution where the programmer {\em must}
+keep that promise: we change the update function to type |Scene ⊸ Scene|. With a
+linear update function no duplication of |ni| is possible, and if a |np| must be
 duplicated, only one of the duplicates will have a reference to |ni|.
 
 We have implemented a simplified version of this solution in the case
@@ -1753,7 +1766,8 @@ where the impure \textsc{api} is a simple tree
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
 
-\subsection{Applications in the industry}
+
+\subsection{Applications in industry}
 
 \todo{Integrate content in this section into future work / conclusion
   / intro sections instead?}
