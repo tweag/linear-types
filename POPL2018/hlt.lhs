@@ -1870,9 +1870,9 @@ comes at the cost of strong limitations in practice:
 \item |ST|-like regions confine to a stack-like allocation discipline,
   because freeing resources coincide with the static scope of |runST|.
   Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
-  this technique. This factor is a limitating for any long-lived
-  program, but in particular, in many pipeline applications one has
-  conceptually |n| buffers used sequentially, but only two of them are
+  this technique. This can be a problem for long-lived
+  programs, as well as pipeline applications where one
+  has |n| buffers conceptually, but only a sliding window of two of them are
   live simultaneously.
 
   In our system, even though the lifetimes of linear variables is
@@ -1883,23 +1883,21 @@ comes at the cost of strong limitations in practice:
 We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
 \begin{code}
-alloc  (\x ->
-{- x live -}
-alloc  (\y ->
-{- x and y live -}
-free x (
-alloc  (\z ->
-{- y and z live -}
-free y (
-{- z live -}
-free z)))))
+alloc   $ \x ->                 {- x live -}
+alloc   $ \y ->                 {- x and y live -}
+free x  $
+alloc   $ \z ->                 {- y and z live -}
+free y  $                       {- z live -}
+free z
 \end{code}
 
-\item |ST| actions cannot be interleaved with |IO| actions. So in our
-  mutable array examples, for instance, it is not possible to provide
-  a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
-  a)| which will also make it possible to use |IO| actions to fill in
-  the array.\jp{I do not understand this item.}
+%% \item |ST| actions cannot be interleaved with |IO| actions. So in our
+%%   mutable array examples, for instance, it is not possible to provide
+%%   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
+%%   a)| which will also make it possible to use |IO| actions to fill in
+%%   the array.\jp{I do not understand this item.}
+%% \rn{Neither do I.  Can't the PrimMonad stuff do that?}
+
 \item \citet{kiselyov_regions_2008} show that it is possible to
   promote resources in parent regions to resources in a subregion. But
   this is an explicit and monadic operation, forcing an unnatural
@@ -1912,19 +1910,26 @@ free z)))))
   different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
   writing code at an interactive prompt difficult, compromises code
   reuse, forces otherwise pure functions to be written monadically and
-  rules out useful syntactic facilities like view patterns. In
-  contrast, with linear types, values in two regions (in our running
-  example packets from different mailboxes) have the same type hence
-  can safely be mixed: any data structure containing packet of
-  a mailbox will be forced to be consumed before the mailbox is
-  closed.\jp{FIXME: running example is now gone.}
+  rules out useful syntactic facilities like view patterns.
+%
+  In contrast, with linear types, values in two regions
+  % (in our running example packets from different mailboxes) have the same type
+  hence can safely be mixed:
+  %% any data structure containing packet of a mailbox
+  %% will be forced to be consumed before the mailbox is closed.
+  %  \jp{FIXME: running   example is now gone.}
+  elements can be moved from one data structure (or heap) to another, linearly,
+  with responsibility for deallocation transferred along.
+%  , with  ownership transfer.
 \end{itemize}
 
 \subsection{Uniqueness and ownership typing}
 
-The literature is awash with enforcing linearity not via linear types,
-but via uniqueness (or ownership) types. The most prominent
-representatives of languages with uniqueness types are perhaps
+The literature
+% is awash with enforcing linearity not via linear types,
+contains many proposals for uniqueness (or ownership) types (in contrast with
+linear types).
+Prominent representative languages with uniqueness types include
 Clean~\cite{barendsen_uniqueness_1993} and
 Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
@@ -1934,7 +1939,7 @@ Linear types and uniqueness types are, at their core, dual: whereas a linear typ
 a contract that a function uses its argument exactly once
 even if the call's context can share a linear argument as many times as it
 pleases, a uniqueness type ensures that the argument of a function is
-not used anywhere else in the expressions context even if the function
+not used anywhere else in the expression's context even if the callee
 can work with the argument as it pleases.
 
 Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
