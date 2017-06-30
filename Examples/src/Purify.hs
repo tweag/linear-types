@@ -2,21 +2,22 @@
 
 module Purify where
 
+import Data.IORef
 import Linear.Std
 import Prelude hiding (($))
 
 -- Input: impure API
-data MTree a = MTree -- TODO
+data MTree a = MTree (IORef (TreeView a))
 
 data TreeView a = VLeaf | VNode (MTree a) a (MTree a)
 readTree :: MTree a -> IO (TreeView a)
-readTree = error "TODO: readTree"
+readTree (MTree mtree) = readIORef mtree
 
 writeTree :: MTree a -> TreeView a -> IO ()
-writeTree = error "TODO: writeTree"
+writeTree (MTree mtree) = writeIORef mtree
 
 newTree :: TreeView a -> IO (MTree a)
-newTree = error "TODO: newTree"
+newTree view = MTree <$> newIORef view
 
 -- Output: pure API
 data Tree a
