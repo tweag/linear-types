@@ -1540,8 +1540,8 @@ As a concrete example consider this simple data-type:
   data Tree = Leaf Int | Branch Tree Tree
 \end{code}
 %
-From this definition, we derive a safe operations for writing and reading
-values of this type:
+From this definition, we derive a safe interface for writing and reading
+serialised |Tree| data:
 %
 \begin{code}
 startLeaf   :: Needs (Tree : r) t ⊸ Needs (Int : r) t
@@ -1563,25 +1563,35 @@ On top of the safe interface, writing a complete |Leaf| is simple:
 writeLeaf n p = write n (startLeaf p)
 \end{code}
 
-On the other hand,
-to read |Tree| values, we pass continuations to the |caseTree| combinator.  That
-is, |caseTree t k1 k2| reads the next tag byte in the stream, and calls |k1| if the
-tree is a leaf, or |k2| if it is a branch.
+Using an |newBuffer| primitive similar to |newMArray|
+(\fref{sec:freezing-arrays}), we can allocate and initialize a complete tree,
+|Branch (Leaf 3) (Leaf 4)| with:
+
+\begin{code}
+newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Has [Tree]
+newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
+\end{code}
+
+On the other hand, to {\em read} |Tree| values, we pass continuations to the
+|caseTree| combinator.  That is, |caseTree t k1 k2| reads the next byte in
+the stream, and calls |k1| if it's a leaf tag or |k2| otherwise.
 %
-Using |caseTree|, as well as a read operation for primitive values, we can sum
-the leaves of a tree:
+Using |caseTree| together with a read for primitive values, we sum the leaves
+of a tree like so:
 
 \begin{code}
 sum h = caseTree h read
            (\h2 -> let (n,h3) = sum h2; (m,h4) = sum h3
-                   in (n+m,h4))
+                       in (n+m,h4))
 
 read :: Storable a => Has (a:r) -> (a, Has r)
 \end{code}
 
-Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
-and then we have what we need to build a map function that reads directly from
-an input buffer and writes directly to an output buffer.
+%% Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
+%% and then
+We also we have what we need to build a map function that logically operates on
+the leaves of a tree, but reads serialised data directly from an input buffer
+and writes directly to an output buffer.
 %
 Indeed, in our current Haskell implementation ``|map (+1) tree|'' touches {\em
   only} these buffers --- it performs zero heap allocation!
@@ -1606,6 +1616,7 @@ Here we use the same typestate associated with a |Needs| cursor,
 
 \note{Implementation details -- memory manager}
 
+\note{Xeon(R) CPU E5-2699 at 2.30GHz}
 
 
 \begin{figure}
