@@ -856,8 +856,8 @@ combinators of |IOL| can be used in the familiar way. The difference
 with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
-  do  { f <- openFile s   -- |openFile :: FilePath -> IO 1 (File ByteString)|
-      ; d <- getDate      -- |getDate  :: IO ω Date|
+  do  { f <- openFile s   -- |openFile :: FilePath -> IOL 1 (File ByteString)|
+      ; d <- getDate      -- |getDate  :: IOL ω Date|
       ; e[f,d] }
 \end{code}
 Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
@@ -880,7 +880,7 @@ newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
 data IORes p a where
   IOR :: World ⊸ a -> _ p IOR p a
 
-bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 bindIOL (IOL m) k = IOL (\w -> case m w of
                                  IOR w' r -> unIOL (k r) w')
 \end{code}
