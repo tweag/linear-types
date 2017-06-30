@@ -2435,23 +2435,23 @@ probably fix this.}
   |Array|-s.}
 
 In accordance with our stated goals in \fref{sec:introduction}, we are
-interested in two key properties of our system: that we can implement
-linear \textsc{api} with mutation under the hood, while exposing a
-pure interface, and that type-level state are indeed enforced.
+interested in two key properties of our system: 1. that we can implement
+a linear \textsc{api} with mutation under the hood, while exposing a
+pure interface, and 2. that type-level states are indeed enforced.
 
 We introduce two dynamic semantics for \calc{}: a semantics with
-mutation which model the implementation but blocks on incorrect
+mutation which models the implementation but blocks on incorrect
 type-states, and a pure semantics, which we dub \emph{denotational} as
-it represents the intended meaning of the program. We consider array
-primitives like in \fref{sec:freezing-arrays}, but we could extend to
+it represents the intended meaning of the program. We consider here array
+primitives in the style of \fref{sec:freezing-arrays}, but we could extend to
 any number of other examples such as the files of
 \fref{sec:io-protocols}.
 
 We prove the two semantics bisimilar, so that type-safety and progress
 can be transported from the denotational semantics to the ordinary
 semantics with mutation. The bisimilarity itself ensures that the
-mutations are not observable and the semantics is correct in exposing
-a pure semantics, progress proves that type-level states need not be
+mutations are not observable and that the semantics is correct in exposing
+a pure semantics. The progress result proves that type-level states need not be
 tracked dynamically.
 
 \subsection{Preliminaries}
@@ -2499,18 +2499,19 @@ contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
 Our semantics, which we often call \emph{ordinary} to constrast it
 with the denotational semantics of \fref{sec:denotational}, follows
 closely the semantics of \citet{launchbury_natural_1993}. The main
-differences is that we keep the type annotation, and that we have
+differences are that we keep the type annotation, and that we have
 primitives for proper mutation.
 
 Mixing mutation and laziness is not usual, as the unspecified
 evaluation order of lazy languages would make mutation order
 unpredicable, hence programs non-deterministic. It is our goal to show
-that the linear type discipline ensures that, despite the mutations,
+that the linear typing discipline ensures that, despite the mutations,
 the evaluation is pure.
 
-Just like \citet{launchbury_natural_1993}, the terms must be in a
-constrained form before evaluation. \Fref{fig:launchbury:syntax} shows
-the translation of abtrary term to terms in the constrained form.
+Just like \citet{launchbury_natural_1993} does, we constrain the terms
+to be explicit about sharing, before any evaluation takes
+place. \Fref{fig:launchbury:syntax} shows the translation of abtrary
+term to terms in the explicit-sharing form.
 
 \begin{figure}
   \figuresection{Translation of typed terms}
@@ -2674,12 +2675,12 @@ The details of the ordinary evaluation relation are given in
 \end{figure}
 
 The ordinary semantics, if a good model of what we are implementing in
-practice, is not very convenient to reason about directly. First the
-mutations are a complication in itself, but it is also difficult to
-recover type or even multiplicity annotation from a particular
+practice, is not very convenient to reason about directly. First
+mutation is a complication in itself, but it is also difficult to
+recover types (or even multiplicity annotations) from a particular
 evaluation state.
 
-To remedy this we introduce a denotational semantics where the states
+We address this difficulty by introducing a denotational semantics where the states
 are annotated with types and linearity. The denotational semantics
 also does not perform mutations: arrays are seen as ordinary values
 which we modify by copy.
@@ -2708,7 +2709,7 @@ well-typed state.
 \begin{definition}[Weighted pairs]
   We define a type of left-weighted pairs:
 
-  $$\data a~{}_π\!⊗ a = ({}_π\!,) : a ->_π b ⊸ a~{}_π\!⊗ b$$
+  $$\data a~{}_π\!⊗ a = ({}_π\!,) : a →_π b ⊸ a~{}_π\!⊗ b$$
 
   Let us remark that
   \begin{itemize}
@@ -2757,12 +2758,12 @@ when annotated states are well-typed.
   \item[linear variable] linear variables are removed from the
     environment when they are evaluated: they are no longer accessible
     (if the state is well-typed)
-  \item[let] even we are evaluating a $\flet_1$m we may have to
-    introduce non-linear binding in the environemnt: if the value we
+  \item[let] even if we are evaluating a $\flet_1$m we may have to
+    introduce a non-linear binding in the environemnt: if the value we
     are currently computing will be used as the argument of a
-    non-linear function, the newly introduce variables may be forced
+    non-linear function, the newly introduced variables may be forced
     several times (or not at all). An example is
-    $\flet[ω] x = \flet[1] y = \varid{True}~in~y~in~(x,x)$: if evaluating
+    $\flet[ω] x = (\flet[1] y = \varid{True}) \fin y \fin (x,x)$: if evaluating
     this example yielded the binding $y :_1 Bool = True$, then the
     intermediate state would be ill-typed. So for the sake of proofs,
     instead we add $y :_ω Bool = True$ to the environment
@@ -2773,7 +2774,7 @@ when annotated states are well-typed.
 \end{definition}
 
 The denotation semantics preserves the well-typedness of annotated
-states throughout the evaluation. As proved next. From then on, we
+states throughout the evaluation\fref{lem:type-safety}. From then on, we
 will only consider the evaluation of well-typed states.
 
 \begin{lemma}[Denotational evaluation preserves typing]\label{lem:type-safety}
@@ -2797,14 +2798,19 @@ is the relation between the states of the ordinary evaluation and
 those of the denotational evaluation which witnesses the bisimulation.
 
 \begin{definition}[Denotation assignment]
+  \begin{alt}
+    We say that there is a denotation assignment $γ$ from an ordinary
+    state $Γ:e$ to a well-typed state ${Ξ ⊢ Γ' || e' :_ρ A , Σ}$ if
+    ...
+  \end{alt}
   A well-typed state is said to be a denotation assignment for an ordinary
   state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
   $e[Γ_1]=e' ∧ Γ' \leqslant Γ_ω[Γ_1]$.\improvement{explain the
-    restrictions of $Γ$}
+    restrictions of $Γ$}\jp{what is $Γ_ω$?}
 
   That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
   linear, and to drop unnecessary $ω$ bindings. Array pointers are
-  substituted with their value. With the additional
+  substituted with their value. \jp{Next sentence is not clear at all. Break it?}With the additional
   requirement\improvement{Make precise}{} that |MArray| pointers are
   substituted \emph{exactly once} in $(Γ',e)$, and, when susbtituting
   in $Γ'$, only inside the body of variables with multiplicity $1$,
@@ -2817,7 +2823,7 @@ those of the denotational evaluation which witnesses the bisimulation.
 \improvement{A sentence or two on each of the lemmas and theorems below}
 
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
-  The denotaion assignment relation defines a simulation of the
+  The denotation assignment relation defines a simulation of the
   ordinary evaluation by the denotational evaluation, both in the
   complete and partial case.
 
@@ -2887,9 +2893,17 @@ for the \emph{shared variable} and \emph{let} rules.
   derivation.
 \end{proof}
 
+\begin{alt}
+  A corrolary of bisimilarity is that the results of evaluating by the
+  ordinary are observationally equivalent to the results obtained by
+  the denotational semantics. Because any observation can be broken
+  down to a sequence of bits, it suffices to prove the results for a
+  value of the boolean type.
+\end{alt}
 \begin{theorem}[Observational equivalence]
   For all $\ta{⋅:e}{⊢ (⋅||e) :_ρ Bool,⋅}$, if $⋅:e ⇓ Δ:z$ and
   $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ Bool, ⋅ $, then $z=z'$
+\jp{Why do we care? (reference the lemma from somewhere else)}
 \end{theorem}
 \begin{proof}
   Because the semantics are deterministic, this is a direct
