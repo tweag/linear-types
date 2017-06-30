@@ -1762,7 +1762,7 @@ time again in a variety of other projects.
 \begin{description}
 \item[file descriptors] Linux specific extensions to POSIX file
   descriptors include operations to merge (via \texttt{select(2)} or
-  \textt{epoll(2)}), \texttt{splice(2)} or \texttt{tee(2)}
+  \texttt{epoll(2)}), \texttt{splice(2)} or \texttt{tee(2)}
   (\emph{i.e.} split) file descriptors. We can abstract these systems
   calls as a DSL for expressing arbitrary acyclic graphs of file
   descriptors, or dataflows. Data in these graphs flows between file
