@@ -539,7 +539,7 @@ Consider this \textsc{api} for files:
 \begin{code}
   type File
   openFile :: FilePath -> IO File
-  readLine :: File -> IO a
+  readLine :: File -> IO ByteString
   closeFile :: File -> IO ()
 \end{code}
 Here we see |File a| as a cursor in a file. Each call
@@ -972,13 +972,10 @@ its type and multiplicity; and multiplicity abstraction and application
 are explicit.  \HaskeLL{} will use type inference to fill in
 much of this information, but we do not address the challenges of type
 inference here.
-\improvement{Though there are some thoughts in \fref{sec:implementation}}
 
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
 arrows (albeit multiplicity-annotated ones), data types, and
 multiplicity polymorphism.
-% The annotated function type is a
-% generalisation of the intuitionistic arrow and the linear arrow.
 We use the following abbreviations:
 \(A → B ≝  A →_ω B\) and
 \(A ⊸ B ≝ A →_1 B\).
@@ -992,31 +989,9 @@ each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions: an
 argument of multiplicity $ω$ means that consuming the data constructor once
 makes no claim on how often that argument is consumed (\fref{def:consume}).
-% the data type can store, at
-% that position, data which \emph{must} reside in the dynamic heap;
-% while a multiplicity of $1$ means that data at that position
-% \emph{can} reside in either heap.
 All the variables in the multiplicities $q_i$ must be among
 $π_1…π_n$; we write $q[p_1…p_n]$ for the substitution of $π_i$ by
 $p_i$ in $q$.
-
-% For most purposes, $c_k$ behaves like a constant with the type
-% $A₁ →_{q₁} ⋯ A_{n_k} →_{q_{n_k}} D$. As the typing rules of
-% \fref{fig:typing} make clear, this means in particular that from a
-% value $d$ of type to save clutter $D$ with multiplicity $ω$, pattern matching
-% extracts the elements of $d$ with multiplicity $ω$. Conversely, if all
-% the arguments of $c_k$ have multiplicity $ω$, $c_k$ constructs $D$
-% with multiplicity $ω$.
-%
-% Note that, as discussed in \fref{sec:linear-constructors},
-% constructors with arguments of multiplicity $1$ are not more general
-% than constructors with arguments of multiplicity $ω$, because if, when
-% constructing $c u$ with the argument of $c$ of multiplicity $1$, $u$
-% \emph{may} be either of multiplicity $1$ or of multiplicity $ω$;
-% dually when pattern-matching on $c x$, $x$ \emph{must} be of
-% multiplicity $1$ (if the argument of $c$ had been of multiplicity $ω$,
-% on the other hand, then $x$ could be used either as having
-% multiplicity $ω$ or $1$).
 
 % -------------------------------------------------
 \subsection{Static semantics}
@@ -1219,8 +1194,9 @@ The details of the meta-theory of \calc{} are deferred to
 \fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
 \item That a pure linear interface can be implemented using mutations
-  under the hood.
-\item That the ``typestate'' of data is enforced by the type system\jp{what does this mean? what is a typestate?}
+  under the hood, like in \fref{sec:freezing-arrays}.
+\item That the usage protocol resources is enforced by the type
+  system, like in \fref{sec:io-protocols}
 \end{itemize}
 
 To that effect we introduce two semantics: a semantics with
@@ -1252,9 +1228,7 @@ The complete proof of both of these statements can be found in
 Let us review the design space allowed by \calc{}, the points in the space that
 we chose, and the generalizations that we have left open.
 
-\paragraph{Case rule}\unsure{While I was writing this new version,
-  Simon suggested that we canned the discussion on $\varid{case}_ω$
-  altogether. Let's discuss that soon.}
+\paragraph{Case rule}
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
 Consider |fst| again.  We could instead have
 \begin{code}
@@ -1268,13 +1242,9 @@ But now multiplicity polymorphism infects all basic data types (such as pairs), 
 is hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
 reasonable to annotate |case| in the same way.
 
-To put it another way, our design choice allows us to meaningfully inhabit
-|Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
-forbids that.
-
-\unsure{aspiwack: we could add that, interestingly, the regular tensor
-product of linear logic, where the components must be consumed the
-same number of times can be recovered as |type a ⊗ b = forall r. ((a,b)⊸r)⊸r|.}
+To put it another way, $\varid{case}_ω$ allows us to meaningfully inhabit
+|forall a b. Unrestricted (a,b) ⊸ (Unrestricted a, Unrestricted b)|, while linear logic
+does not.
 
 \paragraph{Subtyping}
 Because the type $A⊸B$ only strengthens the contract of its elements
@@ -1308,7 +1278,14 @@ also have |id :: forall π. Int → _ π Int|?  But as it stands, our rules do
 not accept it. To do so we would need $x :_π Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $π=1$ and $π=ω$.
-\simon{I could not work out what your $π$ and $π'$ were.... so I ended up with case analysis.  What am I missing?}
+\simon{I could not work out what your $π$ and $π'$ were.... so I ended
+  up with case analysis.  What am I missing? -- [aspiwack]: well, the
+  $π'$ was wrong because it has no reason to be a variable. But the
+  (var) rules tells us that in order for $x$ to be well-typed its
+  multiplicity in $Γ$ must be of the form $1+ωp$ (or just $1$, because
+  we don't have $0$). But your explanation is just as good. I just
+  tried to point out exactly what needed changing for identity to have
+  a polymorphic type}
 But if we had a richer domain of multiplicities, including
 $0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
 in a dependently typed system}, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
@@ -1317,7 +1294,7 @@ so because it is not the case that |id :: Int → _ 0 Int|.
 For now, we accept more conservative rules, in order to hold open the possiblity
 of extending the multiplicity domain later.  But there is an up-front cost,
 of somewhat less polymorphism than we might expect.  We hope that experience will
-lead us to a better assessment of the costs/benefit tradeoff here.
+lead us to a better assessment of the costs/benefit trade-off here.
 
 % \section{Applications}
 \section{Case Studies}
@@ -2868,4 +2845,4 @@ for the \emph{shared variable} and \emph{let} rules.
 % semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum bisimilar observationally
-%  LocalWords:  typestates denotational functor
+%  LocalWords:  typestates denotational functor polymorphism
