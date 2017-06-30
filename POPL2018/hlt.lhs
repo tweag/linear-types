@@ -2757,7 +2757,7 @@ when annotated states are well-typed.
     are currently computing will be used as the argument of a
     non-linear function, the newly introduce variables may be forced
     several times (or not at all). An example is
-    $\flet_ω x = \flet_1 y = \varid{True} in y in (x,x)$: if evaluating
+    $\flet[ω] x = \flet[1] y = \varid{True}~in~y~in~(x,x)$: if evaluating
     this example yielded the binding $y :_1 Bool = True$, then the
     intermediate state would be ill-typed. So for the sake of proofs,
     instead we add $y :_ω Bool = True$ to the environment
