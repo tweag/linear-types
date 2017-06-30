@@ -1761,70 +1761,15 @@ duplicated, only one of the duplicates will have a reference to |ni|.
 
 We have implemented a simplified version of this solution in the case
 where the impure \textsc{api} is a simple tree
-\textsc{api}.\improvement{With some data regarding implementation, a
+\textsc{api}.
+\rn{Why is API in textsc?  Do we just use that for all acronyms?}
+\improvement{With some data regarding implementation, a
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
-
-
-\subsection{Applications in industry}
-
-\todo{Integrate content in this section into future work / conclusion
-  / intro sections instead?}
-
-Our own work in an industrial context triggered our efforts to add
-linear types to GHC. We were originally motivated by precisely typed
-protocols for complex interactions in distributed systems and by
-taming GC latencies in highly synchronized distributed computations.
-But anecdotally, we have since noticed other applications time and
-time again in a variety of other projects.
-
-\begin{description}
-\item[file descriptors] Linux specific extensions to POSIX file
-  descriptors include operations to merge (via \texttt{select(2)} or
-  \texttt{epoll(2)}), \texttt{splice(2)} or \texttt{tee(2)}
-  (\emph{i.e.} split) file descriptors. We can abstract these systems
-  calls as a DSL for expressing arbitrary acyclic graphs of file
-  descriptors, or dataflows. Data in these graphs flows between file
-  descriptors entirely in kernel space and without copies. Splitting
-  a dataflow using |tee| should \emph{consume} the original dataflow,
-  since otherwise duplicating the dataflow involve copies, which we
-  want to rule out. That is, we want the following linear type for
-  |tee|:
-  \begin{code}
-    TODO
-  \end{code}
-\item[Streaming I/O] Complex interactions with multiple files or
-  sockets in a resource efficient way is an error prone endeavour
-  \cite{kiselyov_iteratees_2012}. Rather than building complex
-  pipelines with brittle explicit loops, copying data piecemeal, one
-  approach is to copy them wholemeal by composing efficient
-  combinators implemented once and for all. For example, the idea is
-  to reify message reads from a socket as a stream, as in the below
-  infinitely running echo service:
-  \begin{code}
-    receive :: Socket -> IOStream Msg
-    send :: Socket -> IOStream Msg -> IO ()
-    echo isock osock = send osock (receive isock)
-  \end{code}
-  However, reifying sequences of |IO| actions (socket reads) in this
-  way runs the risk that effects might be duplicated inadvertently. In
-  the above example, we wouldn't want to inadvertently hand over the
-  receive stream to multiple consumers, or the abstraction of
-  wholemeal I/O programming would be broken, because neither consumer
-  would ultimately see the same values from the stream. If say one
-  consumer reads in the stream first, the second consumer would see
-  all but an empty stream --- not what the first consumer saw.
-\item[Programming foreign heaps] Complex projects with large teams
-  invariably involve a mix of programming languages. Reusing legacy
-  code is often much cheaper than reimplementing it. A kep to
-  successful interoperation between languages is performance. If all
-  code lives in the same address space, then data need not be copied
-  as it flows from function to function implemented in multiple
-  programming languages. However, each language needs to manage its
-  own heap of objects. TODO finish
-\item[RDMA?] \todo{Arnaud?}
-\end{description}
+%
+In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
+have not yet implemented, but which motivate this work.
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
@@ -2405,6 +2350,71 @@ $$
 $$
 Where the order on contexts is the point-wise extension of the order
 on multiplicities.
+
+
+\subsection{Further applications, drawn from industry}
+\label{sec:industry}
+
+\todo{Integrate content in this section into future work / conclusion
+  / intro sections instead?}\rn{Agreed.}
+
+Our own work in an industrial context triggered our efforts to add
+linear types to GHC. We were originally motivated by precisely typed
+protocols for complex interactions in distributed systems and by
+taming GC latencies in highly synchronized distributed computations.
+But we have since noticed other applications time and
+ again in a variety of other projects.
+
+\begin{description}
+\item[File descriptors] Linux-specific extensions to POSIX file
+  descriptors include operations to merge (\texttt{select}/\texttt{epoll}),
+  \texttt{splice(2)} or split (\texttt{tee})
+  file descriptors. We can abstract these system
+  calls as a DSL for expressing arbitrary acyclic graphs of file
+  descriptors, or dataflows. Data in these graphs flows between file
+  descriptors entirely in kernel space and without copies. Splitting
+  a dataflow using |tee| should \emph{consume} the original dataflow,
+  since otherwise duplicating the dataflow involve copies, which we
+  want to rule out. That is, we want the following linear type for
+  |tee|:
+  \begin{code}
+    TODO
+  \end{code}
+\item[Streaming I/O] Complex interactions with multiple files or
+  sockets in a resource efficient way is an error prone endeavour
+  \cite{kiselyov_iteratees_2012}. Rather than building complex
+  pipelines with brittle explicit loops, copying data piecemeal, one
+  approach is to copy them wholemeal by composing efficient
+  combinators implemented once and for all. For example, the idea is
+  to reify message reads from a socket as a stream, as in the below
+  infinitely running echo service:
+  \begin{code}
+    receive :: Socket -> IOStream Msg
+    send :: Socket -> IOStream Msg -> IO ()
+    echo isock osock = send osock (receive isock)
+  \end{code}
+  However, reifying sequences of |IO| actions (socket reads) in this
+  way runs the risk that effects might be duplicated inadvertently. In
+  the above example, we wouldn't want to inadvertently hand over the
+  receive stream to multiple consumers, or the abstraction of
+  wholemeal I/O programming would be broken, because neither consumer
+  would ultimately see the same values from the stream. If, say, one
+  consumer reads in the stream first, the second consumer would see
+  all but an empty stream --- not what the first consumer saw.
+
+
+\item[Programming foreign heaps] Complex projects with large teams
+  invariably involve a mix of programming languages. Reusing legacy
+  code is often much cheaper than reimplementing it. A key to
+  successful interoperation between languages is performance. If all
+  code lives in the same address space, then data need not be copied
+  as it flows from function to function implemented in multiple
+  programming languages. However, each language needs to manage its
+  own heap of objects. TODO finish
+
+\item[RDMA?] \todo{Arnaud?}
+\end{description}
+
 
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
