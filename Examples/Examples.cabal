@@ -80,7 +80,8 @@ test-suite test-Examples
   if flag(pure)
     cpp-options: -DPUREMODE
   other-modules:       ByteArraySpec,
-                       PackedTreeSpec
+                       PackedTreeSpec,
+                       PurifySpec
   build-depends:
           base
         , bytestring >=0.10
