@@ -1535,12 +1535,12 @@ but rather an isomorphic, serialised representation: |Has [Foo]|.  Nevertheless,
 everything in a |Foo| can be read in a type-safe way directly from the
 serialised buffer.
 
-As a concrete example consider this simple datatype:
+As a concrete example consider this simple data-type:
 \begin{code}
   data Tree = Leaf Int | Branch Tree Tree
 \end{code}
 %
-From the data-type, we can derive a safe interface for writing and reading
+From this definition, we derive a safe operations for writing and reading
 values of this type:
 %
 \begin{code}
@@ -1551,8 +1551,8 @@ caseTree :: Has (Tree:r) -> (Has (Int:r) -> a) -> (Has (Tree:Tree:r) -> a) -> a
 
 These operations themselves go into the trusted codebase.  Internally, we choose
 a one-byte representation for the |Leaf|/|Branch| tags, and write these to the
-output stream, preceding the left-to-right serialised fields.  Yet
-``|write leafTag|'' would not suffice; it has a different type from |startLeaf| above.
+output stream, immediately before the left-to-right serialised fields.  Yet
+``|write leafTag|'' would not suffice, as its type differs from |startLeaf| above.
 % it would be |Needs (Tag:r) t ⊸ Needs r t`
 A coercion is needed internally to reify the knowledge
 that ``a tag plus an integer equals a leaf record, and thus a tree''.
@@ -1563,7 +1563,8 @@ On top of the safe interface, writing a complete |Leaf| is simple:
 writeLeaf n p = write n (startLeaf p)
 \end{code}
 
-To read |Tree| values, we pass continuations to the |caseTree| combinator.  That
+On the other hand,
+to read |Tree| values, we pass continuations to the |caseTree| combinator.  That
 is, |caseTree t k1 k2| reads the next tag byte in the stream, and calls |k1| if the
 tree is a leaf, or |k2| if it is a branch.
 %
@@ -1582,14 +1583,24 @@ Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
 and then we have what we need to build a map function that reads directly from
 an input buffer and writes directly to an output buffer.
 %
-Indeed, ``|map (+1) tree|'' touches only these buffers --- it performs zero heap
-allocation in our current Haskell implementation!
+Indeed, in our current Haskell implementation ``|map (+1) tree|'' touches {\em
+  only} these buffers --- it performs zero heap allocation!
 
 % withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 % 
 % mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)  
 
-\subsubsection{Optimization challenges}
+\subsubsection{Linear vs. non-linear and compiler optimisation}
+
+How would we build the same thing in Haskell without linear types?  It may seem
+that the ST monad is a suitable choice:
+
+\begin{code}
+writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)  
+\end{code}
+
+Here we use the same typestate associated with a |Needs| cursor, 
+
 
 \note{Multiple return values above}
 
@@ -1604,7 +1615,12 @@ allocation in our current Haskell implementation!
   \includegraphics[width=0.5 \textwidth]{figures/sumtree_all_plot_baseline_unpack-repack.pdf}
   \includegraphics[width=0.5 \textwidth]{figures/maptree_plot_baseline_unpack-repack.pdf}    
   \end{minipage}
-\caption{FINISHME}
+\caption{Speedup of operating directly on serialised data, either using
+  linear-types or the ST monad, as compared to fully unpacking, processing,
+  and repacking the data.  For reference a ``pointer-based'' version is also
+  included, which doesn't operate on serialised data at all, but instead normal
+  heap objects; it represents the hypothetical performance of ``unpack-repack''
+  if (de)serialisation were instantaneous.}
 \label{}
 \end{figure}
 
