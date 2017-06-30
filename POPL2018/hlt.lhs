@@ -1600,16 +1600,51 @@ Indeed, in our current Haskell implementation ``|map (+1) tree|'' touches {\em
 % 
 % mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)  
 
-\subsubsection{Linear vs. non-linear and compiler optimisation}
 
-How would we build the same thing in Haskell without linear types?  It may seem
+% \subsubsection{Linear vs. non-linear and compiler optimisations}
+\subsubsection{A version without linear types}
+
+How would we build the same thing in Haskell without linear types?  It may appear
 that the ST monad is a suitable choice:
 
 \begin{code}
 writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)  
 \end{code}
 
-Here we use the same typestate associated with a |Needs| cursor, 
+Here we use the same typestate associated with a |Needs| pointer, while also
+associating its mutable state with the ST session indexed by |s|.
+%
+Unfortunately, not only do we have the same trouble with freezing in the absence
+of linearity (|unsafeFreeze| or freeze at the end of the ST session), we also
+have an additional problem not present with arrays:
+%
+namely, a non-linear use of a |Needs| pointer can result in type-safety
+violations.
+
+For example, we can write a |Leaf| and a |Branch| to the same pointer in an
+interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
+an integer in bytes 1-9, while the branch will place another tag at byte 1.
+%
+If we define a type-safe serialization interface as one where every read at a
+type returns a whole value written at the same type, then this is a violation.
+We can receive a corrupted 8-byte integer, clobbered by a tag from an
+interleaved ``alternate future''.
+
+% Rehabilitating an ST-based formulation
+Fixing this problem would require switching to an indexed monad with additional
+type-indices that model the typestate of all accessible pointers, which would
+need to have static, type-level identifiers.  That is, it would require encoding
+linearity, and would break compatibility with the existing |ST| type and |Monad|
+type class.
+
+
+\subsubsection{Compiler optimisations}
+
+
+\begin{code}
+caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
+  Has (Tree:b) -> (Has (Int:b) ⊸ res) -> (Has (Tree:Tree:b) ⊸ res) -> res
+\end{code}
 
 
 \note{Multiple return values above}
