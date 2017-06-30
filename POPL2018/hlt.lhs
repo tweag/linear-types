@@ -307,8 +307,8 @@
 
 %% Keywords
 %% comma separated list
-\keywords{Haskell, laziness, linear logic, Linear types, systems
-  programming}  %% \keywords is optional
+\keywords{GHC, Haskell, laziness, linear logic, linear types,
+  polymorphism, typestate}  %% \keywords is optional
 
 
 %% \maketitle
