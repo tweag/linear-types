@@ -631,7 +631,7 @@ in particular, |g| can pass that argument to |f|.
 % of |x|:
 % \begin{itemize}
 % \item If |x| is a linear variable, \emph{i.e.} it must be consumed
-%   exactly once, we can ensure that it's consumed exactly once by
+%   exactly once, we can ensure that it is consumed exactly once by
 %   consuming |f| exactly once: it is the definition of linear
 %   functions. However, |g| does not guarantee that it will consume |f
 %   x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
@@ -1345,7 +1345,7 @@ in-memory and on-the-wire formats for simple product types (protobufs).
 
 
 Here is an unusual case where type-safety can {\em yield performance} by making it
-practical to write in a style previously infeasible.  Indeed, linearity and \Red{typestate}
+practical to write in a previously infeasible style.  Indeed, linearity and \Red{typestate}
 are both key to to a safe \textsc{api} for serialised data.
 %
 Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
@@ -1353,7 +1353,7 @@ Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
 widths, at unaligned byte-offsets.  
 %
 A pointer into a buffer containing serialised output is similar to a constructor
-method for a regular heap object.  It must ensure all fields are initialised, at
+method for a regular heap object.  It must ensure that all fields are initialised, at
 the proper addresses and with values of the correct type.
 %
 Linear use of the write pointer can ensure exactly this.  We use a type
@@ -1430,7 +1430,7 @@ newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 
 On the other hand, to {\em read} |Tree| values, we pass continuations to the
 |caseTree| combinator.  That is, |caseTree t k1 k2| reads the next byte in
-the stream, and calls |k1| if it's a leaf tag or |k2| otherwise.
+the stream, and calls |k1| if it is a leaf tag or |k2| otherwise.
 %
 Using |caseTree| together with a read for primitive values, we sum the leaves
 of a tree like so:
@@ -1537,7 +1537,7 @@ occupy distinct kinds.
 In fact, the type of a combinator like |caseTree| is a good fit for the recent
 ``levity polymorphism'' addition to
 \ghc{}~\cite{levity-polymorphism}\improvement{actual citation}.  We can
-thus allow the branches of the case to return types with different {\em physical
+thus allow the branches of the |case| to return types with different {\em physical
 representations}:
 
 \begin{code}
@@ -1555,10 +1555,10 @@ non-allocating, rather than depending on the optimiser.
 This results in better performance for the linear, compared to monadic version
 of the serialised-data transformations.
 
-The basic premise of \fref{fig:pack-bench} is that machine in the network
+The basic premise of \fref{fig:pack-bench} is that a machine in the network
 receives, processes, and transmits serialized data (trees).
 %
-We consider two simple benchmarks, a fold and map respectively: (1) summing the
+We consider two simple benchmarks, a |fold| and a |map| respectively: (1) summing the
 leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
 tree.
 %
@@ -1568,11 +1568,11 @@ processing the data directly in its serialised form results in speedups of over
 20$\times$ on large trees.
 
 The experiment was conducted on a Xeon E5-2699 CPU (2.30GHz, 64GB memory) using
-a modified version of GHC 8.2 (\fref{sec:impl}).  As tree size was varied, each
+a modified version of GHC 8.2 (\fref{sec:impl}).  As tree-size was varied, each
 data point was measured by performing many trials and taking a linear regression
-of iteration count against time (criterion library).
+of iteration count against time (using the criterion library~\cite{osullivan_criterion_2013}).
 %
-This allows for accurate measurements of both small and large times.  The
+This process allows for accurate measurements of both small and large times.  The
 baseline unpack-repack tree-summing times vary from 25ns to 1.9 seconds at
 depths 1 and 24 respectively.  Likewise, the baseline mapping times vary from
 215ns to 2.93 seconds.
@@ -1654,23 +1654,23 @@ of the plot we see tree size exceeding cache size.
 \label{sec:sockets}
 
 The \textsc{bsd} socket \textsc{api} is a standard, if not \emph{the}
-standard, through which computer connect over networks. It involves a
+standard, through which computers connect over networks. It involves a
 series of actions which must be performed in order: on the
 server-side, a freshly created socket must be \emph{bound} to an
 address, then start \emph{listening} incoming traffic, then
 \emph{accept} connection requests, said connection is returned as a
 new socket, this new socket can now \emph{receive} traffic. One reason
-for having that many actions to do is that the precise sequence of
+for having that many steps is that the precise sequence of
 action is protocol-dependent. For \textsc{tcp} traffic you would do as
 described, but for \textsc{udp}, which does not need connections, you
-would not accept connection but receive messages directly. The
+would not accept aa connection but receive messages directly. The
 \texttt{socket} library for Haskell, exposes precisely this sequence
 of actions.
 
 It is a bit clumsy to program with: with each action, not only the
-state of the socket changes, but also the actions permissible on
-this. Used as we are to typed programming languages, we like to use
-type to predicate what actions can be taken on an object. So the state
+state of the socket changes, but also the permissible actions.
+Used as we are to typed programming languages, we like to use
+the type to predicate what actions can be taken on an object. So the state
 of sockets should be tracked in the type. This is akin to a typestate
 analysis~\cite{strom_typestate_1983}.
 
@@ -1684,7 +1684,7 @@ their state, we can effectively encode the proper sequencing of socket
 actions.
 
 As an illustration, we implemented wrapper around the \textsc{api} of the
-\texttt{socket} library. For the sake of simplicity this wrapper is
+\texttt{socket} library. For concision, this wrapper is
 specialised for the case of \textsc{tcp}.
 
 \begin{code}
@@ -1702,9 +1702,9 @@ receive :: Socket Egress ⊸ IOL 1 (Socket Egress, Unrestricted ByteString)
 close :: forall s. Socket s -> IOL ω ()
 \end{code}
 
-This linear socket \textsc{api} is very similar to files': we use the
+This linear socket \textsc{api} is very similar to that of files: we use the
 |IOL| monad in order to enforce linear use of sockets. The difference
-is the argument to |Socket|, which represent the current state of the
+is the argument to |Socket|, which represents the current state of the
 socket and is used to limit the functions which can apply to a socket
 at a given time.
 
@@ -1713,9 +1713,10 @@ at a given time.
 
 \subsection{Pure bindings to impure APIs}
 \label{sec:spritekit}
+\jp{This section feels handwavy, it would require showing a bit more technical stuff. Do we have access to implementation?}
 
 \Citet{chakravarty_spritekit_2017} have a different kind of
-problem. \Citeauthor{chakravarty_spritekit_2017} are building a pure
+problem. They are building a pure
 interface for graphical interfaces, in the same style as the Elm
 programming language\improvement{citation}, but are implementing it in
 terms of an existing imperative graphical interface engine.
@@ -1725,19 +1726,19 @@ Scene| which is tasked with returning the next state that the
 interface will display. In order to efficiently map this pure
 interface to the imperative engine, the new |Scene| must not destroy
 the entire imperative scene and re-create it, but must be rendered
-using imperative update. To achieve this result, the nodes in the
+using imperative updates. To achieve this result, the nodes in the
 |Scene| data-type contain pointers to the imperative nodes that they
-represent, so that changing, say, a node |np|'s children will be
+represent, so that changing the children of a node |np| will be
 effected as an imperative update of the corresponding imperative node
-|ni|.
+|ni|.\jp{what is the relationship between np and ni?}
 
 But if the update function duplicates |ni|, the imperative update will
-mutate |ni| twice. Which would break the pure semantics. In the
+mutate |ni| twice, and thus break the pure semantics. In the
 current state of the implementation, the programmer must be careful of
 not duplicating |ni|. Linear types offer a solution where the
 programmer cannot inadvertently break that promise: we take the update
 function to be of type |Scene ⊸ Scene|. With such a linear update
-function duplication of |ni| becomes impossible, and if a |np| must be
+function no duplication of |ni| is possible, and if a |np| must be
 duplicated, only one of the duplicates will have a reference to |ni|.
 
 We have implemented a simplified version of this solution in the case
@@ -1776,8 +1777,8 @@ time again in a variety of other projects.
   \end{code}
 \item[Streaming I/O] Complex interactions with multiple files or
   sockets in a resource efficient way is an error prone endeavour
-  \Citeauthor{kiselyov_iteratees_2012}. Rather than building complex
-  pipelines with brittle explicit loops copying data piecemeal, one
+  \cite{kiselyov_iteratees_2012}. Rather than building complex
+  pipelines with brittle explicit loops, copying data piecemeal, one
   approach is to copy them wholemeal by composing efficient
   combinators implemented once and for all. For example, the idea is
   to reify message reads from a socket as a stream, as in the below
