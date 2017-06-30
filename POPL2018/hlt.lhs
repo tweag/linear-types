@@ -830,10 +830,12 @@ extension is not turned on.
 \subsection{Linear input/output} \label{sec:linear-io}
 
 In \fref{sec:io-protocols} we introduced the |IOL|
-monad.\footnote{|IOL p| is not a monad in the strict sense, because
-  |join :: IOL p (IOL q a) ⊸ IOL (pq) a| and we do not have the law
-  |pp = p|. We believe that it is a relative
-  monad~\cite{altenkirch_monads_2010}.}  But how does it work?  |IOL|
+monad.\footnote{|IOL p| is not a monad in the strict sense, |p| and
+  |q| can be different in |bindIOL|, it is however a relative
+  monad~\cite{altenkirch_monads_2010}. The details, involving the
+  functor |data Mult p a = Mult :: a -> _ p Mult p a| and linear
+  arrows, are left as an exercise to the reader}
+But how does it work?  |IOL|
 is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
@@ -2866,4 +2868,4 @@ for the \emph{shared variable} and \emph{let} rules.
 % semantics can't block on a typestate).
 
 %  LocalWords:  sequentialised supremum bisimilar observationally
-%  LocalWords:  typestates denotational
+%  LocalWords:  typestates denotational functor
