@@ -262,7 +262,7 @@
   permeate conventional functional programming.  Rather than bifurcate
   % not just data; functions must also be bifurcated due to closures.
   types into linear and non-linear counterparts, we instead
-  attach linearity to {\em binders}.  Linear function types can
+  attach linearity to {\em arrows}.  Linear function types can
   receive inputs from linearly-bound values, but can also operate over
   unrestricted, regular values.
 
