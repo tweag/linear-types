@@ -1197,7 +1197,7 @@ specifies that is it consumed once if the constructor is (\fref{def:consume}).
 To put it another way, suppose one of the linear
 fields\footnote{
 Recall \fref{sec:non-linear-constructors}, which described
-how each constructor can have a mixture of linear and non-linear fields).}
+how each constructor can have a mixture of linear and non-linear fields.}
 of $c_k$ is used non-linearly in $u_k$.  Then, $q_i=1$ (it is a linear field),
 so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
 forces the scrutinee to be used non-linearly, which is just what we want.
@@ -1262,10 +1262,10 @@ data Pair p q a b where
   Pair :: a → _ p b → _ q Pair p q a b
 
 fst :: Pair 1 ω a b ⊸ a
-fst x = case_1 x of Pair a b -> a
+fst x = case _ 1 x of Pair a b -> a
 \end{code}
 But now multiplicity polymorphism infects all basic data types (such as pairs), and it
-it hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
+is hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
 reasonable to annotate |case| in the same way.
 
 To put it another way, our design choice allows us to meaningfully inhabit
