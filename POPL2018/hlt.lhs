@@ -1726,12 +1726,12 @@ it?}
 % \rn{Maybe partially addressed?}
 
 In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
-of problem. They are building a pure interface for graphics, in the same style
+of problem. They build a pure interface for graphics, in the same style
 as the Elm programming language\improvement{citation}, but implement it in terms
 of an existing imperative graphical interface engine.
 
 Basically, the pure interface takes an update function |Scene -> Scene| which is
-tasked with returning the next state that the interface will display.
+tasked with returning the next state that the screen will display.
 %
 Yet it would be too expensive to dredge out and copy the {\em full} state of the
 imperative graphics engine, reproducing it as a pure |Scene| value.  The
@@ -1809,7 +1809,7 @@ inferred}, is that it prevents us from needing to split the context along
 multiplicities (for instance in the application rule), which would have been
 achieved, in practice, by extending the semi-ring structure with partial
 operations for subtraction and division.
-\rn{I don't follow this atm -- but how is it ``implementation''}
+\rn{I don't follow this atm -- and ... how is it ``implementation''?}
 
 Instead, in the application rule, we get the multiplicities of the
 variables in each of the operands as inputs and we can add them
@@ -1941,15 +1941,16 @@ even if the call's context can share a linear argument as many times as it
 pleases, a uniqueness type ensures that the argument of a function is
 not used anywhere else in the expression's context even if the callee
 can work with the argument as it pleases.
-
+%
 Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
 analysis} while linear typing provides a {\em cardinality analysis}. The
 former aims at in-place updates and related optimisations, the latter
 at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
 of linear types in relation with fusion can be found
-in~\citet{bernardy_composable_2015}, see also the discussion in
-\fref{sec:fusion}.\unsure{The discussion on fusion may well disappear}
+in~\citet{bernardy_composable_2015};
+\Red{see also the discussion in \fref{sec:fusion}.}
+\unsure{The discussion on fusion may well disappear}
 
 Because of this weak duality, we could have
 retrofitted uniqueness types to Haskell. But several points
@@ -1963,17 +1964,18 @@ conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
 \paragraph{Rust}
-Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called ownership
-typing. Like the original formulation of linear logic, in Rust \texttt{A}
-stands for linear values, unrestricted values at type \texttt{A} are denoted
-\texttt{RC<A>}, and duplication is explicit.
-
+Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
+ownership typing. Like the original formulation of linear logic, in Rust, if a
+type \texttt{T} stands for linear values, \Red{which are copied on function
+  calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
+explicit.
+%
 \jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
 Rust addresses the problem of being mindful about
 memory, resources, and latency, but this comes at a price: Rust,
 as a programming language, is specifically optimised for writing
-programs that are structured using the RAII
-pattern\footnote{\url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+programs that are structured using the ``RAII''
+pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
 (where resource lifetimes are tied directly or indirectly to stack
 allocated objects that are freed when the control flow exits the
 current lexical scope). Ordinary functional programs seldom fit this
@@ -1982,14 +1984,20 @@ citizens. For instance, tail-call optimization, crucial to the
 operational behaviour of many functional programs, is not usually
 sound. This is because resource liberation must be triggered when the
 tail call returns.
-
+%
 \HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm, yet gracefully scaling up
-to latency-sensitive and resource-sensitive programs is still
-possible.\improvement{Change depending on what we put in the
-  evaluation section}
+regular non-linear expressions are the norm, yet
+% gracefully scaling up
+investing extra effort to enforce invariants or perform low-level
+systems programming, with control over resources and latency, is still possible.
+
+%% for latency-sensitive and resource-sensitive programs is
+%% still possible.\improvement{Change depending on what we put in the evaluation
+%%   section}
 
 \paragraph{Borrowing}
+\rn{I don't understand the upshot of this section.  It seems to be that we can't
+currently do borrowing.}
 How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
 lifetime of references using a special system, one can simply give
 each reference a multiplicity of one, and explicitly pass them around.
@@ -2024,10 +2032,16 @@ local linear modifications to global linear modifications. Note that,
 if the original object lives in the GC heap (and thus can be shared),
 the same lens library can be used, but individual lifting of
 modifications cannot be implemented by in-place update.
+\rn{Is this text stale?  I.e. from an earlier version of the paper that talked
+  about the ``GC heap''?}
+
 
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
+\rn{I think this subsection should go first in this (long) section.  It more
+  directly addresses {\em competing} work.  I don't think we're competing with
+  the 1995 ST monad paper.}
 There are two possible choices to indicate the distinction between
 linear and unrestricted objects.  Our choice is to use the arrow
 type. That is, we have both a linear arrow to introduce linear objects
@@ -2084,8 +2098,8 @@ Advantages of ``linearity via arrows'' include:
   code, and be properly promoted. Indeed, assuming lists as defined in
   \fref{sec:compatibility} and:
   \begin{code}
-    (++) :: [a] ⊸ [a] ⊸ [a]
-    cycle :: [a] → [a]
+    (++) :: [a] ⊸ [a] ⊸ [a]   -- Append two lists
+    cycle :: [a] → [a]        -- Repeat a list, infinitely
   \end{code}
   The following definition type-checks, even though |++| is applied to
   unrestricted values and used in an unrestricted context.
@@ -2099,7 +2113,7 @@ Advantages of ``linearity via arrows'' include:
   polymorphism over kinds.
 
 \item Easier polymorphism.  Even in the cases where code-sharing requires
-  to use polymorphism, linearity on arrows is simpler to use.  Indeed,
+  polymorphism, linearity on arrows is simpler to use.  Indeed,
   multiplicity polymorphism can be supported by adding a special-purpose
   quantification, which is syntactically separate and does not
   interfere with any other aspect of the type-system. In contrast, if
@@ -2142,16 +2156,17 @@ Advantages of ``linearity via arrows'' include:
   % using a two-kind system.
   % JP: I do not understand this one.
 
-\item Easier implementation. We managed to implement a working
-  prototype of \textsc{ghc} linearity-on-arrow, and our patch is only a little
-  over 1000loc. We attribute its relative simplicity to two factors.
-  First, we could avoid tracking of the kind of types in the
-  variables, which is a daunting task in \textsc{ghc}'s type-checker \jp{why?}.
+\item Easier implementation. We managed to implement a working prototype of
+  \textsc{ghc}, linearity-on-arrow, with reasonable effort. We attribute its
+  relative simplicity to two factors.  First, we avoided tracking of the
+  kind of types in the variables, which is a daunting task in \textsc{ghc}'s
+  type-checker \jp{why?}.
 
   Second, \textsc{ghc} already supports impredicative dependent types
   and a wealth of unboxed or otherwise primitive types and kinds that
   cannot be substituted for polymorphic type arguments. Further extending
   the kind system is a complex endeavour which we could avoid entirely.
+\rn{I had trouble following this bullet.}  
 \end{itemize}
 
 % Such approaches have been very successful for theory: see for instance
@@ -2179,13 +2194,15 @@ represents the multiplicity of $t$. So, in
 \citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
 required, instead of computing $ωΓ$, it is enough to check that
 $ρ=ω$. The problem is that this check is arguably too coarse, and
-results into the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
+results in the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
+%
 This derivation is not desirable: it implies that there cannot be
 reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
 \citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
 into an isomorphism.
 In that respect, our system is closer to
 \citeauthor{ghica_bounded_2014}'s.
+\rn{Is there any remaining {\em difference} with \citeauthor{ghica_bounded_2014}?}
 
 % What we keep from
 % \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
@@ -2209,25 +2226,24 @@ this work is not directly applicable to \calc.
 we present in the evaluation section}
 
 \Citet{wakeling_linearity_1991} produced a complete implementation of
-a language with linear types, with the goal of improving the
+a language with linear types, with the goal of improving 
 performance. Their implementation features a separate linear heap, as
 \fref{appendix:dynamics} where they allocate as much as possible in the
 linear heap, as modelled by the strengthened semantics. However,
-\citeauthor{wakeling_linearity_1991} did not manage to obtain
+\citeauthor{wakeling_linearity_1991} did not obtain
 consistent performance gains. On the other hand, they still manage to
 reduce \textsc{gc} usage, which may be critical in distributed and
 real-time environments, where latency that matters more than
 throughput.
 
-\citeauthor{wakeling_linearity_1991} propose to not attempt prompt
-free of thunks and only taking advantage of linearity for managing the
-lifetimes of large arrays. Our approach is similar: we advocate
-exploiting linearity for operational gains on large data structures
-(but not just arrays) stored off-heap. we go further and leave the
-management of external (linear) data to external code, only accessing
-it via an \textsc{api}. Yet, our language supports an implementation
-where each individual constructor with multiplicity 1 can be allocated
-on a linear heap, and deallocated when it is pattern matched.
+\citeauthor{wakeling_linearity_1991} propose to {\em not} attempt prompt freeing of
+thunks; they only taking advantage of linearity for managing the lifetimes of
+large arrays. Our approach is similar: we advocate exploiting linearity for
+operational gains on large data structures (but not just arrays) stored
+off-heap. We go further and leave the management of external (linear) data to
+external code, only accessing it via an \textsc{api}. Yet, our language supports
+an implementation where each individual constructor with multiplicity 1 can be
+allocated on a linear heap, and deallocated when it is pattern matched.
 Implementing this behaviour is left for future work.
 
 \subsubsection{Garbage}
@@ -2235,9 +2251,10 @@ Implementing this behaviour is left for future work.
 track the number of times that a value is used. They intend their
 system to be used for inference instead of declaration. Thus, while
 our main concern is the smooth integration with an existing lazy
-functional language, they do not pay any attention to any language
-design issue. Besides, their system features both annotations on types
-an certain variable bindings: while our type-system is related to
+functional language, they are not concerned with language design issues.
+%
+Besides, their system features both annotations on types
+an certain variable bindings; while our type-system is related to
 theirs it appears to be incomparable.
 
 The work of \citet{igarashi_garbage_2000} uses the typesystem of
@@ -2259,9 +2276,9 @@ the language, in the sense that:
 \item such programs retain the same semantics, and
 \item the performance of existing programs is not affected,
 \item yet existing library functions can be reused to serve the
-  objectives of resource sensitive programs with simple changes to
-  their types without being duplicated.\unsure{Do we still speak of
-    resource sensitivity all that much?}
+  objectives of resource-sensitive programs with simple changes to
+  their types, and no code duplication.
+%  \unsure{Do we still speak of resource sensitivity all that much?}
 \end{itemize}
 In other words: regular Haskell comes first. Additionally, first-order
 linearly typed functions and data structures are usable directly from
