@@ -361,7 +361,7 @@ channels and other resources.  Our particular contributions are these
       It enjoys the usual properties of progress and preservation.
 \item We have implemented a prototype of system in as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
-      We use this prototype to implement case-study applications ((\fref{sec:applications})).
+      We use this prototype to implement case-study applications (\fref{sec:applications}).
       Our prototype performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
