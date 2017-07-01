@@ -103,7 +103,7 @@
 \setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
-\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
 \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
 \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
 \newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
@@ -1887,6 +1887,7 @@ comes at the cost of strong limitations in practice:
 |free  : A ⊸ r ⊸ r|.
 We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
+\info{Note \$ : $(a →_p b) ⊸ a →_p b$}
 \begin{code}
 alloc   $ \x ->                 {- x live -}
 alloc   $ \y ->                 {- x and y live -}
