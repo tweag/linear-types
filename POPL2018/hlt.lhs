@@ -2357,7 +2357,9 @@ synchronized distributed computations.  But we have since noticed other
 potential applications time of linearity in a variety of other projects.
 
 \begin{description}
-\item[File descriptors] Linux-specific extensions to POSIX file
+\item[File descriptors]
+\rn{Since I don't understand this one, I feel like its ok to leave it out.}
+  Linux-specific extensions to POSIX file
   descriptors include operations to merge (\texttt{select}/\texttt{epoll}),
   \texttt{splice} or split (\texttt{tee})
   file descriptors. We can abstract these system
@@ -2371,17 +2373,16 @@ potential applications time of linearity in a variety of other projects.
   \rn{What's the persistence story here?  Are these pipes only or connected to
     disk files?  I don't really follow the operational model.  If ``tee'' is
     possible {\em without} copying, doesn't that mean duplication is ok?
-    Doesn't splice still copy bytes, it just doesn't copy them into user space?}
+    Doesn't splice still {\em copy} bytes, it just doesn't copy them into user space?}
   \begin{code}
     TODO
   \end{code}
   
-\item[Streaming I/O] Complex interactions with multiple files or
-  sockets in a resource efficient way is an error prone endeavour
-  \cite{kiselyov_iteratees_2012}. Rather than building complex
-  pipelines with brittle explicit loops, the idea is to directly represent
-  infinite streams.  For example, the echo service below reifies sockets as
-  streams, connects them, and runs forever:
+\item[Streaming I/O] Complex interactions with multiple files or sockets in a
+  resource-efficient way is error-prone \cite{kiselyov_iteratees_2012}. Rather
+  than building complex pipelines with brittle explicit loops, one idea is to
+  directly represent infinite streams.  For example, the echo service below
+  reifies sockets as streams, connects them, and runs forever:
   \begin{code}
     receive :: Socket -> IOStream Msg
     send :: Socket -> IOStream Msg -> IO ()
@@ -2392,10 +2393,10 @@ actions making up streams are IO actions (e.g., socket read), which must not be
 duplicated inadvertently.  For example, we would not want to pass a receive
 stream to two consumers, which would call the underlying system call multiple
 times and observe different data.  Previous authors, including
-\citet{lippmeier_parallel_2016} have commented on this problem of unenforced
-linearity in stream libraries, nevertheless several such libraries are popular
-in the Haskell ecosystem today.
-  
+\citet{lippmeier_parallel_2016}, have commented on this problem of unenforced
+linearity in stream libraries.  Nevertheless, several such libraries are popular
+in the Haskell ecosystem.
+
   %% However, reifying sequences of |IO| actions (socket reads) in this
   %% way runs the risk that effects might be duplicated inadvertently. In
   %% the above example, we wouldn't want to inadvertently hand over the
@@ -2406,16 +2407,33 @@ in the Haskell ecosystem today.
   %% all but an empty stream --- not what the first consumer saw.
 
 
-\item[Programming foreign heaps] Complex projects with large teams
+% \item[Programming foreign heaps]
+\item[Inter-language memory management]
+  Complex projects with large teams
   invariably involve a mix of programming languages. Reusing legacy
   code is often much cheaper than reimplementing it. A key to
   successful interoperation between languages is performance. If all
   code lives in the same address space, then data need not be copied
   as it flows from function to function implemented in multiple
-  programming languages. However, each language needs to manage its
-  own heap of objects. TODO finish
+  programming languages.
+  % However, each language needs to manage its
+  % own heap of objects.
+  %
+\Red{
+    % Interactions between garbage collectors are complicated, typically
+    % involving pinning and weak pointers.
+%
+    Objects stored in a manually-managed area can sit outside the
+    language-specific heaps, but still require careful coordination.  A linear
+    type system makes a language a good citizen in this environment: ownership
+    of data, including the obligation to deallocate it, can transfer from
+    language A, to a shared space, to language B and back.}
+  %
+  \rn{Check if this was what was intended.}
+  \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
 
-\item[RDMA?] \todo{Arnaud?}
+  % \item[RDMA?] \todo{Arnaud?}
+  
 \end{description}
 
 
