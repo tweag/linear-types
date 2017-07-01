@@ -2265,9 +2265,164 @@ information at runtime to ensure that the GC does not follow dangling
 pointers.
 % JP: How can that even work?
 
-\section{Conclusion and future work}
 
-This article demonstrated how an existing lazy language, such
+
+\section{Future work}
+
+\todo{Section on the |newtype Unrestricted| problem. I guess?}
+
+\subsection{Inlining}
+\label{sec:fusion}
+
+\jp{Let me know if this section looks ok or not.}  Inlining is a
+cornerstone of program optimisation, exposing opportunities for many
+program transformations including fusion. Not every function can be
+inlined without negative effects on performance: inlining a function
+with more than one use sites of the argument may result in duplicating
+a computation. For example one should avoid the following reduction:
+|(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
+
+Many compilers can discover safe inlining opportunities by analysing
+source code and determine how many times functions use their
+arguments.  (In \textsc{ghc} this analysis is called a cardinality
+analysis~\cite{sergey_cardinality_2014}). The limitation of such an
+analysis is that it is necessarily heuristic (the problem is
+undecidable). Because inlining is crucial to efficiency, programmers
+find themselves in the uncomfortable position of relying on a
+heuristic to obtain efficient programs. That is, a small, seemingly
+innocuous change can prevent a critical inlining opportunity and have
+rippling catastrophic effects throughout the program.
+%% Due to this unpredictability, folklore is that high-level languages should be
+%% abandoned if one wants control over the performance.
+
+Linear types can address this issue by serving as a programmer-facing
+interface to inlining: because it is always safe to inline a linear
+function, we can make it part of the \emph{semantics} of linear
+functions that they are always inlined.
+%
+\rn{I don't see why this is OK - see questions in Slack.}
+%
+In fact, the system of
+multiplicity annotation of \calc{} can be faithfully embed the
+abstract domain presented by \citet{sergey_cardinality_2014}. This
+gives confidence that linear arrows can serve as cardinality
+\emph{declarations}.
+
+Formalising and implementing the integration of multiplicity
+annotation in the cardinality analysis is left as future work.
+
+\subsection{Extending multiplicities}
+\label{sec:extending-multiplicities}
+
+% Applications of multiplicities beyond linear logic seem to often have
+% too narrow a focus to have their place in a general purpose language
+% such as Haskell. \Citet{ghica_bounded_2014} propose to use
+% multiplicities to represent real time annotations, and
+% \citet{petricek_coeffects_2013} show how to use multiplicities to
+% track either implicit parameters (\emph{i.e.} dynamically scoped
+% variables) or the size of the history that a dataflow program needs to
+% remember. \jp{I think that it would be enough to list the useful extensions (dependent and affine types.)}
+
+\improvement{This section could speak about the borrowing
+  multiplicity.}  For the sake of this article, we use only multiplicities
+$1$ and $ω$.  But in fact \calc{} can readily be extended to
+more, following \citet{ghica_bounded_2014} and
+\citet{mcbride_rig_2016}. The general setting for \calc{} is an
+ordered-semiring of multiplicities (with a join operation for type
+inference).  In particular, in order to support dependent types, we
+additionally need a $0$ multiplicity. We may may want to add a
+multiplicity for affine arguments (\emph{i.e.}  arguments which can be
+used \emph{at most once}).
+
+The typing rules are mostly unchanged with the \emph{caveat} that
+$\mathsf{case}_q$ must exclude $q=0$ (in particular we see that we
+cannot substitute multiplicity variables by $0$). The variable rule is
+modified as:
+$$
+\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
+$$
+Where the order on contexts is the point-wise extension of the order
+on multiplicities.
+
+
+\subsection{Further applications, drawn from industry}
+\label{sec:industry}
+%% \todo{Integrate content in this section into future work / conclusion
+%%   / intro sections instead?}\rn{Agreed.}
+
+Our own work in an industrial context triggered our efforts to add linear types
+to GHC. We were originally motivated by precisely typed protocols for complex
+interactions in distributed systems and by taming GC latencies in highly
+synchronized distributed computations.  But we have since noticed other
+potential applications time of linearity in a variety of other projects.
+
+\begin{description}
+\item[File descriptors] Linux-specific extensions to POSIX file
+  descriptors include operations to merge (\texttt{select}/\texttt{epoll}),
+  \texttt{splice} or split (\texttt{tee})
+  file descriptors. We can abstract these system
+  calls as a DSL for expressing arbitrary acyclic graphs of file
+  descriptors, or dataflows. Data in these graphs flows between file
+  descriptors entirely in kernel space and without copies. Splitting
+  a dataflow using |tee| should \emph{consume} the original dataflow,
+  since otherwise duplicating the dataflow involves copies, which we
+  want to rule out. That is, we want the following linear type for
+  |tee|:
+  \rn{What's the persistence story here?  Are these pipes only or connected to
+    disk files?  I don't really follow the operational model.  If ``tee'' is
+    possible {\em without} copying, doesn't that mean duplication is ok?
+    Doesn't splice still copy bytes, it just doesn't copy them into user space?}
+  \begin{code}
+    TODO
+  \end{code}
+  
+\item[Streaming I/O] Complex interactions with multiple files or
+  sockets in a resource efficient way is an error prone endeavour
+  \cite{kiselyov_iteratees_2012}. Rather than building complex
+  pipelines with brittle explicit loops, the idea is to directly represent
+  infinite streams.  For example, the echo service below reifies sockets as
+  streams, connects them, and runs forever:
+  \begin{code}
+    receive :: Socket -> IOStream Msg
+    send :: Socket -> IOStream Msg -> IO ()
+    echo isock osock = send osock (receive isock)
+  \end{code}
+The contract with the programmer typically requires linearity.  The individual
+actions making up streams are IO actions (e.g., socket read), which must not be
+duplicated inadvertently.  For example, we would not want to pass a receive
+stream to two consumers, which would call the underlying system call multiple
+times and observe different data.  Previous authors, including
+\citet{lippmeier_parallel_2016} have commented on this problem of unenforced
+linearity in stream libraries, nevertheless several such libraries are popular
+in the Haskell ecosystem today.
+  
+  %% However, reifying sequences of |IO| actions (socket reads) in this
+  %% way runs the risk that effects might be duplicated inadvertently. In
+  %% the above example, we wouldn't want to inadvertently hand over the
+  %% receive stream to multiple consumers, or the abstraction of
+  %% wholemeal I/O programming would be broken, because neither consumer
+  %% would ultimately see the same values from the stream. If, say, one
+  %% consumer reads in the stream first, the second consumer would see
+  %% all but an empty stream --- not what the first consumer saw.
+
+
+\item[Programming foreign heaps] Complex projects with large teams
+  invariably involve a mix of programming languages. Reusing legacy
+  code is often much cheaper than reimplementing it. A key to
+  successful interoperation between languages is performance. If all
+  code lives in the same address space, then data need not be copied
+  as it flows from function to function implemented in multiple
+  programming languages. However, each language needs to manage its
+  own heap of objects. TODO finish
+
+\item[RDMA?] \todo{Arnaud?}
+\end{description}
+
+
+
+\section{Conclusions}
+
+This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
 the language, in the sense that:
 \begin{itemize}
@@ -2294,153 +2449,28 @@ bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is no
 inputs of the judgement, and the \emph{multiplicities} as outputs.''}
 typing contexts go in, inferred multiplicities come
 out (and are compared to their expected values). As we hoped, this
-design integrates very well in \textsc{ghc}.
+design integrates well in \textsc{ghc}.
 
-\improvement{We don't talk about the ffi all that much in this version
-I think. This paragraph ought to be adapted to match the content of
-the evaluation section.}
-It is worth stressing that, in order to implement foreign data
-structures like we advocate as a means to
-provide safe access to resources or reduce \textsc{gc} pressure and
-latency, we only need to modify the type system: primitives to
-manipulate foreign data can be implemented in user libraries using the
-foreign function interface. This helps keeping the prototype lean,
-since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
+%% \improvement{We don't talk about the ffi all that much in this version
+%% I think. This paragraph ought to be adapted to match the content of
+%% the evaluation section.}
+%% It is worth stressing that, in order to implement foreign data
+%% structures like we advocate as a means to
+%% provide safe access to resources or reduce \textsc{gc} pressure and
+%% latency, we only need to modify the type system: primitives to
+%% manipulate foreign data can be implemented in user libraries using the
+%% foreign function interface. This helps keeping the prototype lean,
+%% since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 
-\todo{Section on the |newtype Unrestricted| problem. I guess?}
-
-\subsection{Inlining}
-\label{sec:fusion}
-
-\jp{Let me know if this section looks ok or not.}  Inlining is a
-cornerstone of program optimisation, exposing opportunities for many
-program transformations including fusion. Not every function can be
-inlined without negative effects on performance: inlining a function
-with more than one use sites of the argument may result in duplicating
-a computation. For example one should avoid the following reduction:
-|(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
-
-Many compilers can discover safe inlining opportunities by analysing
-source code and determine how many times functions use their
-arguments.  (In \textsc{ghc} this analysis is called a cardinality
-analysis~\cite{sergey_cardinality_2014}). The limitation of such an
-analysis is that it is necessarily heuristic (the problem is
-undecidable). Because inlining is crucial to efficiency, programmers
-find themselves in the uncomfortable position of relying on a
-heuristic to obtain efficient programs. That is, a small, seemingly
-innocuous change can prevent a critical inlining opportunity and have
-rippling catastrophic effects throughout the program.  Due to this
-impredictability, folklore is that high-level languages should be
-abandonned if one wants control over the performance.
-
-Linear types can address this issue by serving as a programmer-facing
-interface to inlining: because it is always safe to inline a linear
-function, we can make it part of the \emph{semantics} of linear
-functions that they are always inlined. In fact, the system of
-multiplicity annotation of \calc{} can be faithfully embed the
-abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence that linear arrows can serve as cardinality
-\emph{declarations}.
-
-Formalising and implementing the integration of multiplicity
-annotation in the cardinality analysis is left as future work.
-
-\subsection{Extending multiplicities}
-\label{sec:extending-multiplicities}
-
-% Applications of multiplicities beyond linear logic seem to often have
-% too narrow a focus to have their place in a general purpose language
-% such as Haskell. \Citet{ghica_bounded_2014} propose to use
-% multiplicities to represent real time annotations, and
-% \citet{petricek_coeffects_2013} show how to use multiplicities to
-% track either implicit parameters (\emph{i.e.} dynamically scoped
-% variables) or the size of the history that a dataflow program needs to
-% remember. \jp{I think that it would be enough to list the useful extensions (dependent and affine types.)}
-
-\improvement{This section could speak about the borrowing
-  multiplicity.}  For the sake of this article, we use only $1$ and
-$ω$ as possibilities.  But in fact \calc{} can readily be extended to
-more multiplicities: we can follow \citet{ghica_bounded_2014} and
-\citet{mcbride_rig_2016}. The general setting for \calc{} is an
-ordered-semiring of multiplicities (with a join operation for type
-inference).  In particular, in order to support dependent types, we
-additionally need a $0$ multiplicity. We may may want to add a
-multiplicity for affine arguments (\emph{i.e.}  arguments which can be
-used \emph{at most once}).
-
-The typing rules are mostly unchanged with the \emph{caveat} that
-$\mathsf{case}_q$ must exclude $q=0$ (in particular we see that we
-cannot substitute multiplicity variables by $0$). The variable rule is
-modified as:
-$$
-\inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
-$$
-Where the order on contexts is the point-wise extension of the order
-on multiplicities.
+Even though we change only \ghc's type system, we found that the compiler and
+runtime already had the features necessary for unboxed, off-heap, and in-place
+data structures.  That is, \ghc{} has the low-level compiler primitives and
+FFI-support to implement, for example, mutable arrays, mutable cursors into
+serialised data, or off-heap foreign data structures without garbage collection.
+These could be implemented (unsafely) {\em before} this work, but linearity
+unlocks these capabilities for safe use within pure code.
 
 
-\subsection{Further applications, drawn from industry}
-\label{sec:industry}
-
-\todo{Integrate content in this section into future work / conclusion
-  / intro sections instead?}\rn{Agreed.}
-
-Our own work in an industrial context triggered our efforts to add
-linear types to GHC. We were originally motivated by precisely typed
-protocols for complex interactions in distributed systems and by
-taming GC latencies in highly synchronized distributed computations.
-But we have since noticed other applications time and
- again in a variety of other projects.
-
-\begin{description}
-\item[File descriptors] Linux-specific extensions to POSIX file
-  descriptors include operations to merge (\texttt{select}/\texttt{epoll}),
-  \texttt{splice(2)} or split (\texttt{tee})
-  file descriptors. We can abstract these system
-  calls as a DSL for expressing arbitrary acyclic graphs of file
-  descriptors, or dataflows. Data in these graphs flows between file
-  descriptors entirely in kernel space and without copies. Splitting
-  a dataflow using |tee| should \emph{consume} the original dataflow,
-  since otherwise duplicating the dataflow involve copies, which we
-  want to rule out. That is, we want the following linear type for
-  |tee|:
-  \begin{code}
-    TODO
-  \end{code}
-\item[Streaming I/O] Complex interactions with multiple files or
-  sockets in a resource efficient way is an error prone endeavour
-  \cite{kiselyov_iteratees_2012}. Rather than building complex
-  pipelines with brittle explicit loops, copying data piecemeal, one
-  approach is to copy them wholemeal by composing efficient
-  combinators implemented once and for all. For example, the idea is
-  to reify message reads from a socket as a stream, as in the below
-  infinitely running echo service:
-  \begin{code}
-    receive :: Socket -> IOStream Msg
-    send :: Socket -> IOStream Msg -> IO ()
-    echo isock osock = send osock (receive isock)
-  \end{code}
-  However, reifying sequences of |IO| actions (socket reads) in this
-  way runs the risk that effects might be duplicated inadvertently. In
-  the above example, we wouldn't want to inadvertently hand over the
-  receive stream to multiple consumers, or the abstraction of
-  wholemeal I/O programming would be broken, because neither consumer
-  would ultimately see the same values from the stream. If, say, one
-  consumer reads in the stream first, the second consumer would see
-  all but an empty stream --- not what the first consumer saw.
-
-
-\item[Programming foreign heaps] Complex projects with large teams
-  invariably involve a mix of programming languages. Reusing legacy
-  code is often much cheaper than reimplementing it. A key to
-  successful interoperation between languages is performance. If all
-  code lives in the same address space, then data need not be copied
-  as it flows from function to function implemented in multiple
-  programming languages. However, each language needs to manage its
-  own heap of objects. TODO finish
-
-\item[RDMA?] \todo{Arnaud?}
-\end{description}
 
 
 %% Acknowledgments
