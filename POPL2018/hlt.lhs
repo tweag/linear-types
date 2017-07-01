@@ -430,7 +430,7 @@ Haskell actually generalises over the type of array indices, but for this
 paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
 \begin{code}
 array :: (Int,Int) -> [(Int,a)] -> Array a
-\end{code}
+\end{code}\unsure{should array take a single Int? }
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement variations (and certainly do implement more complex variations, see for example \fref{sec:cursors}).  Here is the
@@ -2505,6 +2505,7 @@ unlocks these capabilities for safe use within pure code.
   %% extraction tools.
   This work has received funding from the European Commission
   through the SAGE project (grant agreement no. 671500).
+  We thank Peter Thiemann for his valuable feedback on a draft of this paper.
 \end{acks}
 
 %% Bibliography
