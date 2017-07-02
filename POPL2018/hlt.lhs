@@ -36,6 +36,7 @@
 %format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
 %format unIOL = "\varid{unIO}_{\varid{L}}"
 %format forM_ = "\varid{forM}\_"
+%format mapM_ = "\varid{mapM}\_"
 %format __ = "\_"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
@@ -1896,6 +1897,7 @@ alloc   $ \z ->                 {- y and z live -}
 free y  $                       {- z live -}
 free z
 \end{code}
+% $ hint to emacs (parser) that we're not in math mode.
 
 %% \item |ST| actions cannot be interleaved with |IO| actions. So in our
 %%   mutable array examples, for instance, it is not possible to provide
@@ -2278,45 +2280,58 @@ pointers.
 
 \todo{Section on the |newtype Unrestricted| problem. I guess?}
 
-\subsection{Inlining}
+\subsection{Controlling program optimizations}
+\subsubsection{Inlining}
 \label{sec:fusion}
-
 \jp{Let me know if this section looks ok or not.}  Inlining is a
-cornerstone of program optimisation, exposing opportunities for many
-program transformations including fusion. Not every function can be
+cornerstone of program optimization, exposing opportunities for many
+program transformations. Not every function can be
 inlined without negative effects on performance: inlining a function
 with more than one use sites of the argument may result in duplicating
 a computation. For example one should avoid the following reduction:
 |(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
-Many compilers can discover safe inlining opportunities by analysing
+Many compilers can discover safe inlining opportunities by analyzing
 source code and determine how many times functions use their
 arguments.  (In \textsc{ghc} this analysis is called a cardinality
 analysis~\cite{sergey_cardinality_2014}). The limitation of such an
 analysis is that it is necessarily heuristic (the problem is
-undecidable). Because inlining is crucial to efficiency, programmers
+undecidable for Haskell). Because inlining is crucial to efficiency, programmers
 find themselves in the uncomfortable position of relying on a
 heuristic to obtain efficient programs. That is, a small, seemingly
 innocuous change can prevent a critical inlining opportunity and have
 rippling catastrophic effects throughout the program.
-%% Due to this unpredictability, folklore is that high-level languages should be
-%% abandoned if one wants control over the performance.
+Such unpredictable behavior feeds the folklore that high-level languages should be
+abandoned if one wants precise control over the performance.
+\jp{Do not delete the above sentence without discussion.}
 
-Linear types can address this issue by serving as a programmer-facing
-interface to inlining: because it is always safe to inline a linear
-function, we can make it part of the \emph{semantics} of linear
-functions that they are always inlined.
-%
-\rn{I don't see why this is OK - see questions in Slack.}
-%
-In fact, the system of
-multiplicity annotation of \calc{} can be faithfully embed the
-abstract domain presented by \citet{sergey_cardinality_2014}. This
-gives confidence that linear arrows can serve as cardinality
-\emph{declarations}.
+A solution is to use the multiplicity annotations of \calc{} as
+cardinality \emph{declarations}. Formalizing and implementing the
+integration of multiplicity annotations in the cardinality analysis is
+left as future work.
 
-Formalising and implementing the integration of multiplicity
-annotation in the cardinality analysis is left as future work.
+\subsubsection{Full-laziness}
+
+Another important optimization of GHC is full-laziness.
+Consider the following program, which is a simplified version of an issue that occurs in
+practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
+\begin{code}
+main = forM_ [1..5] (\i -> mapM_ print [1 .. N])
+\end{code}
+If |mapM_| is not inlined, then full-laziness transforms the above into
+\begin{code}
+main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
+\end{code}
+Unfortunately, in this case, full-laziness is actually a
+pessimization: one would expect the above program to use constant
+space (because the list |[1..N]| is produced lazily). However, if
+there is sharing of the intermediate list |[1..N]| between runs of
+|mapM_ print [1 .. N]|, the memory residency is proportional to |N|.
+In this case, linearity |mapM_ :: (a ⊸ IO b) -> [a] ⊸ IO ()| should
+inform the compiler not only that inlining is possible but that
+sharing of the linear arguments is to be avoided. In fact, we could
+make it part of the semantics of linear functions that their arguments
+are never subject to full-laziness.
 
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
@@ -3032,5 +3047,6 @@ for the \emph{shared variable} and \emph{let} rules.
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
 
-%  LocalWords:  sequentialised supremum bisimilar observationally
-%  LocalWords:  typestates denotational functor polymorphism
+%  LocalWords:  sequentialised supremum bisimilar observationally ghc
+%  LocalWords:  typestates denotational functor polymorphism inlined
+%  LocalWords:  inlining cardinality forM mapM xs pessimization
