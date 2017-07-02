@@ -2284,35 +2284,35 @@ pointers.
 \subsubsection{Inlining}
 \label{sec:fusion}
 \jp{Let me know if this section looks ok or not.}  Inlining is a
-cornerstone of program optimization, exposing opportunities for many
+cornerstone of program optimisation, exposing opportunities for many
 program transformations. Not every function can be
 inlined without negative effects on performance: inlining a function
 with more than one use sites of the argument may result in duplicating
 a computation. For example one should avoid the following reduction:
 |(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
-Many compilers can discover safe inlining opportunities by analyzing
+Many compilers can discover safe inlining opportunities by analysing
 source code and determine how many times functions use their
 arguments.  (In \textsc{ghc} this analysis is called a cardinality
 analysis~\cite{sergey_cardinality_2014}). The limitation of such an
 analysis is that it is necessarily heuristic (the problem is
 undecidable for Haskell). Because inlining is crucial to efficiency, programmers
 find themselves in the uncomfortable position of relying on a
-heuristic to obtain efficient programs. That is, a small, seemingly
+heuristic to obtain efficient programs. Consequently, a small, seemingly
 innocuous change can prevent a critical inlining opportunity and have
 rippling catastrophic effects throughout the program.
-Such unpredictable behavior feeds the folklore that high-level languages should be
-abandoned if one wants precise control over the performance.
+Such unpredictable behaviour justifies the folklore that high-level languages should be
+abandoned to gain precise control over program efficiency.
 \jp{Do not delete the above sentence without discussion.}
 
-A solution is to use the multiplicity annotations of \calc{} as
-cardinality \emph{declarations}. Formalizing and implementing the
+A remedy is to use the multiplicity annotations of \calc{} as
+cardinality \emph{declarations}. Formalising and implementing the
 integration of multiplicity annotations in the cardinality analysis is
 left as future work.
 
 \subsubsection{Full-laziness}
 
-Another important optimization of GHC is full-laziness.
+Another important optimisation of GHC is full-laziness.
 Consider the following program, which is a simplified version of an issue that occurs in
 practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
 \begin{code}
@@ -2323,7 +2323,7 @@ If |mapM_| is not inlined, then full-laziness transforms the above into
 main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
 \end{code}
 Unfortunately, in this case, full-laziness is actually a
-pessimization: one would expect the above program to use constant
+pessimisation: one would expect the above program to use constant
 space (because the list |[1..N]| is produced lazily). However, if
 there is sharing of the intermediate list |[1..N]| between runs of
 |mapM_ print [1 .. N]|, the memory residency is proportional to |N|.
@@ -3047,6 +3047,31 @@ for the \emph{shared variable} and \emph{let} rules.
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
 
-%  LocalWords:  sequentialised supremum bisimilar observationally ghc
-%  LocalWords:  typestates denotational functor polymorphism inlined
-%  LocalWords:  inlining cardinality forM mapM xs pessimization
+% Local Variables:
+% ispell-local-dictionary: "british"
+% End:
+
+%  LocalWords:  FHPC Lippmeier al honda pq th ffi monadic runLowLevel
+%  LocalWords:  forkIO initialContext runtime doneWithContext Primops
+%  LocalWords:  deallocation Launchbury launchbury gc scrutinee dup
+%  LocalWords:  centric polymorphism modality intuitionistic typable
+%  LocalWords:  compositional Andreoli's openfile myfile ReadMore ys
+%  LocalWords:  hClose xs deallocated linearities mcbride snd inlined
+%  LocalWords:  unboxed Haskellian api newByteArray MutableByteArray
+%  LocalWords:  updateByteArray freeByteArray indexMutByteArray et ss
+%  LocalWords:  freezeByteArray ByteArray indexByteArray Unfused srcs
+%  LocalWords:  evaluator lippmeier functionals copySetP FilePath sk
+%  LocalWords:  dsts sourceFs sinkFs drainP expensiveComputation WHNF
+%  LocalWords:  duplications bernardy deallocate morris latencies gc
+%  LocalWords:  doSomethingWithLinearHeap untyped boolean withFile ap
+%  LocalWords:  forall aspiwack dually involutive runComputation lmb
+%  LocalWords:  withNewByteArray expensiveFunction affine booleans zs
+%  LocalWords:  Kleisli ghica wakeling TODOs Haskell subtype IOClient
+%  LocalWords:  OpenFile IOServer shareable openFile monads withAHeap
+%  LocalWords:  splitByteArray withLinearHeap weightedTypes foldArray
+%  LocalWords:  optimizations denotational withNewArray updateArray
+%  LocalWords:  splitArray arraySize Storable byteArraySize natively
+%  LocalWords:  unannotated tuple subkinding invertible coeffects ghc
+%  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
+%  LocalWords:  Finalisers effectful subtyping parameterised Inlining
+%  LocalWords:  inlining cardinality forM mapM pessimisation
