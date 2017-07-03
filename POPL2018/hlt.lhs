@@ -2165,17 +2165,21 @@ Advantages of ``linearity via arrows'' include:
   % using a two-kind system.
   % JP: I do not understand this one.
 
-\item Easier implementation. We managed to implement a working prototype of
-  \textsc{ghc}, linearity-on-arrow, with reasonable effort. We attribute its
-  relative simplicity to two factors.  First, we avoided tracking of the
-  kind of types in the variables, which is a daunting task in \textsc{ghc}'s
-  type-checker \jp{why?}.
+% \item Easier implementation. We managed to implement a working prototype of
+%   \textsc{ghc}, linearity-on-arrow, with reasonable effort. We attribute its
+%   relative simplicity to two factors.  First, we avoided tracking of the
+%   kind of types in the variables, which is a daunting task in \textsc{ghc}'s
+%   type-checker \jp{why?}.
 
-  Second, \textsc{ghc} already supports impredicative dependent types
-  and a wealth of unboxed or otherwise primitive types and kinds that
-  cannot be substituted for polymorphic type arguments. Further extending
-  the kind system is a complex endeavour which we could avoid entirely.
-\rn{I had trouble following this bullet.}  
+%   Second, \textsc{ghc} already supports impredicative dependent types
+%   and a wealth of unboxed or otherwise primitive types and kinds that
+%   cannot be substituted for polymorphic type arguments. Further extending
+%   the kind system is a complex endeavour which we could avoid entirely.
+
+%   JP: Probably, the implementation burden *itself* can be kept under
+%   control thanks this kind of polymorphism (see Simon's email):
+%   TYPE : Linearity -> KIND
+
 \end{itemize}
 
 % Such approaches have been very successful for theory: see for instance
