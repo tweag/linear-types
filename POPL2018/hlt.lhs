@@ -1753,9 +1753,9 @@ But if the update function {\em duplicates} a proxy node |np|, sharing the
 same reference to a foreign, imperative object |ni|, then the engine
 will mutate |ni| twice, and break the pure semantics.
 %
-In the current state of the implementation, the programmer must be careful of
-not duplicating. Linear types offer a solution where the programmer {\em must}
-keep that promise: we change the update function to type |Scene ⊸ Scene|. With a
+In the current state of the implementation, the burden of checking non-duplication is on the programmer.
+Linear types offer to switch that burden to the compiler.
+We change the update function to type |Scene ⊸ Scene|. With a
 linear update function no duplication of |ni| is possible, and if a |np| must be
 duplicated, only one of the duplicates will have a reference to |ni|.
 
