@@ -1198,11 +1198,12 @@ The details of the meta-theory of \calc{} are deferred to
   system, like in \fref{sec:io-protocols}
 \end{itemize}
 
-To that effect we introduce two semantics: a semantics with
-mutation where type-states are enforced dynamically and a pure semantics
+To that effect we introduce two semantics: a semantics with mutation
+where type-level states are enforced dynamically and a pure semantics
 that tracks linearity carefully, but where ``mutations'' are
 implemented as copying. Both semantics are big step operational
-semantics with laziness in the style of \citet{launchbury_natural_1993}.
+semantics with laziness in the style of
+\citet{launchbury_natural_1993}.
 
 The semantics are instantiated with the arrays of
 \fref{sec:freezing-arrays}. They can be easily extended to support,
@@ -1212,13 +1213,12 @@ for instance, a real-world token and file handles as in
 We then prove the two semantics to be bisimilar from which we can
 deduce:
 \todo{make sure that the theorem titles are exactly the same in the appendix.}
-\begin{theorem}\label{thm:obs-equiv}
-  The implementation of the array primitives with in-place mutation is
-  observationally equivalent to a pure implementation.
+\begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
+  The semantics with in-place mutation is observationally equivalent to the pure semantics.
 \end{theorem}
-\begin{theorem}\label{thm:progress}
-  Neither semantics can block on typestates. Therefore typestates need
-  not be tracked dynamically.
+\begin{theorem}[Progress]\label{thm:progress}
+  Evualation does not block. In particular, type-level states need not
+  be checked dynamically.
 \end{theorem}
 
 The complete proof of both of these statements can be found in
@@ -3007,14 +3007,18 @@ those of the denotational evaluation which witnesses the bisimulation.
   Both are proved by a straightforward induction over the derivation of
   $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$ (resp. $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$).
 \end{proof}
-By induction, using the restrictions on substituting |MArray| pointers
-for the \emph{shared variable} and \emph{let} rules.
+
+Equipped with this bisimulation, we are ready to prove the theorems of
+\fref{sec:metatheory}.
 
 {
 \renewcommand{\thetheorem}{\ref{thm:progress}}
 \begin{theorem}[Progress]
-  For any partial derivation of $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the
-  derivation can be extended.
+  Evualation does not block. That is, for any partial derivation of
+  $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the derivation can be
+  extended.
+
+  In particular, type-level states need not be checked dynamically.
 \end{theorem}
 \addtocounter{theorem}{-1}
 }
@@ -3037,19 +3041,19 @@ for the \emph{shared variable} and \emph{let} rules.
   derivation.
 \end{proof}
 
-\begin{alt}
-  A corrolary of bisimilarity is that the results of evaluating by the
-  ordinary are observationally equivalent to the results obtained by
-  the denotational semantics. Because any observation can be broken
-  down to a sequence of bits, it suffices to prove the results for a
-  value of the boolean type.
-\end{alt}
+Observational equivalence, which means, for \calc{}, that an
+implementation in terms of in-place mutation is indistinguishable from
+a pure implementation, is phrased in terms of the |Bool|: any
+distinction which we can make between two evaulations can be
+extended so that one evaluates to |False| and the other to |True|.
 {
 \renewcommand{\thetheorem}{\ref{thm:obs-equiv}}
 \begin{theorem}[Observational equivalence]
-  For all $\ta{⋅:e}{⊢ (⋅||e) :_ρ Bool,⋅}$, if $⋅:e ⇓ Δ:z$ and
-  $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ Bool, ⋅ $, then $z=z'$
-\jp{Why do we care? (reference the lemma from somewhere else)}
+  The ordinary semantics, with in-place mutation is observationally equivalent
+  to the pure denotational semantics.
+
+  That is, for all $\ta{⋅:e}{⊢ (⋅||e) :_ρ \varid{Bool},⋅}$, if $⋅:e ⇓ Δ:z$ and
+  $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ \varid{Bool}, ⋅ $, then $z=z'$
 \end{theorem}
 \addtocounter{theorem}{-1}
 }
