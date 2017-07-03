@@ -133,7 +133,7 @@
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
 
-%%%%%%%%%%%%%%%%% Author's configuration %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% /Author's configuration %%%%%%%%%%%%%%%%%
 
 %% Some recommended packages.
 \usepackage{booktabs}   %% For formal tables:
@@ -1212,11 +1212,11 @@ for instance, a real-world token and file handles as in
 We then prove the two semantics to be bisimilar from which we can
 deduce:
 \todo{make sure that the theorem titles are exactly the same in the appendix.}
-\begin{theorem}
+\begin{theorem}\label{thm:obs-equiv}
   The implementation of the array primitives with in-place mutation is
   observationally equivalent to a pure implementation.
 \end{theorem}
-\begin{theorem}
+\begin{theorem}\label{thm:progress}
   Neither semantics can block on typestates. Therefore typestates need
   not be tracked dynamically.
 \end{theorem}
@@ -3010,10 +3010,14 @@ those of the denotational evaluation which witnesses the bisimulation.
 By induction, using the restrictions on substituting |MArray| pointers
 for the \emph{shared variable} and \emph{let} rules.
 
+{
+\renewcommand{\thetheorem}{\ref{thm:progress}}
 \begin{theorem}[Progress]
   For any partial derivation of $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the
   derivation can be extended.
 \end{theorem}
+\addtocounter{theorem}{-1}
+}
 \begin{proof}
   By liveness (\fref{lem:liveness}) it is sufficient to prove the case
   of the denotational semantics.
@@ -3040,11 +3044,15 @@ for the \emph{shared variable} and \emph{let} rules.
   down to a sequence of bits, it suffices to prove the results for a
   value of the boolean type.
 \end{alt}
+{
+\renewcommand{\thetheorem}{\ref{thm:obs-equiv}}
 \begin{theorem}[Observational equivalence]
   For all $\ta{⋅:e}{⊢ (⋅||e) :_ρ Bool,⋅}$, if $⋅:e ⇓ Δ:z$ and
   $⋅ ⊢ (⋅||e⇓ Δ||z')  :_ρ Bool, ⋅ $, then $z=z'$
 \jp{Why do we care? (reference the lemma from somewhere else)}
 \end{theorem}
+\addtocounter{theorem}{-1}
+}
 \begin{proof}
   Because the semantics are deterministic, this is a direct
   consequence of bisimilarity.
