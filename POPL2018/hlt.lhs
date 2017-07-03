@@ -1811,7 +1811,18 @@ inferred}, is that it prevents us from needing to split the context along
 multiplicities (for instance in the application rule), which would have been
 achieved, in practice, by extending the semi-ring structure with partial
 operations for subtraction and division.
-\rn{I don't follow this atm -- and ... how is it ``implementation''?}
+\rn{I don't follow this atm -- and ... how is it ``implementation''?
+  -- aspiwack, I think this has become a bit muddled in various edits
+  (also quite probably my first attempt was not clear). I may not be
+  too important. I intended to convey that in an implementation,
+  having multiplicity as output requires combining them with addition,
+  scaling and meet. Whereas having them as input requires to split
+  context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
+  = Γ_1 + qΓ_2$), which is a magical operation. In order to do that
+  one could thread $Γ$ as a state and perform the appropriate
+  substractions to remove things from $Γ$ as we are using them such
+  that when we reach the second branch of $Γ$ , we are only left with
+  $qΓ_2$ and dividing by $q$ recovers $Γ_2$. Quite a bit of a mess, really.}
 
 Instead, in the application rule, we get the multiplicities of the
 variables in each of the operands as inputs and we can add them
