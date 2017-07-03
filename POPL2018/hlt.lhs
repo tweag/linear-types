@@ -129,7 +129,7 @@
 % \newtheorem{lemma}{Lemma}
 \newtheorem{remark}{Remark}
 
-\newcommand\HaskeLL{Hask-LL}
+\newcommand\HaskeLL{Hask-\textsc{ll}}
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
 
