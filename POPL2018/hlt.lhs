@@ -1720,7 +1720,7 @@ at a given time.
 \note{Is there anything to say about the implementation?  Conclusions to draw from
 it?}
 
-\subsection{Pure bindings to impure APIs}
+\subsection{Pure bindings to impure \textsc{api}s}
 \label{sec:spritekit}
 %% \jp{This section feels handwavy, it would require showing a bit more technical stuff. Do we have access to implementation?}
 % \rn{Maybe partially addressed?}
@@ -1730,16 +1730,23 @@ of problem. They build a pure interface for graphics, in the same style
 as the Elm programming language\improvement{citation}, but implement it in terms
 of an existing imperative graphical interface engine.
 
-Basically, the pure interface takes an update function |Scene -> Scene| which is
+Basically, the pure interface takes an update function |u : Scene -> Scene| which is
 tasked with returning the next state that the screen will display.
 %
-Yet it would be too expensive to dredge out and copy the {\em full} state of the
-imperative graphics engine, reproducing it as a pure |Scene| value.  The
-SpriteKit authors instead use a form of lazy marshalling, where each imperative
-scene object (|ni|) may or may not be represented by a pure proxy object (|np|).
-%
-On each frame, the update function translates functional updates on these pure
-proxies back into imperative updates.
+Yet it would be too expensive to update the {\em full} state of the
+imperative graphics at every frame.  The SpriteKit authors instead use
+so-called \emph{lazy marshalling}. The scene is first converted to a
+pure tree where each node keeps, along with the pure data, a pointer
+to its imperative counterpart when it applies, or |Nothing| for new
+nodes.
+\begin{code}
+data Node = Node {payload :: Payload, ref :: Maybe (IORef ImperativeNode), children :: [Node]}
+\end{code}
+
+On each frame, SpriteKit applies |u| to the current scene, and checks
+(with the help of the RTS) if a node |n| was updated. If it was, it
+applies the update directly onto |ref n| or creates a new imperative
+node.
 %
 %% In order to efficiently map this pure interface to the imperative engine, the
 %% new |Scene| must not destroy the entire imperative scene and re-create it, but
@@ -1749,15 +1756,19 @@ proxies back into imperative updates.
 %% imperative update of the corresponding imperative node |ni|.\jp{what is the
 %%   relationship between np and ni?}
 %
-But if the update function {\em duplicates} a proxy node |np|, sharing the
-same reference to a foreign, imperative object |ni|, then the engine
-will mutate |ni| twice, and break the pure semantics.
-%
-In the current state of the implementation, the burden of checking non-duplication is on the programmer.
-Linear types offer to switch that burden to the compiler.
-We change the update function to type |Scene ⊸ Scene|. With a
-linear update function no duplication of |ni| is possible, and if a |np| must be
-duplicated, only one of the duplicates will have a reference to |ni|.
+Things can go wrong though: if the update function {\em duplicates}
+any node proxy node, one gets the situation where two nodes |n| and
+|n'| can point to the same imperative source |ref n = ref n'|, but
+have different payloads. In this situation the |Scene| has become
+inconsistent and the behaviour of SpriteKit is unpredictable.
+
+In the current state of the implementation, the burden of checking
+non-duplication is on the programmer.  Using linear types, we can
+switch that burden to the compiler: we change the update function to
+type |Scene ⊸ Scene|, and the |ref| field is made linear too.  Thanks
+to linearity, no reference can be duplicated: if a node is copied, the
+programmer must choose which one will correspond to the old imperative
+counterpart and which will be new.
 
 We have implemented a simplified version of this solution in the case
 where the impure \textsc{api} is a simple tree
@@ -3099,4 +3110,5 @@ extended so that one evaluates to |False| and the other to |True|.
 %  LocalWords:  unannotated tuple subkinding invertible coeffects ghc
 %  LocalWords:  unrestrictedly bidirectionality GADT reify finaliser
 %  LocalWords:  Finalisers effectful subtyping parameterised Inlining
-%  LocalWords:  inlining cardinality forM mapM pessimisation
+%  LocalWords:  inlining cardinality forM mapM pessimisation APIs RTS
+%  LocalWords:  SpriteKit chakravarty spritekit IORef ImperativeNode
