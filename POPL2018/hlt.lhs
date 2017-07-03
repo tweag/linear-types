@@ -922,39 +922,39 @@ way we make precise much of the informal discussion above.
 \begin{figure}
   \figuresection{Multiplicities}
   \begin{align*}
-    p,q &::= 1 ~||~ ω ~||~ π ~||~ p+q ~||~ p·q
+    π,μ &::= 1 ~||~ ω ~||~ p ~||~ π+μ ~||~ π·μ
   \end{align*}
   \figuresection{Contexts}
   \begin{align*}
     Γ,Δ & ::=\\
-        & ||  x :_q A, Γ & \text{multiplicity-annotated binder} \\
+        & ||  x :_{μ} A, Γ & \text{multiplicity-annotated binder} \\
         & ||     & \text {empty context}
   \end{align*}
 
   \figuresection{Type declarations}
   \begin{align*}
-    \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+    \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
   \end{align*}
 
   \figuresection{Types}
   \begin{align*}
   A,B &::=\\
-      & ||  A →_q B &\text{function type}\\
-      & ||  ∀ρ. A &\text{multiplicity-dependent type}\\
-      & ||  D~π_1~…~π_n &\text{data type}
+      & ||  A →_π B &\text{function type}\\
+      & ||  ∀π. A &\text{multiplicity-dependent type}\\
+      & ||  D~p_1~…~p_n &\text{data type}
   \end{align*}
 
   \figuresection{Terms}
   \begin{align*}
     e,s,t,u & ::= \\
             & ||  x & \text{variable} \\
-            & ||  λ_q (x{:}A). t & \text{abstraction} \\
+            & ||  λ_π (x{:}A). t & \text{abstraction} \\
             & ||  t s & \text{application} \\
-            & ||  λπ. t & \text{multiplicity abstraction} \\
-            & ||  t p & \text{multiplicity application} \\
+            & ||  λp. t & \text{multiplicity abstraction} \\
+            & ||  t π & \text{multiplicity application} \\
             & ||  c t₁ … t_n & \text{data construction} \\
-            & ||  \case[p] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-            & ||  \flet[q] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
+            & ||  \case[π] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & ||  \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
   \end{align*}
 
   \caption{Syntax of the linear calculus}
@@ -983,53 +983,53 @@ We use the following abbreviations:
 
 Data type declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
-  \data D~π_1~…~π_n~\mathsf{where} \left(c_k : A₁ →_{q₁} ⋯    A_{n_k} →_{q_{n_k}} D\right)^m_{k=1}
+  \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
 \end{align*}
-The above declaration means that \(D\) is parameterized over \(n\) multiplicities $π_i$ and has \(m\) constructors \(c_k\),
+The above declaration means that \(D\) is parameterized over \(n\) multiplicities $p_i$ and has \(m\) constructors \(c_k\),
 each with \(n_k\) arguments. Arguments of
 constructors have a multiplicity, just like arguments of functions: an
 argument of multiplicity $ω$ means that consuming the data constructor once
 makes no claim on how often that argument is consumed (\fref{def:consume}).
-All the variables in the multiplicities $q_i$ must be among
-$π_1…π_n$; we write $q[p_1…p_n]$ for the substitution of $π_i$ by
-$p_i$ in $q$.
+All the variables in the multiplicities $π_i$ must be among
+$p_1…p_n$; we write $π[π_1…π_n]$ for the substitution of $p_i$ by
+$π_i$ in $π$.
 
 % -------------------------------------------------
 \subsection{Static semantics}
 \label{sec:typing-contexts}
 
 %%% typing rule macros %%%
-\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_q B  \\   Δ ⊢ u : A}{Γ+qΔ ⊢ t u  :  B}\text{app}}
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
-\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~p_1~…~p_n \\ Δ, x₁:_{pq_i[p_1…p_n]} A_i, …,
-      x_{n_k}:_{pq_{n_k}[p_1…p_n]} A_{n_k} ⊢ u_k : C \\
-      \text{for each $c_k : A_1 →_{q_1} … →_{q_{n_k-1}} A_{n_k} →_{q_{n_k}} D~π_1~…~π_n$}}
-    {pΓ+Δ ⊢ \case[p] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\ Δ, x₁:_{πμ_i[π_1…π_n]} A_i, …,
+      x_{n_k}:_{πμ_{n_k}[π_1…π_n]} A_{n_k} ⊢ u_k : C \\
+      \text{for each $c_k : A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}}
+    {πΓ+Δ ⊢ \case[π] t {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
 \begin{figure}
   \begin{mathpar}
     \varrule
 
-    \inferrule{Γ, x :_{q} A  ⊢   t : B}
-    {Γ ⊢ λ_q (x{:}A). t  :  A  →_q  B}\text{abs}
+    \inferrule{Γ, x :_{π} A  ⊢   t : B}
+    {Γ ⊢ λ_π (x{:}A). t  :  A  →_q  B}\text{abs}
 
     \apprule
 
-    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{q_1} … →_{q_{n-1}}
-        A_n →_{q_n} D~π_1~…~π_n$ constructor}}
-    {ωΓ+\sum_i q_i[p₁…p_n]Δ_i ⊢ c_k  t₁ … t_n : D~p₁~…~p_n}\text{con}
+    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{μ_1} … →_{μ_{n-1}}
+        A_n →_{μ_n} D~p_1~…~p_n$ constructor}}
+    {ωΓ+\sum_i μ_i[π₁…π_n]Δ_i ⊢ c_k  t₁ … t_n : D~π₁~…~π_n}\text{con}
 
     \caserule
 
-    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{q} A₁ …  x_n:_{q} A_n ⊢ u : C }
-    { Δ+q\sum_i Γ_i ⊢ \flet[q] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{π} A₁ …  x_n:_{π} A_n ⊢ u : C }
+    { Δ+q\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
-    \inferrule{Γ ⊢  t : A \\ \text {$π$ fresh for $Γ$}}
-    {Γ ⊢ λπ. t : ∀π. A}\text{m.abs}
+    \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
+    {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
 
-    \inferrule{Γ ⊢ t :  ∀π. A}
-    {Γ ⊢ t p  :  A[p/π]}\text{m.app}
+    \inferrule{Γ ⊢ t :  ∀p. A}
+    {Γ ⊢ t π  :  A[π/p]}\text{m.app}
   \end{mathpar}
 
   \caption{Typing rules}
@@ -1037,21 +1037,21 @@ $p_i$ in $q$.
 \end{figure}
 
 The static semantics of \calc{} is given in \fref{fig:typing}.  Each
-binding in $Γ$, of form \(x :_q A\), includes a multiplicity $q$
+binding in $Γ$, of form \(x :_π A\), includes a multiplicity $π$
 (\fref{fig:syntax}).  The familiar judgement \(Γ ⊢ t : A\) should
 be read as follows
 \begin{quote}
  \(Γ ⊢ t : A\) asserts that consuming the term $t : A$ exactly once will
-  consume each binding $(x :_{q} A)$ in $Γ$ with its multiplicity $q$.
+  consume each binding $(x :_{π} A)$ in $Γ$ with its multiplicity $π$.
 \end{quote}
 One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
 %For example\jp{example of what?},
-The rule (abs) for lambda abstraction adds $(x :_{q} A)$ to the
+The rule (abs) for lambda abstraction adds $(x :_{π} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
-Notice that in \calc{}, the lambda abstraction  $λ_q(x{:}A). t$
-is explicitly annotated with multiplicity $q$.  Remember, this
+Notice that in \calc{}, the lambda abstraction  $λ_π(x{:}A). t$
+is explicitly annotated with multiplicity $π$.  Remember, this
 is an explicitly-typed intermediate language; in \HaskeLL{}
 this multiplicity is inferred.
 
@@ -1059,20 +1059,20 @@ The dual application rule (app) is more interesting:
 $$\apprule$$
 To consume |(t u)| once, we consume |t| once, yielding the
 multiplicities in $Γ$, and |u| once, yielding the multiplicies in
-$\Delta$.  But if the multiplicity $q$ on |u|'s function arrow is $ω$,
+$\Delta$.  But if the multiplicity $π$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by taking the {\em product} of the multiplicities in $\Delta$ and $q$,
-thus $q\Delta$.  Finally we need to add together all the
-multiplicities in $Γ$ and $q\Delta$; hence the context $Γ+qΔ$ in the
+express this by taking the {\em product} of the multiplicities in $\Delta$ and $π$,
+thus $π\Delta$.  Finally we need to add together all the
+multiplicities in $Γ$ and $π\Delta$; hence the context $Γ+πΔ$ in the
 conclusion of the rule.
 
 In writing this rule we needed to ``scale'' a context by
 a multiplicity, and ``add'' two contexts.  We pause to define these operations.
 \begin{definition}[Context addition]~
   \begin{align*}
-    (x :_p A,Γ) + (x :_q A,Δ) &= x :_{p+q} A, (Γ+Δ)\\
-    (x :_p A,Γ) + Δ &= x :_p A, Γ+Δ & (x ∉ Δ)\\
+    (x :_π A,Γ) + (x :_{μ} A,Δ) &= x :_{π+μ} A, (Γ+Δ)\\
+    (x :_π A,Γ) + Δ &= x :_π A, Γ+Δ & (x ∉ Δ)\\
     () + Δ &= Δ
   \end{align*}
 \end{definition}
@@ -1083,7 +1083,7 @@ not the second or third rule applies.
 
 \begin{definition}[Context scaling]
   \begin{displaymath}
-    p(x :_q A, Γ) =  x :_{pq} A, pΓ
+    π(x :_{μ} A, Γ) =  x :_{πμ} A, πΓ
   \end{displaymath}
 \end{definition}
 
@@ -1091,9 +1091,9 @@ not the second or third rule applies.
   The following laws hold:
   \begin{align*}
     Γ + Δ &= Δ + Γ &
-    p (Γ+Δ) &= p Γ + p Δ\\
-    (p+q) Γ &= p Γ+ q Γ \\
-    (pq) Γ &= p (q Γ) &
+    π (Γ+Δ) &= π Γ + π Δ\\
+    (π+μ) Γ &= π Γ+ μ Γ \\
+    (πμ) Γ &= π (μ Γ) &
     1 Γ &= Γ
   \end{align*}
 \end{lemma}
@@ -1102,9 +1102,7 @@ These operations depend, in turn, on addition and multiplication of multipliciti
 The syntax of multiplicities is given in \fref{fig:syntax}.
 We need the concrete multiplicities $1$ and $ω$ and, to support polymorphism,
 multiplicity variables (ranged over by the metasyntactic
-variables \(π\) and \(ρ\)).
-\rn{Objection: $\rho$ does not occur in the  grammar.  Also having both $p$ and
-  $\rho$ is painful...}
+variables \(p\) and \(q\)).
 Because we
 need to multiply and add multiplicities,
 we also need formal sums and products of multiplicities.
@@ -1157,16 +1155,16 @@ This includes weakening via the $ωΓ$ context in the conclusion.
 The (case) rule is more interesting:
 $$\caserule$$
 First, notice that the $\mathsf{case}$ keyword is annotated with a
-multiplicity $p$; this is analogous to the explicit
+multiplicity $π$; this is analogous to the explicit
 multiplicity on a $\mathsf{let}$ binding.  It says how often the scrutinee (or,
 for a $\mathsf{let}$, the right hand side) will be consumed.  Just as
-for $\mathsf{let}$, we expect $p$ to be inferred from an un-annotated $\mathsf{case}$ in
+for $\mathsf{let}$, we expect $π$ to be inferred from an un-annotated $\mathsf{case}$ in
 \HaskeLL{}.
 
-The scrutinee $t$ is consumed $p$ times, which accounts for the $pΓ$ in
-the conclusion.  Now consider the bindings $(x_i :_{pq_i[p_1…p_n]} A_i)$ in the
+The scrutinee $t$ is consumed $π$ times, which accounts for the $πΓ$ in
+the conclusion.  Now consider the bindings $(x_i :_{πμ_i[π_1…π_n]} A_i)$ in the
 environment for typechecking $u_k$.  That binding will be linear only if
-\emph{both} $p$ \emph{and} $q_i$ are linear; that is, only if we specify
+\emph{both} $π$ \emph{and} $π_i$ are linear; that is, only if we specify
 that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
 specifies that is it consumed once if the constructor is (\fref{def:consume}).
 
@@ -1174,8 +1172,8 @@ To put it another way, suppose one of the linear
 fields\footnote{
 Recall \fref{sec:non-linear-constructors}, which described
 how each constructor can have a mixture of linear and non-linear fields.}
-of $c_k$ is used non-linearly in $u_k$.  Then, $q_i=1$ (it is a linear field),
-so $p$ must be $ω$, so that $pq_i=ω$.  In short, using a linear field non-linearly
+of $c_k$ is used non-linearly in $u_k$.  Then, $μ_i=1$ (it is a linear field),
+so $π$ must be $ω$, so that $πμ_i=ω$.  In short, using a linear field non-linearly
 forces the scrutinee to be used non-linearly, which is just what we want.
 Here are some concrete examples:
 \begin{code}
@@ -1261,7 +1259,7 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 Alternatively, |g| might well be multiplicity-polymorphic, with type
-|forall π. (Int -> _ π Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
+|forall p. (Int -> _ p Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
 \jp{I feel that the eta-expansion thing is enough discussion. I
   suggest that we can say that extending subtyping is future work.}
 
@@ -1276,21 +1274,21 @@ subtyping (see, for example, the extensive exposition by
 %% \end{code}
 Our typing rules would validate both |id :: Int → Int| and |id :: Int ⊸ Int|.
 So, since we think of multiplicities ranging over $\{1,ω\}$, surely we should
-also have |id :: forall π. Int → _ π Int|?  But as it stands, our rules do
-not accept it. To do so we would need $x :_π Int ⊢ x : Int$.  Looking
+also have |id :: forall p. Int → _ p Int|?  But as it stands, our rules do
+not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
-trying $π=1$ and $π=ω$.
-\simon{I could not work out what your $π$ and $π'$ were.... so I ended
+trying $p=1$ and $p=ω$.
+\simon{I could not work out what your $p$ and $p'$ were.... so I ended
   up with case analysis.  What am I missing? -- [aspiwack]: well, the
-  $π'$ was wrong because it has no reason to be a variable. But the
+  $p'$ was wrong because it has no reason to be a variable. But the
   (var) rules tells us that in order for $x$ to be well-typed its
-  multiplicity in $Γ$ must be of the form $1+ωp$ (or just $1$, because
+  multiplicity in $Γ$ must be of the form $1+ωπ$ (or just $1$, because
   we don't have $0$). But your explanation is just as good. I just
   tried to point out exactly what needed changing for identity to have
   a polymorphic type}
 But if we had a richer domain of multiplicities, including
 $0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
-in a dependently typed system}, we would be able to prove $x :_π Int ⊢ x : Int$, and rightly
+in a dependently typed system}, we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
@@ -1818,11 +1816,11 @@ operations for subtraction and division.
   having multiplicity as output requires combining them with addition,
   scaling and meet. Whereas having them as input requires to split
   context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
-  = Γ_1 + qΓ_2$), which is a magical operation. In order to do that
+  = Γ_1 + πΓ_2$), which is a magical operation. In order to do that
   one could thread $Γ$ as a state and perform the appropriate
   substractions to remove things from $Γ$ as we are using them such
   that when we reach the second branch of $Γ$ , we are only left with
-  $qΓ_2$ and dividing by $q$ recovers $Γ_2$. Quite a bit of a mess, really.}
+  $πΓ_2$ and dividing by $π$ recovers $Γ_2$. Quite a bit of a mess, really.}
 
 Instead, in the application rule, we get the multiplicities of the
 variables in each of the operands as inputs and we can add them
@@ -2372,7 +2370,7 @@ multiplicity for affine arguments (\emph{i.e.}  arguments which can be
 used \emph{at most once}).
 
 The typing rules are mostly unchanged with the \emph{caveat} that
-$\mathsf{case}_q$ must exclude $q=0$ (in particular we see that we
+$\mathsf{case}_π$ must exclude $π=0$ (in particular we see that we
 cannot substitute multiplicity variables by $0$). The variable rule is
 modified as:
 $$
@@ -2658,20 +2656,20 @@ term to terms in the explicit-sharing form.
 \begin{figure}
   \figuresection{Translation of typed terms}
   \begin{align*}
-    (λ_q(x{:}A). t)^* &= λ_q(x{:}A). (t)^* \\
+    (λ_π(x{:}A). t)^* &= λ_π(x{:}A). (t)^* \\
     x^*             &= x \\
     (t  x )^*     &= (t)^*  x \\
-    (t  u )^*     &= \flet[q] y : A = (u)^* \fin (t)^*  y &
-    \text{with $Γ⊢ t : A →_q B$}
+    (t  u )^*     &= \flet[π] y : A = (u)^* \fin (t)^*  y &
+    \text{with $Γ⊢ t : A →_π B$}
   \end{align*}
   \begin{align*}
-    c_k  t₁ … t_n   &= \flet x₁ :_{q_1} A_1 = (t₁)^*,…, x_n :_{q_n} A_n = (t_n)^*
+    c_k  t₁ … t_n   &= \flet x₁ :_{π_1} A_1 = (t₁)^*,…, x_n :_{π_n} A_n = (t_n)^*
                       \fin c_k x₁ … x_n & \text{with $c_k : A_1
-                                          →_{q_1}…A_n →_{q_n}D$}
+                                          →_{π_1}…A_n →_{π_n}D$}
   \end{align*}
   \begin{align*}
-    (\case[p] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[p] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
-    (\flet[q] x_1: A_1= t₁  …  x_n : A_n = t_n \fin u)^* & = \flet[q] x₁:A_1 = (t₁)^*,…, x_n:A_n= (t_n)^* \fin (u)^*
+    (\case[π] t {c_k  x₁ … x_{n_k} → u_k})^* &= \case[π] {(t)^*} {c_k  x₁ … x_{n_k} → (u_k)^*} \\
+    (\flet[π] x_1: A_1= t₁  …  x_n : A_n = t_n \fin u)^* & = \flet[π] x₁:A_1 = (t₁)^*,…, x_n:A_n= (t_n)^* \fin (u)^*
   \end{align*}
 
   \caption{Syntax for the Launchbury-style semantics}
@@ -2709,10 +2707,10 @@ The details of the ordinary evaluation relation are given in
 
 \begin{figure}
   \begin{mathpar}
-    \inferrule{ }{Γ : λ_p(x{:}A). e ⇓ Γ : λ_p(x{:}A). e}\text{abs}
+    \inferrule{ }{Γ : λ_π(x{:}A). e ⇓ Γ : λ_π(x{:}A). e}\text{abs}
 
 
-    \inferrule{Γ : e ⇓ Δ : λ_p(y{:}A).e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
+    \inferrule{Γ : e ⇓ Δ : λ_π(y{:}A).e' \\ Δ : e'[x/y] ⇓ Θ : z} {Γ :
       e x ⇓ Θ : z} \text{application}
 
     \inferrule{Γ : e ⇓ Δ : z}{(Γ,x :_ω A = e) : x ⇓ (Δ;x :_ω A = z) :
@@ -2722,7 +2720,7 @@ The details of the ordinary evaluation relation are given in
     {(Γ,l :_1 A = arr) : l ⇓ (Γ, l :_1 A = arr) : l}\text{mutable cell}
 
     \inferrule{(Γ,x_1 :_ω A_1 = e_1,…,x_n :_ω A_n e_n) : e ⇓ Δ : z}
-    {Γ : \flet[q] x₁ : A_1 = e₁ … x_n : A_n = e_n \fin e ⇓ Δ :
+    {Γ : \flet[π] x₁ : A_1 = e₁ … x_n : A_n = e_n \fin e ⇓ Δ :
       z}\text{let}
 
     \inferrule{ }{Γ : c  x₁ … x_n ⇓ Γ : c  x₁ …
@@ -2730,7 +2728,7 @@ The details of the ordinary evaluation relation are given in
 
 
     \inferrule{Γ: e ⇓ Δ : c_k  x₁ … x_n \\ Δ : e_k[x_i/y_i] ⇓ Θ : z}
-    {Γ : \case[q] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
+    {Γ : \case[π] e {c_k  y₁ … y_n ↦ e_k } ⇓ Θ : z}\text{case}
 
     %%%% Arrays
 
@@ -2760,10 +2758,10 @@ The details of the ordinary evaluation relation are given in
 
 \begin{figure}
   \begin{mathpar}
-\inferrule{ }{Ξ ⊢ (Γ || λ_q(x{:}A). e ⇓ Γ || λ_q (x{:}A). e) :_ρ A→_q B, Σ}\text{abs}
+\inferrule{ }{Ξ ⊢ (Γ || λ_π(x{:}A). e ⇓ Γ || λ_π (x{:}A). e) :_ρ A→_π B, Σ}\text{abs}
 
 \inferrule
-    {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_q A).u):_ρ A →_q B, x:_{qρ} A, Σ \\
+    {Ξ  ⊢  (Γ||e      ⇓ Δ||λ(y:_π A).u):_ρ A →_π B, x:_{πρ} A, Σ \\
      Ξ  ⊢  (Δ||u[x/y] ⇓ Θ||z)   :_ρ       B,            Σ}
     {Ξ  ⊢  (Γ||e x ⇓ Θ||z) :_ρ B ,Σ}
 {\text{app}}
@@ -2779,8 +2777,8 @@ The details of the ordinary evaluation relation are given in
 {\text{linear variable}}
 
 \inferrule
-  {Ξ ⊢ (Γ,       x_1 :_{ρq} A_1 = e_1 … x_n :_{ρq} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
-  {Ξ ⊢ (Γ||\flet[q] x_1 :  A_1 = e_1 … x_n : A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ,       x_1 :_{ρπ} A_1 = e_1 … x_n :_{ρπ} A_n = e_n  ||  t ⇓ Δ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\flet[π] x_1 :  A_1 = e_1 … x_n : A_n = e_n \fin t ⇓ Δ||z) :_ρ C, Σ}
 {\text{let}}
 
 \inferrule
@@ -2789,9 +2787,9 @@ The details of the ordinary evaluation relation are given in
 {\text{constructor}}
 
 \inferrule
-  {Ξ,y_1:_{p_1qρ} A_1 … ,y_n:_{p_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{qρ} D, u_k:_ρ C, Σ \\
+  {Ξ,y_1:_{π_1qρ} A_1 … ,y_n:_{π_nqρ} A_n ⊢ (Γ||e ⇓ Δ||c_k x_1…x_n) :_{πρ} D, u_k:_ρ C, Σ \\
     Ξ ⊢ (Δ||u_k[x_i/y_i] ⇓ Θ||z) :_ρ C, Σ}
-  {Ξ ⊢ (Γ||\case[q] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
+  {Ξ ⊢ (Γ||\case[π] e {c_k y_1…y_n ↦ u_k} ⇓ Θ||z) :_ρ C, Σ}
   {\text{case}}
 
 %%%%% Arrays
@@ -2874,7 +2872,7 @@ when annotated states are well-typed.
   Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
   $$
   Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
-  bindings\improvement{needs more effort in our restricted $\flet[q]$ calculus}, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
+  bindings\improvement{needs more effort in our restricted $\flet[π]$ calculus}, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
   for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
   $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
   $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
@@ -3029,7 +3027,7 @@ for the \emph{shared variable} and \emph{let} rules.
   In other word, we must prove that a state of the form
   $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not reachable. Notice that
   $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed state because it
-  reduces to $x:_1B = x:_{ωp} B$ for some $p$, which never holds. By
+  reduces to $x:_1B = x:_{ωπ} B$ for some $π$, which never holds. By
   type preservation (\fref{lem:type-safety}),
   $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ cannot be the head of a partial
   derivation.
