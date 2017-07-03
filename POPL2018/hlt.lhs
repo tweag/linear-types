@@ -1217,7 +1217,7 @@ deduce:
   The semantics with in-place mutation is observationally equivalent to the pure semantics.
 \end{theorem}
 \begin{theorem}[Progress]\label{thm:progress}
-  Evualation does not block. In particular, type-level states need not
+  Evaluation does not block. In particular, type-level states need not
   be checked dynamically.
 \end{theorem}
 
@@ -3014,7 +3014,7 @@ Equipped with this bisimulation, we are ready to prove the theorems of
 {
 \renewcommand{\thetheorem}{\ref{thm:progress}}
 \begin{theorem}[Progress]
-  Evualation does not block. That is, for any partial derivation of
+  Evaluation does not block. That is, for any partial derivation of
   $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the derivation can be
   extended.
 
