@@ -1708,7 +1708,7 @@ the ``unpack-repack'' line in the plots.  Compared to this baseline,
 What linear types makes safe, is also efficient.
 
 The experiment was conducted on a Xeon E5-2699 CPU (2.30GHz, 64GB memory) using
-a modified version of GHC 8.2 (\fref{sec:impl}).  Each
+a modified version of \ghc{} 8.2 (\fref{sec:impl}).  Each
 data point was measured by performing many trials and taking a linear regression
 of iteration count against time (using the criterion library~\cite{osullivan_criterion_2013}).
 %
@@ -1949,7 +1949,7 @@ particular such systems feature ``linear arrows'', but they have a
 completely different interpretation from ours.) This choice is
 attractive on the surface because, intuitively, some types are
 inherently linear (file handles, updateable arrays, etc.) and some
-types are inherently unrestricted (Integer, Booleans, etc.).
+types are inherently unrestricted (|Int|, |Bool|, etc.).
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
@@ -1963,29 +1963,11 @@ types are inherently unrestricted (Integer, Booleans, etc.).
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-
 However, after scratching the surface we have discovered that
-``linearity via arrows'' have many advantages over ``linearity via
+``linearity via arrows'' has an edge over ``linearity via
 kinds'':
 \begin{itemize}
-\item More natural handling of closures.  In a system with linear
-  types, any closure of an unrestricted arrow type cannot contain an
-  occurence of a linear value. Indeed, this unrestricted closure could
-  be discarded, and its environment with it. This property is somewhat
-  surprising for programmers who often think that they construct a
-  single object -- but in fact this single object may be duplicated
-  later.  The corresponding property in our system, is that linear
-  values cannot be passed as arguments to an unrestricted function.
 
-\item Better interaction with laziness. In a lazy language, every
-  value may be a thunk. Thus every value behaves like a closure, and
-  so in a linearity-via-kinds system no unrestricted value can be
-  constructed from linear ones. Consequently, there can be no function
-  (or constructor) from linear to unrestricted types. This makes it
-  impossible to provide functions such as |fileClose : File ⊸ ()|, as
-  proposed by \citet{mazurak_lightweight_2010}. Consequently one must
-  introduce a linear variant of |()|, and thus even obviously
-  unrestricted types must exist in a linear variant.
 
 \item Better subsumption properties.  When retrofitting linear types
   in an existing language, it is important to share has much code as
@@ -2005,23 +1987,50 @@ kinds'':
     f :: [a] → [a] → [a]
     f xs ys = cycle (xs ++ ys)
   \end{code}
-  In contrast, in a two-kind system, a function must declare
-  the \emph{exact} linearity of its return value. Consequently, to make a function
-  promotable from linear to unrestriced, its declaration must use
-  polymorphism over kinds.
+  In contrast, in a two-kind system, a function must declare the
+  \emph{exact} linearity of its return value. Consequently, to make a
+  function promotable from linear to unrestriced, its declaration must
+  use polymorphism over kinds. We show how this may look like below;
+  but first we need to discuss data types.
 
-\item Easier polymorphism. \jp{type of |Maybe|}  Even in the cases where code-sharing requires
-  polymorphism, linearity on arrows is simpler to use.  Indeed,
-  multiplicity polymorphism can be supported by adding a special-purpose
-  quantification, which is syntactically separate and does not
-  interfere with any other aspect of the type-system. In contrast, if
-  linearity is encoded in kinds, one needs
-  kind-polymorphism. Furthermore, the subsumption property must be
-  encoded via a sub-kinding property, which is not easy to get right,
-  especially in the presence of ML-style polymorphism. The difficulty
-  is witnessed in the work of \citet{morris_best_2016}: several of
-  applications (including monads) require bounded polymorphism, while
-  we can avoid it here.
+  As seen in \fref{sec:programming-intro}, in \HaskeLL{} the reuse of linear
+  code extends to data types: the usual parametric data types (lists,
+  pairs, etc.) work both with linear and unrestricted values. On the
+  contrary, if linearity depends on the kind, then if a linear value
+  is contained in a type, the container type must be linear
+  too. (Indeed, an unrestricted container could be discarded or
+  duplicated, and its contents with it.) Consequently, sharing data
+  types also requires polymorphism.  For example, in a two-kinds
+  system, the |List| type may look like so, if one assumes a that
+  |Type 1| is the kind of linear types and and |Type ω| is the kind of
+  unrestricted types.
+  \begin{code}
+    data List (p :: Multiplicity) (a :: Type p) :: Type p
+      = [] | a : (List l m a)
+  \end{code}
+  The above declaration ensures that the linearity of the list
+  inherits the linearity of the contents. A linearity-polymorphic
+  |(++)| function could have the definition, assuming the |(∧)|
+  operator takes the minimum of multiplicities.
+  \begin{code}
+    (++) :: List p (a p) -> List q (a q) -> List (p ∧ q) (a (p ∧ q))
+    [] ++ xs = xs
+    (x:xs) ++ ys = x : (xs ++ ys)
+  \end{code}
+  The above type ensures that one can mix multiplicities freely
+  between the arguments; but the result must be linear if any argument
+  is linear.  However, the definition is valid only if |a q| is a
+  subtype of |a (p ∧ q)| for any type family |a :: Multiplicitiy ->
+  Type|. Thus, code-sharing requires not only polymorphism, but a
+  non-trivial subtyping and subkinding system.
+
+  Note that, in the above, we parameterize over multiplicities instead
+  of parameterizing over kinds directly, as is customary in the
+  literature. We do so to because changing the kinds directly would
+  not be possible in \ghc{}, which already has a complicated kind
+  system, and whose kinds are already parameterized over a so-called
+  levity~\cite{eisenberg_levity_2017}.
+
 
 \item Exensibility.  It is easy to extend our system to any set of
   ground multiplicities with a ring structure
@@ -2029,9 +2038,11 @@ kinds'':
   for example affine types and dependent linear types.  In contrast,
   in a multiple-kind system, such extensions require \textit{ad-hoc}
   support. Indeed, affine types require changes in the subkinding
-  system, which in turns may impact unification. While there exists
-  systems with two-kinds and dependent types, they are only trivial in
-  the sense that no linear arrow can be dependent.
+  system, which in turns may impact unification. Additionally, while
+  there exists systems with two-kinds and dependent types, they are
+  only trivial in the sense that no linear arrow can be
+  dependent. Leaving the door open to dependent types is crucial, as
+  this is being explored as a possible extension to \ghc{}.
 
 % Linearity-on-arrow makes it possible to constrain any function to
 % use its arguments linearly, this is useful for the function writer,
