@@ -1992,6 +1992,47 @@ Advantages of ``linearity via arrows'' include:
 % JP: I don't know what theory this refers to. Also I do not believe
 % that this is relevant for this paper.
 
+\subsection{Other variants of ``linearity on the arrow''}
+\label{sec:related-type-systems}
+
+The \calc{} type system is heavily inspired from the work of
+\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
+present a type system where arrows are annotated with the multiplicty
+of the the argument that they require, and where the multiplicities
+form a semi-ring.
+
+In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
+multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
+represents the multiplicity of $t$. So, in
+\citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
+required, instead of computing $ωΓ$, it is enough to check that
+$ρ=ω$. The problem is that this check is arguably too coarse, and
+results in the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
+%
+This derivation is not desirable: it implies that there cannot be
+reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
+\citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
+into an isomorphism.
+In that respect, our system is closer to
+\citeauthor{ghica_bounded_2014}'s.
+\rn{Is there any remaining {\em difference} with \citeauthor{ghica_bounded_2014}?}
+
+% What we keep from
+% \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
+% \fref{sec:statics})
+% JP: nope, there is no 'case' rule in mcbride_rig_2016
+
+The literature on so-called
+coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
+uses type systems similar to \citeauthor{ghica_bounded_2014}, but
+with a linear arrow and multiplicities carried by the exponential
+modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
+develops a Krivine-style realisability model for such a calculus. We are not
+aware of an account of Krivine realisability for lazy languages, hence
+this work is not directly applicable to \calc.
+
+\improvement{Not the right place, but let us not forget to cite the
+  very relevant: \cite{pottier_programming_2013}}
 
 \subsection{Uniqueness and ownership typing}
 \label{sec:uniqueness}
@@ -2196,47 +2237,6 @@ free z
 
 
 
-\subsection{Related type systems}
-\label{sec:related-type-systems}
-
-The \calc{} type system is heavily inspired from the work of
-\citet{ghica_bounded_2014} and \citet{mcbride_rig_2016}. Both of them
-present a type system where arrows are annotated with the multiplicty
-of the the argument that they require, and where the multiplicities
-form a semi-ring.
-
-In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
-multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
-represents the multiplicity of $t$. So, in
-\citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
-required, instead of computing $ωΓ$, it is enough to check that
-$ρ=ω$. The problem is that this check is arguably too coarse, and
-results in the judgement $⊢_ω λx. (x,x) : A ⊸ (A,A)$ being derivable.
-%
-This derivation is not desirable: it implies that there cannot be
-reusable definitions of linear functions. In terms of linear logic~\cite{girard_linear_1987},
-\citeauthor{mcbride_rig_2016} makes the natural function of type $!(A⊸B) ⟹ !A⊸!B$
-into an isomorphism.
-In that respect, our system is closer to
-\citeauthor{ghica_bounded_2014}'s.
-\rn{Is there any remaining {\em difference} with \citeauthor{ghica_bounded_2014}?}
-
-% What we keep from
-% \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
-% \fref{sec:statics})
-% JP: nope, there is no 'case' rule in mcbride_rig_2016
-
-The literature on so-called
-coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
-uses type systems similar to \citeauthor{ghica_bounded_2014}, but
-with a linear arrow and multiplicities carried by the exponential
-modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
-develops a Krivine-style realisability model for such a calculus. We are not
-aware of an account of Krivine realisability for lazy languages, hence
-this work is not directly applicable to \calc.
-
-\improvement{Not the right place, but let us not forget to cite the
-  very relevant: \cite{pottier_programming_2013}}
 
 % \subsection{Operational aspects of linear languages}
 
