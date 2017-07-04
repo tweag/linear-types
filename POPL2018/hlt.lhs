@@ -441,7 +441,7 @@ Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
-as described in \cite{launchbury-pj:state-in-haskell}.\improvement{fix reference}
+as described in \cite{launchbury_state_1995}.
 
 Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
 immutable array, but to avoid an unnecessary copy,
