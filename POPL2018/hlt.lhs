@@ -1301,6 +1301,9 @@ interact with optimiser of a sophisticated compiler.
 In this section, we describe a few case study implementations; in
 \fref{sec:implementation} we describe the modified version of the \textsc{ghc}
 compiler that makes them possible.
+%
+In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
+have not yet implemented, but which motivate this work.
 
 % \subsection{Serialised tree traversals}
 \subsection{Application 1: Traversals of serialised data}
@@ -1765,9 +1768,6 @@ where the impure \textsc{api} is a simple tree
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
-%
-In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
-have not yet implemented, but which motivate this work.
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
@@ -1848,208 +1848,6 @@ implement a first version of \HaskeLL{} with reasonable effort.
 \section{Related work}
 \label{sec:related}
 
-
-
-
-\subsection{Region-types}
-
-\citet{launchbury_st_1995} taught us
-a conceptually simple approach to lifetimes: the |ST| monad. It has
-a phantom type parameter |s| that is instantiated once at the
-beginning of the computation by a |runST| function of type:
-\begin{code}
-  runST :: (forall s. ST s a) -> a
-\end{code}
-This way, resources that are allocated during the computation, such
-as mutable cell references, cannot escape the dynamic scope of the call
-to |runST| because they are themselves tagged with the same phantom
-type parameter.
-
-This simplicity (one only needs rank-2 polymorphism)
-comes at the cost of strong limitations in practice:
-\begin{itemize}
-% arnaud: The stack story is true, but it is not an easy case to make,
-% so I've taken it out for now. General idea is: in |ST| you can use
-% values as long as their regions lives, so resources can't be closed
-% before |runST| has completed. Whereas with linear types, we can
-% "disappear" a value, at which time we can take the opportunity to
-% close it. It is hard, however to pinpoint a case where it is
-% critical not to use stack-allocation.
-
-% jp: In many pipeline applications one has conceptually n
-% buffers used sequentially, but only two of them are live
-% simultaneously.
-
-\item |ST|-like regions confine to a stack-like allocation discipline,
-  because freeing resources coincide with the static scope of |runST|.
-  Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
-  this technique. This can be a problem for long-lived
-  programs as well as pipeline applications where one
-  has |n| buffers conceptually, but only a sliding window of two of them are
-  live simultaneously.
-
-  In our system, even though the lifetimes of linear variables are
-  checked statically, we can make use of continuation-passing style
-  (or Monads) to implement dynamic lifetimes for objects in the linear
-  heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
-|free  : A ⊸ r ⊸ r|.
-We can write code such as the following, where the lifetimes of |x|, |y|
-and |z| overlap in a non-stack fashion:
-\info{Note \$ : $(a →_p b) ⊸ a →_p b$}
-\begin{code}
-alloc   $ \x ->                 {- |x| live -}
-alloc   $ \y ->                 {- |x| and |y| live -}
-free x  $
-alloc   $ \z ->                 {- |y| and |z| live -}
-free y  $                       {- |z| live -}
-free z
-\end{code}
-% $ hint to emacs (parser) that we're not in math mode.
-
-%% \item |ST| actions cannot be interleaved with |IO| actions. So in our
-%%   mutable array examples, for instance, it is not possible to provide
-%%   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
-%%   a)| which will also make it possible to use |IO| actions to fill in
-%%   the array.\jp{I do not understand this item.}
-%% \rn{Neither do I.  Can't the PrimMonad stuff do that?}
-
-\item \citet{kiselyov_regions_2008} show that it is possible to
-  promote resources in parent regions to resources in a subregion. But
-  this is an explicit and monadic operation, forcing an unnatural
-  imperative style of programming where order of evaluation is
-  explicit. Moreover, computations cannot live directly in |IO|, but
-  instead in a wrapper monad. The HaskellR
-  project~\cite{boespflug_project_2014} uses monadic regions in the
-  style of \citeauthor{kiselyov_regions_2008} to safely synchronise
-  values shared between two different garbage collectors for two
-  different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
-  writing code at an interactive prompt difficult, compromises code
-  reuse, forces otherwise pure functions to be written monadically and
-  rules out useful syntactic facilities like view patterns.
-%
-  In contrast, with linear types, values in two regions
-  % (in our running example packets from different mailboxes) have the same type
-  hence can safely be mixed:
-  %% any data structure containing packet of a mailbox
-  %% will be forced to be consumed before the mailbox is closed.
-  %  \jp{FIXME: running   example is now gone.}
-  elements can be moved from one data structure (or heap) to another, linearly,
-  with responsibility for deallocation transferred along.
-%  , with  ownership transfer.
-\end{itemize}
-
-\subsection{Uniqueness and ownership typing}
-\label{sec:uniqueness}
-
-The literature
-% is awash with enforcing linearity not via linear types,
-contains many proposals for uniqueness (or ownership) types (in contrast with
-linear types).
-Prominent representative languages with uniqueness types include
-Clean~\cite{barendsen_uniqueness_1993} and
-Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
-designed around linear types based on linear
-logic~\cite{girard_linear_1987}.
-
-Linear types and uniqueness types are, at their core, dual: whereas a linear type is
-a contract that a function uses its argument exactly once
-even if the call's context can share a linear argument as many times as it
-pleases, a uniqueness type ensures that the argument of a function is
-not used anywhere else in the expression's context even if the callee
-can work with the argument as it pleases.
-%
-Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
-analysis} while linear typing provides a {\em cardinality analysis}. The
-former aims at in-place updates and related optimisations, the latter
-at inlining and fusion. Rust and Clean largely explore the
-consequences of uniqueness on in-place update; an in-depth exploration
-of linear types in relation with fusion can be found
-in~\citet{bernardy_composable_2015};
-\Red{see also the discussion in \fref{sec:fusion}.}
-\unsure{The discussion on fusion may well disappear}
-
-Because of this weak duality, we could have
-retrofitted uniqueness types to Haskell. But several points
-guided our choice of designing \HaskeLL{} around linear
-logic rather than uniqueness types: (a) functional languages have more use
-for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
-analysis but no non-aliasing analysis is any indication); (b) there is a
-wealth of literature detailing the applications of linear
-logic — see \fref{sec:applications}; (c) and decisively, linear type systems are
-conceptually simpler than uniqueness type systems, giving a
-clearer path to implementation in \textsc{ghc}.
-
-\paragraph{Rust}
-Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
-ownership typing. Like the original formulation of linear logic, in Rust, if a
-type \texttt{T} stands for linear values, \Red{which are copied on function
-  calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
-explicit.
-%
-\jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
-Rust addresses the problem of being mindful about
-memory, resources, and latency, but this comes at a price: Rust,
-as a programming language, is specifically optimised for writing
-programs that are structured using the ``RAII''
-pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-(where resource lifetimes are tied directly or indirectly to stack
-allocated objects that are freed when the control flow exits the
-current lexical scope). Ordinary functional programs seldom fit this
-particular resource acquisition pattern so end up being second class
-citizens. For instance, tail-call optimization, crucial to the
-operational behaviour of many functional programs, is not usually
-sound. This is because resource liberation must be triggered when the
-tail call returns.
-%
-\HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm, yet
-% gracefully scaling up
-investing extra effort to enforce invariants or perform low-level
-systems programming, with control over resources and latency, is still possible.
-
-%% for latency-sensitive and resource-sensitive programs is
-%% still possible.\improvement{Change depending on what we put in the evaluation
-%%   section}
-
-\paragraph{Borrowing}
-\rn{I don't understand the upshot of this section.  It seems to be that we can't
-currently do borrowing.}
-How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
-lifetime of references using a special system, one can simply give
-each reference a multiplicity of one, and explicitly pass them around.
-
-A function can be declared to destroy a reference simply by taking it
-as a (linear) parameter.  For example the following signature is that
-of a function from |A| to |B| which also destroys a reference:
-\begin{code}
-destroyer : Reference ⊸ A -> B
-\end{code}
-A function which borrows a reference can take it as input and return
-it.
-\begin{code}
-borrower : Reference ⊸ A -> (Reference, B)
-\end{code}
-\paragraph{Borrowing references in data structures}
-In an imperative language, one often walks data structure, extract
-references and pass them around. In Rust, the borrowing system
-ensures that the passed reference does not outlive the datastructure
-that it points to.
-
-In a functional language, instead of extracting references, one will
-use lenses to lift a modification function from a local subtree to a
-global one. Thanks to garbage collection, there is already no risk of
-dangling references, but one has to pay a runtime cost. By using
-linear types one can avoid this cost.
-
-Indeed, we can ensure that a modification function can have the type:
-|Reference ⊸ Reference| and thus can be implemented with no need for
-GC. At the same time, the lens library will use linear types and lift
-local linear modifications to global linear modifications. Note that,
-if the original object lives in the GC heap (and thus can be shared),
-the same lens library can be used, but individual lifting of
-modifications cannot be implemented by in-place update.
-\rn{Is this text stale?  I.e. from an earlier version of the paper that talked
-  about the ``GC heap''?}
 
 
 \subsection{Linearity via arrows vs. linearity via kinds}
@@ -2196,6 +1994,208 @@ Advantages of ``linearity via arrows'' include:
 
 % JP: I don't know what theory this refers to. Also I do not believe
 % that this is relevant for this paper.
+
+
+\subsection{Uniqueness and ownership typing}
+\label{sec:uniqueness}
+
+The literature
+% is awash with enforcing linearity not via linear types,
+contains many proposals for uniqueness (or ownership) types (in contrast with
+linear types).
+Prominent representative languages with uniqueness types include
+Clean~\cite{barendsen_uniqueness_1993} and
+Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
+designed around linear types based on linear
+logic~\cite{girard_linear_1987}.
+
+Linear types and uniqueness types are, at their core, dual: whereas a linear type is
+a contract that a function uses its argument exactly once
+even if the call's context can share a linear argument as many times as it
+pleases, a uniqueness type ensures that the argument of a function is
+not used anywhere else in the expression's context even if the callee
+can work with the argument as it pleases.
+%
+Seen as a system of constraints, uniqueness typing is a {\em non-aliasing
+analysis} while linear typing provides a {\em cardinality analysis}. The
+former aims at in-place updates and related optimisations, the latter
+at inlining and fusion. Rust and Clean largely explore the
+consequences of uniqueness on in-place update; an in-depth exploration
+of linear types in relation with fusion can be found
+in~\citet{bernardy_composable_2015};
+\Red{see also the discussion in \fref{sec:fusion}.}
+\unsure{The discussion on fusion may well disappear}
+
+Because of this weak duality, we could have
+retrofitted uniqueness types to Haskell. But several points
+guided our choice of designing \HaskeLL{} around linear
+logic rather than uniqueness types: (a) functional languages have more use
+for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
+analysis but no non-aliasing analysis is any indication); (b) there is a
+wealth of literature detailing the applications of linear
+logic — see \fref{sec:applications}; (c) and decisively, linear type systems are
+conceptually simpler than uniqueness type systems, giving a
+clearer path to implementation in \textsc{ghc}.
+
+\paragraph{Rust}
+Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
+ownership typing. Like the original formulation of linear logic, in Rust, if a
+type \texttt{T} stands for linear values, \Red{which are copied on function
+  calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
+explicit.
+%
+\jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
+Rust addresses the problem of being mindful about
+memory, resources, and latency, but this comes at a price: Rust,
+as a programming language, is specifically optimised for writing
+programs that are structured using the ``RAII''
+pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+(where resource lifetimes are tied directly or indirectly to stack
+allocated objects that are freed when the control flow exits the
+current lexical scope). Ordinary functional programs seldom fit this
+particular resource acquisition pattern so end up being second class
+citizens. For instance, tail-call optimization, crucial to the
+operational behaviour of many functional programs, is not usually
+sound. This is because resource liberation must be triggered when the
+tail call returns.
+%
+\HaskeLL{} aims to hit a different point in the design space where
+regular non-linear expressions are the norm, yet
+% gracefully scaling up
+investing extra effort to enforce invariants or perform low-level
+systems programming, with control over resources and latency, is still possible.
+
+%% for latency-sensitive and resource-sensitive programs is
+%% still possible.\improvement{Change depending on what we put in the evaluation
+%%   section}
+
+\paragraph{Borrowing}
+\rn{I don't understand the upshot of this section.  It seems to be that we can't
+currently do borrowing.}
+How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
+lifetime of references using a special system, one can simply give
+each reference a multiplicity of one, and explicitly pass them around.
+
+A function can be declared to destroy a reference simply by taking it
+as a (linear) parameter.  For example the following signature is that
+of a function from |A| to |B| which also destroys a reference:
+\begin{code}
+destroyer : Reference ⊸ A -> B
+\end{code}
+A function which borrows a reference can take it as input and return
+it.
+\begin{code}
+borrower : Reference ⊸ A -> (Reference, B)
+\end{code}
+\paragraph{Borrowing references in data structures}
+In an imperative language, one often walks data structure, extract
+references and pass them around. In Rust, the borrowing system
+ensures that the passed reference does not outlive the datastructure
+that it points to.
+
+In a functional language, instead of extracting references, one will
+use lenses to lift a modification function from a local subtree to a
+global one. Thanks to garbage collection, there is already no risk of
+dangling references, but one has to pay a runtime cost. By using
+linear types one can avoid this cost.
+
+Indeed, we can ensure that a modification function can have the type:
+|Reference ⊸ Reference| and thus can be implemented with no need for
+GC. At the same time, the lens library will use linear types and lift
+local linear modifications to global linear modifications. Note that,
+if the original object lives in the GC heap (and thus can be shared),
+the same lens library can be used, but individual lifting of
+modifications cannot be implemented by in-place update.
+\rn{Is this text stale?  I.e. from an earlier version of the paper that talked
+  about the ``GC heap''?}
+
+
+\subsection{Region-types}
+
+\citet{launchbury_st_1995} taught us
+a conceptually simple approach to lifetimes: the |ST| monad. It has
+a phantom type parameter |s| that is instantiated once at the
+beginning of the computation by a |runST| function of type:
+\begin{code}
+  runST :: (forall s. ST s a) -> a
+\end{code}
+This way, resources that are allocated during the computation, such
+as mutable cell references, cannot escape the dynamic scope of the call
+to |runST| because they are themselves tagged with the same phantom
+type parameter.
+
+This simplicity (one only needs rank-2 polymorphism)
+comes at the cost of strong limitations in practice:
+\begin{itemize}
+% arnaud: The stack story is true, but it is not an easy case to make,
+% so I've taken it out for now. General idea is: in |ST| you can use
+% values as long as their regions lives, so resources can't be closed
+% before |runST| has completed. Whereas with linear types, we can
+% "disappear" a value, at which time we can take the opportunity to
+% close it. It is hard, however to pinpoint a case where it is
+% critical not to use stack-allocation.
+
+% jp: In many pipeline applications one has conceptually n
+% buffers used sequentially, but only two of them are live
+% simultaneously.
+
+\item |ST|-like regions confine to a stack-like allocation discipline,
+  because freeing resources coincide with the static scope of |runST|.
+  Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
+  this technique. This can be a problem for long-lived
+  programs as well as pipeline applications where one
+  has |n| buffers conceptually, but only a sliding window of two of them are
+  live simultaneously.
+
+  In our system, even though the lifetimes of linear variables are
+  checked statically, we can make use of continuation-passing style
+  (or Monads) to implement dynamic lifetimes for objects in the linear
+  heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
+|free  : A ⊸ r ⊸ r|.
+We can write code such as the following, where the lifetimes of |x|, |y|
+and |z| overlap in a non-stack fashion:
+\info{Note \$ : $(a →_p b) ⊸ a →_p b$}
+\begin{code}
+alloc   $ \x ->                 {- |x| live -}
+alloc   $ \y ->                 {- |x| and |y| live -}
+free x  $
+alloc   $ \z ->                 {- |y| and |z| live -}
+free y  $                       {- |z| live -}
+free z
+\end{code}
+% $ hint to emacs (parser) that we're not in math mode.
+
+%% \item |ST| actions cannot be interleaved with |IO| actions. So in our
+%%   mutable array examples, for instance, it is not possible to provide
+%%   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
+%%   a)| which will also make it possible to use |IO| actions to fill in
+%%   the array.\jp{I do not understand this item.}
+%% \rn{Neither do I.  Can't the PrimMonad stuff do that?}
+
+\item \citet{kiselyov_regions_2008} show that it is possible to
+  promote resources in parent regions to resources in a subregion. But
+  this is an explicit and monadic operation, forcing an unnatural
+  imperative style of programming where order of evaluation is
+  explicit. Moreover, computations cannot live directly in |IO|, but
+  instead in a wrapper monad. The HaskellR
+  project~\cite{boespflug_project_2014} uses monadic regions in the
+  style of \citeauthor{kiselyov_regions_2008} to safely synchronise
+  values shared between two different garbage collectors for two
+  different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
+  writing code at an interactive prompt difficult, compromises code
+  reuse, forces otherwise pure functions to be written monadically and
+  rules out useful syntactic facilities like view patterns.
+%
+  In contrast, with linear types, values in two regions
+  % (in our running example packets from different mailboxes) have the same type
+  hence can safely be mixed:
+  %% any data structure containing packet of a mailbox
+  %% will be forced to be consumed before the mailbox is closed.
+  %  \jp{FIXME: running   example is now gone.}
+  elements can be moved from one data structure (or heap) to another, linearly,
+  with responsibility for deallocation transferred along.
+%  , with  ownership transfer.
+\end{itemize}
 
 
 
