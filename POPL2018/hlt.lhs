@@ -2472,29 +2472,13 @@ the same code with linearity erased.
 \HaskeLL{} was engineered as an unintrusive design, making it tractable
 to integrate to an existing, mature compiler with a large ecosystem.
 We have developed a prototype implementation extending
-\textsc{ghc} with multiplicities. The main difference between the
-implementation and \calc is that the implementation is adapted to
-bidirectionality:\jp{the typing rules do not dictate an algorithm, so this is not a difference. In fact it says above ``One may want to think of the \emph{types} in $Γ$ as
-inputs of the judgement, and the \emph{multiplicities} as outputs.''}
-typing contexts go in, inferred multiplicities come
-out (and are compared to their expected values). As we hoped, this
+\textsc{ghc} with multiplicities. As we hoped, this
 design integrates well in \textsc{ghc}.
-
-%% \improvement{We don't talk about the ffi all that much in this version
-%% I think. This paragraph ought to be adapted to match the content of
-%% the evaluation section.}
-%% It is worth stressing that, in order to implement foreign data
-%% structures like we advocate as a means to
-%% provide safe access to resources or reduce \textsc{gc} pressure and
-%% latency, we only need to modify the type system: primitives to
-%% manipulate foreign data can be implemented in user libraries using the
-%% foreign function interface. This helps keeping the prototype lean,
-%% since \textsc{ghc}'s runtime system (\textsc{rts}) is unaffected.
 
 Even though we change only \ghc's type system, we found that the compiler and
 runtime already had the features necessary for unboxed, off-heap, and in-place
 data structures.  That is, \ghc{} has the low-level compiler primitives and
-FFI-support to implement, for example, mutable arrays, mutable cursors into
+\textsc{ffi} support to implement, for example, mutable arrays, mutable cursors into
 serialised data, or off-heap foreign data structures without garbage collection.
 These could be implemented (unsafely) {\em before} this work, but linearity
 unlocks these capabilities for safe use within pure code.
