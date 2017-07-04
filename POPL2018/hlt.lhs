@@ -343,15 +343,9 @@ channels and other resources.  Our particular contributions are these
 \item The key to this non-invasiveness is that, in contrast most other
       approaches, we focus on \emph{linarity on the function arrow}
       rather than \emph{linearity on the types} (\fref{sec:lin-arrow}).
-    \item Linearity on the function arrow alone is not enough: a
-      linear function must be able to return both linear and
-      non-linear results.  \jp{I am not sure what this means nor how
-        it connects with the next sentence.  Do you intend the following? ``Linear
-        functions are not sufficient on their own. Data types must
-        also be adjusted, so that they can be used to store linear and
-        unrestricted values.'' } We make a simple extension to
-      algebraic data type declarations to support this need
-      (\fref{sec:data-types}).
+\item Every function arrow can be declared linear, including those of
+      constructor types. This results in data-types which can store
+      both linear values, in addition to unrestricted ones (\fref{sec:data-types}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
