@@ -423,8 +423,8 @@ The Haskell language provides immutable arrays, built with the function |array|\
 Haskell actually generalises over the type of array indices, but for this
 paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
 \begin{code}
-array :: (Int,Int) -> [(Int,a)] -> Array a
-\end{code}\unsure{should array take a single Int? }
+array :: Int -> [(Int,a)] -> Array a
+\end{code}
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
@@ -649,8 +649,7 @@ in particular, |g| can pass that argument to |f|.
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
 \begin{code}
- (,) ::  a ⊸ b ⊸ (a,b)
- (,) ::  a -> b -> (a,b)
+ (,) ::  a ⊸ b ⊸ (a,b)          (,) ::  a -> b -> (a,b)
 \end{code}
 Using the definition in \fref{sec:consumed}, the former is clearly the right
 choice: if the result of |(,) e1 e2| is consumed exactly once,
@@ -667,13 +666,13 @@ f2 :: (Int,Int) ⊸ (Int,Int)
 f2 x = case x of (a,b) -> (b,a)
 \end{code}
 |f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
-a linear type, that does \emph{not} imply that the pattern-bound variables must be
-consumed exactly once.
+a linear type, that does \emph{not} imply that the pattern-bound variables |a| and |b|
+must be consumed exactly once; and indeed they aren't.
 
 However |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
 once?  No: |t| is guaranteed to be evaluated once, but its first component is then
-consumed twice and its second component not at all.
+consumed twice and its second component not at all, contradicting \Fref{def:consume}.
 In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactly once,
 then indeed |t| is consumed exactly once.
 
@@ -758,7 +757,7 @@ able to declare data constructors with non-linear types, like this:
   f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
 Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
-constructor |PLU|, with mixed linearity.\improvement{Explain here that
+constructor |PLU|, with mixed linearity. \improvement{Explain here that
 non-linearity syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
@@ -771,7 +770,7 @@ Instead of defining a pair with mixed linearity, we can also write
 
   f :: (MArray Int, Unrestricted Int) ⊸  MArray Int
 \end{code}
-The type |(Unrestricted t)| is very like |!t| in linear logic, but to us
+The type |(Unrestricted t)| is very like ``|!t|'' in linear logic, but to us
 it is just a library data type.
 We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
 a pair of a linear |MArray| and an unrestricted array element:
@@ -802,12 +801,15 @@ It can be given the two following incomparable types:
   the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
-Likewise, function composition can be given the following general type:
+Likewise, function composition and |foldl| (c.f. \Fref{sec:freezing-arrays})
+can be given the following general types:
 \begin{code}
-(∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p q) c
+foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
+
+(∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p · q) c
 (f ∘ g) x = f (g x)
 \end{code}
-That is: two functions that accept arguments of arbitrary
+The type of |(.)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
 function accepting arguments of multiplicity |pq| (\emph{i.e.} the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
@@ -875,8 +877,8 @@ data IORes p a where
   IOR :: World ⊸ a -> _ p IOR p a
 
 bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
-bindIOL (IOL m) k = IOL (\w -> case m w of
-                                 IOR w' r -> unIOL (k r) w')
+bindIOL (IOL m) k = IOL (\w ->   case m w of
+                                   IOR w' r -> unIOL (k r) w')
 \end{code}
 A value of type |World| represents the state of the world, and is
 threaded linearly through I/O computations.  The linearity of the
@@ -932,9 +934,7 @@ way we make precise much of the informal discussion above.
 
   \figuresection{Types}
   \begin{align*}
-  A,B &::= A →_π B &\text{function type}\\
-      & \pip ∀π. A &\text{multiplicity-dependent type}\\
-      & \pip D~p_1~…~p_n &\text{data type}
+  A,B ::= A →_π B \quad || \quad  ∀π. A \quad || \quad D~p_1~…~p_n
   \end{align*}
 
   \figuresection{Terms}
@@ -1276,6 +1276,82 @@ of extending the multiplicity domain later.  But there is an up-front cost,
 of somewhat less polymorphism than we might expect.  We hope that experience will
 lead us to a better assessment of the costs/benefit trade-off here.
 
+\section{Implementing \HaskeLL}
+\label{sec:implementation}
+\label{sec:impl}
+
+We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
+\textsc{ghc}, version 8.2.  This branch only modifies type inference and
+type-checking in the compiler, neither the intermediate language
+(Core\improvement{citation for Core}) nor the run-time system are affected.
+%
+Our implementation of multiplicity polymorphism is incomplete, but the current
+prototype is sufficient for the examples and case studies of this paper.
+%
+Our \HaskeLL{} implementation is compatible with most, but not all, of
+\textsc{ghc}'s extension (one notable incompatible extension is
+pattern-synonyms, the details of which have yet to be worked out).
+
+In order to implement the linear arrow, we followed the design of
+\calc{} and added a multiplicity annotation to arrows, as an
+additional argument of the type constructor for arrows of
+\textsc{ghc}'s type checker. The constructor for arrow types is
+constructed and destructed frequently in \textsc{ghc}'s type checker, and this
+accounts for most of the modifications to existing code.
+
+Where the implementation goes beyond \calc{} is that it extends type inference
+to compute multiplicities.
+%% in how multiplicities are
+%% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
+%% algorithm, in the implementation multiplicities are outputs of type inference.
+%% \jp{the typing rules do not dictate an algorithm, so this is not a
+%%   difference. In fact it says above ``One may want to think of the \emph{types}
+%%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
+%%   outputs.''}
+%
+\Red{The main reason for leaving multiplicities explicit in the calculus, not
+inferred}, is that it prevents us from needing to split the context along
+multiplicities (for instance in the application rule), which would have been
+achieved, in practice, by extending the semi-ring structure with partial
+operations for subtraction and division.
+\rn{I don't follow this atm -- and ... how is it ``implementation''?
+  -- aspiwack, I think this has become a bit muddled in various edits
+  (also quite probably my first attempt was not clear). I may not be
+  too important. I intended to convey that in an implementation,
+  having multiplicity as output requires combining them with addition,
+  scaling and meet. Whereas having them as input requires to split
+  context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
+  = Γ_1 + πΓ_2$), which is a magical operation. In order to do that
+  one could thread $Γ$ as a state and perform the appropriate
+  substractions to remove things from $Γ$ as we are using them such
+  that when we reach the second branch of $Γ$ , we are only left with
+  $πΓ_2$ and dividing by $π$ recovers $Γ_2$. Quite a bit of a mess, really.}
+
+Instead, in the application rule, we get the multiplicities of the
+variables in each of the operands as inputs and we can add them
+together. We still need to require more than just a semi-ring though:
+we need an ordering of the multiplicity semi-ring (such that
+$1\leqslant ω$) in order to check that the computed multiplicity is
+correct with respect to multiplicity annotations. In addition to the
+ordering, we need to be able to join the multiplicities computed in the
+branches of a |case|. To that effect, we need a supremum
+operation. Therefore the multiplicities need to form a
+join-semi-lattice-ordered semi-ring.
+
+Implementing this branch affects 1122 lines of \textsc{ghc} (for
+comparison the parts of the compiler that were affected by \HaskeLL{}
+total about 100000 lines of code), including 436 net extra lines. A new
+file responsible for multiplicity operations as well the files
+responsible for the environment manipulation and type inference of
+patterns account for almost half of the affected lines. The rest spans
+over a 100 files, most of which have 2 or 3 lines modified to account
+for the extra multiplicity argument of the arrow constructor.
+%% This work required roughly 1 man-month to complete.
+
+These figures vindicate our claim that \HaskeLL{} is easy to integrate into an
+existing implementation: despite \textsc{ghc} being 25 years old, we could
+implement a first version of \HaskeLL{} with reasonable effort.
+
 % \section{Applications}
 \section{Case Studies}
 \label{sec:evaluation}
@@ -1549,7 +1625,7 @@ tree.
 %
 The baseline is the time required to deserialize, transform, and reserialize:
 the ``unpack-repack'' line in the plots.  Compared to this baseline,
-{\bf processing the data directly in its serialised form results in speedups of over
+{\em processing the data directly in its serialised form results in speedups of over
 20$\times$ on large trees}.
 %
 What linear types makes safe, is also efficient.
@@ -1759,82 +1835,6 @@ where the impure \textsc{api} is a simple tree
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
   respected by the \textsc{api} user.}
-
-\section{Implementing \HaskeLL}
-\label{sec:implementation}
-\label{sec:impl}
-
-We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
-\textsc{ghc}, version 8.2.  This branch only modifies type inference and
-type-checking in the compiler, neither the intermediate language
-(Core\improvement{citation for Core}) nor the run-time system are affected.
-%
-Our implementation of multiplicity polymorphism is incomplete, but the current
-prototype is sufficient for the examples and case studies of this paper.
-%
-Our \HaskeLL{} implementation is compatible with most, but not all, of
-\textsc{ghc}'s extension (one notable incompatible extension is
-pattern-synonyms, the details of which have yet to be worked out).
-
-In order to implement the linear arrow, we followed the design of
-\calc{} and added a multiplicity annotation to arrows, as an
-additional argument of the type constructor for arrows of
-\textsc{ghc}'s type checker. The constructor for arrow types is
-constructed and destructed frequently in \textsc{ghc}'s type checker, and this
-accounts for most of the modifications to existing code.
-
-Where the implementation goes beyond \calc{} is that it extends type inference
-to compute multiplicities.
-%% in how multiplicities are
-%% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
-%% algorithm, in the implementation multiplicities are outputs of type inference.
-%% \jp{the typing rules do not dictate an algorithm, so this is not a
-%%   difference. In fact it says above ``One may want to think of the \emph{types}
-%%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
-%%   outputs.''}
-%
-\Red{The main reason for leaving multiplicities explicit in the calculus, not
-inferred}, is that it prevents us from needing to split the context along
-multiplicities (for instance in the application rule), which would have been
-achieved, in practice, by extending the semi-ring structure with partial
-operations for subtraction and division.
-\rn{I don't follow this atm -- and ... how is it ``implementation''?
-  -- aspiwack, I think this has become a bit muddled in various edits
-  (also quite probably my first attempt was not clear). I may not be
-  too important. I intended to convey that in an implementation,
-  having multiplicity as output requires combining them with addition,
-  scaling and meet. Whereas having them as input requires to split
-  context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
-  = Γ_1 + πΓ_2$), which is a magical operation. In order to do that
-  one could thread $Γ$ as a state and perform the appropriate
-  substractions to remove things from $Γ$ as we are using them such
-  that when we reach the second branch of $Γ$ , we are only left with
-  $πΓ_2$ and dividing by $π$ recovers $Γ_2$. Quite a bit of a mess, really.}
-
-Instead, in the application rule, we get the multiplicities of the
-variables in each of the operands as inputs and we can add them
-together. We still need to require more than just a semi-ring though:
-we need an ordering of the multiplicity semi-ring (such that
-$1\leqslant ω$) in order to check that the computed multiplicity is
-correct with respect to multiplicity annotations. In addition to the
-ordering, we need to be able to join the multiplicities computed in the
-branches of a |case|. To that effect, we need a supremum
-operation. Therefore the multiplicities need to form a
-join-semi-lattice-ordered semi-ring.
-
-Implementing this branch affects 1122 lines of \textsc{ghc} (for
-comparison the parts of the compiler that were affected by \HaskeLL{}
-total about 100000 lines of code), including 436 net extra lines. A new
-file responsible for multiplicity operations as well the files
-responsible for the environment manipulation and type inference of
-patterns account for almost half of the affected lines. The rest spans
-over a 100 files, most of which have 2 or 3 lines modified to account
-for the extra multiplicity argument of the arrow constructor.
-%% This work required roughly 1 man-month to complete.
-
-These figures vindicate our claim that \HaskeLL{} is easy to integrate into an
-existing implementation: despite \textsc{ghc} being 25 years old, we could
-implement a first version of \HaskeLL{} with reasonable effort.
 
 \section{Related work}
 \label{sec:related}
