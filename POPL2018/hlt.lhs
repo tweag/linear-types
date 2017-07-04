@@ -328,13 +328,12 @@ even though linearity has inspired uniqueness typing in Clean, and
 ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-\jp{What about ``Even though our design supports many
-  applications for linear types, we demonstrate that our design
-  supports two typical use-cases.''}  Linear types can do many
-things, but we focus on two particular use-cases.  First, safe
+Linear types can do many things. Our design support a large subset of
+those, but we focus here on two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
-enforcing access protocols for external \textsc{api}s, such as files, sockets,
-channels and other resources.  Our particular contributions are these
+enforcing access protocols for external \textsc{api}s, such as files,
+sockets, channels and other resources.  Our particular contributions
+are these
 \begin{itemize}
 \item Our extension to Haskell, dubbed \HaskeLL, is
       \emph{non-invasive}.  Existing programs continue to typecheck,
