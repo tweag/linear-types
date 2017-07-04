@@ -7,6 +7,10 @@
 %% For final camera-ready submission
 \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
+% TOGGLE ME to turn off all the commentary:
+% \def\noeditingmarks{}
+
+
 %% Note: Authors migrating a paper from PACMPL format to traditional
 %% SIGPLAN proceedings format should change 'acmsmall' to
 %% 'sigplan'.
@@ -100,8 +104,19 @@
 
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
-\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-\setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
+\ifx\noeditingmarks\undefined
+    \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+    \setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
+    \newcommand{\Red}[1]{{\color{red}{#1}}}
+    \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
+    \newenvironment{alt}{\color{red}}{}
+\else
+    \newcommand{\todo}[1]{}
+    \newcommand{\Red}[1]{#1}
+    \newcommand{\note}[1]{}
+    \newenvironment{alt}{}{}
+\fi
+
 \usepackage{xargs}
 \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
 \newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
@@ -112,15 +127,11 @@
 \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
 
-% Peanut gallery comments by Ryan:
-\newcommandx{\rn}[1]{\todo[]{RRN: #1}}
+\newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
 \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
 \newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
-\newenvironment{alt}{\color{red}}{}
 
-\newcommand{\Red}[1]{{\color{red}{#1}}}
-
-\newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
+    
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
