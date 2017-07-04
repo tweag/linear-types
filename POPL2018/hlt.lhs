@@ -918,7 +918,7 @@ way we make precise much of the informal discussion above.
 \begin{figure}
   \figuresection{Multiplicities}
   \begin{align*}
-    π,μ &::= 1 ~||~ ω ~||~ p ~||~ π+μ ~||~ π·μ
+    π,μ &::= 1 ~||~ ω ~||~ π ~||~ π+μ ~||~ π·μ
   \end{align*}
   \figuresection{Contexts}
   \begin{align*}
