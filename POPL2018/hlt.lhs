@@ -1785,7 +1785,7 @@ it?}
 
 In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
 of problem. They build a pure interface for graphics, in the same style
-as the Elm programming language\improvement{citation}, but implement it in terms
+as the Elm programming language~\cite{czaplicki_elm_2012}, but implement it in terms
 of an existing imperative graphical interface engine.
 
 Basically, the pure interface takes an update function |u : Scene -> Scene| which is
@@ -2310,7 +2310,7 @@ innocuous change can prevent a critical inlining opportunity and have
 rippling catastrophic effects throughout the program.
 Such unpredictable behaviour justifies the folklore that high-level languages should be
 abandoned to gain precise control over program efficiency.
-\jp{Do not delete the above sentence without discussion.}
+%% Do not delete the above sentence without discussion.
 
 A remedy is to use the multiplicity annotations of \calc{} as
 cardinality \emph{declarations}. Formalising and implementing the
