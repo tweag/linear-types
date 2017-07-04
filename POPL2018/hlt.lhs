@@ -1597,7 +1597,7 @@ fills two registers and inhabits an unboxed kind (distinct from |*|).
 %
 In fact, the type of a combinator like |caseTree| is a good fit for the recent
 ``levity polymorphism'' addition to
-\ghc{}~\cite{levity-polymorphism}\improvement{actual citation}.  Using it,
+\ghc{}~\cite{eisenberg_levity_2017}.  Using it,
 we can permit the branches of the |case| to return types with different {\em physical
 representations}:
 
