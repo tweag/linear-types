@@ -1435,11 +1435,11 @@ read :: Storable a => Has (a:r) -> (a, Has r)
 
 %% Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
 %% and then
-We also we have what we need to build a map function that logically operates on
+We also we have what we need to build a |map| function that logically operates on
 the leaves of a tree, but reads serialised data directly from an input buffer
 and writes directly to an output buffer.
 %
-Indeed, in our current Haskell implementation ``|map (+1) tree|'' touches {\em
+Indeed, in our current \HaskeLL implementation ``|map (+1) tree|'' touches {\em
   only} these buffers --- it performs zero heap allocation!
 
 % withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
@@ -1458,7 +1458,6 @@ that the ST monad is a suitable choice:
 \begin{code}
 writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)  
 \end{code}
-
 Here we use the same typestate associated with a |Needs| pointer, while also
 associating its mutable state with the |ST| session indexed by |s|.
 %
@@ -1518,7 +1517,7 @@ of a result and a new pointer.  In a monadic formulation, an expression of type
 {\em lifted} type.  Nevertheless, in some situations, for some monads, the
 optimiser is able to deforest data constructors returned by monadic actions.
 %
-In the particular case of fold and map operations over serialised trees,
+In the particular case of |fold| and |map| operations over serialised trees,
 unfortunately, we are currently unable to eliminate all allocation from
 |ST|-based implementations of the algorithms.
 
@@ -1723,13 +1722,13 @@ Basically, the pure interface takes an update function |u : Scene -> Scene| whic
 tasked with returning the next state that the screen will display.
 %
 Yet it would be too expensive to update the {\em full} state of the
-imperative graphics at every frame.  The SpriteKit authors instead use
+imperative graphics at every frame.  Thus the SpriteKit authors instead use
 so-called \emph{lazy marshalling}. The scene is first converted to a
 pure tree where each node keeps, along with the pure data, a pointer
 to its imperative counterpart when it applies, or |Nothing| for new
 nodes.
 \begin{code}
-data Node = Node {payload :: Payload, ref :: Maybe (IORef ImperativeNode), children :: [Node]}
+data Node = Node {payload :: Int, ref :: Maybe (IORef ImperativeNode), children :: [Node]}
 \end{code}
 
 On each frame, SpriteKit applies |u| to the current scene, and checks
@@ -1762,7 +1761,6 @@ counterpart and which will be new.
 We have implemented a simplified version of this solution in the case
 where the impure \textsc{api} is a simple tree
 \textsc{api}.
-\rn{Why is API in textsc?  Do we just use that for all acronyms?}
 \improvement{With some data regarding implementation, a
   remark that linearity is not used \emph{in} the implementation but
   only as the interface level to ensure that the proof obligation is
