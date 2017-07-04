@@ -1203,7 +1203,6 @@ for instance, a real-world token and file handles as in
 
 We then prove the two semantics to be bisimilar from which we can
 deduce:
-\todo{make sure that the theorem titles are exactly the same in the appendix.}
 \begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
   The semantics with in-place mutation is observationally equivalent to the pure semantics.
 \end{theorem}
@@ -1212,8 +1211,7 @@ deduce:
   be checked dynamically.
 \end{theorem}
 
-The complete proof of both of these statements can be found in
-\fref{appendix:dynamics}.
+These statements are formalised and proven in \fref{appendix:dynamics}.
 
 \subsection{Design choices \& trade-offs}
 Let us review the design space allowed by \calc{}, the points in the space that
@@ -2242,52 +2240,53 @@ develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
 this work is not directly applicable to \calc.
 
-\subsection{Operational aspects of linear languages}
-
 \improvement{Not the right place, but let us not forget to cite the
   very relevant: \cite{pottier_programming_2013}}
-\unsure{This section will need a clean up, to be more in phase of what
-we present in the evaluation section}
 
-\Citet{wakeling_linearity_1991} produced a complete implementation of
-a language with linear types, with the goal of improving 
-performance. Their implementation features a separate linear heap, as
-\fref{appendix:dynamics} where they allocate as much as possible in the
-linear heap, as modelled by the strengthened semantics. However,
-\citeauthor{wakeling_linearity_1991} did not obtain
-consistent performance gains. On the other hand, they still manage to
-reduce \textsc{gc} usage, which may be critical in distributed and
-real-time environments, where latency that matters more than
-throughput.
+% \subsection{Operational aspects of linear languages}
 
-\citeauthor{wakeling_linearity_1991} propose to {\em not} attempt prompt freeing of
-thunks; they only taking advantage of linearity for managing the lifetimes of
-large arrays. Our approach is similar: we advocate exploiting linearity for
-operational gains on large data structures (but not just arrays) stored
-off-heap. We go further and leave the management of external (linear) data to
-external code, only accessing it via an \textsc{api}. Yet, our language supports
-an implementation where each individual constructor with multiplicity 1 can be
-allocated on a linear heap, and deallocated when it is pattern matched.
-Implementing this behaviour is left for future work.
+% \unsure{This section will need a clean up, to be more in phase of what
+% we present in the evaluation section}
 
-\subsubsection{Garbage}
-\citet{mogensen_types_1997} proposes a type system whose purpose is to
-track the number of times that a value is used. They intend their
-system to be used for inference instead of declaration. Thus, while
-our main concern is the smooth integration with an existing lazy
-functional language, they are not concerned with language design issues.
-%
-Besides, their system features both annotations on types
-an certain variable bindings; while our type-system is related to
-theirs it appears to be incomparable.
+% \Citet{wakeling_linearity_1991} produced a complete implementation of
+% a language with linear types, with the goal of improving 
+% performance. Their implementation features a separate linear heap, as
+% \fref{appendix:dynamics} where they allocate as much as possible in the
+% linear heap, as modelled by the strengthened semantics. However,
+% \citeauthor{wakeling_linearity_1991} did not obtain
+% consistent performance gains. On the other hand, they still manage to
+% reduce \textsc{gc} usage, which may be critical in distributed and
+% real-time environments, where latency that matters more than
+% throughput.
 
-The work of \citet{igarashi_garbage_2000} uses the typesystem of
-Mogensen to drive a garbage collection mechanism. Yet, their approach
-is opposite to ours: while we aim to keep linear values
-completely outside of garbage collection, they use the type
-information at runtime to ensure that the GC does not follow dangling
-pointers.
-% JP: How can that even work?
+% \citeauthor{wakeling_linearity_1991} propose to {\em not} attempt prompt freeing of
+% thunks; they only taking advantage of linearity for managing the lifetimes of
+% large arrays. Our approach is similar: we advocate exploiting linearity for
+% operational gains on large data structures (but not just arrays) stored
+% off-heap. We go further and leave the management of external (linear) data to
+% external code, only accessing it via an \textsc{api}. Yet, our language supports
+% an implementation where each individual constructor with multiplicity 1 can be
+% allocated on a linear heap, and deallocated when it is pattern matched.
+% Implementing this behaviour is left for future work.
+
+% \subsubsection{Garbage}
+% \citet{mogensen_types_1997} proposes a type system whose purpose is to
+% track the number of times that a value is used. They intend their
+% system to be used for inference instead of declaration. Thus, while
+% our main concern is the smooth integration with an existing lazy
+% functional language, they are not concerned with language design issues.
+% %
+% Besides, their system features both annotations on types
+% an certain variable bindings; while our type-system is related to
+% theirs it appears to be incomparable.
+
+% The work of \citet{igarashi_garbage_2000} uses the typesystem of
+% Mogensen to drive a garbage collection mechanism. Yet, their approach
+% is opposite to ours: while we aim to keep linear values
+% completely outside of garbage collection, they use the type
+% information at runtime to ensure that the GC does not follow dangling
+% pointers.
+% % JP: How can that even work?
 
 
 
