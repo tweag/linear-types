@@ -949,7 +949,7 @@ way we make precise much of the informal discussion above.
             & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
   \end{align*}
 
-  \caption{Syntax of the linear calculus}
+  \caption{Syntax of \calc{}}
   \label{fig:syntax}
   \label{fig:contexts}
 \end{figure}
@@ -2293,20 +2293,18 @@ this work is not directly applicable to \calc.
 \todo{Section on the |newtype Unrestricted| problem. I guess?}
 
 \subsection{Controlling program optimizations}
-\subsubsection{Inlining}
 \label{sec:fusion}
-\jp{Let me know if this section looks ok or not.}  Inlining is a
-cornerstone of program optimisation, exposing opportunities for many
-program transformations. Not every function can be
-inlined without negative effects on performance: inlining a function
-with more than one use sites of the argument may result in duplicating
-a computation. For example one should avoid the following reduction:
-|(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
+Inlining is a cornerstone of program optimisation, exposing
+opportunities for many program transformations. Yet not every function can
+be inlined without negative effects on performance: inlining a
+function with more than one use sites of the argument may result in
+duplicating a computation. For example one should avoid the following
+reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
 Many compilers can discover safe inlining opportunities by analysing
 source code and determine how many times functions use their
 arguments.  (In \textsc{ghc} this analysis is called a cardinality
-analysis~\cite{sergey_cardinality_2014}). The limitation of such an
+analysis~\cite{sergey_cardinality_2014}). A limitation of such an
 analysis is that it is necessarily heuristic (the problem is
 undecidable for Haskell). Because inlining is crucial to efficiency, programmers
 find themselves in the uncomfortable position of relying on a
@@ -2322,10 +2320,10 @@ cardinality \emph{declarations}. Formalising and implementing the
 integration of multiplicity annotations in the cardinality analysis is
 left as future work.
 
-\subsubsection{Full-laziness}
-
-Another important optimisation of GHC is full-laziness.
-Consider the following program, which is a simplified version of an issue that occurs in
+Another important optimisation for lazy languages is full-laziness,
+which attempt to maximize sharing of sub-expressions. Unfortunately,
+full-laziness is sometimes a pessimisation, as in the following example,
+which is a simplified version of an issue that occurs in
 practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
 \begin{code}
 main = forM_ [1..5] (\i -> mapM_ print [1 .. N])
@@ -2334,16 +2332,16 @@ If |mapM_| is not inlined, then full-laziness transforms the above into
 \begin{code}
 main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
 \end{code}
-Unfortunately, in this case, full-laziness is actually a
-pessimisation: one would expect the above program to use constant
-space (because the list |[1..N]| is produced lazily). However, if
-there is sharing of the intermediate list |[1..N]| between runs of
-|mapM_ print [1 .. N]|, the memory residency is proportional to |N|.
-In this case, linearity |mapM_ :: (a ⊸ IO b) -> [a] ⊸ IO ()| should
-inform the compiler not only that inlining is possible but that
-sharing of the linear arguments is to be avoided. In fact, we could
-make it part of the semantics of linear functions that their arguments
-are never subject to full-laziness.
+Even though one would expect the above program to use constant space
+(because the list |[1..N]| is produced lazily), when the intermediate
+list |[1..N]| is shared between runs of |mapM_ print [1 .. N]|, the
+memory residency becomes proportional to |N|. We conjecture
+that linearity annotations can be used to guide full-laziness:
+arguments to linear functions should not be shared. Indeed, being used
+only once, it always is more memory-efficient to re-create them at
+each invokation. In this case, if |mapM_| is given the type |(a ⊸ IO
+b) -> [a] ⊸ IO ()|, the compiler would see that sharing of |[1..N]|
+should be avoided.
 
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
