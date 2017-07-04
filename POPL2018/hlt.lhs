@@ -2379,92 +2379,72 @@ on multiplicities.
 
 \subsection{Further applications, drawn from industry}
 \label{sec:industry}
-%% \todo{Integrate content in this section into future work / conclusion
-%%   / intro sections instead?}\rn{Agreed.}
 
-Our own work in an industrial context triggered our efforts to add linear types
-to GHC. We were originally motivated by precisely typed protocols for complex
-interactions in distributed systems and by taming GC latencies in highly
-synchronized distributed computations.  But we have since noticed other
-potential applications time of linearity in a variety of other projects.
+Our own work in an industrial context triggered our efforts to add
+linear types to \textsc{ghc}. We were originally motivated by
+precisely typed protocols for complex interactions and by taming
+\textsc{gc} latencies in distributed systems. But we have since
+noticed other potential applications time of linearity in a variety of
+other industrial projects.
 
 \begin{description}
-\item[File descriptors]
-\rn{Since I don't understand this one, I feel like its ok to leave it out.}
-  Linux-specific extensions to POSIX file
-  descriptors include operations to merge (\texttt{select}/\texttt{epoll}),
-  \texttt{splice} or split (\texttt{tee})
-  file descriptors. We can abstract these system
-  calls as a DSL for expressing arbitrary acyclic graphs of file
-  descriptors, or dataflows. Data in these graphs flows between file
-  descriptors entirely in kernel space and without copies. Splitting
-  a dataflow using |tee| should \emph{consume} the original dataflow,
-  since otherwise duplicating the dataflow involves copies, which we
-  want to rule out. That is, we want the following linear type for
-  |tee|:
-  \rn{What's the persistence story here?  Are these pipes only or connected to
-    disk files?  I don't really follow the operational model.  If ``tee'' is
-    possible {\em without} copying, doesn't that mean duplication is ok?
-    Doesn't splice still {\em copy} bytes, it just doesn't copy them into user space?}
-  \begin{code}
-    TODO
-  \end{code}
-  
-\item[Streaming I/O] Complex interactions with multiple files or sockets in a
-  resource-efficient way is error-prone \cite{kiselyov_iteratees_2012}. Rather
-  than building complex pipelines with brittle explicit loops, one idea is to
-  directly represent infinite streams.  For example, the echo service below
-  reifies sockets as streams, connects them, and runs forever:
-  \begin{code}
-    receive :: Socket -> IOStream Msg
-    send :: Socket -> IOStream Msg -> IO ()
-    echo isock osock = send osock (receive isock)
-  \end{code}
-The contract with the programmer typically requires linearity.  The individual
-actions making up streams are IO actions (e.g., socket read), which must not be
-duplicated inadvertently.  For example, we would not want to pass a receive
-stream to two consumers, which would call the underlying system call multiple
-times and observe different data.  Previous authors, including
-\citet{lippmeier_parallel_2016}, have commented on this problem of unenforced
-linearity in stream libraries.  Nevertheless, several such libraries are popular
-in the Haskell ecosystem.
+\item[Effect duplications]
+  This is a problem that shows up, for instance, in streaming
+  libraries: a stream perform effects so, as data, has suspended
+  effects. Stream manipulations, such as |fmap :: (a->b) -> Stream a
+  -> Stream b| hence duplicate this effect. In many case this
+  duplication can yield to contract violation if both the |Stream a|
+  and |Stream b| are used, \citet[Section
+  2.2]{lippmeier_parallel_2016} demonstrate one particular such
+  violation.
 
-  %% However, reifying sequences of |IO| actions (socket reads) in this
-  %% way runs the risk that effects might be duplicated inadvertently. In
-  %% the above example, we wouldn't want to inadvertently hand over the
-  %% receive stream to multiple consumers, or the abstraction of
-  %% wholemeal I/O programming would be broken, because neither consumer
-  %% would ultimately see the same values from the stream. If, say, one
-  %% consumer reads in the stream first, the second consumer would see
-  %% all but an empty stream --- not what the first consumer saw.
+  We have encountered such mistaken duplication in industrial
+  projects: they produce bugs which are very painful to track down. A
+  linear type discipline would prevent such bug from happening.
 
+  Variations on this theme occur whenever effects are treated as
+  data. Another example is composing file-descriptors with
+  \texttt{epoll}.
 
-% \item[Programming foreign heaps]
 \item[Inter-language memory management]
-  Complex projects with large teams
-  invariably involve a mix of programming languages. Reusing legacy
-  code is often much cheaper than reimplementing it. A key to
-  successful interoperation between languages is performance. If all
-  code lives in the same address space, then data need not be copied
-  as it flows from function to function implemented in multiple
-  programming languages.
-  % However, each language needs to manage its
-  % own heap of objects.
-  %
-\Red{
-    % Interactions between garbage collectors are complicated, typically
-    % involving pinning and weak pointers.
-%
-    Objects stored in a manually-managed area can sit outside the
-    language-specific heaps, but still require careful coordination.  A linear
-    type system makes a language a good citizen in this environment: ownership
-    of data, including the obligation to deallocate it, can transfer from
-    language A, to a shared space, to language B and back.}
-  %
-  \rn{Check if this was what was intended.}
+  Complex projects with large teams invariably involve a mix of
+  programming languages. Reusing legacy code is often much cheaperxf
+  than reimplementing it. A key to successful interoperation between
+  languages is performance. If all code lives in the same address
+  space, then data need not be copied as it flows from function to
+  function implemented in multiple programming languages.
+
+  This often implies cooperation between two garbage collectors. This
+  can be achieved by pinning some object, such as with Haskell's
+  |StablePtr|. Such pinning is expensive, so many language offer
+  cheaper cooperation primitives with restricted life-time and usage,
+  such as \emph{local references} in Java's \textsc{jni}. Such local
+  reference must conform to a particular usage pattern which can be
+  enforced with linear types. Global references like |StablePtr| can,
+  on the other hand, be used unrestrictedly.
   \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
 
-  % \item[RDMA?] \todo{Arnaud?}
+\item[Destination-passing style]
+  \Fref{sec:cursors} is an example of \textsc{api} requiring
+  destination-passing style. Destination-passing style often appears
+  in performance-sensitive contexts. One notable example from our
+  industrial experience is \textsc{rdma} (Remote Direct Memory Access)
+  which allows computers on high-end cluster to copy data in
+  one-another's memory directly, bypassing the kernel and even the
+  \textsc{cpu}, and, in the process, avoiding many copies.
+
+  \textsc{Rdma} is a form of destination-passing: one computer
+  allocates a buffer, and other computers write to the remote
+  buffer. When all write are completed, we can treat the buffer as
+  immutable. A reasonable way to expose such an \textsc{api} is hide
+  the allocation of the buffer inside the \textsc{rdma} primitives,
+  remote computer can treat the buffer as mutable (writes after
+  freezing the buffer result in errors). This already covers many
+  use-cases, but we have encountered situations where we need to
+  forward the buffer to a buffer allocated elsewhere (typically in C
+  code), in other words we need to expose the \textsc{rdma} interface
+  as a destination-passing interface, which is best expressed with
+  linear types.
   
 \end{description}
 
