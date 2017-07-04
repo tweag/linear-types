@@ -31,16 +31,15 @@ import qualified System.Socket.Family.Inet6 as S
 import qualified System.Socket.Type.Stream as S
 import qualified System.Socket.Protocol.TCP as S
 
--- TODO: newtype, for abstraction
 newtype Socket p (s :: State) = S { unS :: S.Socket S.Inet6 S.Stream p}
 type S p = S.Socket S.Inet6 S.Stream p
 type SocketAddress = S.SocketAddress S.Inet6
+-- TODO: this should be abstract too, in a type family
 data State
   = Unbound
   | Bound
   | Listening
-  | Ingress
-  | Egress
+  | Connected
 
 -- Initial state of the protocol
 type family Initial p :: State
@@ -69,10 +68,10 @@ listen sock = unsafeIOtoIO1 (unsafeListen (unsafeUnrestricted sock))
       S.listen sock 0
       return (coerce sock)
 
-accept :: forall p pre post. Rule p "accept" pre post => Socket p pre ⊸ IO' 'One (Socket p post, Socket p 'Egress)
+accept :: forall p pre post. Rule p "accept" pre post => Socket p pre ⊸ IO' 'One (Socket p post, Socket p 'Connected)
 accept sock = unsafeIOtoIO1 (unsafeAccept (unsafeUnrestricted sock))
   where
-    unsafeAccept :: Unrestricted (Socket p pre) ⊸ IO (Socket p post, Socket p 'Egress)
+    unsafeAccept :: Unrestricted (Socket p pre) ⊸ IO (Socket p post, Socket p 'Connected)
     unsafeAccept (Unrestricted (coerce -> sock)) = do
       (incoming, _) <- S.accept (sock :: S p)
       return (coerce sock, coerce incoming)

@@ -38,6 +38,7 @@ library
         Purify,
         Socket,
         Socket.Generic,
+        SocketExample,
 
         -- Exposed only for testing:
         PackedTree

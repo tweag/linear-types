@@ -1778,17 +1778,17 @@ As an illustration, we implemented wrapper around the \textsc{api} of the
 specialised for the case of \textsc{tcp}.
 
 \begin{code}
-data State = Unbound | Bound | Listening | Ingress | Egress
+data State = Unbound | Bound | Listening | Connected
 data Socket (s :: State)
 data SocketAddress
 
 socket ::  IOL 1 (Socket Unbound)
 bind ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Bound)
 listen :: Socket Bound ⊸ IOL 1 (Socket Listening)
-accept ::  Socket Listening ⊸ IOL 1 (Socket Listening, Socket Egress)
-connect ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Ingress)
-send :: Socket Ingress ⊸ ByteString -> IOL 1 (Socket Ingress, Unrestricted Int)
-receive :: Socket Egress ⊸ IOL 1 (Socket Egress, Unrestricted ByteString)
+accept ::  Socket Listening ⊸ IOL 1 (Socket Listening, Socket Connected)
+connect ::  Socket Unbound ⊸ SocketAddress -> IOL 1 (Socket Connected)
+send :: Socket Connected ⊸ ByteString -> IOL 1 (Socket Connected, Unrestricted Int)
+receive :: Socket Connected ⊸ IOL 1 (Socket Connected, Unrestricted ByteString)
 close :: forall s. Socket s -> IOL ω ()
 \end{code}
 

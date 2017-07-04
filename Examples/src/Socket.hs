@@ -34,9 +34,9 @@ type instance G.Initial S.TCP = 'Unbound
 instance G.Rule S.TCP "bind" 'Unbound 'Bound
 instance G.Rule S.TCP "listen" 'Bound 'Listening
 instance G.Rule S.TCP "accept" 'Listening 'Listening
-instance G.Rule S.TCP "connect" 'Unbound 'Ingress
-instance G.Rule S.TCP "send" 'Ingress 'Ingress
-instance G.Rule S.TCP "receive" 'Egress 'Egress
+instance G.Rule S.TCP "connect" 'Unbound 'Connected
+instance G.Rule S.TCP "send" 'Connected 'Connected
+instance G.Rule S.TCP "receive" 'Connected 'Connected
 
 socket ::  IO' 'One (Socket 'Unbound)
 socket = G.socket
@@ -47,16 +47,16 @@ bind = G.bind
 listen :: Socket 'Bound ⊸ IO' 'One (Socket 'Listening)
 listen = G.listen
 
-accept ::  Socket 'Listening ⊸ IO' 'One (Socket 'Listening, Socket 'Egress)
+accept ::  Socket 'Listening ⊸ IO' 'One (Socket 'Listening, Socket 'Connected)
 accept = G.accept
 
-connect ::  Socket 'Unbound ⊸ SocketAddress -> IO' 'One (Socket 'Ingress)
+connect ::  Socket 'Unbound ⊸ SocketAddress -> IO' 'One (Socket 'Connected)
 connect = G.connect
 
-send :: Socket 'Ingress ⊸ ByteString -> IO' 'One (Socket 'Ingress, Unrestricted Int)
+send :: Socket 'Connected ⊸ ByteString -> IO' 'One (Socket 'Connected, Unrestricted Int)
 send = G.send
 
-receive :: Socket 'Egress ⊸ IO' 'One (Socket 'Egress, Unrestricted ByteString)
+receive :: Socket 'Connected ⊸ IO' 'One (Socket 'Connected, Unrestricted ByteString)
 receive = G.receive
 
 close :: forall s. Socket s -> IO' 'Ω ()
