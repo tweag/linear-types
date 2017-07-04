@@ -571,7 +571,7 @@ It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often very useful do
 to so, as we will see in \fref{sec:sockets}, because we can use a
 phantom type to encode the state of the resource (similar to a
-typestate).
+type-level state, or {\em typestate}~\cite{strom_typestate_1983}).
 
 \subsection{Operational intuitions}
 \label{sec:consumed}
@@ -1404,7 +1404,7 @@ in-memory and on-the-wire formats for simple product types (protobufs).
 
 
 Here is an unusual case where type-safety can {\em yield performance} by making it
-practical to write in a previously infeasible style.  Indeed, linearity and \Red{typestate}
+practical to write in a previously infeasible style.  Indeed, linearity and {typestate}
 are both key to to a safe \textsc{api} for serialised data.
 %
 Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
