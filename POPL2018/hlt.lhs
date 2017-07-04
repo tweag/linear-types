@@ -416,7 +416,8 @@ subsequent subsections.
   read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
   freeze :: MArray a ⊸ Unrestricted (Array a)
 \end{code}
-\caption{Type signatures for array primitives (linear version)}
+\caption{Type signatures for array primitives (linear version), allowing
+  in-place update.}
 \label{fig:linear-array-sigs}
 \end{figure}
 The Haskell language provides immutable arrays, built with the function |array|\footnote{
