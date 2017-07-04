@@ -1865,8 +1865,6 @@ where the impure \textsc{api} is a simple tree
 \section{Related work}
 \label{sec:related}
 
-
-
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
@@ -1897,19 +1895,10 @@ others are unrestricted.  In a typical design making this choice,
 every type constructor exists in two flavours: one which constructs a
 linear type and one which constructs an unrestricted type. (Thus in
 particular such systems feature ``linear arrows'', but they have a
-completely different interpretation from ours.)
-
-An advantage of ``linearity via kinds'' is the possibility to directly
-declare the linearity of values returned by a function---not just that
-of the argument of a function. In contrast, in our system if one wants
-to indicate that a returned value is linear, we have to
-use a double-negation trick. That is, given $f : A → (B ⊸ !r) ⊸ r$,
-then $B$ can be used a single time in the (single) continuation, and
-effectively $f$ ``returns'' a single $B$. One can obviously declare a
-type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
-|Linear|-returning functions with appropriate combinators.  In fact,
-as explained in \fref{sec:linear-io}, the cost of the double negation
-almost entirely vanishes in the presence of an ambient monad.
+completely different interpretation from ours.) This choice is
+attractive on the surface because, intuitively, some types are
+inherently linear (file handles, updateable arrays, etc.) and some
+types are inherently unrestricted (Integer, Booleans, etc.).
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
@@ -1923,9 +1912,30 @@ almost entirely vanishes in the presence of an ambient monad.
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-Advantages of ``linearity via arrows'' include:
 
+However, after scratching the surface we have discovered that
+``linearity via arrows'' have many advantages over ``linearity via
+kinds'':
 \begin{itemize}
+\item More natural handling of closures.  In a system with linear
+  types, any closure of an unrestricted arrow type cannot contain an
+  occurence of a linear value. Indeed, this unrestricted closure could
+  be discarded, and its environment with it. This property is somewhat
+  surprising for programmers who often think that they construct a
+  single object -- but in fact this single object may be duplicated
+  later.  The corresponding property in our system, is that linear
+  values cannot be passed as arguments to an unrestricted function.
+
+\item Better interaction with laziness. In a lazy language, every
+  value may be a thunk. Thus every value behaves like a closure, and
+  so in a linearity-via-kinds system no unrestricted value can be
+  constructed from linear ones. Consequently, there can be no function
+  (or constructor) from linear to unrestricted types. This makes it
+  impossible to provide functions such as |fileClose : File ⊸ ()|, as
+  proposed by \citet{mazurak_lightweight_2010}. Consequently one must
+  introduce a linear variant of |()|, and thus even obviously
+  unrestricted types must exist in a linear variant.
+
 \item Better subsumption properties.  When retrofitting linear types
   in an existing language, it is important to share has much code as
   possible between linear and non-linear code. In a system with
@@ -1949,7 +1959,7 @@ Advantages of ``linearity via arrows'' include:
   promotable from linear to unrestriced, its declaration must use
   polymorphism over kinds.
 
-\item Easier polymorphism.  Even in the cases where code-sharing requires
+\item Easier polymorphism. \jp{type of |Maybe|}  Even in the cases where code-sharing requires
   polymorphism, linearity on arrows is simpler to use.  Indeed,
   multiplicity polymorphism can be supported by adding a special-purpose
   quantification, which is syntactically separate and does not
@@ -2009,6 +2019,18 @@ Advantages of ``linearity via arrows'' include:
 %   TYPE : Linearity -> KIND
 
 \end{itemize}
+
+An advantage of ``linearity via kinds'' is the possibility to directly
+declare the linearity of values returned by a function---not just that
+of the argument of a function. In contrast, in our system if one wants
+to indicate that a returned value is linear, we have to
+use a double-negation trick. That is, given $f : A → (B ⊸ !r) ⊸ r$,
+then $B$ can be used a single time in the (single) continuation, and
+effectively $f$ ``returns'' a single $B$. One can obviously declare a
+type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
+|Linear|-returning functions with appropriate combinators.  In fact,
+as explained in \fref{sec:linear-io}, the cost of the double negation
+almost entirely vanishes in the presence of an ambient monad.
 
 % Such approaches have been very successful for theory: see for instance
 % the line of work on so-called \emph{mixed linear and non-linear logic}
