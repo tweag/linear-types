@@ -530,14 +530,14 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \caption{Types for linear file IO} \label{fig:io-linear}
 \end{figure}
 
-Consider this \textsc{api} for files:
+Consider this \textsc{api} for files, where we see a |File| as a cursor in a physical file.
 \begin{code}
   type File
   openFile :: FilePath -> IO File
   readLine :: File -> IO ByteString
   closeFile :: File -> IO ()
 \end{code}
-Here we see |File a| as a cursor in a file. Each call
+Each call
 to |readLine| returns an |a| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
@@ -909,7 +909,10 @@ formalise a core calculus, \calc{}, which exhibits all the key features
 of \HaskeLL{}, including data types and multiplicity polymorphism.  In this
 way we make precise much of the informal discussion above.
 
+
 \subsection{Syntax}
+% \newcommand{\pip}{\mathmakebox[0pt][r]{||~}\phantom{::=}}
+\newcommand{\pip}{\kern 1.18em || }
 \label{sec:syntax}
 
 \begin{figure}
@@ -919,9 +922,7 @@ way we make precise much of the informal discussion above.
   \end{align*}
   \figuresection{Contexts}
   \begin{align*}
-    Γ,Δ & ::=\\
-        & ||  x :_{μ} A, Γ & \text{multiplicity-annotated binder} \\
-        & ||     & \text {empty context}
+    Γ,Δ & ::=  (x :_{μ} A), Γ \quad||\quad –
   \end{align*}
 
   \figuresection{Type declarations}
@@ -931,23 +932,21 @@ way we make precise much of the informal discussion above.
 
   \figuresection{Types}
   \begin{align*}
-  A,B &::=\\
-      & ||  A →_π B &\text{function type}\\
-      & ||  ∀π. A &\text{multiplicity-dependent type}\\
-      & ||  D~p_1~…~p_n &\text{data type}
+  A,B &::= A →_π B &\text{function type}\\
+      & \pip ∀π. A &\text{multiplicity-dependent type}\\
+      & \pip D~p_1~…~p_n &\text{data type}
   \end{align*}
 
   \figuresection{Terms}
   \begin{align*}
-    e,s,t,u & ::= \\
-            & ||  x & \text{variable} \\
-            & ||  λ_π (x{:}A). t & \text{abstraction} \\
-            & ||  t s & \text{application} \\
-            & ||  λp. t & \text{multiplicity abstraction} \\
-            & ||  t π & \text{multiplicity application} \\
-            & ||  c t₁ … t_n & \text{data construction} \\
-            & ||  \case[π] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
-            & ||  \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
+    e,s,t,u & ::= x & \text{variable} \\
+            & \pip λ_π (x{:}A). t & \text{abstraction} \\
+            & \pip t s & \text{application} \\
+            & \pip λp. t & \text{multiplicity abstraction} \\
+            & \pip t π & \text{multiplicity application} \\
+            & \pip c t₁ … t_n & \text{data construction} \\
+            & \pip \case[π] t {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
   \end{align*}
 
   \caption{Syntax of the linear calculus}
@@ -959,7 +958,6 @@ The term syntax of \calc{} is that of a type-annotated (\textit{à la}
 Church) simply-typed $λ$-calculus with let-definitions
 (\fref{fig:syntax}).  It includes multiplicity polymorphism, but to avoid clutter
 we omit ordinary type polymorphism.
-\simon{Save space by putting the syntax of types and context on one line each.}
 
 \calc{} is an explicitly-typed language: each binder is annotated with
 its type and multiplicity; and multiplicity abstraction and application
