@@ -1853,19 +1853,19 @@ implement a first version of \HaskeLL{} with reasonable effort.
 
 \subsection{Region-types}
 
-Haskell's |ST| monad~\cite{launchbury_st_1995} taught us
-a conceptually simple approach to lifetimes. The |ST| monad has
+\citet{launchbury_st_1995} taught us
+a conceptually simple approach to lifetimes: the |ST| monad. It has
 a phantom type parameter |s| that is instantiated once at the
 beginning of the computation by a |runST| function of type:
 \begin{code}
   runST :: (forall s. ST s a) -> a
 \end{code}
-In this way, resources that are allocated during the computation, such
+This way, resources that are allocated during the computation, such
 as mutable cell references, cannot escape the dynamic scope of the call
 to |runST| because they are themselves tagged with the same phantom
 type parameter.
 
-This apparent simplicity (one only needs rank-2 polymorphism)
+This simplicity (one only needs rank-2 polymorphism)
 comes at the cost of strong limitations in practice:
 \begin{itemize}
 % arnaud: The stack story is true, but it is not an easy case to make,
@@ -1884,11 +1884,11 @@ comes at the cost of strong limitations in practice:
   because freeing resources coincide with the static scope of |runST|.
   Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
   this technique. This can be a problem for long-lived
-  programs, as well as pipeline applications where one
+  programs as well as pipeline applications where one
   has |n| buffers conceptually, but only a sliding window of two of them are
   live simultaneously.
 
-  In our system, even though the lifetimes of linear variables is
+  In our system, even though the lifetimes of linear variables are
   checked statically, we can make use of continuation-passing style
   (or Monads) to implement dynamic lifetimes for objects in the linear
   heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
@@ -1897,11 +1897,11 @@ We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
 \info{Note \$ : $(a →_p b) ⊸ a →_p b$}
 \begin{code}
-alloc   $ \x ->                 {- x live -}
-alloc   $ \y ->                 {- x and y live -}
+alloc   $ \x ->                 {- |x| live -}
+alloc   $ \y ->                 {- |x| and |y| live -}
 free x  $
-alloc   $ \z ->                 {- y and z live -}
-free y  $                       {- z live -}
+alloc   $ \z ->                 {- |y| and |z| live -}
+free y  $                       {- |z| live -}
 free z
 \end{code}
 % $ hint to emacs (parser) that we're not in math mode.
