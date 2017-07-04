@@ -2433,19 +2433,12 @@ other industrial projects.
   one-another's memory directly, bypassing the kernel and even the
   \textsc{cpu}, and, in the process, avoiding many copies.
 
-  \textsc{Rdma} is a form of destination-passing: one computer
-  allocates a buffer, and other computers write to the remote
-  buffer. When all write are completed, we can treat the buffer as
-  immutable. A reasonable way to expose such an \textsc{api} is hide
-  the allocation of the buffer inside the \textsc{rdma} primitives,
-  remote computer can treat the buffer as mutable (writes after
-  freezing the buffer result in errors). This already covers many
-  use-cases, but we have encountered situations where we need to
-  forward the buffer to a buffer allocated elsewhere (typically in C
-  code), in other words we need to expose the \textsc{rdma} interface
-  as a destination-passing interface, which is best expressed with
-  linear types.
-  
+  In \textsc{rdma} one computer allocates a buffer |b|, and other
+  computers write to |b|. When all write are completed, we treat |b|
+  as immutable. It is more composable not to allocate |b| as part of
+  the \textsc{rdma} primitives. In other words we want to expose the
+  \textsc{rdma} interface as a destination-passing interface, which is
+  best expressed with linear types.
 \end{description}
 
 
