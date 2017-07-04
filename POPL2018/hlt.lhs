@@ -8,7 +8,7 @@
 \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
-% \def\noeditingmarks{}
+\def\noeditingmarks{}
 
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
@@ -104,32 +104,49 @@
 
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
+
+\usepackage{xargs}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \ifx\noeditingmarks\undefined
-    \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+%    \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
     \setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
     \newcommand{\Red}[1]{{\color{red}{#1}}}
     \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
     \newenvironment{alt}{\color{red}}{}
+
+    \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+    \newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
+    \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+    \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+    \newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+    \newcommandx{\improvement}[2][1=]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink,#1]{#2}}
+    \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
+    \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
+
+    \newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
+    \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
+    \newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
+
 \else
-    \newcommand{\todo}[1]{}
+%    \newcommand{\todo}[1]{}
     \newcommand{\Red}[1]{#1}
     \newcommand{\note}[1]{}
     \newenvironment{alt}{}{}
+
+    \newcommand{\unsure}[2]{}
+    \newcommand{\info}[2]{}
+    \newcommand{\change}[2]{}
+    \newcommand{\inconsistent}[2]{}
+    \newcommand{\critical}[2]{}
+    \newcommand{\improvement}[2]{}
+    \newcommand{\resolved}[2]{}
+    \newcommand{\thiswillnotshow}[2]{}
+
+    \newcommand{\rn}[1]{}
+    \newcommand{\simon}[1]{}
+    \newcommand{\jp}[1]{}
 \fi
 
-\usepackage{xargs}
-\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
-\newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
-\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
-\newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
-\newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
-\newcommandx{\improvement}[2][1=]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink,#1]{#2}}
-\newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
-\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}} % will replace \resolved in the final document
-
-\newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
-\newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
-\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
 
     
 
