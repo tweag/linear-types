@@ -328,8 +328,8 @@ even though linearity has inspired uniqueness typing in Clean, and
 ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
 
-Linear types can do many things. Our design support a large subset of
-those, but we focus here on two particular use-cases.  First, safe
+Our design supports many applications for linear types, but we focus on
+two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
 enforcing access protocols for external \textsc{api}s, such as files,
 sockets, channels and other resources.  Our particular contributions
@@ -427,7 +427,7 @@ array :: (Int,Int) -> [(Int,a)] -> Array a
 \end{code}\unsure{should array take a single Int? }
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
-can readily implement variations (and certainly do implement more complex variations, see for example \fref{sec:cursors}).  Here is the
+can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
 definition of |array|, using library functions whose types are given
 in \fref{fig:array-sigs}:
 \begin{code}
@@ -1245,12 +1245,11 @@ For example, if
   g :: (Int -> Int) -> Bool
 \end{code}
 then the call |(g f)| is ill-typed, even though |f| provides more
-guarantees than |g| requires.  However, eta-expansion to |g (\x. f x)|
-makes the expression typeable, as the reader may check.
-Alternatively, |g| might well be multiplicity-polymorphic, with type
+guarantees than |g| requires.
+However, |g| might well be multiplicity-polymorphic, with type
 |forall p. (Int -> _ p Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
-\jp{I feel that the eta-expansion thing is enough discussion. I
-  suggest that we can say that extending subtyping is future work.}
+Alternatively, eta-expansion to |g (\x. f x)|
+makes the expression typeable, as the reader may check.
 
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
@@ -1267,14 +1266,6 @@ also have |id :: forall p. Int → _ p Int|?  But as it stands, our rules do
 not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $p=1$ and $p=ω$.
-\simon{I could not work out what your $p$ and $p'$ were.... so I ended
-  up with case analysis.  What am I missing? -- [aspiwack]: well, the
-  $p'$ was wrong because it has no reason to be a variable. But the
-  (var) rules tells us that in order for $x$ to be well-typed its
-  multiplicity in $Γ$ must be of the form $1+ωπ$ (or just $1$, because
-  we don't have $0$). But your explanation is just as good. I just
-  tried to point out exactly what needed changing for identity to have
-  a polymorphic type}
 But if we had a richer domain of multiplicities, including
 $0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
 in a dependently typed system}, we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
