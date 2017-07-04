@@ -1853,9 +1853,15 @@ implement a first version of \HaskeLL{} with reasonable effort.
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
-\rn{I think this subsection should go first in this (long) section.  It more
-  directly addresses {\em competing} work.  I don't think we're competing with
-  the 1995 ST monad paper.}
+\improvement{aspiwack: I think we need to take a new stab at this
+  following the levity polymorphism discussion that we had. Two-kinds
+  seems to be more appropriate for call-by-value. Polymorphism is
+  probably not much of a problem at least in \textsc{ghc}, however, we
+  don't know a solution which does not require making everything
+  (data-types, functions) polymorphic. Though do we need additional
+  constraints, like |p <= q| on multiplicities? We probably at least
+  need this or a join operation $p∧q$.}
+
 There are two possible choices to indicate the distinction between
 linear and unrestricted objects.  Our choice is to use the arrow
 type. That is, we have both a linear arrow to introduce linear objects
@@ -1869,7 +1875,7 @@ is encoded as $!A ⊸ B$.
 Another popular choice
 \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011}
 is to separate types into two kinds: a linear kind and an unrestricted
-kind. Values with a type whose kind is linear are be linear, and the
+kind. Values with a type whose kind is linear are linear, and the
 others are unrestricted.  In a typical design making this choice,
 every type constructor exists in two flavours: one which constructs a
 linear type and one which constructs an unrestricted type. (Thus in
