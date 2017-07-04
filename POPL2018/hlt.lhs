@@ -165,7 +165,7 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
-
+\usepackage{wrapfig}
 
 %% Journal information (used by PACMPL format)
 %% Supplied to authors by publisher for camera-ready submission
@@ -1428,51 +1428,104 @@ data has motivated small steps in this direction:
 libraries like ``Cap'N Proto''~\footnote{{\url{https://capnproto.org/}}} enable unifying
 in-memory and on-the-wire formats for simple product types (protobufs).
 
-
-Here is an unusual case where type-safety can {\em yield performance} by making it
-practical to write in a previously infeasible style.  Indeed, linearity and {typestate}
-are both key to to a safe \textsc{api} for serialised data.
-%
-Whereas mutable arrays are homogenous --- with evenly-spaced, aligned elements
---- binary-serialised data structures contain primitive values of various
-widths, at unaligned byte-offsets.  
-%
-A pointer into a buffer containing serialised output is similar to a constructor
-method for a regular heap object.  It must ensure that all fields are initialised, at
-the proper addresses and with values of the correct type.
-%
-Linear use of the write pointer can ensure exactly this.  We use a type
-``|Needs|'' for these writable output pointers, expecting to receive serialised
-data:
+\begin{wrapfigure}[6]{r}[34pt]{8.5cm}
+\vspace{-5mm}
+  %module FooMod( Foo(..), pack, unpack, caseFoo) where
 \begin{code}
-  p :: Needs [Int, Double] Foo 
+data Foo = MkFoo Int Double
+pack    :: Foo ⊸ Packed [Foo]
+unpack  :: Packed [Foo] ⊸ Foo
+caseFoo :: Packed [Foo] ⊸ Packed [Int, Double]
 \end{code}
-%
-Here |Needs| is parameterised both by {\em obligations}, that an |Int| and
-then a |Double| must be written, and by the resulting, immutable value 
-that will be available upon completing those writes (|Foo|).
-%
-A |write| function for primitive types shaves one element off the type-level
-list of obligations:
+\end{wrapfigure}
+The interface on the right gives a example of type-safe, {\em read-only}
+access to serialised data.
+% For example, consider the read-only interface on the right;
+Here, a @Packed@ value is a pointer to raw bits (a bytestring), indexed by the
+types of the values contained within.  We define a {\em type safe} serialisation
+layer as one which {\em reads} bits only at the type and size they were
+originally {\em written}.  This is a small extension of the memory safety we
+already expect of Haskell's heap itself --- extended to include the contents of
+bytestrings containing serialised data\footnote{The additional safety ensured
+  here is somewhat lower stakes, as, even it is violated, the serialised values
+  do not contain pointers and cannot segfault the program reading them.}.  Hence
+the @Packed@ type {\em must} be abstract.
 
+If we cannot muck about with the bits inside a @Packed@ directly, then we can
+still retrieve data with @unpack@, i.e., the traditional, allocating and
+copying, approach to deserialisation.  Better still is to read the data {\em
+  without} copying.  We can manage this feat with @caseFoo@, which is analogous
+to the expression ``@case e of MkFoo ...@''.  Unlike this case expression,
+@caseFoo@'s operational behavior merely reads a tag byte from the byte stream,
+advances the cursor and returns a type safe pointer to the fields,
+@Packed [Int, Double]@.
+%
+A serialised @Foo@ takes exactly 17 bytes, and @caseFoo@ returns a reference to
+the remaining 16 bytes of data.
+%
+It is precisely to access multiple, consecutive values that @Packed@ is indexed
+by phantom type parameter containing a {\em list} of types.
+
+Here is an unusual case where type-safety can {\em yield performance} by making
+it practical to write in a previously infeasible style: accessing serialised
+data without copying it.  In this read-only example, linearity is not essential,
+only typestate.  But as we consider an \textsc{API} for {\em writing} @Packed
+[Foo]@ values (without ever having a @Foo@ value in the heap to start with),
+then linearity is key.
+
+%% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
+%% manipulating serialised data.  But, as with arrays, linearity is only necessary
+%% for writing.  A read-only interface on serialised data can work fine without it.
+
+\subsubsection{Writing serialised data}
+
+%% The mutable arrays of \fref{sec:freezing-arrays} were homogenous --- with
+%% evenly-spaced, aligned elements.  In contrast, binary-serialised data structures
+%% contain primitive values of various widths, at unaligned byte-offsets.
+%
+To create a serialised @MkFoo@ value, we must write a tag, an integer, and a
+double, in that order --- three writes, 17 bytes.
+%% A pointer into a buffer containing serialised output is similar to a constructor
+%% method for a regular heap object.  It must ensure that all fields are initialised, at
+%% the proper addresses and with values of the correct type.
+%
+A {\em linear} write pointer can ensure all three writes happen, and none happen
+twice.  We use a type ``|Needs|'' for write pointers, parameterised by (1) a
+list of remaining things to be written, and (2) the type of the final value
+which will be initialised once those writes are performed.  For example, after
+we write the tag of a @MkFoo@ we are left with: 
+%\begin{code}
+``@Needs [Int, Double] Foo@'':
+%\end{code}
+an {\em obligation} to write the fields, and a {\em promise} that we'll receive
+a logical @Foo@ value at the end.
+%
+%% |Needs| is parameterised both by {\em obligations}, that an |Int| and then a
+%% |Double| must be written, and by the resulting, immutable value that will be
+%% available upon completing those writes (|Foo|).
+
+To write or read an individal @Int@ or @Double@, we provide primitives that
+shave one element off the type-level list of obligations (or contents,
+respectively):
+%
 \begin{code}
-  write  :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
-  
-  write 4.4 (write 3 p) :: Needs [] Foo
+  write :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
+  read  :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{code}
 %
 After writing the two fields to |p| in this example, we need a way to finalize
 the operation and convert the write pointer to a read pointer:
 
-\begin{code}  
-  finish :: Needs [] t ⊸ Unrestricted (Has [t])
+\begin{code}
+  write 4.4 (write 3 p) :: Needs [] Foo
+  finish :: Needs [] t ⊸ Unrestricted (Packed [t])
 \end{code}
 %
 Just as when we converted mutable arrays to immutable arrays, here the immutable
 |Foo| can be read multiple times.
 %
 It is not, however, a {\em normal} heap representation of |Foo|,
-but rather an isomorphic, serialised representation: |Has [Foo]|.  Nevertheless,
+but rather an isomorphic, serialised representation: |Packed [Foo]|.  Nevertheless,
 everything in a |Foo| can be read in a type-safe way directly from the
 serialised buffer.
 
@@ -1487,7 +1540,7 @@ serialised |Tree| data:
 \begin{code}
 startLeaf   :: Needs (Tree : r) t ⊸ Needs (Int : r) t
 startBranch :: Needs (Tree : r) t ⊸ Needs (Tree : Tree : r) t
-caseTree :: Has (Tree:r) -> (Has (Int:r) -> a) -> (Has (Tree:Tree:r) -> a) -> a
+caseTree :: Packed (Tree:r) -> (Packed (Int:r) -> a) -> (Packed (Tree:Tree:r) -> a) -> a
 \end{code}
 
 These operations themselves go into the trusted codebase.  Internally, we choose
@@ -1509,7 +1562,7 @@ Using an |newBuffer| primitive similar to |newMArray|
 |Branch (Leaf 3) (Leaf 4)|, with:
 
 \begin{code}
-newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Has [Tree]
+newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
 newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
 
@@ -1525,8 +1578,6 @@ sum h =   caseTree h read
             (\h2 ->  let  (n,h3) = sum h2
                           (m,h4) = sum h3
                      in (n+m,h4))
-
-read :: Storable a => Has (a:r) -> (a, Has r)
 \end{code}
 
 %% Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
@@ -1570,8 +1621,8 @@ For example, we can write a |Leaf| and a |Branch| to the same pointer in an
 interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
 an integer in bytes 1-9, while the branch will place another tag at byte 1.
 %
-If we define a type-safe serialization interface as one where every read at a
-type returns a whole value written at the same type, then this is a violation.
+\Red{If we define a type-safe serialization interface as one where every read at a
+type returns a whole value written at the same type, then this is a violation.}
 We can receive a corrupted 8-byte integer, clobbered by a tag from an
 interleaved ``alternate future''.
 
@@ -1629,7 +1680,7 @@ representations}:
 
 \begin{code}
 caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
-  Has (Tree:b) -> (Has (Int:b) ⊸ res) -> (Has (Tree:Tree:b) ⊸ res) -> res
+  Packed (Tree:b) -> (Packed (Int:b) ⊸ res) -> (Packed (Tree:Tree:b) ⊸ res) -> res
 \end{code}
 
 This works because we do not need to {\em call} a function with |res| as
@@ -1649,7 +1700,7 @@ We consider two simple benchmarks, a |fold| and a |map| respectively: (1) summin
 leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
 tree.
 %
-The baseline is the time required to deserialize, transform, and reserialize:
+The baseline is the time required to deserialise, transform, and reserialise:
 the ``unpack-repack'' line in the plots.  Compared to this baseline,
 {\em processing the data directly in its serialised form results in speedups of over
 20$\times$ on large trees}.
