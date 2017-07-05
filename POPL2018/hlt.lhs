@@ -1052,7 +1052,6 @@ be read as follows
 One may want to think of the \emph{types} in $Γ$ as
 inputs of the judgement, and the \emph{multiplicities} as outputs.
 
-%For example\jp{example of what?},
 The rule (abs) for lambda abstraction adds $(x :_{π} A)$ to the
 environment $Γ$ before checking the body |t| of the abstraction.
 Notice that in \calc{}, the lambda abstraction  $λ_π(x{:}A). t$
@@ -1318,10 +1317,10 @@ to compute multiplicities.
 %% in how multiplicities are
 %% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
 %% algorithm, in the implementation multiplicities are outputs of type inference.
-%% \jp{the typing rules do not dictate an algorithm, so this is not a
+%% jp: the typing rules do not dictate an algorithm, so this is not a
 %%   difference. In fact it says above ``One may want to think of the \emph{types}
 %%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
-%%   outputs.''}
+%%   outputs.''
 %
 \Red{The main reason for leaving multiplicities explicit in the calculus, not
 inferred}, is that it prevents us from needing to split the context along
@@ -1845,8 +1844,6 @@ it?}
 
 \subsection{Pure bindings to impure \textsc{api}s}
 \label{sec:spritekit}
-%% \jp{This section feels handwavy, it would require showing a bit more technical stuff. Do we have access to implementation?}
-% \rn{Maybe partially addressed?}
 
 In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
 of problem. They build a pure interface for graphics, in the same style
