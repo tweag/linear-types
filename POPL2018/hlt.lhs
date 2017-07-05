@@ -1308,7 +1308,7 @@ lead us to a better assessment of the costs/benefit trade-off here.
 We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
 \textsc{ghc}, version 8.2.  This branch only modifies type inference and
 type-checking in the compiler, neither the intermediate language
-(Core\improvement{citation for Core}) nor the run-time system are affected.
+(Core~\cite{sulzmann_fc_2007}) nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies of this paper.
@@ -1324,48 +1324,17 @@ additional argument of the type constructor for arrows of
 constructed and destructed frequently in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
-Where the implementation goes beyond \calc{} is that it extends type inference
-to compute multiplicities.
-%% in how multiplicities are
-%% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
-%% algorithm, in the implementation multiplicities are outputs of type inference.
-%% jp: the typing rules do not dictate an algorithm, so this is not a
-%%   difference. In fact it says above ``One may want to think of the \emph{types}
-%%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
-%%   outputs.''
-%
-\Red{The main reason for leaving multiplicities explicit in the calculus, not
-inferred}, is that it prevents us from needing to split the context along
-multiplicities (for instance in the application rule), which would have been
-achieved, in practice, by extending the semi-ring structure with partial
-operations for subtraction and division.
-\rn{I don't follow this atm -- and ... how is it ``implementation''?
-  -- aspiwack, I think this has become a bit muddled in various edits
-  (also quite probably my first attempt was not clear). I may not be
-  too important. I intended to convey that in an implementation,
-  having multiplicity as output requires combining them with addition,
-  scaling and meet. Whereas having them as input requires to split
-  context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
-  = Γ_1 + πΓ_2$), which is a magical operation. In order to do that
-  one could thread $Γ$ as a state and perform the appropriate
-  substractions to remove things from $Γ$ as we are using them such
-  that when we reach the second branch of $Γ$ , we are only left with
-  $πΓ_2$ and dividing by $π$ recovers $Γ_2$. Quite a bit of a mess, really.}
+As suggested in \fref{sec:typing-contexts}, the multiplicities are an
+output of the algorithm. In order to infer the multiplicities of
+variables in the branches of a |case| expression we need a way to join
+the output of the branch. In \calc{}, we can simply ``guess'' the
+right value, in the implementation we use a supremum operation on
+multiplicities where $1∨0 = ω$ (where $0$ stands for a variable absent
+in a branch).
 
-Instead, in the application rule, we get the multiplicities of the
-variables in each of the operands as inputs and we can add them
-together. We still need to require more than just a semi-ring though:
-we need an ordering of the multiplicity semi-ring (such that
-$1\leqslant ω$) in order to check that the computed multiplicity is
-correct with respect to multiplicity annotations. In addition to the
-ordering, we need to be able to join the multiplicities computed in the
-branches of a |case|. To that effect, we need a supremum
-operation. Therefore the multiplicities need to form a
-join-semi-lattice-ordered semi-ring.
-
-Implementing this branch affects 1122 lines of \textsc{ghc} (for
+Implementing this branch affects 1152 lines of \textsc{ghc} (for
 comparison the parts of the compiler that were affected by \HaskeLL{}
-total about 100000 lines of code), including 436 net extra lines. A new
+total about 100000 lines of code), including 444 net extra lines. A new
 file responsible for multiplicity operations as well the files
 responsible for the environment manipulation and type inference of
 patterns account for almost half of the affected lines. The rest spans
