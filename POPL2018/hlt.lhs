@@ -97,6 +97,11 @@
 
 \newcommand{\ghc}{\textsc{ghc}}
 
+\usepackage{xspace}
+
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
 \newcommand{\where}{ \mathsf{where} }
@@ -617,9 +622,10 @@ and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often very useful do
-to so, as we will see in \fref{sec:sockets}, because we can use a
+to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we can use a
 phantom type to encode the state of the resource (similar to a
-type-level state, or {\em typestate}~\cite{strom_typestate_1983}).
+type-level state, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
+types for the File before vs after an operation.
 
 
 \subsection{Operational intuitions}
@@ -662,7 +668,7 @@ The type of |g| makes no particular guarantees about the way in which it uses |x
 in particular, |g| can pass that argument to |f|.
 
 % A consequence of this definition is that an \emph{unrestricted} value,
-% \textit{i.e.} one which is not guaranteed to be used exactly once, such
+% \ie one which is not guaranteed to be used exactly once, such
 % as the argument of a regular function |g :: a -> b|, can freely be
 % passed to |f|: |f| offers stronger guarantees than regular
 % functions. On the other hand a linear value |u|, such as the argument of
@@ -674,7 +680,7 @@ in particular, |g| can pass that argument to |f|.
 % :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
 % of |x|:
 % \begin{itemize}
-% \item If |x| is a linear variable, \textit{i.e.} it must be consumed
+% \item If |x| is a linear variable, \ie it must be consumed
 %   exactly once, we can ensure that it is consumed exactly once by
 %   consuming |f| exactly once: it is the definition of linear
 %   functions. However, |g| does not guarantee that it will consume |f
@@ -860,7 +866,7 @@ foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
 \end{code}
 The type of |(·)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
-function accepting arguments of multiplicity |p·q| (\textit{i.e.} the
+function accepting arguments of multiplicity |p·q| (\ie the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
@@ -1457,7 +1463,7 @@ Consequently, a client of the module defining |Tree| need not be privy to the
 memory layout of its serialisation.
 
 If we cannot muck about with the bits inside a |Packed| directly, then we can
-still retrieve data with |unpack|, i.e., the traditional, {\em copying},
+still retrieve data with |unpack|, \ie, the traditional, {\em copying},
 approach to deserialisation.  Better still is to read the data {\em without}
 copying.  We can manage this feat with |caseTree|, which is analogous to the
 expression ``|case e of {Leaf ... ; Branch ...}|''.
@@ -1467,7 +1473,7 @@ corresponding to the two branches of the case expression.
 %
 Unlike the case expression, |caseTree| operates on the packed byte stream, reads
 a tag byte, advances the pointer past it, and returns a type safe pointer to the
-fields (\textit{e.g.} |Packed [Int]| in the case of a leaf).
+fields (\eg |Packed [Int]| in the case of a leaf).
 %% \begin{code}
 %%   caseTree  (pack (Leaf 3))
 %%             (\ p::Packed [Int] -> ...)
@@ -1928,7 +1934,7 @@ The idea: all linear objects go into the memory of a monad. The monad is indexed
 Idris proposes an alternative way to make sockets safer: instead of
 using liear types, use an indexed monad to enforce linearity. Idris
 introduces a generic way to add typestate on top of a monad, the
-|STrans| indexed monad transformer\footnote{See \textit{e.g.}
+|STrans| indexed monad transformer\footnote{See \eg
   \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
 |STrans| you make sockets be part of the monad's state. So we could
 give, for instance, the following type to bind:
@@ -2395,7 +2401,7 @@ pattern to be expressed. See \fref{sec:extending-multiplicities}.
 % if the original object lives in the GC heap (and thus can be shared),
 % the same lens library can be used, but individual lifting of
 % modifications cannot be implemented by in-place update.
-% \rn{Is this text stale?  I.e. from an earlier version of the paper that talked
+% \rn{Is this text stale?  That is, from an earlier version of the paper that talked
 %   about the ``GC heap''?}
 
 
@@ -2594,7 +2600,7 @@ more, following \citet{ghica_bounded_2014} and
 ordered-semiring of multiplicities (with a join operation for type
 inference).  In particular, in order to support dependent types, we
 additionally need a $0$ multiplicity. We may may want to add a
-multiplicity for affine arguments (\textit{i.e.}  arguments which can be
+multiplicity for affine arguments (\ie  arguments which can be
 used \emph{at most once}).
 
 The typing rules are mostly unchanged with the \emph{caveat} that
@@ -3035,12 +3041,12 @@ which we modify by copy.
   An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
   \begin{itemize}
   \item $Ξ$ is a typing context
-  \item $Γ$ is a \emph{typed environment}, \textit{i.e.} a collection of
+  \item $Γ$ is a \emph{typed environment}, \ie a collection of
     bindings of the form $x :_ρ A = e$
   \item $t$ is a term
   \item $ρ∈\{1,ω\}$ is a multiplicity
   \item $A$ is a type
-  \item $Σ$ is a typed stack, \textit{i.e.} a list of triple $e:_ρ A$ of
+  \item $Σ$ is a typed stack, \ie a list of triple $e:_ρ A$ of
     a term, a multiplicity and an annotation.
   \end{itemize}
 
@@ -3272,7 +3278,7 @@ extended so that one evaluates to |False| and the other to |True|.
 
 % safety proves that the mutable semantics is equivalent to a pure
 % semantics.
-% liveness proves that the primitives don't block on typestate (\textit{e.g.} in the
+% liveness proves that the primitives don't block on typestate (\eg in the
 % write primitive, we are never given an |Array|) (because typing is
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
