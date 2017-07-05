@@ -31,10 +31,7 @@ system-ghc: true
 
 docker:
   enable: true
-  # GHC 8.1 
-  #  image: parfunc/linear-types:0.0.2
-  # GHC 8.2.X rebase
-  image: tweag/linear-types:0.1.2
+  image: tweag/linear-types:latest
 [...]
 ```
 
