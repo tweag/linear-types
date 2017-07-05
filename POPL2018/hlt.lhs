@@ -2249,9 +2249,6 @@ develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
 this work is not directly applicable to \calc.
 
-\improvement{Not the right place, but let us not forget to cite the
-  very relevant: \cite{pottier_programming_2013}}
-
 \subsection{Uniqueness and ownership typing}
 \label{sec:uniqueness}
 
@@ -2510,8 +2507,6 @@ free z
 
 
 \section{Future work}
-
-\todo{Section on the |newtype Unrestricted| problem. I guess?}
 
 \subsection{Controlling program optimizations}
 \label{sec:fusion}
