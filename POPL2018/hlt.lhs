@@ -302,7 +302,7 @@
 
   To demonstrate the efficacy of our linear type system~---~both how
   easy it can be integrated in an existing language implementation and
-  how streamlined it makes it to write program with linear
+  how streamlined it makes it to write programs with linear
   types~---~we implemented our type system in 
   \textsc{ghc}, the leading Haskell compiler, and demonstrate
   two kinds of applications of linear types: making side-effecting functions
@@ -367,15 +367,15 @@ two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
 enforcing access protocols for external \textsc{api}s, such as files,
 sockets, channels and other resources.  Our particular contributions
-are these
+are these:
 \begin{itemize}
 \item Our extension to Haskell, dubbed \HaskeLL, is
       \emph{non-invasive}.  Existing programs continue to typecheck,
       and existing data types can be used as-is even in linear parts
       of the program.
-\item The key to this non-invasiveness is that, in contrast most other
+\item The key to this non-invasiveness is that, in contrast to most other
       approaches, we focus on \emph{linarity on the function arrow}
-      rather than \emph{linearity on the types} (\fref{sec:lin-arrow}).
+      rather than \emph{linearity in the kinds} (\fref{sec:lin-arrow}).
 \item Every function arrow can be declared linear, including those of
       constructor types. This results in data-types which can store
       both linear values, in addition to unrestricted ones (\fref{sec:data-types}).
@@ -387,7 +387,7 @@ are these
 \item We formalise our system in a small, statically-typed core
       calculus that exhibits all these features (\fref{sec:calculus}).
       It enjoys the usual properties of progress and preservation.
-\item We have implemented a prototype of system in as a modest extension to \textsc{ghc}
+\item We have implemented a prototype of the system in as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
       We use this prototype to implement case-study applications (\fref{sec:applications}).
       Our prototype performs linearity \emph{inference}, but a systematic
@@ -419,6 +419,77 @@ Here, linearity does not affect efficiency, but rather eliminates many bugs.
 We introduce our extension to Haskell, which we call \HaskeLL, by focusing on these
 two use-cases.   In doing so, we introduce a number of ideas that we flesh out in
 subsequent subsections.
+
+\subsection{Operational intuitions}
+\label{sec:consumed}
+
+We have said informally that \emph{``a linear function consumes its argument
+exactly once''}. But what exactly does that mean?
+
+\begin{quote}
+\emph{Meaning of the linear arrow}:
+|f :: s ⊸ t| guarantees that if |(f u)| is consumed exactly once,
+then the argument |u| is consumed exactly once.
+\end{quote}
+To make sense of this statement we need to know what ``consumed exactly once'' means.
+Our definition is based on the type of the value concerned:
+\begin{definition}[Consume exactly once]~ \label{def:consume}
+\begin{itemize}
+\item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
+\item To consume a function exactly once, call it, and consume its result exactly once.
+\item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
+\item In general, to consume a value of an algebraic data type exactly once, evaluate
+  it and consume all its linear components exactly once
+  (\fref{sec:non-linear-constructors})\footnote{You may deduce that pairs have linear components,
+    and indeed they do, as we discuss in \fref{sec:non-linear-constructors}.}.
+\end{itemize}
+\end{definition}
+\noindent
+This definition is enough to allow programmers to reason about the
+typing of their functions, and it drives the formal typing judgements in
+\fref{sec:statics}.
+
+Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
+restrict \emph{the arguments to which the function can be applied}.
+In particular, a linear function cannot assume that it is given the
+unique pointer to its argument.  For example, if |f :: s ⊸ t|, then\
+this is fine:
+\begin{code}
+g :: s -> t
+g x = f x
+\end{code}
+The type of |g| makes no particular guarantees about the way in which it uses |x|;
+in particular, |g| can pass that argument to |f|.
+
+% A consequence of this definition is that an \emph{unrestricted} value,
+% \emph{i.e.} one which is not guaranteed to be used exactly once, such
+% as the argument of a regular function |g :: a -> b|, can freely be
+% passed to |f|: |f| offers stronger guarantees than regular
+% functions. On the other hand a linear value |u|, such as the argument of
+% |f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
+% times, or none at all, both violating the linearity guarantee that |u|
+% must be consumed exactly once.
+%
+% In light of this definition, suppose that we have |f :: a ⊸ b| and |g
+% :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
+% of |x|:
+% \begin{itemize}
+% \item If |x| is a linear variable, \emph{i.e.} it must be consumed
+%   exactly once, we can ensure that it's consumed exactly once by
+%   consuming |f| exactly once: it is the definition of linear
+%   functions. However, |g| does not guarantee that it will consume |f
+%   x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
+%   x)| cannot be well-typed.
+% \item If |x| is an unrestricted variable, on the other hand, there is
+%   no constraint on how |x| must be consumed. So |g (f x)| is perfectly
+%   valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
+%   for the details.
+% \end{itemize}
+%
+% In the same spirit, an unrestricted value |u| can never point to a
+% linear value |v|: if |u| is never consumed (which is a correct use of
+% an unrestricted value), then |v| will never be consumed either, which
+% is incorrect of a linear value.
 
 
 \subsection{Safe mutable arrays}
@@ -464,7 +535,7 @@ Then we iterate over the |pairs|, with |forM_|, updating the array in place
 for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
-as described in \cite{launchbury_state_1995}.
+as described in \cite{launchbury_st_1995}.
 
 
 \begin{figure}
@@ -599,7 +670,7 @@ Consider the \textsc{api} for files in \fref{fig:io-traditional}, where a
 |File| is a cursor in a physical file.
 %
 Each call
-to |readLine| returns the line and moves the cursor one line
+to |readLine| returns a |ByteString| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
@@ -628,79 +699,6 @@ to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we c
 phantom type to encode the state of the resource (similar to a
 type-level state, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
 types for the File before vs after an operation.
-
-
-\subsection{Operational intuitions}
-\label{sec:consumed}
-
-We said informally tahat \emph{``a linear function consumes its argument
-exactly once''}. But what exactly does that mean?
-
-\begin{quote}
-\emph{Meaning of the linear arrow}:
-|f :: s ⊸ t| guarantees that if |(f u)| is consumed exactly once,
-then the argument |u| is consumed exactly once.
-\end{quote}
-To make sense of this statement we need to know what ``consumed exactly once'' means.
-Our definition is based on the type of the value concerned:
-\begin{definition}[Consume exactly once]~ \label{def:consume}
-\begin{itemize}
-\item To consume exactly once a value of an atomic base type, like |Int| or |Ptr|, just evaluate it.
-\item To consume a function exactly once, call it, and consume its result exactly once.
-\item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
-\item More generally, to consume exactly once a value of an algebraic data type, evaluate
-  it and consume all its linear components exactly once (\fref{sec:non-linear-constructors}).
-\end{itemize}
-\end{definition}
-\noindent
-This definition is enough to allow programmers to reason about the
-typing of their functions, and it drives the formal typing judgements in
-\fref{sec:statics}.
-
-Note that a linear arrow specifies \emph{how the function uses its argument}. It does not
-restrict \emph{the arguments to which the function can be applied}.
-In particular, a linear function cannot assume that it is given the
-unique pointer to its argument.  For example, if |f :: s ⊸ t|, then\
-this is fine:
-
-%% \begin{wrapfigure}[2]{l}[0pt]{2.5cm} % lines, placement, overhang, width
-%% \vspace{-6mm}
-\begin{code}
-  g :: s -> t    --   The type of |g| makes no particular guarantees about the way in which 
-  g x = f x      --   it uses |x|; in particular, |g| can pass that argument to |f|.
-\end{code}  
-% \end{wrapfigure}
-\vspace{-5mm}
-
-% A consequence of this definition is that an \emph{unrestricted} value,
-% \ie one which is not guaranteed to be used exactly once, such
-% as the argument of a regular function |g :: a -> b|, can freely be
-% passed to |f|: |f| offers stronger guarantees than regular
-% functions. On the other hand a linear value |u|, such as the argument of
-% |f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
-% times, or none at all, both violating the linearity guarantee that |u|
-% must be consumed exactly once.
-%
-% In light of this definition, suppose that we have |f :: a ⊸ b| and |g
-% :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
-% of |x|:
-% \begin{itemize}
-% \item If |x| is a linear variable, \ie it must be consumed
-%   exactly once, we can ensure that it is consumed exactly once by
-%   consuming |f| exactly once: it is the definition of linear
-%   functions. However, |g| does not guarantee that it will consume |f
-%   x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
-%   x)| cannot be well-typed.
-% \item If |x| is an unrestricted variable, on the other hand, there is
-%   no constraint on how |x| must be consumed. So |g (f x)| is perfectly
-%   valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
-%   for the details.
-% \end{itemize}
-%
-% In the same spirit, an unrestricted value |u| can never point to a
-% linear value |v|: if |u| is never consumed (which is a correct use of
-% an unrestricted value), then |v| will never be consumed either, which
-% is incorrect of a linear value.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
@@ -943,7 +941,7 @@ poses no problem in practice.  Consider
 \end{code}
 Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
 an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-Nevertheless, the we can combine them with |bindIOL| in the usual way:
+Nevertheless, we can combine them with |bindIOL| in the usual way:
 \begin{code}
   openFile s `bindIOL` \f ->
   getData    `bindIOL` \d ->
@@ -2789,7 +2787,7 @@ capabilities for safe, compiler-checked use, within pure code.
 \end{acks}
 
 %% Bibliography
-\bibliography{../PaperTools/bibtex/jp.bib,../local.bib}{}
+\bibliography{../PaperTools/bibtex/jp,../local}{}
 
 
 %% Appendix
