@@ -1586,8 +1586,9 @@ With these building blocks, we can move @pack@ and @unpack@ outside of the
 private code that defines @Tree@s, which has this minimal interface:
 \begin{code}
 module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
-module DataPacked( Packed, read, write, newBuffer, finish )
+module DataPacked( Packed, Needs, read, write, newBuffer, finish, dropPacked )
 \end{code}
+\todo{JP says that he can fix the lack of a period in the above module name}
 %
 %% After writing the two fields to |p| in this example, we need a way to finalize
 %% the operation and convert the write pointer to a read pointer:
@@ -1625,7 +1626,7 @@ newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tr
 %
 We also sometimes need to explicitly let go of a linear value we don't need:
 \begin{code}
-  dropPacked :: Packed a ⊸ b ⊸ b
+  dropPacked :: Packed a ⊸ ()
 \end{code}
 
 Finally, we have what we need to build a |map| function that logically operates
@@ -1634,23 +1635,28 @@ output.
 %
 Indeed, in our current \HaskeLL implementation ``|map (+1) tree|'' touches {\em
   only} these buffers --- it performs zero heap allocation!
+%
+We will return to this map and benchmark it in \fref{sec:cursor-benchmark}.
+%
+With the safe interface to serialised data, these functions are not burdensome
+to program.  The code for @map@ is shown below, its inner loop linearly updates
+a pair of a read- and write-pointer.
 
 %\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 %\vspace{-6mm}
 \begin{code}
 map :: (Int->Int) -> Packed Tree ⊸ Packed Tree
-map f pt = newBuffer (extract ∘ go pt)
+map fn pt = newBuffer (extract ∘ go pt)
   where
-    extract (inp,outp) = dropPacked inp (finish outp)
+    extract (inp,outp) = case dropPacked inp of () -> finish outp
     go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
-    go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (f x) o))
+    go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (fn x) o))
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
 \end{code}
 %\end{wrapfigure}
 
-
-\improvement{This section should assert that the abstraction is
-  practical to program with, even comfortable.}
+%% \improvement{This section should assert that the abstraction is
+%%   practical to program with, even comfortable.}
 
 
 % \subsubsection{Linear vs. non-linear and compiler optimisations}
@@ -1691,6 +1697,7 @@ encoding linearity in a way which would become very cumbersome as soon as severa
 buffers are involved.
 
 \subsubsection{Compiler optimisations}
+\label{sec:cursor-benchmark}
 
 \begin{figure}
   \hspace{-2mm}%
