@@ -953,7 +953,7 @@ way we make precise much of the informal discussion above.
     Γ,Δ & ::=  (x :_{μ} A), Γ \quad||\quad –
   \end{align*}
 
-  \figuresection{Type declarations}
+  \figuresection{Datatype declaration}
   \begin{align*}
     \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
   \end{align*}
