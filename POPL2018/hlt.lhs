@@ -1586,9 +1586,7 @@ With these building blocks, we can move @pack@ and @unpack@ outside of the
 private code that defines @Tree@s, which has this minimal interface:
 \begin{code}
 module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
-\end{code}
-\begin{code}
-module Data.Packed( Packed, read, write, newBuffer, finish )
+module DataPacked( Packed, read, write, newBuffer, finish )
 \end{code}
 %
 %% After writing the two fields to |p| in this example, we need a way to finalize
@@ -1613,41 +1611,47 @@ module Data.Packed( Packed, read, write, newBuffer, finish )
 On top of the safe interface, we can of course define higher-level construction
 routines, such as for writing a complete |Leaf|:
 %
+%   writeLeaf n p = write n (startLeaf p)
 \begin{code}
-writeLeaf n p = write n (startLeaf p)
+  writeLeaf n = write n ∘ startLeaf 
 \end{code}
 %
-With which we can allocate and initialize a complete tree,
-  |Branch (Leaf 3) (Leaf 4)|, as follows:
+Now we can allocate and initialize a complete tree --- equivalent to |Branch
+(Leaf 3) (Leaf 4)|, but without ever creating the non-serialised values --- as
+follows:
 \begin{code}
 newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
 \end{code}
-
-On the other hand, to {\em read} |Tree| values, we pass continuations to the
-|caseTree| combinator.  That is, |caseTree t k1 k2| reads the next byte in
-the stream, and calls |k1| if it is a leaf tag or |k2| otherwise.
 %
-Using |caseTree| together with a read for primitive values, we sum the leaves
-of a tree like so:
+We also sometimes need to explicitly let go of a linear value we don't need:
+\begin{code}
+  dropPacked :: Packed a ⊸ b ⊸ b
+\end{code}
 
-............... % sumtree removed.
-
-
-%% Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
-%% and then
-We also we have what we need to build a |map| function that logically operates on
-the leaves of a tree, but reads serialised data directly from an input buffer
-and writes directly to an output buffer.
+Finally, we have what we need to build a |map| function that logically operates
+on the leaves of a tree, but reads serialised input and writes serialised
+output.
 %
 Indeed, in our current \HaskeLL implementation ``|map (+1) tree|'' touches {\em
   only} these buffers --- it performs zero heap allocation!
 
-% withOutput :: (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-% 
-% mapDest :: Has# (Tree ': r) ⊸ Needs (Tree ': r) t ⊸ (# Has# r, Needs r t #)  
+%\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
+%\vspace{-6mm}
+\begin{code}
+map :: (Int->Int) -> Packed Tree ⊸ Packed Tree
+map f pt = newBuffer (extract ∘ go pt)
+  where
+    extract (inp,outp) = dropPacked inp (finish outp)
+    go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
+    go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (f x) o))
+                       (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
+\end{code}
+%\end{wrapfigure}
+
 
 \improvement{This section should assert that the abstraction is
   practical to program with, even comfortable.}
+
 
 % \subsubsection{Linear vs. non-linear and compiler optimisations}
 \subsubsection{A version without linear types}
