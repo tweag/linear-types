@@ -2204,7 +2204,9 @@ type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
 |Linear|-returning functions with appropriate combinators.  In fact,
 as explained in \fref{sec:linear-io}, the cost of the double negation
 almost entirely vanishes in the presence of an ambient monad.
-\improvement{aspiwack: We should also speak of the need of call-by-value.}
+\info{Actually linearity via kids works well with lazy evaluation. We only need a ``linear unit type'' (which is like a type of effects).
+All linear things will eventually accrete in such a type and it
+can collected for example in $runEffect :: LinearUnit -o IO ()$; or we could have $main :: LinearUnit$. }
 
 \subsection{Other variants of ``linearity on the arrow''}
 \label{sec:related-type-systems}
