@@ -9,7 +9,7 @@ module SocketExample where
 
 import Data.ByteString.Char8 ()
 import Data.String (String, fromString)
-import IO
+import IO hiding (close)
 import Linear.Std
 import Prelude (fromInteger, (++), show)
 import qualified Prelude as P
@@ -20,17 +20,21 @@ import qualified System.Socket.Family.Inet6 as S
 import qualified System.Socket.Type.Stream as S
 import qualified System.Socket.Protocol.TCP as S
 
+forever :: (a ⊸ IO' 'One a) -> a ⊸ IO' 'Ω b
+forever f a = do
+  a' <- f a
+  forever f a'
+
 putStrLn :: String -> IO' 'Ω ()
 putStrLn s = unsafeIOtoIOΩ (P.putStrLn s)
 
-main :: IO' 'Ω (Socket 'Connected)
+main :: IO' 'Ω a
 main = do
   s1 <- socket
   s2 <- bind s1 (S.SocketAddressInet6 S.inet6Any 8080 0 0)
   s3 <- listen s2
   putStrLn "Listening socket ready..."
-  acceptAndHandle s3
-  -- forever $ acceptAndHandle s `catch` \e-> print (e :: SocketException)
+  forever acceptAndHandle s3
 
   --  bracket
   -- ( socket :: IO (Socket Inet6 Stream TCP) )
@@ -47,12 +51,13 @@ main = do
   --   forever $ acceptAndHandle s `catch` \e-> print (e :: SocketException)
   -- )
 
-acceptAndHandle :: Socket 'Listening -> IO' 'Ω (Socket 'Connected)
+acceptAndHandle :: Socket 'Listening ⊸ IO' 'One (Socket 'Listening)
 acceptAndHandle s = do
-  (s, p1) <- accept s
+  (s', p1) <- accept s
   putStrLn $ "Accepted connection"
   (p2, Unrestricted _) <- send p1 "Hello world!"
-  return p2
+  close p2
+  returnL s'
 
   --  bracket
   -- ( accept s )

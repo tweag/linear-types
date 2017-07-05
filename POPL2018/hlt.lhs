@@ -1914,9 +1914,78 @@ is the argument to |Socket|, which represents the current state of the
 socket and is used to limit the functions which apply to a socket
 at a given time.
 
-\improvement{Compare with Idris's dependent typestate in the |ST|
-  monad}
+\paragraph{Idris and the dependent index monad}
+%
+Idris proposes an alternative way to make sockets safer: instead of
+using liear types, use an indexed monad to enforce linearity. Idris
+introduces a generic way to add typestate on top of a monad, the
+|STrans| index monad transformer\footnote{See \emph{e.g.}
+  \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
+|STrans| you make sockets be part of the monad's state. So we could
+give, for instance, the following type to bind:
+\begin{code}
+  bind :: SocketAddress -> STrans IO Unbound Bound
+\end{code}
+But that would not do: we may need several sockets, or other
+resources. So |STrans| takes a list of resource states addressed by a
+label. The type of |bind| must then express that the socket belongs to
+the initial state, and return a new state where the state of the
+socket has been changed. This is quite tedious to express, so Idris
+makes good use of its dependent types and defines a new transformer
+|ST| which takes common actions and transforms them into |STrans|
+conditions. So the type of |bind| is:
+\begin{code}
+  bind :: (sock :: Var) -> SocketAddress -> ST IO () [sock ::: Socket Unbound :-> Socket Bound]
+\end{code}
 
+Could we do the same in Haskell today without dependent type? It is
+probably achievable: Haskell's type-level programming capabilities are
+expressive enough to reason on type-level sets. And there is a notion
+of labels that we could use, as singleton types, instead of the |Var|
+type. This is not obvious though, and the error message would be
+really uninformative.
+%
+\improvement{aspiwack: I assume it would be quite a bit of a hassle to
+use such |ST| functions in higher order functions, but I'm not sure
+how to phrase that as of today}
+
+\paragraph{Catching errors}
+%
+But if we were to try and implement typestate with indexed monad we
+would run into further complication: error management. Indeed, |bind|
+may fail (typically because we are trying to bind a port which is
+attached to another socket). So far we have simply assumed that
+failures of socket functions to apply result in catastrophic failure
+which crashes the program (or at least the section of the
+program). However, it is often preferable to handle errors in a
+fine-grained fashion. For this purpose the type of Idris's |bind|
+above, is still not the right one, instead Idris defines:
+\begin{code}
+  bind ::  (sock :: Var) -> SocketAddress ->
+           ST IO (Either () ()) [sock ::: Sock Unbound :-> (Sock Bound `or` Sock Unbound)]
+\end{code}
+Indeed, the return-state of |ST| is a function of the return value of
+|ST|, this uses dependent type in an essential way. This is not
+something Haskell is equipped to handle.\improvement{aspiwack: it is not
+  entirely impossible though, using a variant of |Either| which is a
+  \textsc{gadt} and matching on the phantom type using a type family
+  |or|. It's a tad rigid but feasible. It would quite a large pile of
+  hacks though, I understand why no one does that}
+
+With the linear \textsc{api}, on the other hand, we define:
+\begin{code}
+  bind :: Socket Unbound ⊸ SocketAddress -> Either (Socket Bound) (Socket Unbound)
+\end{code}
+As the state is carried locally by the socket variable, it will be
+decided by a pattern matching without advanced dependent pattern matching.
+
+\improvement{aspiwack: So what are the conclusion? the |ST| thing has
+  one advantage: it doesn't require linear types. The linear-type
+  version seem to be a bit more flexible, and way easier to implement in
+  \HaskeLL{}. What else can we be saying}
+
+\paragraph{Implementing the linear socket \textsc{api}}
+%
 \note{Is there anything to say about the implementation?  Conclusions to draw from
 it?}
 
