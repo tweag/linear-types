@@ -12,7 +12,7 @@
 %% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
-\def\noeditingmarks{}
+% \def\noeditingmarks{}
 
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
@@ -961,7 +961,7 @@ way we make precise much of the informal discussion above.
     Γ,Δ & ::=  (x :_{μ} A), Γ \quad||\quad –
   \end{align*}
 
-  \figuresection{Type declarations}
+  \figuresection{Datatype declaration}
   \begin{align*}
     \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
   \end{align*}
@@ -1316,7 +1316,7 @@ lead us to a better assessment of the costs/benefit trade-off here.
 We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
 \textsc{ghc}, version 8.2.  This branch only modifies type inference and
 type-checking in the compiler, neither the intermediate language
-(Core\improvement{citation for Core}) nor the run-time system are affected.
+(Core~\cite{sulzmann_fc_2007}) nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies of this paper.
@@ -1332,48 +1332,17 @@ additional argument of the type constructor for arrows of
 constructed and destructed frequently in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
-Where the implementation goes beyond \calc{} is that it extends type inference
-to compute multiplicities.
-%% in how multiplicities are
-%% computed: whereas in the \calc{} multiplicities are inputs of the type-checking
-%% algorithm, in the implementation multiplicities are outputs of type inference.
-%% jp: the typing rules do not dictate an algorithm, so this is not a
-%%   difference. In fact it says above ``One may want to think of the \emph{types}
-%%   in $Γ$ as inputs of the judgement, and the \emph{multiplicities} as
-%%   outputs.''
-%
-\Red{The main reason for leaving multiplicities explicit in the calculus, not
-inferred}, is that it prevents us from needing to split the context along
-multiplicities (for instance in the application rule), which would have been
-achieved, in practice, by extending the semi-ring structure with partial
-operations for subtraction and division.
-\rn{I don't follow this atm -- and ... how is it ``implementation''?
-  -- aspiwack, I think this has become a bit muddled in various edits
-  (also quite probably my first attempt was not clear). I may not be
-  too important. I intended to convey that in an implementation,
-  having multiplicity as output requires combining them with addition,
-  scaling and meet. Whereas having them as input requires to split
-  context at the application rules (find $Γ_1$ and $Γ_2$ such that $Γ
-  = Γ_1 + πΓ_2$), which is a magical operation. In order to do that
-  one could thread $Γ$ as a state and perform the appropriate
-  substractions to remove things from $Γ$ as we are using them such
-  that when we reach the second branch of $Γ$ , we are only left with
-  $πΓ_2$ and dividing by $π$ recovers $Γ_2$. Quite a bit of a mess, really.}
+As suggested in \fref{sec:typing-contexts}, the multiplicities are an
+output of the algorithm. In order to infer the multiplicities of
+variables in the branches of a |case| expression we need a way to join
+the output of the branch. In \calc{}, we can simply ``guess'' the
+right value, in the implementation we use a supremum operation on
+multiplicities where $1∨0 = ω$ (where $0$ stands for a variable absent
+in a branch).
 
-Instead, in the application rule, we get the multiplicities of the
-variables in each of the operands as inputs and we can add them
-together. We still need to require more than just a semi-ring though:
-we need an ordering of the multiplicity semi-ring (such that
-$1\leqslant ω$) in order to check that the computed multiplicity is
-correct with respect to multiplicity annotations. In addition to the
-ordering, we need to be able to join the multiplicities computed in the
-branches of a |case|. To that effect, we need a supremum
-operation. Therefore the multiplicities need to form a
-join-semi-lattice-ordered semi-ring.
-
-Implementing this branch affects 1122 lines of \textsc{ghc} (for
+Implementing this branch affects 1152 lines of \textsc{ghc} (for
 comparison the parts of the compiler that were affected by \HaskeLL{}
-total about 100000 lines of code), including 436 net extra lines. A new
+total about 100000 lines of code), including 444 net extra lines. A new
 file responsible for multiplicity operations as well the files
 responsible for the environment manipulation and type inference of
 patterns account for almost half of the affected lines. The rest spans
@@ -1456,6 +1425,7 @@ caseTree ::  Packed (Tree:r) ⊸
 %
 The interface on the right gives an example of type-safe, {\em read-only}
 access to serialised data for a particular datatype.
+\improvement{aspiwack: the type of |caseTree| in the figure is almost certainly not the right one}
 %
 A |Packed| value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type-safe} serialisation
@@ -1937,10 +1907,13 @@ at a given time.
 
 \paragraph{Idris and the dependent index monad}
 %
+\jp{What about calling this ``linearity by monad'' and move it to the related work section? (It seems excessive to go into alternative case studiies.)
+   Essentially this is a variant of regions.
+The idea: all linear objects go into the memory of a monad. The monad is indexed by the types of those objects. The bad: everything is in a monad again. Even for natually monadic things (sockets), the error messages something to stomach.  }
 Idris proposes an alternative way to make sockets safer: instead of
 using liear types, use an indexed monad to enforce linearity. Idris
 introduces a generic way to add typestate on top of a monad, the
-|STrans| index monad transformer\footnote{See \emph{e.g.}
+|STrans| indexed monad transformer\footnote{See \emph{e.g.}
   \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
 |STrans| you make sockets be part of the monad's state. So we could
 give, for instance, the following type to bind:
@@ -2029,7 +2002,7 @@ a type class.
 \subsection{Pure bindings to impure \textsc{api}s}
 \label{sec:spritekit}
 
-In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
+In Haskell SpriteKit, \citet{chakravarty_spritekit_2017} have a different kind
 of problem. They build a pure interface for graphics, in the same style
 as the Elm programming language~\cite{czaplicki_elm_2012}, but implement it in terms
 of an existing imperative graphical interface engine.
@@ -2037,9 +2010,7 @@ of an existing imperative graphical interface engine.
 Basically, the pure interface takes an update function |u : Scene -> Scene| which is
 tasked with returning the next state that the screen will display.
 %
-Yet it would be too expensive to update the {\em full} state of the
-imperative graphics at every frame.  Thus the SpriteKit authors instead use
-so-called \emph{lazy marshalling}. The scene is first converted to a
+The scene is first converted to a
 pure tree where each node keeps, along with the pure data, a pointer
 to its imperative counterpart when it applies, or |Nothing| for new
 nodes.
@@ -2048,25 +2019,16 @@ data Node = Node {payload :: Int, ref :: Maybe (IORef ImperativeNode), children 
 \end{code}
 
 On each frame, SpriteKit applies |u| to the current scene, and checks
-(with the help of the RTS) if a node |n| was updated. If it was, it
-applies the update directly onto |ref n| or creates a new imperative
-node.
-%
-%% In order to efficiently map this pure interface to the imperative engine, the
-%% new |Scene| must not destroy the entire imperative scene and re-create it, but
-%% must be rendered using imperative updates. To achieve this result, the nodes in
-%% the |Scene| data-type contain pointers to the imperative nodes that they
-%% represent, so that changing the children of a node |np| will be effected as an
-%% imperative update of the corresponding imperative node |ni|.\jp{what is the
-%%   relationship between np and ni?}
-%
+if a node |n| was updated. If it was, it applies the update directly
+onto |ref n| or creates a new imperative node.
+
 Things can go wrong though: if the update function {\em duplicates}
 any node proxy node, one gets the situation where two nodes |n| and
 |n'| can point to the same imperative source |ref n = ref n'|, but
 have different payloads. In this situation the |Scene| has become
 inconsistent and the behaviour of SpriteKit is unpredictable.
 
-In the current state of the implementation, the burden of checking
+In the api of \citet{chakravarty_spritekit_2017}, the burden of checking
 non-duplication is on the programmer.  Using linear types, we can
 switch that burden to the compiler: we change the update function to
 type |Scene ⊸ Scene|, and the |ref| field is made linear too.  Thanks
@@ -2074,13 +2036,10 @@ to linearity, no reference can be duplicated: if a node is copied, the
 programmer must choose which one will correspond to the old imperative
 counterpart and which will be new.
 
-We have implemented a simplified version of this solution in the case
-where the impure \textsc{api} is a simple tree
-\textsc{api}.
-\improvement{With some data regarding implementation, a
-  remark that linearity is not used \emph{in} the implementation but
-  only as the interface level to ensure that the proof obligation is
-  respected by the \textsc{api} user.}
+We implemented such an \textsc{api} in our implementation of
+\HaskeLL{}. The library-side code does not use any linear code, the
+|Node|s are actually used unrestrictedly. Linearity is only imposed on
+the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
@@ -2253,7 +2212,9 @@ type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
 |Linear|-returning functions with appropriate combinators.  In fact,
 as explained in \fref{sec:linear-io}, the cost of the double negation
 almost entirely vanishes in the presence of an ambient monad.
-\improvement{aspiwack: We should also speak of the need of call-by-value.}
+\info{Actually linearity via kids works well with lazy evaluation. We only need a ``linear unit type'' (which is like a type of effects).
+All linear things will eventually accrete in such a type and it
+can collected for example in $runEffect :: LinearUnit -o IO ()$; or we could have $main :: LinearUnit$. }
 
 \subsection{Other variants of ``linearity on the arrow''}
 \label{sec:related-type-systems}
@@ -2297,9 +2258,6 @@ modality instead. \Citet{brunel_coeffect_core_2014}, in particular,
 develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
 this work is not directly applicable to \calc.
-
-\improvement{Not the right place, but let us not forget to cite the
-  very relevant: \cite{pottier_programming_2013}}
 
 \subsection{Uniqueness and ownership typing}
 \label{sec:uniqueness}
@@ -2559,8 +2517,6 @@ free z
 
 
 \section{Future work}
-
-\todo{Section on the |newtype Unrestricted| problem. I guess?}
 
 \subsection{Controlling program optimizations}
 \label{sec:fusion}
