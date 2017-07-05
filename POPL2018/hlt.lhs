@@ -1448,6 +1448,7 @@ caseTree ::  Packed (Tree:r) ⊸
 %
 The interface on the right gives an example of type-safe, {\em read-only}
 access to serialised data for a particular datatype.
+\improvement{aspiwack: the type of |caseTree| in the figure is almost certainly not the right one}
 %
 A |Packed| value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type-safe} serialisation
@@ -2029,9 +2030,7 @@ of an existing imperative graphical interface engine.
 Basically, the pure interface takes an update function |u : Scene -> Scene| which is
 tasked with returning the next state that the screen will display.
 %
-Yet it would be too expensive to update the {\em full} state of the
-imperative graphics at every frame.  Thus the SpriteKit authors instead use
-so-called \emph{lazy marshalling}. The scene is first converted to a
+The scene is first converted to a
 pure tree where each node keeps, along with the pure data, a pointer
 to its imperative counterpart when it applies, or |Nothing| for new
 nodes.
