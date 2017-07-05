@@ -748,25 +748,41 @@ then indeed |t| is consumed exactly once.
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special non-linear pair}.
 
-The same idea applies to all existing Haskell data types: we (re-)define
-their constuctors to use a linear arrow.  For example here is a declaration
-of \HaskeLL{}'s list type:
+% \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
+\begin{wrapfigure}[8]{r}[0pt]{4.5cm} \vspace{-6mm} 
 \begin{code}
 data [a] where
   []   :: [a]
   (:)  :: a ⊸ [a] ⊸ [a]
 \end{code}
+\begin{code}
+(++) :: [a] ⊸ [a] ⊸ [a]
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+\end{wrapfigure}
+%  
+The same idea applies to all existing Haskell data types: we (re-)define
+their constuctors to use a linear arrow.  For example here is a declaration
+of \HaskeLL{}'s list type:
+
+
+%% \begin{wrapfigure}[4]{r}[0pt]{4cm} \vspace{-6mm} % lines, placement, overhang, width
+%% \begin{code}
+%% (++) :: [a] ⊸ [a] ⊸ [a]
+%% []      ++ ys = ys
+%% (x:xs)  ++ ys = x : (xs ++ ys)
+%% \end{code}
+%% \end{wrapfigure}
+%
 Just as with pairs, this is not a new, linear list type: this \emph{is}
 \HaskeLL{}'s list type, and all existing Haskell functions will work
 over it perfectly well.
 Even better, many list-based functions are in fact linear, and
 can be given a more precise type. For example we can write |(++)| as
 follows:
-\begin{code}
-(++) :: [a] ⊸ [a] ⊸ [a]
-[]      ++ ys = ys
-(x:xs)  ++ ys = x : (xs ++ ys)
-\end{code}
+
+
 This type says that if |(xs ++ ys)| is consumed exactly once, then
 |xs| is consumed exactly once, and so is |ys|, and indeed our type
 system will accept this definition.
