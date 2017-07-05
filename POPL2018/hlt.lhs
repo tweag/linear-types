@@ -1982,11 +1982,27 @@ decided by a pattern matching without advanced dependent pattern matching.
   one advantage: it doesn't require linear types. The linear-type
   version seem to be a bit more flexible, and way easier to implement in
   \HaskeLL{}. What else can we be saying}
+\improvement{aspiwack: actually implement the error-catching version
+  of the \textsc{api}}
 
 \paragraph{Implementing the linear socket \textsc{api}}
 %
-\note{Is there anything to say about the implementation?  Conclusions to draw from
-it?}
+Our socket \textsc{api} has been tested by writing a small
+echo-server. The \textsc{api} is implemented as a wrapper around the
+\texttt{socket} library. Each function wrapped takes half-a-dozen
+lines of code, of type annotation and coercions between |IO| and
+|IOL|\footnote{Since our implementation of \HaskeLL{} does not yet
+  have multiplicity-polymorphism, we had to fake it with type families
+  and \textsc{gadts}}. There is no computational behaviour besides
+error recovery.
+
+It would have been too restrictive to limit the typestate to enforce
+the usage protocol of \textsc{tcp}. We do not intend for a new set of
+wrapper functions to be implemented for each protocol. Instead the
+wrappers are implemented with a generic type-state evolving according
+to the rules of a deterministic automaton. Each protocol can define
+it's own automaton, which is represented as a set of instances of
+a type class.
 
 \subsection{Pure bindings to impure \textsc{api}s}
 \label{sec:spritekit}
