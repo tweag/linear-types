@@ -1385,8 +1385,10 @@ compiler that makes them possible.
 In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
 have not yet implemented, but which motivate this work.
 
+
 % \subsection{Serialised tree traversals}
-\subsection{Application 1: Traversals of serialised data}
+\subsection{Application 1: Computing directly with serialised data}
+%------------------------------------------------------------------
 \label{sec:cursors}
 
 While \fref{sec:freezing-arrays} covered simple mutable arrays, we now
@@ -1415,63 +1417,89 @@ data has motivated small steps in this direction:
 libraries like ``Cap'N Proto''~\footnote{{\url{https://capnproto.org/}}} enable unifying
 in-memory and on-the-wire formats for simple product types (protobufs).
 
+Here is an unusual case where {advanced types can {\em yield performance}} by
+making it practical to code in a previously infeasible style: accessing
+serialised data at a fine grain without copying it.
+%
+The interface on the right gives a example of type-safe, {\em read-only}
+access to serialised data.
+% For example, consider the read-only interface on the right;
 \begin{wrapfigure}[6]{r}[34pt]{8.5cm}
-\vspace{-5mm}
-  %module FooMod( Foo(..), pack, unpack, caseFoo) where
+% \vspace{-5mm}
+% module FooMod( Foo(..), pack, unpack, caseFoo) where
 \begin{code}
 data Foo = MkFoo Int Double
 pack    :: Foo ⊸ Packed [Foo]
 unpack  :: Packed [Foo] ⊸ Foo
 caseFoo :: Packed [Foo] ⊸ Packed [Int, Double]
 \end{code}
+%read :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{wrapfigure}
-The interface on the right gives a example of type-safe, {\em read-only}
-access to serialised data.
-% For example, consider the read-only interface on the right;
-Here, a @Packed@ value is a pointer to raw bits (a bytestring), indexed by the
+%
+A @Packed@ value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type safe} serialisation
-layer as one which {\em reads} bits only at the type and size they were
+layer as one which {\em reads} byte-ranges only at the type and size they were
 originally {\em written}.  This is a small extension of the memory safety we
-already expect of Haskell's heap itself --- extended to include the contents of
+already expect of Haskell's heap --- extended to include the contents of
 bytestrings containing serialised data\footnote{The additional safety ensured
   here is somewhat lower stakes, as, even it is violated, the serialised values
-  do not contain pointers and cannot segfault the program reading them.}.  Hence
-the @Packed@ type {\em must} be abstract.
+  do not contain pointers and cannot segfault the program reading them.}.
+%
+To preserve this type safety, the @Packed@ type {\em must} be abstract.
+%
+Consequently, a client of the module defining @Foo@ need not be privy to the
+memory layout of its serialisation.
 
 If we cannot muck about with the bits inside a @Packed@ directly, then we can
-still retrieve data with @unpack@, i.e., the traditional, allocating and
-copying, approach to deserialisation.  Better still is to read the data {\em
-  without} copying.  We can manage this feat with @caseFoo@, which is analogous
-to the expression ``@case e of MkFoo ...@''.  Unlike this case expression,
-@caseFoo@'s operational behavior merely reads a tag byte from the byte stream,
-advances the cursor and returns a type safe pointer to the fields,
-@Packed [Int, Double]@.
+still retrieve data with @unpack@, i.e., the traditional, {\em copying},
+approach to deserialisation.  Better still is to read the data {\em without}
+copying.  We can manage this feat with @caseFoo@, which is analogous to the
+expression ``@case e of MkFoo ...@''.  Unlike the case expression, @caseFoo@'s
+operational behavior merely
+% reads a tag byte from the packed byte stream, advances the cursor and
+returns a type safe pointer to the fields, @Packed [Int, Double]@.
 %
-A serialised @Foo@ takes exactly 17 bytes, and @caseFoo@ returns a reference to
-the remaining 16 bytes of data.
-%
-It is precisely to access multiple, consecutive values that @Packed@ is indexed
-by phantom type parameter containing a {\em list} of types.
+@caseFoo@ abstracts over whether or not a {\em tag} value is included in the
+serialisation, if not, it becomes a cast and a @Foo@ requires only 16 bytes.
 
-Here is an unusual case where type-safety can {\em yield performance} by making
-it practical to write in a previously infeasible style: accessing serialised
-data without copying it.  In this read-only example, linearity is not essential,
-only typestate.  But as we consider an \textsc{API} for {\em writing} @Packed
-[Foo]@ values (without ever having a @Foo@ value in the heap to start with),
-then linearity is key.
+%% When handling datatypes with multiple constructors, their serialisations will
+%% first include a {\em tag} byte indicating which variant; but @Foo@ is a product
+%% type, requiring only 16 bytes.
+
+%% A serialised @Foo@ fills exactly 17 bytes, and @caseFoo@ returns a reference to
+%% the 16-byte suffix containing the two fields.
+
+It is precisely to access multiple, consecutive fields that @Packed@ is indexed
+by a {\em list} of types as its phantom type parameter.  The individual
+@Int@ and @Double@ values can be read one at a time with a lower-level @read@
+primitive.  (This can efficiently read out scalars and store them in registers.)
+\begin{code}
+  read :: Storable a => Packed (a:r) ⊸ (a, Packed r)  
+\end{code}
+%
+Putting it together, we can write a function that consumes serialised data as follows.
+\begin{code}
+  f :: Packed [Foo] -> Double
+  f p =  let  (n,p')   = read (caseFoo p);  (m,p'')  = read p' in fromIntegral n + m
+\end{code}
+%
+ In this read-only example, linearity is not essential, only typestate.  Next we
+ consider an \textsc{API} for {\em writing} @Packed [Foo]@ values, where
+ linearity is key.
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
 %% for writing.  A read-only interface on serialised data can work fine without it.
 
 \subsubsection{Writing serialised data}
+%------------------------------------------
 
 %% The mutable arrays of \fref{sec:freezing-arrays} were homogenous --- with
 %% evenly-spaced, aligned elements.  In contrast, binary-serialised data structures
 %% contain primitive values of various widths, at unaligned byte-offsets.
 %
 To create a serialised @MkFoo@ value, we must write a tag, an integer, and a
-double, in that order --- three writes, 17 bytes.
+double, in that order --- three atomic writes.
 %% A pointer into a buffer containing serialised output is similar to a constructor
 %% method for a regular heap object.  It must ensure that all fields are initialised, at
 %% the proper addresses and with values of the correct type.
@@ -1491,30 +1519,58 @@ a logical @Foo@ value at the end.
 %% |Double| must be written, and by the resulting, immutable value that will be
 %% available upon completing those writes (|Foo|).
 
-To write or read an individal @Int@ or @Double@, we provide primitives that
-shave one element off the type-level list of obligations (or contents,
-respectively):
+To write an individal @Int@ or @Double@, we provide a primitive that shaves one
+element off the type-level list of obligations:
 %
 \begin{code}
   write :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
-  read  :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{code}
 %
-After writing the two fields to |p| in this example, we need a way to finalize
-the operation and convert the write pointer to a read pointer:
+When the list of outstanding writes is empty, we can retrive a read pointer.
+Just as when we froze arrays (\fref{sec:freezing-arrays}), the immutable value
+is unrestricted, and can be used multiple times:
+%
+\begin{code}
+  finish :: Needs [] t ⊸ Unrestricted (Packed [t])
+\end{code}
+%
+Finalizing written values with @finish@ works hand in hand with allocating new
+buffers in which to place them:
+\begin{code}
+  newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
+\end{code}
+Primitives @write@, @read@, and @finish@ are general operations for serialised
+data, whereas @caseFoo@ is datatype specific.  Likewise, the module that defines
+@Foo@ exports a datatype-specific way to start writing a serialised value:
+\begin{code}
+  startFoo :: Needs (Foo:r) t ⊸ Needs (Int:Double:r) t
+\end{code}
+Operationally, @startFoo@ writes only the tag.
+............
+\begin{code}
+module FooMod( Foo(..), pack, unpack, caseFoo, startMkFoo)
+\end{code}
+
+Regarding our type-safety guarantee,......
+
+%% After writing the two fields to |p| in this example, we need a way to finalize
+%% the operation and convert the write pointer to a read pointer:
 
 \begin{code}
   write 4.4 (write 3 p) :: Needs [] Foo
   finish :: Needs [] t ⊸ Unrestricted (Packed [t])
 \end{code}
 %
-Just as when we converted mutable arrays to immutable arrays, here the immutable
-|Foo| can be read multiple times.
+%% Just as when we converted mutable arrays to immutable arrays, here the immutable
+%% |Foo| can be read multiple times.
 %
-It is not, however, a {\em normal} heap representation of |Foo|,
-but rather an isomorphic, serialised representation: |Packed [Foo]|.  Nevertheless,
-everything in a |Foo| can be read in a type-safe way directly from the
-serialised buffer.
+%% It is not, however, a {\em normal} heap representation of |Foo|,
+%% but rather an isomorphic, serialised representation: |Packed [Foo]|.  Nevertheless,
+%% everything in a |Foo| can be read in a type-safe way directly from the
+%% serialised buffer.
+
+
+
 
 As a concrete example consider this simple data-type:
 \begin{code}
