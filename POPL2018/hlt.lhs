@@ -555,35 +555,51 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \subsection{I/O protocols} \label{sec:io-protocols}
 
 \begin{figure}
-\begin{code}
-  type File
-  openFile :: FilePath -> IOL 1 File
-  readLine :: File a ⊸ IOL 1 (File, Unrestricted ByteString)
-  closeFile :: File ⊸ IOL ω ()
-\end{code}
-\caption{Types for linear file IO} \label{fig:io-linear}
-\end{figure}
-
-Consider this \textsc{api} for files, where we see a |File| as a cursor in a physical file.
+\begin{minipage}{0.40 \textwidth} 
 \begin{code}
   type File
   openFile :: FilePath -> IO File
   readLine :: File -> IO ByteString
   closeFile :: File -> IO ()
 \end{code}
+\vspace{-7mm}
+\caption{Types for traditional file IO} \label{fig:io-traditional}
+\end{minipage}%
+\begin{minipage}{0.60 \textwidth}
+\begin{code}
+  type File
+  openFile :: FilePath -> IOL 1 File
+  readLine :: File a ⊸ IOL 1 (File, Unrestricted ByteString)
+  closeFile :: File ⊸ IOL ω ()
+\end{code}
+\vspace{-7mm}
+\caption{Types for linear file IO} \label{fig:io-linear}
+\end{minipage}
+\vspace{-2mm}
+\end{figure}
+
+\begin{wrapfigure}[7]{r}[0pt]{6.0cm} % lines, placement, overhang, width
+  \vspace{-6mm}
+\begin{code}
+firstLine :: FilePath -> IOL ω Bytestring
+firstLine fp =
+  do  { f <- open fp
+      ; (f, Unrestricted bs) <- readLine f
+      ; close f
+      ; return bs }
+\end{code}
+\end{wrapfigure}
+%
+Consider the \textsc{api} for files in \fref{fig:io-traditional}, where a
+|File| is a cursor in a physical file.
+%
 Each call
-to |readLine| returns an |a| (the line) and moves the cursor one line
+to |readLine| returns the line and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using it we can write a simple file-handling program:
-\begin{code}
-firstLine :: FilePath -> Bytestring
-firstLine fp = do  { f <- open fp
-                   ; (f, Unrestricted bs) <- readLine f
-                   ; close f
-                   ; return bs }
-\end{code}
+Using it we can write a simple file-handling program, as shown on the right.
+
 Notice several things
 \begin{itemize}
 \item Operations on files remain monadic, unlike the case with mutable arrays.
@@ -606,6 +622,7 @@ operations with the |IO| monad. But in fact it is often very useful do
 to so, as we will see in \fref{sec:sockets}, because we can use a
 phantom type to encode the state of the resource (similar to a
 type-level state, or {\em typestate}~\cite{strom_typestate_1983}).
+
 
 \subsection{Operational intuitions}
 \label{sec:consumed}
