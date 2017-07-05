@@ -823,7 +823,7 @@ foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
 (∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p · q) c
 (f ∘ g) x = f (g x)
 \end{code}
-The type of |(.)| says that two functions that accept arguments of arbitrary
+The type of |(·)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
 function accepting arguments of multiplicity |pq| (\emph{i.e.} the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
