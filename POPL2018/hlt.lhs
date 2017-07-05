@@ -3,10 +3,13 @@
 %% For double-blind review submission
 \documentclass[acmsmall,10pt,review,anonymous]{acmart}
 \settopmatter{printfolios=true,printacmref=false}
+\def\draftmode{}
+
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
+
 %% For final camera-ready submission
-% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
+%% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
 \def\noeditingmarks{}
@@ -289,10 +292,12 @@
   two kinds of applications of linear types: making side-effecting functions
   pure instead;
  % that otherwise would be considered to have side effects, pure;
-  and enforcing protocols in \textsc{i/o}-performing functions.
+  and enforcing protocols in \textsc{i/o}-performing functions. %
+  \ifx\draftmode\undefined \else \vspace{-5mm} \fi
 \end{abstract}
 
-
+%% \if@ACM@review
+\ifx\draftmode\undefined    
 %% 2012 ACM Computing Classification System (CSS) concepts
 %% Generate at 'http://dl.acm.org/ccs/ccs.cfm'.
 \begin{CCSXML}
@@ -320,19 +325,17 @@
 \ccsdesc[300]{Software and its engineering~Formal language definitions}
 %% End of generated code
 
-
 %% Keywords
 %% comma separated list
 \keywords{GHC, Haskell, laziness, linear logic, linear types,
-  polymorphism, typestate}  %% \keywords is optional
-
+ polymorphism, typestate}  %% \keywords is optional
+\fi
 
 %% \maketitle
 %% Note: \maketitle command must come after title commands, author
 %% commands, abstract environment, Computing Classification System
 %% environment and commands, and keywords command.
 \maketitle
-
 
 \section{Introduction}
 \label{sec:introduction}
