@@ -8,7 +8,7 @@
 \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
-\def\noeditingmarks{}
+% \def\noeditingmarks{}
 
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
@@ -387,7 +387,7 @@ to two questions:
 \item \emph{Is it safe to update this value in-place} (\fref{sec:freezing-arrays})?
 That depends on whether there
 are aliases to the value; update-in-place is \textsc{ok} if there are no other pointers to it.
-Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying. \jp{This is really a special case of the next item}
+Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying.
 \item \emph{Am I obeying the usage protocol of this external resource}
 (\fref{sec:io-protocols})?
 For example, an open file should be closed, and should not be used after it it has been closed;
@@ -2110,7 +2110,11 @@ reusable definitions of linear functions. In terms of linear logic~\cite{girard_
 into an isomorphism.
 In that respect, our system is closer to
 \citeauthor{ghica_bounded_2014}'s.
-\rn{Is there any remaining {\em difference} with \citeauthor{ghica_bounded_2014}?}
+
+The essential differences between our system and that of
+\citeauthor{ghica_bounded_2014} is that we support
+multiplicity-polymorphism and datatypes. In particular our |case| rule
+is novel.
 
 % What we keep from
 % \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
