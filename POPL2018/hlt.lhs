@@ -2067,15 +2067,6 @@ where the impure \textsc{api} is a simple tree
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
-\improvement{aspiwack: I think we need to take a new stab at this
-  following the levity polymorphism discussion that we had. Two-kinds
-  seems to be more appropriate for call-by-value. Polymorphism is
-  probably not much of a problem at least in \textsc{ghc}, however, we
-  don't know a solution which does not require making everything
-  (data-types, functions) polymorphic. Though do we need additional
-  constraints, like |p <= q| on multiplicities? We probably at least
-  need this or a join operation $p∧q$.}
-
 There are two possible choices to indicate the distinction between
 linear and unrestricted objects.  Our choice is to use the arrow
 type. That is, we have both a linear arrow to introduce linear objects
@@ -2241,14 +2232,7 @@ type for linear values |Linear a = (a ⊸ !r) ⊸ r| and chain
 |Linear|-returning functions with appropriate combinators.  In fact,
 as explained in \fref{sec:linear-io}, the cost of the double negation
 almost entirely vanishes in the presence of an ambient monad.
-
-% Such approaches have been very successful for theory: see for instance
-% the line of work on so-called \emph{mixed linear and non-linear logic}
-% (usually abbreviated \textsc{lnl}) started by
-% \citet{benton_mixed_1995}.
-
-% JP: I don't know what theory this refers to. Also I do not believe
-% that this is relevant for this paper.
+\improvement{aspiwack: We should also speak of the need of call-by-value.}
 
 \subsection{Other variants of ``linearity on the arrow''}
 \label{sec:related-type-systems}
@@ -2336,78 +2320,89 @@ logic — see \fref{sec:applications}; (c) and decisively, linear type systems
 conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
-\paragraph{Rust}
-Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
-ownership typing. Like the original formulation of linear logic, in Rust, if a
-type \texttt{T} stands for linear values, \Red{which are copied on function
-  calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
-explicit.
+\paragraph{Rust \& Borrowing}
+% aspiwack: most of this looks irrelevant at this stage
 %
-\jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
-Rust addresses the problem of being mindful about
-memory, resources, and latency, but this comes at a price: Rust,
-as a programming language, is specifically optimised for writing
-programs that are structured using the ``RAII''
-pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-(where resource lifetimes are tied directly or indirectly to stack
-allocated objects that are freed when the control flow exits the
-current lexical scope). Ordinary functional programs seldom fit this
-particular resource acquisition pattern so end up being second class
-citizens. For instance, tail-call optimization, crucial to the
-operational behaviour of many functional programs, is not usually
-sound. This is because resource liberation must be triggered when the
-tail call returns.
+% Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
+% ownership typing. Like the original formulation of linear logic, in Rust, if a
+% type \texttt{T} stands for linear values, \Red{which are copied on function
+%   calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
+% explicit.
+% %
+% \jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
+% Rust addresses the problem of being mindful about
+% memory, resources, and latency, but this comes at a price: Rust,
+% as a programming language, is specifically optimised for writing
+% programs that are structured using the ``RAII''
+% pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
+% (where resource lifetimes are tied directly or indirectly to stack
+% allocated objects that are freed when the control flow exits the
+% current lexical scope). Ordinary functional programs seldom fit this
+% particular resource acquisition pattern so end up being second class
+% citizens. For instance, tail-call optimization, crucial to the
+% operational behaviour of many functional programs, is not usually
+% sound. This is because resource liberation must be triggered when the
+% tail call returns.
+% %
+% \HaskeLL{} aims to hit a different point in the design space where
+% regular non-linear expressions are the norm, yet
+% % gracefully scaling up
+% investing extra effort to enforce invariants or perform low-level
+% systems programming, with control over resources and latency, is still possible.
+
+Rust depends on a feature called \emph{borrowing} to make programs
+more palatable: where \texttt{T} is the type of some owned value,
+\texttt{\&T} is the type of a borrowed value of type
+\texttt{T}. Borrowed value differ from owned values in that they can
+be used in an unrestricted fashion, albeit in a \emph{delimited
+  life-time}.
+
+This avoids threading variables throughout the program, as function to
+which we would give the type |T ⊸ T| can often have type \texttt{\&T
+  -> ()} in Rust. This does not come without a cost, however: if a
+function \texttt{f} borrows a value \texttt{v} of type \texttt{T},
+then the caller of the function \emph{must} retain \texttt{v} alive
+until \texttt{f} has returned; the consequence is that Rust cannot, in
+general, perform tail-call elimination, crucial to the operation
+behaviour of many functional programs, as some resources must be
+released \emph{after} \texttt{f} has returned.
+
+The reason why Rust programs depend so much on borrowing is that the
+default is that of owned types. \HaskeLL{} aims to hit a different
+point in the design space where regular non-linear expressions are the
+norm, yet gracefully scaling up investing extra effort to enforce
+linearity invariants. Therefore, threading linear variable, being much
+less common, will not be as painful.
+
+Nevertheless, we have encountered cases where we borrowing, that is
+limiting life-time without imposing linear use, seem to be the right
+notion. Fortunately the notion of multiplicity is extensible, and we
+have devised a provisional approach which, we expect, allows such
+pattern to be expressed. See \ref{sec:extending-multiplicities}.
+
+% aspiwack: also not too relevant in the current state of the paper
 %
-\HaskeLL{} aims to hit a different point in the design space where
-regular non-linear expressions are the norm, yet
-% gracefully scaling up
-investing extra effort to enforce invariants or perform low-level
-systems programming, with control over resources and latency, is still possible.
+% \paragraph{Borrowing references in data structures}
+% In an imperative language, one often walks data structure, extract
+% references and pass them around. In Rust, the borrowing system
+% ensures that the passed reference does not outlive the datastructure
+% that it points to.
 
-%% for latency-sensitive and resource-sensitive programs is
-%% still possible.\improvement{Change depending on what we put in the evaluation
-%%   section}
+% In a functional language, instead of extracting references, one will
+% use lenses to lift a modification function from a local subtree to a
+% global one. Thanks to garbage collection, there is already no risk of
+% dangling references, but one has to pay a runtime cost. By using
+% linear types one can avoid this cost.
 
-\paragraph{Borrowing}
-\rn{I don't understand the upshot of this section.  It seems to be that we can't
-  currently do borrowing.}
-\jp{Move to future work?}
-How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
-lifetime of references using a special system, one can simply give
-each reference a multiplicity of one, and explicitly pass them around.
-
-A function can be declared to destroy a reference simply by taking it
-as a (linear) parameter.  For example the following signature is that
-of a function from |A| to |B| which also destroys a reference:
-\begin{code}
-destroyer : Reference ⊸ A -> B
-\end{code}
-A function which borrows a reference can take it as input and return
-it.
-\begin{code}
-borrower : Reference ⊸ A -> (Reference, B)
-\end{code}
-\paragraph{Borrowing references in data structures}
-In an imperative language, one often walks data structure, extract
-references and pass them around. In Rust, the borrowing system
-ensures that the passed reference does not outlive the datastructure
-that it points to.
-
-In a functional language, instead of extracting references, one will
-use lenses to lift a modification function from a local subtree to a
-global one. Thanks to garbage collection, there is already no risk of
-dangling references, but one has to pay a runtime cost. By using
-linear types one can avoid this cost.
-
-Indeed, we can ensure that a modification function can have the type:
-|Reference ⊸ Reference| and thus can be implemented with no need for
-GC. At the same time, the lens library will use linear types and lift
-local linear modifications to global linear modifications. Note that,
-if the original object lives in the GC heap (and thus can be shared),
-the same lens library can be used, but individual lifting of
-modifications cannot be implemented by in-place update.
-\rn{Is this text stale?  I.e. from an earlier version of the paper that talked
-  about the ``GC heap''?}
+% Indeed, we can ensure that a modification function can have the type:
+% |Reference ⊸ Reference| and thus can be implemented with no need for
+% GC. At the same time, the lens library will use linear types and lift
+% local linear modifications to global linear modifications. Note that,
+% if the original object lives in the GC heap (and thus can be shared),
+% the same lens library can be used, but individual lifting of
+% modifications cannot be implemented by in-place update.
+% \rn{Is this text stale?  I.e. from an earlier version of the paper that talked
+%   about the ``GC heap''?}
 
 
 \subsection{Region-types}
@@ -3310,3 +3305,4 @@ extended so that one evaluates to |False| and the other to |True|.
 %  LocalWords:  Finalisers effectful subtyping parameterised Inlining
 %  LocalWords:  inlining cardinality forM mapM pessimisation APIs RTS
 %  LocalWords:  SpriteKit chakravarty spritekit IORef ImperativeNode
+%  LocalWords:  invariants
