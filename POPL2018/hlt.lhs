@@ -1899,10 +1899,13 @@ at a given time.
 
 \paragraph{Idris and the dependent index monad}
 %
+\jp{What about calling this ``linearity by monad'' and move it to the related work section? (It seems excessive to go into alternative case studiies.)
+   Essentially this is a variant of regions.
+The idea: all linear objects go into the memory of a monad. The monad is indexed by the types of those objects. The bad: everything is in a monad again. Even for natually monadic things (sockets), the error messages something to stomach.  }
 Idris proposes an alternative way to make sockets safer: instead of
 using liear types, use an indexed monad to enforce linearity. Idris
 introduces a generic way to add typestate on top of a monad, the
-|STrans| index monad transformer\footnote{See \emph{e.g.}
+|STrans| indexed monad transformer\footnote{See \emph{e.g.}
   \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
 |STrans| you make sockets be part of the monad's state. So we could
 give, for instance, the following type to bind:
