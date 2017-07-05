@@ -1,14 +1,14 @@
 % -*- latex -*-
 
 %% For double-blind review submission
-% \documentclass[acmsmall,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
+\documentclass[acmsmall,10pt,review,anonymous,printacmref=false]{acmart}\settopmatter{printfolios=true}
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
 %% For final camera-ready submission
-\documentclass[acmsmall,10pt]{acmart}\settopmatter{}
+% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
-% \def\noeditingmarks{}
+\def\noeditingmarks{}
 
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
@@ -268,26 +268,27 @@
 %% before \maketitle command
 \begin{abstract}
   Linear type systems have a long and storied history, but not a clear
-  path forward to integrate with existing languages such as Ocaml or
-  Haskell. In this paper, we introduce and study a linear type system
+  path forward to integrate with existing languages such as OCaml or
+  Haskell. In this paper, we study a linear type system
   designed with two crucial properties in mind:
   backwards-compatibility and code reuse across linear and non-linear
   users of a library. Only then can the benefits of linear types
   permeate conventional functional programming.  Rather than bifurcate
   % not just data; functions must also be bifurcated due to closures.
   types into linear and non-linear counterparts, we instead
-  attach linearity to {\em function arrows}.  Linear function types can
-  receive inputs from linearly-bound values, but can also operate over
+  attach linearity to {\em function arrows}.  Linear functions can
+  receive inputs from linearly-bound values, but can {\em also} operate over
   unrestricted, regular values.
 
   To demonstrate the efficacy of our linear type system~---~both how
   easy it can be integrated in an existing language implementation and
   how streamlined it makes it to write program with linear
-  types~---~we implemented our type system in a branch of
-  \textsc{ghc}, the leading Haskell compiler, and demonstrate, with
-  it, two kinds of applications of linear types: making functions,
-  that otherwise would be considered to have side effects, pure; and
-  enforcing protocols in \textsc{i/o}-performing functions.
+  types~---~we implemented our type system in 
+  \textsc{ghc}, the leading Haskell compiler, and demonstrate
+  two kinds of applications of linear types: making side-effecting functions
+  pure instead;
+ % that otherwise would be considered to have side effects, pure;
+  and enforcing protocols in \textsc{i/o}-performing functions.
 \end{abstract}
 
 
@@ -340,7 +341,7 @@ type systems have not made it into mainstream programming languages,
 even though linearity has inspired uniqueness typing in Clean, and
 ownership typing in Rust.  We take up this challenge by extending
 Haskell with linear types.
-
+%
 Our design supports many applications for linear types, but we focus on
 two particular use-cases.  First, safe
 update-in-place for mutable structures, such as arrays; and second,
@@ -402,7 +403,8 @@ subsequent subsections.
 
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
-\begin{figure}
+\begin{wrapfigure}[7]{r}[0pt]{7.0cm} % lines, placement, overhang, width
+\vspace{-6mm}
 \begin{code}
   type MArray s a
   type Array a
@@ -415,24 +417,10 @@ subsequent subsections.
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
   runST :: (forall a. ST s a) -> a
 \end{code}
-\caption{Type signatures for array primitives (current \textsc{ghc})}
+\caption{Signatures for array primitives (current \textsc{ghc})}
 \label{fig:array-sigs}
-\end{figure}
-
-\begin{figure}
-\begin{code}
-  type MArray a
-  type Array a
-
-  newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
-  write :: MArray a ⊸ (Int, a) -> MArray a
-  read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
-  freeze :: MArray a ⊸ Unrestricted (Array a)
-\end{code}
-\caption{Type signatures for array primitives (linear version), allowing
-  in-place update.}
-\label{fig:linear-array-sigs}
-\end{figure}
+\end{wrapfigure}
+%
 The Haskell language provides immutable arrays, built with the function |array|\footnote{
 Haskell actually generalises over the type of array indices, but for this
 paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
@@ -443,7 +431,8 @@ But how is |array| implemented? A possible answer is ``it is built-in; don't ask
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
 definition of |array|, using library functions whose types are given
-in \fref{fig:array-sigs}:
+in \fref{fig:array-sigs}.
+
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = runST (do  { ma <- newMArray size
@@ -456,6 +445,24 @@ for each pair.  Finally, we freeze the mutable array, returning an immutable
 array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
 as described in \cite{launchbury_state_1995}.
+
+
+\begin{figure}
+\begin{code}
+  type MArray a
+  type Array a
+
+  newMArray :: Int -> (MArray a ⊸ Unrestricted b) ⊸ b
+  write :: MArray a ⊸ (Int, a) -> MArray a
+  read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
+  freeze :: MArray a ⊸ Unrestricted (Array a)
+\end{code}
+\vspace{-5mm}
+\caption{Type signatures for array primitives (linear version), allowing
+  in-place update.}
+\vspace{-5mm}
+\label{fig:linear-array-sigs}
+\end{figure}
 
 Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
 immutable array, but to avoid an unnecessary copy,
@@ -1549,7 +1556,9 @@ a @Tree@ value at the end (albeit a packed one).
 %% available upon completing those writes (|Foo|).
 
 To write an individal number, we provide a primitive that shaves one
-element off the type-level list of obligations (a counterpart to @read@, above):
+element off the type-level list of obligations (a counterpart to @read@, above).
+As with mutable arrays, this |write| operates in-place on the buffer, in spite
+being a pure function.
 %
 \begin{code}
   write :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
