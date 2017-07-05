@@ -1003,14 +1003,18 @@ way we make precise much of the informal discussion above.
 \label{sec:syntax}
 
 \begin{figure}
+  \begin{minipage}{0.4 \textwidth} \centering  
   \figuresection{Multiplicities}
   \begin{align*}
     π,μ &::= 1 ~||~ ω ~||~ π ~||~ π+μ ~||~ π·μ
   \end{align*}
+  \end{minipage}%
+  \begin{minipage}{0.4 \textwidth} \centering
   \figuresection{Contexts}
   \begin{align*}
     Γ,Δ & ::=  (x :_{μ} A), Γ \quad||\quad –
   \end{align*}
+  \end{minipage}
 
   \figuresection{Datatype declaration}
   \begin{align*}
