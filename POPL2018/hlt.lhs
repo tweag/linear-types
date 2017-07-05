@@ -1255,10 +1255,12 @@ of $c_k$ is used non-linearly in $u_k$.  Then, $μ_i=1$ (it is a linear field),
 so $π$ must be $ω$, so that $πμ_i=ω$.  In short, using a linear field non-linearly
 forces the scrutinee to be used non-linearly, which is just what we want.
 Here are some concrete examples:
+\begin{center}\vspace{-3mm}  
 \begin{code}
   fst  ::  (a,b) →  a     bigSpace    swap ::  (a,b) ⊸ (b,a)
   fst      (a,b)  =  a                swap     (a,b) =  (b,a)
 \end{code}
+\end{center}
 Recall that both fields of a pair are linear (\fref{sec:linear-constructors}).
 In |fst|, the second component of the pair is used non-linearly (by being
 discarded) which forces the use of $\mathsf{case}_ω$, and hence a non-linear type
@@ -1466,7 +1468,7 @@ making it practical to code in a previously infeasible style: accessing
 serialised data at a fine grain without copying it.
 
 \begin{wrapfigure}[8]{r}[34pt]{8.5cm}
-% \vspace{-5mm}
+\vspace{-4mm}
 \begin{code}
 data Tree = Leaf Int | Branch Tree Tree
 pack    :: Tree ⊸ Packed [Tree]
@@ -1706,7 +1708,7 @@ mapLeaves fn pt = newBuffer (extract ∘ go pt)
 
 
 % \subsubsection{Linear vs. non-linear and compiler optimisations}
-\subsubsection{A version without linear types}
+\subsubsection{A version without linear types}\label{sec:st-cursors}
 
 How would we build the same thing in Haskell without linear types?  It may appear
 that the ST monad is a suitable choice:
@@ -1960,7 +1962,7 @@ is the argument to |Socket|, which represents the current state of the
 socket and is used to limit the functions which apply to a socket
 at a given time.
 
-\paragraph{Idris and the dependent index monad}
+\paragraph{Idris's dependent index monad}
 %
 \jp{What about calling this ``linearity by monad'' and move it to the related work section? (It seems excessive to go into alternative case studiies.)
    Essentially this is a variant of regions.
@@ -1970,8 +1972,8 @@ using liear types, use an indexed monad to enforce linearity. Idris
 introduces a generic way to add typestate on top of a monad, the
 |STrans| indexed monad transformer\footnote{See \eg
   \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
-|STrans| you make sockets be part of the monad's state. So we could
-give, for instance, the following type to bind:
+|STrans| you make sockets part of the monad's state. So we could
+give the following type to bind:
 \begin{code}
   bind :: SocketAddress -> STrans IO Unbound Bound
 \end{code}
@@ -1987,12 +1989,15 @@ conditions. So the type of |bind| is:
   bind :: (sock :: Var) -> SocketAddress -> ST IO () [sock ::: Socket Unbound :-> Socket Bound]
 \end{code}
 
-Could we do the same in Haskell today without dependent type? It is
-probably achievable: Haskell's type-level programming capabilities are
+Could we do the same in Haskell today without dependent types? It is probably
+achievable, but painful (the same problem encountered at the end of
+\fref{sec:st-cursors}).
+%
+Haskell's type-level programming capabilities are
 expressive enough to reason on type-level sets. And there is a notion
 of labels that we could use, as singleton types, instead of the |Var|
 type. This is not obvious though, and the error message would be
-really uninformative.
+uninformative.
 %
 \improvement{aspiwack: I assume it would be quite a bit of a hassle to
 use such |ST| functions in higher order functions, but I'm not sure
@@ -2000,8 +2005,8 @@ how to phrase that as of today}
 
 \paragraph{Catching errors}
 %
-But if we were to try and implement typestate with indexed monad we
-would run into further complication: error management. Indeed, |bind|
+If we were to try and implement typestate with indexed monad we
+would run into a further complication: exception management. Indeed, |bind|
 may fail (typically because we are trying to bind a port which is
 attached to another socket). So far we have simply assumed that
 failures of socket functions to apply result in catastrophic failure
