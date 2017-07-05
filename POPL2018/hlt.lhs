@@ -1586,7 +1586,7 @@ With these building blocks, we can move @pack@ and @unpack@ outside of the
 private code that defines @Tree@s, which has this minimal interface:
 \begin{code}
 module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
-module DataPacked( Packed, Needs, read, write, newBuffer, finish, dropPacked )
+module DataPacked( Packed, Needs, read, write, newBuffer, finish, drop )
 \end{code}
 \todo{JP says that he can fix the lack of a period in the above module name}
 %
@@ -1626,7 +1626,7 @@ newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tr
 %
 We also sometimes need to explicitly let go of a linear value we don't need:
 \begin{code}
-  dropPacked :: Packed a ⊸ ()
+  drop :: Packed a ⊸ ()
 \end{code}
 
 Finally, we have what we need to build a |map| function that logically operates
@@ -1648,7 +1648,7 @@ a pair of a read- and write-pointer.
 map :: (Int->Int) -> Packed Tree ⊸ Packed Tree
 map fn pt = newBuffer (extract ∘ go pt)
   where
-    extract (inp,outp) = case dropPacked inp of () -> finish outp
+    extract (inp,outp) = case drop inp of () -> finish outp
     go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
     go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (fn x) o))
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
