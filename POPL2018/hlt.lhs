@@ -2378,7 +2378,7 @@ Nevertheless, we have encountered cases where we borrowing, that is
 limiting life-time without imposing linear use, seem to be the right
 notion. Fortunately the notion of multiplicity is extensible, and we
 have devised a provisional approach which, we expect, allows such
-pattern to be expressed. See \ref{sec:extending-multiplicities}.
+pattern to be expressed. See \fref{sec:extending-multiplicities}.
 
 % aspiwack: also not too relevant in the current state of the paper
 %
@@ -2595,17 +2595,7 @@ should be avoided.
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
 
-% Applications of multiplicities beyond linear logic seem to often have
-% too narrow a focus to have their place in a general purpose language
-% such as Haskell. \Citet{ghica_bounded_2014} propose to use
-% multiplicities to represent real time annotations, and
-% \citet{petricek_coeffects_2013} show how to use multiplicities to
-% track either implicit parameters (\emph{i.e.} dynamically scoped
-% variables) or the size of the history that a dataflow program needs to
-% remember. \jp{I think that it would be enough to list the useful extensions (dependent and affine types.)}
-
-\improvement{This section could speak about the borrowing
-  multiplicity.}  For the sake of this article, we use only multiplicities
+For the sake of this article, we use only multiplicities
 $1$ and $ω$.  But in fact \calc{} can readily be extended to
 more, following \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}. The general setting for \calc{} is an
@@ -2625,6 +2615,25 @@ $$
 Where the order on contexts is the point-wise extension of the order
 on multiplicities.
 
+In \fref{sec:uniqueness}, we have considered the notion of
+\emph{borrowing}: delimiting life-time without restricting to linear
+usage. This seems to be a useful pattern, and we believe it can be
+encoded as an additional multiplicity as follows: let $β$ be an
+additional multiplicity with the following characteristics:
+\begin{itemize}
+\item $1 < β < ω$
+\item $β+β = 1+β = 0+β = 1+1 = β$
+\end{itemize}
+That is, $β$ supports contraction and weakening but is smaller than
+$ω$. We can then introduce a value with an explicit lifetime with the
+following pattern
+\begin{code}
+  borrow :: (T -> _ β Unrestricted a) -> _ β Unrestricted a
+\end{code}
+The |borrow| function makes the life-time manifest in the structure of
+the program. In particular, it is clear that calls within the argument
+of |borrow| are not tail: a shortcoming of borrowing that we mentioned
+in \fref{sec:uniqueness}.
 
 \subsection{Further applications, drawn from industry}
 \label{sec:industry}
