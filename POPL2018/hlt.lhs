@@ -645,7 +645,7 @@ The type of |g| makes no particular guarantees about the way in which it uses |x
 in particular, |g| can pass that argument to |f|.
 
 % A consequence of this definition is that an \emph{unrestricted} value,
-% \emph{i.e.} one which is not guaranteed to be used exactly once, such
+% \textit{i.e.} one which is not guaranteed to be used exactly once, such
 % as the argument of a regular function |g :: a -> b|, can freely be
 % passed to |f|: |f| offers stronger guarantees than regular
 % functions. On the other hand a linear value |u|, such as the argument of
@@ -657,7 +657,7 @@ in particular, |g| can pass that argument to |f|.
 % :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
 % of |x|:
 % \begin{itemize}
-% \item If |x| is a linear variable, \emph{i.e.} it must be consumed
+% \item If |x| is a linear variable, \textit{i.e.} it must be consumed
 %   exactly once, we can ensure that it is consumed exactly once by
 %   consuming |f| exactly once: it is the definition of linear
 %   functions. However, |g| does not guarantee that it will consume |f
@@ -833,7 +833,7 @@ It can be given the two following incomparable types:
   the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
-Likewise, function composition and |foldl| (cf. \Fref{sec:freezing-arrays})
+Likewise, function composition and |foldl| (\textit{cf.} \Fref{sec:freezing-arrays})
 can be given the following general types:
 \begin{code}
 foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
@@ -843,7 +843,7 @@ foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
 \end{code}
 The type of |(·)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
-function accepting arguments of multiplicity |pq| (\emph{i.e.} the
+function accepting arguments of multiplicity |p·q| (\textit{i.e.} the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
 %
 Finally, from a backwards-compatibility perspective, all of these
@@ -1450,7 +1450,7 @@ corresponding to the two branches of the case expression.
 %
 Unlike the case expression, |caseTree| operates on the packed byte stream, reads
 a tag byte, advances the pointer past it, and returns a type safe pointer to the
-fields (e.g. |Packed [Int]| in the case of a leaf).
+fields (\textit{e.g.} |Packed [Int]| in the case of a leaf).
 %% \begin{code}
 %%   caseTree  (pack (Leaf 3))
 %%             (\ p::Packed [Int] -> ...)
@@ -1911,7 +1911,7 @@ The idea: all linear objects go into the memory of a monad. The monad is indexed
 Idris proposes an alternative way to make sockets safer: instead of
 using liear types, use an indexed monad to enforce linearity. Idris
 introduces a generic way to add typestate on top of a monad, the
-|STrans| indexed monad transformer\footnote{See \emph{e.g.}
+|STrans| indexed monad transformer\footnote{See \textit{e.g.}
   \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
 |STrans| you make sockets be part of the monad's state. So we could
 give, for instance, the following type to bind:
@@ -2577,7 +2577,7 @@ more, following \citet{ghica_bounded_2014} and
 ordered-semiring of multiplicities (with a join operation for type
 inference).  In particular, in order to support dependent types, we
 additionally need a $0$ multiplicity. We may may want to add a
-multiplicity for affine arguments (\emph{i.e.}  arguments which can be
+multiplicity for affine arguments (\textit{i.e.}  arguments which can be
 used \emph{at most once}).
 
 The typing rules are mostly unchanged with the \emph{caveat} that
@@ -3018,12 +3018,12 @@ which we modify by copy.
   An annotated state is a tuple $Ξ ⊢ (Γ||t :_ρ A),Σ$ where
   \begin{itemize}
   \item $Ξ$ is a typing context
-  \item $Γ$ is a \emph{typed environment}, \emph{i.e.} a collection of
+  \item $Γ$ is a \emph{typed environment}, \textit{i.e.} a collection of
     bindings of the form $x :_ρ A = e$
   \item $t$ is a term
   \item $ρ∈\{1,ω\}$ is a multiplicity
   \item $A$ is a type
-  \item $Σ$ is a typed stack, \emph{i.e.} a list of triple $e:_ρ A$ of
+  \item $Σ$ is a typed stack, \textit{i.e.} a list of triple $e:_ρ A$ of
     a term, a multiplicity and an annotation.
   \end{itemize}
 
@@ -3255,7 +3255,7 @@ extended so that one evaluates to |False| and the other to |True|.
 
 % safety proves that the mutable semantics is equivalent to a pure
 % semantics.
-% liveness proves that the primitives don't block on typestate (\emph{e.g.} in the
+% liveness proves that the primitives don't block on typestate (\textit{e.g.} in the
 % write primitive, we are never given an |Array|) (because typing is
 % preserved in the denotational semantics, hence the denotational
 % semantics can't block on a typestate).
