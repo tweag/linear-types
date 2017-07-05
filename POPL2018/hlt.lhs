@@ -672,7 +672,7 @@ in particular, |g| can pass that argument to |f|.
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
 \begin{code}
- (,) ::  a ⊸ b ⊸ (a,b)          (,) ::  a -> b -> (a,b)
+ (,) ::  a ⊸ b ⊸ (a,b)   bigSpace       (,) ::  a -> b -> (a,b)
 \end{code}
 Using the definition in \fref{sec:consumed}, the former is clearly the right
 choice: if the result of |(,) e1 e2| is consumed exactly once,
@@ -690,12 +690,12 @@ f2 x = case x of (a,b) -> (b,a)
 \end{code}
 |f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
 a linear type, that does \emph{not} imply that the pattern-bound variables |a| and |b|
-must be consumed exactly once; and indeed they aren't.
-
-However |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
+must be consumed exactly once; and indeed they are not.
+And, thus |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
 once?  No: |t| is guaranteed to be evaluated once, but its first component is then
 consumed twice and its second component not at all, contradicting \Fref{def:consume}.
+
 In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactly once,
 then indeed |t| is consumed exactly once.
 
