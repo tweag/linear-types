@@ -30,6 +30,7 @@
 %format π = "\pi"
 %format ρ = "\rho"
 %format ⅋ = "\parr"
+%format DataPacked = "\Conid{Data.Packed}"
 %subst keyword a = "\mathsf{" a "}"
 %format mediumSpace = "\hspace{0.6cm}"
 %format bigSpace = "\hspace{2cm}"
@@ -1442,11 +1443,11 @@ caseTree ::  Packed (Tree:r) ⊸
 %read :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{wrapfigure}
 %
-The interface on the right gives a example of type-safe, {\em read-only}
+The interface on the right gives an example of type-safe, {\em read-only}
 access to serialised data for a particular datatype.
 %
 A |Packed| value is a pointer to raw bits (a bytestring), indexed by the
-types of the values contained within.  We define a {\em type safe} serialisation
+types of the values contained within.  We define a {\em type-safe} serialisation
 layer as one which {\em reads} byte-ranges only at the type and size they were
 originally {\em written}.  This is a small extension of the memory safety we
 already expect of Haskell's heap --- extended to include the contents of
@@ -1549,7 +1550,7 @@ we write the tag of a |Leaf| we are left with:
 %\begin{code}
 ``|Needs [Int] Tree|'' ---
 %\end{code}
-an {\em obligation} to write the |Int| field, and a {\em promise} that we'll receive
+an {\em obligation} to write the |Int| field, and a {\em promise} to receive
 a |Tree| value at the end (albeit a packed one).
 %
 %% |Needs| is parameterised both by {\em obligations}, that an |Int| and then a
@@ -1579,7 +1580,7 @@ buffers in which to write data (similar to |newMArray| from \fref{sec:freezing-a
 \begin{code}
   newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
-Primitives |write|, |read|, |newBuffer|, and |finish| are {\em general}
+The primitives |write|, |read|, |newBuffer|, and |finish| are {\em general}
 operations for serialised data, whereas |caseTree| is datatype-specific.
 Further, the module that defines |Tree| exports a datatype-specific way to 
 {\em write} each serialised data constructor:
@@ -1598,7 +1599,6 @@ private code that defines |Tree|s, which has this minimal interface:
 module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
 module DataPacked( Packed, Needs, read, write, newBuffer, finish, done )
 \end{code}
-\todo{JP says that he can fix the lack of a period in the above module name}
 %
 %% After writing the two fields to |p| in this example, we need a way to finalize
 %% the operation and convert the write pointer to a read pointer:
