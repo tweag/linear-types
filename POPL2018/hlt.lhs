@@ -12,7 +12,7 @@
 %% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
-\def\noeditingmarks{}
+% \def\noeditingmarks{}
 
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
