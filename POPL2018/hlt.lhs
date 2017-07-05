@@ -1666,7 +1666,7 @@ How would we build the same thing in Haskell without linear types?  It may appea
 that the ST monad is a suitable choice:
 
 \begin{code}
-writeST :: Storable a => a -> Needs s (a:r) t -> ST s (Needs s r t)  
+writeST :: Storable a => a -> Needs' s (a:r) t -> ST s (Needs' s r t)  
 \end{code}
 Here we use the same typestate associated with a |Needs| pointer, while also
 associating its mutable state with the |ST| session indexed by |s|.
@@ -1674,18 +1674,18 @@ associating its mutable state with the |ST| session indexed by |s|.
 % As in \fref{sec:freezing-arrays}, we rely on using an unsafe
 % ... must extend the trusted code base.
 Unfortunately, not only do we have the same trouble with freezing in the absence
-of linearity (|unsafeFreeze|), we also
-have an additional problem not present with arrays:
+of linearity (|unsafeFreeze|, \fref{sec:freezing-arrays}), we also
+have an {\em additional} problem not present with arrays:
 %
-namely, a non-linear use of a |Needs| pointer can result in type-safety
-violations.
+namely, a non-linear use of a |Needs| pointer can ruin our type-safe
+deserialisation guarantee!
 %
 For example, we can write a |Leaf| and a |Branch| to the same pointer in an
 interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
 an integer in bytes 1-9, while the branch will place another tag at byte 1.
 %
-\Red{If we define a type-safe serialization interface as one where every read at a
-type returns a whole value written at the same type, then this is a violation.}
+%% \Red{If we define a type-safe serialization interface as one where every read at a
+%% type returns a whole value written at the same type, then this is a violation.}
 We can receive a corrupted 8-byte integer, clobbered by a tag from an
 interleaved ``alternate future''.
 
@@ -1693,8 +1693,8 @@ interleaved ``alternate future''.
 Fixing this problem would require switching to an indexed monad with additional
 type-indices that model the typestate of all accessible pointers, which would in
 turn need to have static, type-level identifiers.  That is, it would require
-encoding linearity in a way which would become very cumbersome as soon as several
-buffers are involved.
+{\em encoding} linearity after all, but in a way which would become very
+cumbersome as soon as several buffers are involved.
 
 \subsubsection{Compiler optimisations}
 \label{sec:cursor-benchmark}
