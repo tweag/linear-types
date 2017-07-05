@@ -1629,24 +1629,24 @@ We also need to explicitly let go of linear input buffers we've exhausted.
   done :: Packed [] ⊸ ()
 \end{code}
 
-Finally, we have what we need to build a |map| function that logically operates
+Finally, we have what we need to build a map function that logically operates
 on the leaves of a tree, but reads serialised input and writes serialised
 output.
 %
-Indeed, in our current \HaskeLL{} implementation ``|map (+1) tree|'' touches {\em
+Indeed, in our current \HaskeLL{} implementation ``|mapLeaves (+1) tree|'' touches {\em
   only} packed buffers --- it performs zero Haskell heap allocation!
 %
 We will return to this map example and benchmark it in \fref{sec:cursor-benchmark}.
 %
 With the safe interface to serialised data, functions like |sumLeaves| and
-@map@ are not burdensome to program.  The code for |map| is shown below, its
+|mapLeaves| are not burdensome to program.  The code for |mapLeaves| is shown below, its
 inner loop linearly updates a pair of a read- and write-pointer.
 
 %\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 %\vspace{-6mm}
 \begin{code}
-map :: (Int->Int) -> Packed Tree ⊸ Packed Tree
-map fn pt = newBuffer (extract ∘ go pt)
+mapLeaves :: (Int->Int) -> Packed Tree ⊸ Packed Tree
+mapLeaves fn pt = newBuffer (extract ∘ go pt)
   where
     extract (inp,outp) = case done inp of () -> finish outp
     go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
@@ -1696,7 +1696,7 @@ turn need to have static, type-level identifiers.  That is, it would require
 {\em encoding} linearity after all, but in a way which would become very
 cumbersome as soon as several buffers are involved.
 
-\subsubsection{Compiler optimisations}
+\subsubsection{Benchmarking compiler optimisations}
 \label{sec:cursor-benchmark}
 
 \begin{figure}
@@ -1708,9 +1708,9 @@ cumbersome as soon as several buffers are involved.
   \end{minipage}
 \caption{Speedup of operating directly on serialised data, either using
   linear-types or the ST monad, as compared to fully unpacking, processing,
-  and repacking the data.  For reference a ``pointer-based'' version is also
+  and repacking the data.  For reference, a ``pointer-based'' version is also
   included, which doesn't operate on serialised data at all, but instead normal
-  heap objects; it represents the hypothetical performance of ``unpack-repack''
+  heap objects --- it represents the hypothetical performance of ``unpack-repack''
   if (de)serialisation were instantaneous.}
 \label{fig:pack-bench}
 \end{figure}
@@ -1722,9 +1722,9 @@ performance consequences from using a linear versus a monadic, ST style in
 Achieving allocation-free loops in \ghc{} is always a challenge --- 
 tuple types and numeric types are lazy and ``boxed'' as heap objects by default.
 %
-As we saw above in the |sum| example, each recursive call returned a tuple
+As we saw in the |sumLeaves| and |mapLeaves| examples, each recursive call returned a tuple
 of a result and a new pointer.  In a monadic formulation, an expression of type
-|m a|, for |Monad m|, implies that the type-variable |a| (of kind |*|) must be a
+|m a|, for |Monad m|, implies that the ``result'' type |a|, of kind |*|, must be a
 {\em lifted} type.  Nevertheless, in some situations, for some monads, the
 optimiser is able to deforest data constructors returned by monadic actions.
 %
@@ -1734,13 +1734,13 @@ unfortunately, we are currently unable to eliminate all allocation from
 
 For the linearly-typed code, however, we have more options.  \ghc{} has the ability to
 directly express unboxed values such as a tuple |(# Int#, Double# #)|, which
-fills two registers and inhabits an unboxed kind (distinct from |*|).
+fills two registers and inhabits an unboxed kind distinct from |*|.
 %
 In fact, the type of a combinator like |caseTree| is a good fit for the recent
 ``levity polymorphism'' addition to
-\ghc{}~\cite{eisenberg_levity_2017}.  Using it,
-we can permit the branches of the |case| to return types with different {\em physical
-representations}:
+\ghc{}~\cite{eisenberg_levity_2017}.  
+Thus we permit the branches of the |case| to return unlifted, unboxed types, and
+give |caseTree| a more general type:
 
 \begin{code}
 caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
@@ -1760,11 +1760,12 @@ of the serialised-data transformations.
 The basic premise of \fref{fig:pack-bench} is that a machine in the network
 receives, processes, and transmits serialized data (trees).
 %
-We consider two simple benchmarks, a |fold| and a |map| respectively: (1) summing the
-leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
-tree.
+We consider two simple benchmarks: |sumLeaves| and |mapTree (+1)|.
+%% , a |fold| and a |map| respectively: (1) summing the
+%% leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
+%% tree.
 %
-The baseline is the time required to deserialise, transform, and reserialise:
+The baseline is the traditional approach: deserialise, transform, and reserialise,
 the ``unpack-repack'' line in the plots.  Compared to this baseline,
 {\em processing the data directly in its serialised form results in speedups of over
 20$\times$ on large trees}.
@@ -1772,9 +1773,9 @@ the ``unpack-repack'' line in the plots.  Compared to this baseline,
 What linear types makes safe, is also efficient.
 
 The experiment was conducted on a Xeon E5-2699 CPU (2.30GHz, 64GB memory) using
-a modified version of \ghc{} 8.2 (\fref{sec:impl}).  Each
+our modified version of \ghc{} 8.2 (\fref{sec:impl}).  Each
 data point was measured by performing many trials and taking a linear regression
-of iteration count against time (using the criterion library~\cite{osullivan_criterion_2013}).
+of iteration count against time\footnote{using the criterion library~\cite{osullivan_criterion_2013}}.
 %
 This process allows for accurate measurements of both small and large times.  The
 baseline unpack-repack tree-summing times vary from 25ns to 1.9 seconds at
