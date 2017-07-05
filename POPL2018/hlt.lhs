@@ -2022,7 +2022,7 @@ a type class.
 \subsection{Pure bindings to impure \textsc{api}s}
 \label{sec:spritekit}
 
-In Haskell SpriteKit, \Citet{chakravarty_spritekit_2017} have a different kind
+In Haskell SpriteKit, \citet{chakravarty_spritekit_2017} have a different kind
 of problem. They build a pure interface for graphics, in the same style
 as the Elm programming language~\cite{czaplicki_elm_2012}, but implement it in terms
 of an existing imperative graphical interface engine.
@@ -2039,25 +2039,16 @@ data Node = Node {payload :: Int, ref :: Maybe (IORef ImperativeNode), children 
 \end{code}
 
 On each frame, SpriteKit applies |u| to the current scene, and checks
-(with the help of the RTS) if a node |n| was updated. If it was, it
-applies the update directly onto |ref n| or creates a new imperative
-node.
-%
-%% In order to efficiently map this pure interface to the imperative engine, the
-%% new |Scene| must not destroy the entire imperative scene and re-create it, but
-%% must be rendered using imperative updates. To achieve this result, the nodes in
-%% the |Scene| data-type contain pointers to the imperative nodes that they
-%% represent, so that changing the children of a node |np| will be effected as an
-%% imperative update of the corresponding imperative node |ni|.\jp{what is the
-%%   relationship between np and ni?}
-%
+if a node |n| was updated. If it was, it applies the update directly
+onto |ref n| or creates a new imperative node.
+
 Things can go wrong though: if the update function {\em duplicates}
 any node proxy node, one gets the situation where two nodes |n| and
 |n'| can point to the same imperative source |ref n = ref n'|, but
 have different payloads. In this situation the |Scene| has become
 inconsistent and the behaviour of SpriteKit is unpredictable.
 
-In the current state of the implementation, the burden of checking
+In the api of \citet{chakravarty_spritekit_2017}, the burden of checking
 non-duplication is on the programmer.  Using linear types, we can
 switch that burden to the compiler: we change the update function to
 type |Scene ⊸ Scene|, and the |ref| field is made linear too.  Thanks
@@ -2065,13 +2056,10 @@ to linearity, no reference can be duplicated: if a node is copied, the
 programmer must choose which one will correspond to the old imperative
 counterpart and which will be new.
 
-We have implemented a simplified version of this solution in the case
-where the impure \textsc{api} is a simple tree
-\textsc{api}.
-\improvement{With some data regarding implementation, a
-  remark that linearity is not used \emph{in} the implementation but
-  only as the interface level to ensure that the proof obligation is
-  respected by the \textsc{api} user.}
+We implemented such an \textsc{api} in our implementation of
+\HaskeLL{}. The library-side code does not use any linear code, the
+|Node|s are actually used unrestrictedly. Linearity is only imposed on
+the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
