@@ -1420,21 +1420,22 @@ in-memory and on-the-wire formats for simple product types (protobufs).
 Here is an unusual case where {advanced types can {\em yield performance}} by
 making it practical to code in a previously infeasible style: accessing
 serialised data at a fine grain without copying it.
-%
-The interface on the right gives a example of type-safe, {\em read-only}
-access to serialised data.
-% For example, consider the read-only interface on the right;
-\begin{wrapfigure}[6]{r}[34pt]{8.5cm}
+
+\begin{wrapfigure}[8]{r}[34pt]{8.5cm}
 % \vspace{-5mm}
-% module FooMod( Foo(..), pack, unpack, caseFoo) where
 \begin{code}
-data Foo = MkFoo Int Double
-pack    :: Foo ⊸ Packed [Foo]
-unpack  :: Packed [Foo] ⊸ Foo
-caseFoo :: Packed [Foo] ⊸ Packed [Int, Double]
+data Tree = Leaf Int | Branch Tree Tree
+pack    :: Tree ⊸ Packed [Tree]
+unpack  :: Packed [Tree] ⊸ Tree
+caseTree ::  Packed (Tree:r) ⊸
+             (Packed (Int:r) -> _ p a) -> 
+             (Packed (Tree:Tree:r) -> _ p a) -> _ p a
 \end{code}
 %read :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{wrapfigure}
+%
+The interface on the right gives a example of type-safe, {\em read-only}
+access to serialised data for a particular datatype.
 %
 A @Packed@ value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type safe} serialisation
@@ -1447,20 +1448,28 @@ bytestrings containing serialised data\footnote{The additional safety ensured
 %
 To preserve this type safety, the @Packed@ type {\em must} be abstract.
 %
-Consequently, a client of the module defining @Foo@ need not be privy to the
+Consequently, a client of the module defining @Tree@ need not be privy to the
 memory layout of its serialisation.
 
 If we cannot muck about with the bits inside a @Packed@ directly, then we can
 still retrieve data with @unpack@, i.e., the traditional, {\em copying},
 approach to deserialisation.  Better still is to read the data {\em without}
-copying.  We can manage this feat with @caseFoo@, which is analogous to the
-expression ``@case e of MkFoo ...@''.  Unlike the case expression, @caseFoo@'s
-operational behavior merely
-% reads a tag byte from the packed byte stream, advances the cursor and
-returns a type safe pointer to the fields, @Packed [Int, Double]@.
+copying.  We can manage this feat with @caseTree@, which is analogous to the
+expression ``@case e of Leaf ... | Branch ...@''.
 %
-@caseFoo@ abstracts over whether or not a {\em tag} value is included in the
-serialisation, if not, it becomes a cast and a @Foo@ requires only 16 bytes.
+Lacking builtin syntax, @(caseTree p k1 k2)@ takes two continuations
+corresponding to the two branches of the case expression.
+%
+Unlike the case expression, @caseTree@ operates on the packed byte stream, reads
+a tag byte, advances the pointer past it, and returns a type safe pointer to the
+fields (e.g. @Packed [Int]@ in the case of a leaf).
+%% \begin{code}
+%%   caseTree  (pack (Leaf 3))
+%%             (\ p::Packed [Int] -> ...)
+%% \end{code}
+
+%% @caseFoo@ abstracts over whether or not a {\em tag} value is included in the
+%% serialisation, if not, it becomes a cast and a @Foo@ requires only 16 bytes.
 
 %% When handling datatypes with multiple constructors, their serialisations will
 %% first include a {\em tag} byte indicating which variant; but @Foo@ is a product
@@ -1470,22 +1479,41 @@ serialisation, if not, it becomes a cast and a @Foo@ requires only 16 bytes.
 %% the 16-byte suffix containing the two fields.
 
 It is precisely to access multiple, consecutive fields that @Packed@ is indexed
-by a {\em list} of types as its phantom type parameter.  The individual
-@Int@ and @Double@ values can be read one at a time with a lower-level @read@
-primitive.  (This can efficiently read out scalars and store them in registers.)
+by a {\em list} of types as its phantom type parameter.  Individual atomic
+values (@Int@, @Double@, etc) can be read one at a time with a lower-level
+@read@ primitive, which can efficiently read out scalars and store them in
+registers:
 \begin{code}
   read :: Storable a => Packed (a:r) ⊸ (a, Packed r)  
 \end{code}
 %
-Putting it together, we can write a function that consumes serialised data as follows.
+%% \begin{code}
+%%   f :: Packed [Foo] -> Double
+%%   f p =  let  (n,p')   = read (caseFoo p);  (m,p'')  = read p' in fromIntegral n + m
+%% \end{code}
+
+\begin{wrapfigure}[8]{r}[0pt]{7.0cm} % lines, placement, overhang, width
+\vspace{-6mm}
 \begin{code}
-  f :: Packed [Foo] -> Double
-  f p =  let  (n,p')   = read (caseFoo p);  (m,p'')  = read p' in fromIntegral n + m
+sumLeaves :: Packed [Tree] -> Int
+sumLeaves p = fst (go p)
+  where go p =  caseTree p 
+                  read -- Leaf case
+                  (\p2 ->  let  (n,p3) = go p2
+                                (m,p4) = go p3
+                           in (n+m,p4))
 \end{code}
+\end{wrapfigure}
+Putting it together, we can write a function that consumes serialised data, such
+as @sumLeaves@, shown on the right.
 %
- In this read-only example, linearity is not essential, only typestate.  Next we
- consider an \textsc{API} for {\em writing} @Packed [Foo]@ values, where
- linearity is key.
+Indeed, we can even use @caseTree@ to implement @unpack@, turning it into safe
+``client code'' -- sitting outside the module that defines @Tree@ and the
+trusted code establishing its memory representation.
+
+What about @pack@?  In this read-only example, linearity was not essential, only
+typestate.  Next we consider an \textsc{API} for writing @Packed
+[Tree]@ values bit by bit, where linearity is key.
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
@@ -1498,68 +1526,73 @@ Putting it together, we can write a function that consumes serialised data as fo
 %% evenly-spaced, aligned elements.  In contrast, binary-serialised data structures
 %% contain primitive values of various widths, at unaligned byte-offsets.
 %
-To create a serialised @MkFoo@ value, we must write a tag, an integer, and a
-double, in that order --- three atomic writes.
 %% A pointer into a buffer containing serialised output is similar to a constructor
 %% method for a regular heap object.  It must ensure that all fields are initialised, at
 %% the proper addresses and with values of the correct type.
 %
-A {\em linear} write pointer can ensure all three writes happen, and none happen
-twice.  We use a type ``|Needs|'' for write pointers, parameterised by (1) a
+To create a serialised data constructor, we must write a tag, followed by the
+fields, in order.
+%
+A {\em linear} write pointer can ensure all fields are initialised, in order.
+We use a type ``|Needs|'' for write pointers, parameterised by (1) a
 list of remaining things to be written, and (2) the type of the final value
 which will be initialised once those writes are performed.  For example, after
-we write the tag of a @MkFoo@ we are left with: 
+we write the tag of a @Leaf@ we are left with:
 %\begin{code}
-``@Needs [Int, Double] Foo@'':
+``@Needs [Int] Tree@'' ---
 %\end{code}
-an {\em obligation} to write the fields, and a {\em promise} that we'll receive
-a logical @Foo@ value at the end.
+an {\em obligation} to write the @Int@ field, and a {\em promise} that we'll receive
+a @Tree@ value at the end (albeit a packed one).
 %
 %% |Needs| is parameterised both by {\em obligations}, that an |Int| and then a
 %% |Double| must be written, and by the resulting, immutable value that will be
 %% available upon completing those writes (|Foo|).
 
-To write an individal @Int@ or @Double@, we provide a primitive that shaves one
-element off the type-level list of obligations:
+To write an individal number, we provide a primitive that shaves one
+element off the type-level list of obligations (a counterpart to @read@, above):
 %
 \begin{code}
   write :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
 \end{code}
 %
-When the list of outstanding writes is empty, we can retrive a read pointer.
+When the list of outstanding writes is empty, we can retrive a readable packed buffer.
 Just as when we froze arrays (\fref{sec:freezing-arrays}), the immutable value
-is unrestricted, and can be used multiple times:
+is {\em unrestricted}, and can be used multiple times:
 %
 \begin{code}
   finish :: Needs [] t ⊸ Unrestricted (Packed [t])
 \end{code}
 %
 Finalizing written values with @finish@ works hand in hand with allocating new
-buffers in which to place them:
+buffers in which to write data (similar to |newMArray| from \fref{sec:freezing-arrays}):
+%
 \begin{code}
   newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
-Primitives @write@, @read@, and @finish@ are general operations for serialised
-data, whereas @caseFoo@ is datatype specific.  Likewise, the module that defines
-@Foo@ exports a datatype-specific way to start writing a serialised value:
+Primitives @write@, @read@, @newBuffer@, and @finish@ are {\em general}
+operations for serialised data, whereas @caseTree@ is datatype-specific.
+Further, the module that defines @Tree@ exports a datatype-specific way to 
+{\em write} each serialised data constructor:
+%
+% startFoo :: Needs (Foo:r) t ⊸ Needs (Int:Double:r) t
 \begin{code}
-  startFoo :: Needs (Foo:r) t ⊸ Needs (Int:Double:r) t
+startLeaf    :: Needs (Tree : r) t ⊸ Needs (Int : r) t
+startBranch  :: Needs (Tree : r) t ⊸ Needs (Tree : Tree : r) t
 \end{code}
-Operationally, @startFoo@ writes only the tag.
-............
+Operationally, @start*@ functions write only the tag, hiding the exact
+tag-encoding from the client, and leaving field-writes as future obligations.
+%
+With these building blocks, we can move @pack@ and @unpack@ outside of the
+private code that defines @Tree@s, which has this minimal interface:
 \begin{code}
-module FooMod( Foo(..), pack, unpack, caseFoo, startMkFoo)
+module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
 \end{code}
-
-Regarding our type-safety guarantee,......
-
+\begin{code}
+module Data.Packed( Packed, read, write, newBuffer, finish )
+\end{code}
+%
 %% After writing the two fields to |p| in this example, we need a way to finalize
 %% the operation and convert the write pointer to a read pointer:
-
-\begin{code}
-  write 4.4 (write 3 p) :: Needs [] Foo
-  finish :: Needs [] t ⊸ Unrestricted (Packed [t])
-\end{code}
 %
 %% Just as when we converted mutable arrays to immutable arrays, here the immutable
 %% |Foo| can be read multiple times.
@@ -1568,45 +1601,26 @@ Regarding our type-safety guarantee,......
 %% but rather an isomorphic, serialised representation: |Packed [Foo]|.  Nevertheless,
 %% everything in a |Foo| can be read in a type-safe way directly from the
 %% serialised buffer.
-
-
-
-
-As a concrete example consider this simple data-type:
-\begin{code}
-  data Tree = Leaf Int | Branch Tree Tree
-\end{code}
 %
-From this definition, we derive a safe interface for writing and reading
-serialised |Tree| data:
+%% These operations themselves go into the trusted codebase.  Internally, we choose
+%% a one-byte representation for the |Leaf|/|Branch| tags, and write these to the
+%% output stream, immediately before the left-to-right serialised fields.  Yet
+%% ``|write leafTag|'' would not suffice, as its type differs from |startLeaf| above.
+%% % it would be |Needs (Tag:r) t ⊸ Needs r t`
+%% A coercion is needed internally to reify the knowledge
+%% that ``a tag plus an integer equals a leaf record, and thus a tree''.
 %
-\begin{code}
-startLeaf   :: Needs (Tree : r) t ⊸ Needs (Int : r) t
-startBranch :: Needs (Tree : r) t ⊸ Needs (Tree : Tree : r) t
-caseTree :: Packed (Tree:r) -> (Packed (Int:r) -> a) -> (Packed (Tree:Tree:r) -> a) -> a
-\end{code}
-
-These operations themselves go into the trusted codebase.  Internally, we choose
-a one-byte representation for the |Leaf|/|Branch| tags, and write these to the
-output stream, immediately before the left-to-right serialised fields.  Yet
-``|write leafTag|'' would not suffice, as its type differs from |startLeaf| above.
-% it would be |Needs (Tag:r) t ⊸ Needs r t`
-A coercion is needed internally to reify the knowledge
-that ``a tag plus an integer equals a leaf record, and thus a tree''.
+On top of the safe interface, we can of course define higher-level construction
+routines, such as for writing a complete |Leaf|:
 %
-On top of the safe interface, writing a complete |Leaf| is simple:
-
 \begin{code}
 writeLeaf n p = write n (startLeaf p)
 \end{code}
-
-Using an |newBuffer| primitive similar to |newMArray|
-(\fref{sec:freezing-arrays}), we can allocate and initialize a complete tree,
-|Branch (Leaf 3) (Leaf 4)|, with:
-
+%
+With which we can allocate and initialize a complete tree,
+  |Branch (Leaf 3) (Leaf 4)|, as follows:
 \begin{code}
 newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
-newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
 
 On the other hand, to {\em read} |Tree| values, we pass continuations to the
@@ -1616,12 +1630,8 @@ the stream, and calls |k1| if it is a leaf tag or |k2| otherwise.
 Using |caseTree| together with a read for primitive values, we sum the leaves
 of a tree like so:
 
-\begin{code}
-sum h =   caseTree h read
-            (\h2 ->  let  (n,h3) = sum h2
-                          (m,h4) = sum h3
-                     in (n+m,h4))
-\end{code}
+............... % sumtree removed.
+
 
 %% Just as with mutable arrays, we need an |alloc| primitive for |Needs| pointers,
 %% and then
