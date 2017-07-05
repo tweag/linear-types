@@ -1586,7 +1586,7 @@ With these building blocks, we can move @pack@ and @unpack@ outside of the
 private code that defines @Tree@s, which has this minimal interface:
 \begin{code}
 module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
-module DataPacked( Packed, Needs, read, write, newBuffer, finish, drop )
+module DataPacked( Packed, Needs, read, write, newBuffer, finish, done )
 \end{code}
 \todo{JP says that he can fix the lack of a period in the above module name}
 %
@@ -1624,23 +1624,23 @@ follows:
 newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
 \end{code}
 %
-We also sometimes need to explicitly let go of a linear value we don't need:
+We also need to explicitly let go of linear input buffers we've exhausted.
 \begin{code}
-  drop :: Packed a ⊸ ()
+  done :: Packed [] ⊸ ()
 \end{code}
 
 Finally, we have what we need to build a |map| function that logically operates
 on the leaves of a tree, but reads serialised input and writes serialised
 output.
 %
-Indeed, in our current \HaskeLL implementation ``|map (+1) tree|'' touches {\em
-  only} these buffers --- it performs zero heap allocation!
+Indeed, in our current \HaskeLL{} implementation ``|map (+1) tree|'' touches {\em
+  only} packed buffers --- it performs zero Haskell heap allocation!
 %
-We will return to this map and benchmark it in \fref{sec:cursor-benchmark}.
+We will return to this map example and benchmark it in \fref{sec:cursor-benchmark}.
 %
-With the safe interface to serialised data, these functions are not burdensome
-to program.  The code for @map@ is shown below, its inner loop linearly updates
-a pair of a read- and write-pointer.
+With the safe interface to serialised data, functions like |sumLeaves| and
+@map@ are not burdensome to program.  The code for |map| is shown below, its
+inner loop linearly updates a pair of a read- and write-pointer.
 
 %\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 %\vspace{-6mm}
@@ -1648,7 +1648,7 @@ a pair of a read- and write-pointer.
 map :: (Int->Int) -> Packed Tree ⊸ Packed Tree
 map fn pt = newBuffer (extract ∘ go pt)
   where
-    extract (inp,outp) = case drop inp of () -> finish outp
+    extract (inp,outp) = case done inp of () -> finish outp
     go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
     go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (fn x) o))
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
