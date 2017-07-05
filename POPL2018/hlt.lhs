@@ -401,7 +401,7 @@ to two questions:
 \item \emph{Is it safe to update this value in-place} (\fref{sec:freezing-arrays})?
 That depends on whether there
 are aliases to the value; update-in-place is \textsc{ok} if there are no other pointers to it.
-Linearity supports a more efficient implementation, by O(1) update rather than O(n) copying.
+Linearity supports a more efficient implementation, by $O(1)$ update rather than $O(n)$ copying.
 \item \emph{Am I obeying the usage protocol of this external resource}
 (\fref{sec:io-protocols})?
 For example, an open file should be closed, and should not be used after it it has been closed;
