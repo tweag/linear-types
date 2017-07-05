@@ -119,26 +119,34 @@
     \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
     \newenvironment{alt}{\color{red}}{}
 
+    \newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+    \newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
+    \newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+    \newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+    \newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
+    \newcommand{\improvement}[1]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink]{#1}}
+    \newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
+
+    \newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
+    \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
+    \newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
 
 \else
     \newcommand{\Red}[1]{#1}
     \newcommand{\note}[1]{}
     \newenvironment{alt}{}{}
-    \renewcommand\todo[2]{}
+%    \renewcommand\todo[2]{}
+    \newcommand{\unsure}[2]{}
+    \newcommand{\info}[2]{}
+    \newcommand{\change}[2]{}
+    \newcommand{\inconsistent}[2]{}
+    \newcommand{\critical}[2]{}
+    \newcommand{\improvement}[1]{}
+    \newcommand{\resolved}[2]{}
+    \newcommand{\rn}[1]{}
+    \newcommand{\simon}[1]{}
+    \newcommand{\jp}[1]{}
 \fi
-
-
-\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
-\newcommandx{\info}[2][1=]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
-\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
-\newcommandx{\inconsistent}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
-\newcommandx{\critical}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=red,#1]{#2}}
-\newcommand{\improvement}[1]{\todo[linecolor=pink,backgroundcolor=pink!25,bordercolor=pink]{#1}}
-\newcommandx{\resolved}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}} % use this to mark a resolved question
-
-\newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
-\newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
-\newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
 
 % Link in bibliography interpreted as hyperlinks.
 \newcommand{\HREF}[2]{\href{#1}{#2}}
@@ -494,7 +502,7 @@ this \textsc{api}  we can define |array| thus:
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
 \end{code}
-\simon{I have gneralised the type of |newMArray| so it does not have
+\simon{I have generalised the type of |newMArray| so it does not have
 to return an unrestricted value.  Is that right?}
 There are several things to note here:
 \begin{itemize}
@@ -518,10 +526,10 @@ not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
 type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (\fref{sec:data-types}).
-\item The function |foldl| has the type
-\begin{code}
-foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a
-\end{code}
+\item The function |foldl| has the type: 
+\hspace{3mm}% \begin{code}
+|foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a| \\
+% \end{code}
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
