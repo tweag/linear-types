@@ -98,7 +98,7 @@ git config --global url."git\@github.com:/ghc/packages-".insteadOf      git\@git
 Issues & further instructions
 =====================
 
-If you run into trouble building, please see the [GHC Building Guide] [3] for possible answers.
+If you run into trouble building, please consult the [GHC Building Guide](https://ghc.haskell.org/trac/ghc/wiki/Building) for possible answers.
 
 
 Filing bugs
