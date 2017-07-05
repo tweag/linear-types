@@ -2160,8 +2160,7 @@ at inlining and fusion. Rust and Clean largely explore the
 consequences of uniqueness on in-place update; an in-depth exploration
 of linear types in relation with fusion can be found
 in~\citet{bernardy_composable_2015};
-\Red{see also the discussion in \fref{sec:fusion}.}
-\unsure{The discussion on fusion may well disappear}
+see also the discussion in \fref{sec:fusion}.
 
 Because of this weak duality, we could have
 retrofitted uniqueness types to Haskell. But several points
@@ -2208,7 +2207,8 @@ systems programming, with control over resources and latency, is still possible.
 
 \paragraph{Borrowing}
 \rn{I don't understand the upshot of this section.  It seems to be that we can't
-currently do borrowing.}
+  currently do borrowing.}
+\jp{Move to future work?}
 How can borrowing be encoded in \HaskeLL{}? Instead of tracking the
 lifetime of references using a special system, one can simply give
 each reference a multiplicity of one, and explicitly pass them around.
@@ -2291,7 +2291,6 @@ comes at the cost of strong limitations in practice:
 |free  : A ⊸ r ⊸ r|.
 We can write code such as the following, where the lifetimes of |x|, |y|
 and |z| overlap in a non-stack fashion:
-\info{{Note : $(a →_p b) ⊸ a →_p b$}}{}
 \begin{code}
 alloc   $ \x ->                 {- |x| live -}
 alloc   $ \y ->                 {- |x| and |y| live -}
@@ -2301,6 +2300,7 @@ free y  $                       {- |z| live -}
 free z
 \end{code}
 % $ hint to emacs (parser) that we're not in math mode.
+\info{{Note : $(a →_p b) ⊸ a →_p b$}}{}
 
 %% \item |ST| actions cannot be interleaved with |IO| actions. So in our
 %%   mutable array examples, for instance, it is not possible to provide
@@ -2324,14 +2324,9 @@ free z
   rules out useful syntactic facilities like view patterns.
 %
   In contrast, with linear types, values in two regions
-  % (in our running example packets from different mailboxes) have the same type
   hence can safely be mixed:
-  %% any data structure containing packet of a mailbox
-  %% will be forced to be consumed before the mailbox is closed.
-  %  \jp{FIXME: running   example is now gone.}
   elements can be moved from one data structure (or heap) to another, linearly,
   with responsibility for deallocation transferred along.
-%  , with  ownership transfer.
 \end{itemize}
 
 
@@ -2480,7 +2475,7 @@ Our own work in an industrial context triggered our efforts to add
 linear types to \textsc{ghc}. We were originally motivated by
 precisely typed protocols for complex interactions and by taming
 \textsc{gc} latencies in distributed systems. But we have since
-noticed other potential applications time of linearity in a variety of
+noticed other potential applications of linearity in a variety of
 other industrial projects.
 
 \begin{description}
@@ -2494,9 +2489,9 @@ other industrial projects.
   2.2]{lippmeier_parallel_2016} demonstrate one particular such
   violation.
 
-  We have encountered such mistaken duplication in industrial
-  projects: they produce bugs which are very painful to track down. A
-  linear type discipline would prevent such bug from happening.
+  We have encountered such mistaken duplications in industrial
+  projects, where they produce bugs which are painful to track down. A
+  linear type discipline would prevent such bugs from happening.
 
   Variations on this theme occur whenever effects are treated as
   data. Another example is composing file-descriptors with
@@ -2504,18 +2499,18 @@ other industrial projects.
 
 \item[Inter-language memory management]
   Complex projects with large teams invariably involve a mix of
-  programming languages. Reusing legacy code is often much cheaperxf
+  programming languages. Reusing legacy code is often much cheaper
   than reimplementing it. A key to successful interoperation between
   languages is performance. If all code lives in the same address
   space, then data need not be copied as it flows from function to
   function implemented in multiple programming languages.
 
-  This often implies cooperation between two garbage collectors. This
+  Such interoperation often implies cooperation between two garbage collectors, which
   can be achieved by pinning some object, such as with Haskell's
-  |StablePtr|. Such pinning is expensive, so many language offer
+  |StablePtr|. Such pinning is expensive, so many languages offer
   cheaper cooperation primitives with restricted life-time and usage,
   such as \emph{local references} in Java's \textsc{jni}. Such local
-  reference must conform to a particular usage pattern which can be
+  references must conform to a particular usage pattern which can be
   enforced with linear types. Global references like |StablePtr| can,
   on the other hand, be used unrestrictedly.
   \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
@@ -2525,12 +2520,12 @@ other industrial projects.
   destination-passing style. Destination-passing style often appears
   in performance-sensitive contexts. One notable example from our
   industrial experience is \textsc{rdma} (Remote Direct Memory Access)
-  which allows computers on high-end cluster to copy data in
+  which allows computers on high-end clusters to copy data in
   one-another's memory directly, bypassing the kernel and even the
   \textsc{cpu}, and, in the process, avoiding many copies.
 
   In \textsc{rdma} one computer allocates a buffer |b|, and other
-  computers write to |b|. When all write are completed, we treat |b|
+  computers write to |b|. When all write operations are completed, we treat |b|
   as immutable. It is more composable not to allocate |b| as part of
   the \textsc{rdma} primitives. In other words we want to expose the
   \textsc{rdma} interface as a destination-passing interface, which is
@@ -2552,7 +2547,6 @@ the language, in the sense that:
 \item yet existing library functions can be reused to serve the
   objectives of resource-sensitive programs with simple changes to
   their types, and no code duplication.
-%  \unsure{Do we still speak of resource sensitivity all that much?}
 \end{itemize}
 In other words: regular Haskell comes first. Additionally, first-order
 linearly typed functions and data structures are usable directly from
@@ -2565,13 +2559,15 @@ We have developed a prototype implementation extending
 \textsc{ghc} with multiplicities. As we hoped, this
 design integrates well in \textsc{ghc}.
 
-Even though we change only \ghc's type system, we found that the compiler and
-runtime already had the features necessary for unboxed, off-heap, and in-place
-data structures.  That is, \ghc{} has the low-level compiler primitives and
-\textsc{ffi} support to implement, for example, mutable arrays, mutable cursors into
-serialised data, or off-heap foreign data structures without garbage collection.
-These could be implemented (unsafely) {\em before} this work, but linearity
-unlocks these capabilities for safe use within pure code.
+Even though we change only \ghc's type system, we found that the
+compiler and runtime already had the features necessary for unboxed,
+off-heap, and in-place data structures.  That is, \ghc{} has the
+low-level compiler primitives and \textsc{ffi} support to implement,
+for example, mutable arrays, mutable cursors into serialised data, or
+off-heap foreign data structures without garbage collection.  These
+features could be used {\em before} this work, but their correct use
+put some burden-of-proof on the programmers. Linearity unlocks these
+capabilities for safe, compiler-checked use, within pure code.
 
 
 
