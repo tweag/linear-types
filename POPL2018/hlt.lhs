@@ -1,7 +1,8 @@
 % -*- latex -*-
 
 %% For double-blind review submission
-\documentclass[acmsmall,10pt,review,anonymous,printacmref=false]{acmart}\settopmatter{printfolios=true}
+\documentclass[acmsmall,10pt,review,anonymous]{acmart}
+\settopmatter{printfolios=true,printacmref=false}
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
 %% For final camera-ready submission
