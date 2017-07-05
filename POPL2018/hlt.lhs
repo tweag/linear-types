@@ -526,10 +526,8 @@ not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
 type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (\fref{sec:data-types}).
-\item The function |foldl| has the type: 
-\hspace{3mm}% \begin{code}
-|foldl :: (a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a| \\
-% \end{code}
+\item The function |foldl| has the type 
+|(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
@@ -706,10 +704,10 @@ And, thus |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
 once?  No: |t| is guaranteed to be evaluated once, but its first component is then
 consumed twice and its second component not at all, contradicting \Fref{def:consume}.
-
+%
 In contrast, |f2| \emph{does} have a linear type: if |(f2 t)| is consumed exactly once,
 then indeed |t| is consumed exactly once.
-
+%
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special non-linear pair}.
 
@@ -835,7 +833,7 @@ It can be given the two following incomparable types:
   the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
-Likewise, function composition and |foldl| (c.f. \Fref{sec:freezing-arrays})
+Likewise, function composition and |foldl| (cf. \Fref{sec:freezing-arrays})
 can be given the following general types:
 \begin{code}
 foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
