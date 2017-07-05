@@ -633,7 +633,7 @@ types for the File before vs after an operation.
 \subsection{Operational intuitions}
 \label{sec:consumed}
 
-We have said informally that \emph{``a linear function consumes its argument
+We said informally tahat \emph{``a linear function consumes its argument
 exactly once''}. But what exactly does that mean?
 
 \begin{quote}
@@ -662,12 +662,15 @@ restrict \emph{the arguments to which the function can be applied}.
 In particular, a linear function cannot assume that it is given the
 unique pointer to its argument.  For example, if |f :: s ⊸ t|, then\
 this is fine:
+
+%% \begin{wrapfigure}[2]{l}[0pt]{2.5cm} % lines, placement, overhang, width
+%% \vspace{-6mm}
 \begin{code}
-g :: s -> t
-g x = f x
-\end{code}
-The type of |g| makes no particular guarantees about the way in which it uses |x|;
-in particular, |g| can pass that argument to |f|.
+  g :: s -> t    --   The type of |g| makes no particular guarantees about the way in which 
+  g x = f x      --   it uses |x|; in particular, |g| can pass that argument to |f|.
+\end{code}  
+% \end{wrapfigure}
+\vspace{-5mm}
 
 % A consequence of this definition is that an \emph{unrestricted} value,
 % \ie one which is not guaranteed to be used exactly once, such
@@ -705,16 +708,21 @@ in particular, |g| can pass that argument to |f|.
 
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
+\begin{center}
+\vspace{-1mm}
 \begin{code}
  (,) ::  a ⊸ b ⊸ (a,b)   bigSpace       (,) ::  a -> b -> (a,b)
 \end{code}
+\vspace{-4mm}
+\end{center}
 Using the definition in \fref{sec:consumed}, the former is clearly the right
 choice: if the result of |(,) e1 e2| is consumed exactly once,
 then (by \fref{def:consume}),
 |e1| and |e2| are each consumed exactly once; and hence |(,)| is linear it its
 arguments.
 
-So much for construction; what about pattern matching?  Consider:
+\begin{wrapfigure}[5]{r}[0pt]{5cm} % lines, placement, overhang, width
+\vspace{-6mm}
 \begin{code}
 f1 :: (Int,Int) -> (Int,Int)
 f1 x = case x of (a,b) -> (a+a,0)
@@ -722,6 +730,10 @@ f1 x = case x of (a,b) -> (a+a,0)
 f2 :: (Int,Int) ⊸ (Int,Int)
 f2 x = case x of (a,b) -> (b,a)
 \end{code}
+\end{wrapfigure}
+So much for construction; what about pattern matching?  Consider
+|f1| and |f2| defined here;
+%
 |f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
 a linear type, that does \emph{not} imply that the pattern-bound variables |a| and |b|
 must be consumed exactly once; and indeed they are not.
@@ -736,7 +748,7 @@ then indeed |t| is consumed exactly once.
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special non-linear pair}.
 
-The same idea applies to all existing Haskell data types: we (re)-define
+The same idea applies to all existing Haskell data types: we (re-)define
 their constuctors to use a linear arrow.  For example here is a declaration
 of \HaskeLL{}'s list type:
 \begin{code}
