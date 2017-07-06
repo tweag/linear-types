@@ -2458,8 +2458,8 @@ general, perform tail-call elimination, crucial to the operation
 behaviour of many functional programs, as some resources must be
 released \emph{after} \texttt{f} has returned.
 
-The reason that Rust programs depend so much on borrowing is that the
-default is that of owned types\jp{can't parse}. \HaskeLL{} aims to hit a different
+The reason that Rust programs depend so much on borrowing is that
+unique values are the default. \HaskeLL{} aims to hit a different
 point in the design space where regular non-linear expressions are the
 norm, yet gracefully scaling up investing extra effort to enforce
 linearity invariants is possible.
