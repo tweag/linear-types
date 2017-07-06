@@ -314,7 +314,7 @@
 %  making side-effecting functions pure instead;
  % that otherwise would be considered to have side effects, pure;
   and enforcing protocols in \textsc{i/o}-performing functions. %
-  \ifx\draftmode\undefined \else \vspace{-5mm} \fi
+  \ifx\draftmode\undefined \else \vspace{-4mm} \fi
 \end{abstract}
 
 %% \if@ACM@review
