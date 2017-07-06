@@ -607,9 +607,9 @@ There are several things to note here:
 \item The function |newMArray| allocates a fresh, mutable array of the
   specified size, and passes it to the function supplied as the second
   argument to |newMArray|, as a linear value |ma|.
-
-  That function has the linear type |MArray a ⊸ Unrestricted b|. This
-  has two consequences.  First, it is guaranteed to consume |ma|
+%
+  That function has the type |MArray a ⊸ Unrestricted b|. This
+  has two consequences.  First, the function is guaranteed to consume |ma|
   exactly once. In particular it cannot pass |ma| to several
   functions. Second, it can return a value of any type |Unrestricted
   b| it wishes, but the payload of type |b| must not be linear (by
@@ -642,18 +642,16 @@ its first argument (in this case |write|) must be linear.
 As we shall see in \fref{sec:lin-poly} this is not a new |foldl|, but
 an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
-consumes its input).
+consumes its input).\jp{actually we never show foldl in \fref{sec:lin-poly}}
 
 
 \end{itemize}
 
-
-
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
-the unnecessary sequentialisation that we mentioned earlier.
+the unnecessary sequentialisation that we mentioned earlier.\jp{shall we add split?}
 
-Compared to the status quo (using |ST| and |unsafeFreeze|), the main gain
+Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the main gain
 is in shrinking the trusted code base, because more library code (and it
 can be particularly gnarly code) is statically typechecked.  Clients who
 use only {\em immutable} arrays do not see the inner workings of the library, and will
