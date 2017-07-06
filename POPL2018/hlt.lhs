@@ -305,8 +305,9 @@
   how streamlined it makes it to write programs with linear
   types~---~we implemented our type system in 
   \textsc{ghc}, the leading Haskell compiler, and demonstrate
-  two kinds of applications of linear types: making side-effecting functions
-  pure instead;
+  two kinds of applications of linear types:
+  mutable data with pure interfaces;
+%  making side-effecting functions pure instead;
  % that otherwise would be considered to have side effects, pure;
   and enforcing protocols in \textsc{i/o}-performing functions. %
   \ifx\draftmode\undefined \else \vspace{-5mm} \fi
