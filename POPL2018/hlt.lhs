@@ -727,9 +727,10 @@ and the type of |readLine| indicates this.
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often very useful do
 to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we can use a
-phantom type to encode the state of the resource (similar to a
+phantom type to encode the state of the resource (which we can think
+of as a
 type-level state, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
-types for the File before vs after an operation.
+types for the |File| before vs after an operation.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
@@ -1309,11 +1310,11 @@ The details of the meta-theory of \calc{} are deferred to
 \end{itemize}
 
 To that effect we introduce two semantics: a semantics with mutation
-where type-level states are enforced dynamically and a pure semantics
-that tracks linearity carefully, but where ``mutations'' are
-implemented as copying. Both semantics are big step operational
-semantics with laziness in the style of
-\citet{launchbury_natural_1993}.
+where typestates, such as whether an array is mutable or frozen, are
+enforced dynamically and a pure semantics that tracks linearity
+carefully, but where ``mutations'' are implemented as copying. Both
+semantics are big step operational semantics with laziness in the
+style of \citet{launchbury_natural_1993}.
 
 The semantics are instantiated with the arrays of
 \fref{sec:freezing-arrays}. They can be easily extended to support,
@@ -1326,7 +1327,7 @@ deduce:
   The semantics with in-place mutation is observationally equivalent to the pure semantics.
 \end{theorem}
 \begin{theorem}[Progress]\label{thm:progress}
-  Evaluation does not block. In particular, type-level states need not
+  Evaluation does not block. In particular, typestates need not
   be checked dynamically.
 \end{theorem}
 
@@ -1589,6 +1590,8 @@ trusted code establishing its memory representation.
 What about |pack|?  In this read-only example, linearity was not essential, only
 typestate.  Next we consider an \textsc{API} for writing |Packed
 [Tree]| values bit by bit, where linearity is key.
+\improvement{aspiwack: I don't think the type argument of |Packed| can
+  quite be considered a typestate}
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
@@ -2862,7 +2865,7 @@ probably fix this.}
 In accordance with our stated goals in \fref{sec:introduction}, we are
 interested in two key properties of our system: 1. that we can implement
 a linear \textsc{api} with mutation under the hood, while exposing a
-pure interface, and 2. that type-level states are indeed enforced.
+pure interface, and 2. that typestates are indeed enforced.
 
 We introduce two dynamic semantics for \calc{}: a semantics with
 mutation which models the implementation but blocks on incorrect
@@ -2876,7 +2879,7 @@ We prove the two semantics bisimilar, so that type-safety and progress
 can be transported from the denotational semantics to the ordinary
 semantics with mutation. The bisimilarity itself ensures that the
 mutations are not observable and that the semantics is correct in exposing
-a pure semantics. The progress result proves that type-level states need not be
+a pure semantics. The progress result proves that typestates need not be
 tracked dynamically.
 
 \subsection{Preliminaries}
@@ -3303,7 +3306,7 @@ Equipped with this bisimulation, we are ready to prove the theorems of
   $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the derivation can be
   extended.
 
-  In particular, type-level states need not be checked dynamically.
+  In particular, typestates need not be checked dynamically.
 \end{theorem}
 \addtocounter{theorem}{-1}
 }
