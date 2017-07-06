@@ -2853,12 +2853,6 @@ capabilities for safe, compiler-checked use, within pure code.
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
 
-\improvement{aspiwack: In the rules for primitives, I tend to omit the reduction
-of the strict arguments (shuch as indices of arrays). I should
-probably fix this.}
-\improvement{aspiwack: (related with the strictness thing) In the rule
-  for |write|, I use |l| directly where I should use a variable
-  |x| that points to |l|}
 \improvement{aspiwack: in the |newMArray| rule, I use an illegal form
   of application. It is straightforward to put in in let-form as is
   required by the Launchbury semantics, but it should be done. In the
