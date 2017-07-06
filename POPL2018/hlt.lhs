@@ -1375,7 +1375,7 @@ The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}).
-
+%
 In \HaskeLL{} on the other hand has limited support for subtyping:
 calls like |(g f)| are well typed, and are elaborated to
 $η$-expansions in \calc{}.
