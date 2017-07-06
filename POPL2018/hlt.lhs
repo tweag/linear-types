@@ -966,7 +966,7 @@ It can be given the two following incomparable types:
 %
   Thus, \HaskeLL{} features quantification over multiplicities and
   parameterised arrows (|A → _ q B|).  Using these, |map| can be given
-  the following most general type: |∀p. (a -> _ p b) -> [a] -> _ p
+  the following more general type: |∀p. (a -> _ p b) -> [a] -> _ p
   [b]|.
 %
 Likewise, function composition and |foldl| (\textit{cf.} \Fref{sec:freezing-arrays})
@@ -1423,7 +1423,9 @@ makes the expression typeable, as the reader may check.
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
-\citet{pottier_subtyping_1998}).
+\citet{pottier_subtyping_1998}).\unsure{Stephen Dolan disagrees with
+  this claim. His POPL2016 \emph{MLsub} paper with Alan Microft being
+  the counter argument.}
 %
 \HaskeLL{} on the other hand has limited support for subtyping:
 calls like |(g f)| are well typed, and are elaborated to
@@ -2317,7 +2319,7 @@ of the the argument that they require, and where the multiplicities
 form a semi-ring.
 
 In contrast with \calc, \citeauthor{mcbride_rig_2016} uses a
-multiplicity-annotated type judgement $Γ ⊢_ρ t : A$. Where $ρ$
+multiplicity-annotated type judgement $Γ ⊢_ρ t : A$, where $ρ$
 represents the multiplicity of $t$. So, in
 \citeauthor{mcbride_rig_2016}'s system, when an unrestricted value is
 required, instead of computing $ωΓ$, it is enough to check that
@@ -2547,7 +2549,7 @@ error management where the state of the socket depends on whether
 \begin{code}
   -- In Idris, |bind| uses a type-level function (|or|) to handle errors
   bind ::  (sock :: Var) -> SocketAddress ->
-           ST IO (Either () ()) [sock ::: Sock Unbound :-> (Sock Bound `or` Sock Unbound)]
+           ST IO (Either () ()) [sock ::: Socket Unbound :-> (Socket Bound `or` Socket Unbound)]
   -- In \HaskeLL{}, by contrast, the typestate is part of the return type
   bind :: Socket Unbound ⊸ SocketAddress -> Either (Socket Bound) (Socket Unbound)
 \end{code}
