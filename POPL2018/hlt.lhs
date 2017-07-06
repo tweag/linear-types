@@ -123,6 +123,7 @@
 \ifx\noeditingmarks\undefined    
     \setlength{\marginparwidth}{1.2cm} % Here's a size that matches the new PACMPL format -RRN
     \newcommand{\Red}[1]{{\color{red}{#1}}}
+    \newcommand{\newaudit}[1]{{\color{blue}{#1}}}
     \newcommand{\note}[1]{{\color{blue}{\begin{itemize} \item {#1} \end{itemize}}}}
     \newenvironment{alt}{\color{red}}{}
 
@@ -140,6 +141,7 @@
 
 \else
     \newcommand{\Red}[1]{#1}
+    \newcommand{\newaudit}[1]{}
     \newcommand{\note}[1]{}
     \newenvironment{alt}{}{}
 %    \renewcommand\todo[2]{}
@@ -174,6 +176,7 @@
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
 \usepackage{wrapfig}
+\usepackage{framed}
 
 %% Journal information (used by PACMPL format)
 %% Supplied to authors by publisher for camera-ready submission
@@ -509,7 +512,9 @@ in particular, |g| can pass that argument to |f|.
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
   runST :: (forall a. ST s a) -> a
 \end{code}
+\vspace{-4mm}
 \caption{Signatures for array primitives (current \textsc{ghc})}
+{\vspace{-2.5mm}\hrulefill}
 \label{fig:array-sigs}
 \end{wrapfigure}
 %
@@ -540,6 +545,7 @@ as described in \cite{launchbury_st_1995}.
 
 
 \begin{figure}
+\vspace{-2mm}
 \begin{code}
   type MArray a
   type Array a
@@ -549,10 +555,11 @@ as described in \cite{launchbury_st_1995}.
   read :: MArray a ⊸ Int -> (MArray a, Unrestricted a)
   freeze :: MArray a ⊸ Unrestricted (Array a)
 \end{code}
+%{\vspace{-30mm}\noindent\rule{4cm}{0.4pt}\vspace{30mm}}
 \vspace{-5mm}
 \caption{Type signatures for array primitives (linear version), allowing
   in-place update.}
-\vspace{-5mm}
+{\vspace{-2.5mm}\hrulefill\vspace{-2.5mm}}
 \label{fig:linear-array-sigs}
 \end{figure}
 
@@ -585,26 +592,39 @@ array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
 to return an unrestricted value.  Is that right?}
 There are several things to note here:
 \begin{itemize}
+
 \item We still disinguish the type of mutable arrays |MArray| from that of
 immutable arrays |Array|.
+
 \item The function |newMArray| allocates a fresh, mutable array of the specified
 size, and passes it to the function supplied as the second argument to |newMArray|.
+
 \item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
-lollipop arrow says that the function guarantees to consume the mutable array
+lollipop arrow says it guarantees to consume the array
 exactly once; it will neither discard it nor use it twice.
 %We will define ``consume'' more precisely in \fref{sec:consumed}.
-\item Since |ma| is a linear array, we cannot pass it directly to multilpe calls
+
+\item Since |ma| is a linear array, we cannot pass it directly to multiple calls
   to |write|.  Instead, each call to |write| returns a (logically) new array, so
   that the array is single-threaded, by |foldl|, through the sequence of writes.
+  
 \item The call to |freeze| consumes the mutable array and produces an immutable one.
 Because it consumes its input, there is no danger of the same mutable array being
 subsequently written to, eliminating the problem with |unsafeFreeze|.
+
 \item The result of |freeze| is an immutable array that can be freely shared.
 But in our system, \emph{linearity is a property of function arrows,
 not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
 type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (\fref{sec:data-types}).
+
+\item \newaudit{Only {\em one} pointer exclusively reaches an |MArray|; this is not a primitive
+  notion, but an emergent property of a carefully designed \textsc{api}.
+  In particular, |newMArray| provides {\em only} linear |MArray| array bindings,
+  % forces the computation to use the |MArray| and
+  which {\em cannot} escape inside |Unrestricted| results.}
+
 \item Above, |foldl| has the type 
 |(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|,
 which expresses that it consumes its second argument linearly
@@ -614,6 +634,7 @@ As we shall see in \fref{sec:lin-poly} this is not a new |foldl|, but
 an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
+
 \end{itemize}
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
@@ -622,17 +643,20 @@ the unnecessary sequentialisation that we mentioned earlier.
 Compared to the status quo (using |ST| and |unsafeFreeze|), the main gain
 is in shrinking the trusted code base, because more library code (and it
 can be particularly gnarly code) is statically typechecked.  Clients who
-use only immutable arrays do not see the inner workings of the library, and will
+use only {\em immutable} arrays do not see the inner workings of the library, and will
 be unaffected.  Our second use-case has a much more direct impact on library clients.
 %
 %% \rn{I have mixed feelings about this.  What about the client of the mutable
 %%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
 %%   freezing like ``create''.}
 
+\vspace{-1mm}
 \subsection{I/O protocols} \label{sec:io-protocols}
-
-\begin{figure}
+\vspace{-1mm}
+\begin{figure}[h]
+  \vspace{-4mm}
 \begin{minipage}{0.40 \textwidth} 
+%  \begin{framed}   
 \begin{code}
   type File
   openFile :: FilePath -> IO File
@@ -641,6 +665,7 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \end{code}
 \vspace{-7mm}
 \caption{Types for traditional file IO} \label{fig:io-traditional}
+%  \end{framed}
 \end{minipage}%
 \begin{minipage}{0.60 \textwidth}
 \begin{code}
@@ -653,6 +678,7 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \caption{Types for linear file IO} \label{fig:io-linear}
 \end{minipage}
 \vspace{-2mm}
+\hrulefill
 \end{figure}
 
 \begin{wrapfigure}[7]{r}[0pt]{6.0cm} % lines, placement, overhang, width
