@@ -1041,7 +1041,7 @@ way we make precise much of the informal discussion above.
   \begin{minipage}{0.4 \textwidth} \centering  
   \figuresection{Multiplicities}
   \begin{align*}
-    π,μ &::= 1 ~||~ ω ~||~ π ~||~ π+μ ~||~ π·μ
+    π,μ &::= 1 ~||~ ω ~||~ p ~||~ π+μ ~||~ π·μ
   \end{align*}
   \end{minipage}%
   \begin{minipage}{0.4 \textwidth} \centering
@@ -1058,7 +1058,7 @@ way we make precise much of the informal discussion above.
 
   \figuresection{Types}
   \begin{align*}
-  A,B ::= A →_π B \quad || \quad  ∀π. A \quad || \quad D~p_1~…~p_n
+  A,B ::= A →_π B \quad || \quad  ∀p. A \quad || \quad D~p_1~…~p_n
   \end{align*}
 
   \figuresection{Terms}
