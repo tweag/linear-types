@@ -1401,8 +1401,8 @@ lead us to a better assessment of the costs/benefit trade-off here.
 
 We implement \HaskeLL{} as a branch of the leading Haskell compiler,
 \textsc{ghc}, version 8.2.  This branch only modifies type inference and
-type-checking in the compiler, neither the intermediate language
-(Core~\cite{sulzmann_fc_2007}) nor the run-time system are affected.
+type-checking in the compiler, neither the intermediate language~\cite{sulzmann_fc_2007}
+nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies of this paper.
