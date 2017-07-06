@@ -35,7 +35,8 @@
 %format π = "\pi"
 %format ρ = "\rho"
 %format ⅋ = "\parr"
-%format DataPacked = "\Conid{Data.Packed}"
+% :-> = ":\!↦"
+% format DataPacked = "\Conid{Data.Packed}"
 %subst keyword a = "\mathsf{" a "}"
 %format mediumSpace = "\hspace{0.6cm}"
 %format bigSpace = "\hspace{2cm}"
@@ -893,7 +894,7 @@ foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
 (∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p · q) c
 (f ∘ g) x = f (g x)
 \end{code}
-The type of |(·)| says that two functions that accept arguments of arbitrary
+The type of |(∘)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
 function accepting arguments of multiplicity |p·q| (\ie the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
