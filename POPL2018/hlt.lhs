@@ -393,7 +393,7 @@ are these:
 \item We formalise our system in a small, statically-typed core
       calculus that exhibits all these features (\fref{sec:calculus}).
       It enjoys the usual properties of progress and preservation.
-\item We have implemented a prototype of the system in as a modest extension to \textsc{ghc}
+\item We have implemented a prototype of the system as a modest extension to \textsc{ghc}
       (\fref{sec:impl}), which substantiates our claim of non-invasiveness.
       We use this prototype to implement case-study applications (\fref{sec:applications}).
       Our prototype performs linearity \emph{inference}, but a systematic
@@ -751,7 +751,7 @@ firstLine fp =
 \end{code}
 %\end{wrapfigure}
 %
-Notice several things
+Notice several things:
 \begin{itemize}
 
 \item Operations on files remain monadic, unlike the case with mutable arrays.
@@ -762,7 +762,7 @@ to sequence operations on files individually, as it was for arrays.
 returned value is linear.  We add an extra {\em multiplicity} type parameter |p| to the monad |IOL|,
 where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respectively.
 %
-Now |openFile| returns |IO 1 (File ByteString)|,
+Now |openFile| returns |IOL 1 (File ByteString)|,
 the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 
@@ -1456,14 +1456,15 @@ lead us to a better assessment of the costs/benefit trade-off here.
 We implement \HaskeLL{} on top of the leading Haskell compiler,
 \textsc{ghc}, version 8.2\footnote{github URL suppressed for anonymous review}.
 We modify type inference and
-type-checking in the compiler, neither the intermediate language~\cite{sulzmann_fc_2007}
+type-checking in the compiler. Neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
-prototype is sufficient for the examples and case studies of this paper.
+prototype is sufficient for the examples and case studies presented in
+in this paper.
 %
 Our \HaskeLL{} implementation is compatible with most, but not all, of
-\textsc{ghc}'s extension (one notable incompatible extension is
+\textsc{ghc}'s extensions (one notable incompatible extension is
 pattern-synonyms, the details of which have yet to be worked out).
 
 In order to implement the linear arrow, we followed the design of
@@ -1483,10 +1484,9 @@ in a branch).
 Implementing \HaskeLL{}
 %% \manuel{which branch? link? JP: Linguistically ``this branch'' refers to the
 %%   case branch of the previous parag.}
-affects 1152 lines of \textsc{ghc} (for
-comparison the parts of the compiler that were affected by \HaskeLL{}
-total about 100000 lines of code), including 444 net extra lines. A new
-file responsible for multiplicity operations as well the files
+affects 1,152 lines of \textsc{ghc} (in subsystems of the compiler
+that together amount to more than 100k lines of code), including 444 net extra lines. A new
+file responsible for multiplicity operations as well as the files
 responsible for the environment manipulation and type inference of
 patterns account for almost half of the affected lines. The rest spans
 over a 100 files, most of which have 2 or 3 lines modified to account
@@ -2710,7 +2710,7 @@ noticed other potential applications of linearity in a variety of
 other industrial projects.
 
 \begin{description}
-\item[Effect duplications]
+\item[Spurious effect duplication]
   This is a problem that shows up, for instance, in streaming
   libraries: a stream perform effects so, as data, has suspended
   effects. Stream manipulations, such as |fmap :: (a->b) -> Stream a
@@ -2728,32 +2728,34 @@ other industrial projects.
   %% data. Another example is composing file-descriptors with
   %% \texttt{epoll}\improvement{what's that? citation?}.
 
-\item[Inter-language memory management]
-  Complex projects with large teams invariably involve a mix of
-  programming languages. Reusing legacy code is often much cheaper
-  than reimplementing it. A key to successful interoperation between
-  languages is performance. If all code lives in the same address
-  space, then data need not be copied as it flows from function to
-  function implemented in multiple programming languages.
+\item[Programming foreign heaps] Complex projects with large teams
+  invariably involve a mix of programming languages. Reusing legacy
+  code is often much cheaper than reimplementing it. A key to
+  successful interoperation between languages is performance. If all
+  code lives in the same address space, then data need not be copied
+  as it flows from function to function implemented in multiple
+  programming languages. Trouble is, language A needs to tell language
+  B what objects in language A's heap still have live references in
+  the call stack of language B to avoid too eager garbage collection.
 
-  Such interoperation often implies cooperation between two garbage collectors, which
-  can be achieved by pinning some object, such as with Haskell's
-  |StablePtr|. Such pinning is expensive, so many languages offer
-  cheaper cooperation primitives with restricted life-time and usage,
-  such as \emph{local references} in Java's \textsc{jni}. Such local
-  references must conform to a particular usage pattern which can be
-  enforced with linear types. Global references like |StablePtr| can,
-  on the other hand, be used unrestrictedly.
-%  \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
+  For instance, users of \texttt{inline-java} call the \textsc{JVM}
+  from Haskell via the \textsc{JNI}. The \textsc{JVM} implicitly
+  creates so-called \emph{local references} any time we request a Java
+  object from the \textsc{JVM}. The references count as \textsc{GC}
+  roots that prevent eager garbage collection. For performance, local
+  references have a restricted scope: they are purely thread-local and
+  never survive the call frame in which they were created. Both
+  restrictions to their use can be enforced with linear types.
 
-\item[Destination-passing style]
-  \Fref{sec:cursors} is an example of \textsc{api} requiring
-  destination-passing style. Destination-passing style often appears
+\item[Remote direct memory access]
+  \Fref{sec:cursors} is an example of an \textsc{api} requiring
+  destination-passing style. This style often appears
   in performance-sensitive contexts. One notable example from our
-  industrial experience is \textsc{rdma} (Remote Direct Memory Access)
-  which allows computers on high-end clusters to copy data in
-  one-another's memory directly, bypassing the kernel and even the
-  \textsc{cpu}, and, in the process, avoiding many copies.
+  industrial experience is \textsc{rdma} (Remote Direct Memory Access),
+  which enables machines in high-performance clusters to copy data
+  from the address space in one process to that of a remote process
+  directly, bypassing the kernel and even the
+  \textsc{cpu}, thereby avoiding many copies in the process.
 
   In \textsc{rdma} one computer allocates a buffer |b|, and other
   computers write to |b|. When all write operations are completed, we treat |b|
