@@ -3257,26 +3257,32 @@ is the relation between the states of the ordinary evaluation and
 those of the denotational evaluation which witnesses the bisimulation.
 
 \begin{definition}[Denotation assignment]
-  \begin{alt}
-    We say that there is a denotation assignment $γ$ from an ordinary
-    state $Γ:e$ to a well-typed state ${Ξ ⊢ Γ' || e' :_ρ A , Σ}$ if
-    ...
-  \end{alt}
   A well-typed state is said to be a denotation assignment for an ordinary
   state, written $\ta{Γ:e}{Ξ ⊢ Γ' || e' :_ρ A , Σ}$, if
-  $e[Γ_1]=e' ∧ Γ' \leqslant Γ_ω[Γ_1]$.\improvement{explain the
-    restrictions of $Γ$}\jp{what is $Γ_ω$?}
-
+  $e[Γ_1]=e' ∧ Γ' = Γ''[Γ_1] ∧ Γ'' \leqslant Γ_ω$. Where
+  \begin{itemize}
+  \item $Γ_ω$ is the restriction of $Γ$ (a context of the ordinary
+    semantics) to the variable bindings $x :_ω A = u$
+  \item $Γ_1$ is the restriction of $Γ$ to the array bindings $l :_1 A
+    = [a_1, …, a_n]$, seen as a substitution.
+  \end{itemize}
   That is, $Γ'$ is allowed to strengthen some $ω$ bindings to be
-  linear, and to drop unnecessary $ω$ bindings. Array pointers are
-  substituted with their value. \jp{Next sentence is not clear at all. Break it?}With the additional
-  requirement\improvement{Make precise}{} that |MArray| pointers are
-  substituted \emph{exactly once} in $(Γ',e)$, and, when susbtituting
-  in $Γ'$, only inside the body of variables with multiplicity $1$,
-  and, when substituting the body of a $let$-binding, either in $Γ'$
-  or in $e$, the $let$ binding must have multiplicity $1$. If
-  there are |MArray| pointers in $Γ$, we additionally require that $ρ=1$.
-  \improvement{Does this need to be made more precise?}
+  linear, and to drop unnecessary bindings. Array pointers are
+  substituted with their value (since we have array pointers in the
+  ordinary semantics but only array values in the denotational
+  semantics). The substitution is subject to
+
+  The substitution must abide by the following restrictions in order
+  to preserve the invariant that |MArray| pointers are not shared:
+  \begin{itemize}
+  \item An |MArray| pointer in $Γ_1$ is substituted either exactly
+    in one place in $Γ''$ or exactly in one place in $e$.
+  \item If an |MArray| pointer is substituted in $Γ''$ then it is
+    substituded in a linear binding $x :_1 A = u$
+  \item If an |MArray| pointer is substituted in $e$ the $ρ=1$
+  \item If an |MArray| pointer is substituted in the body $u$ as of
+    $let_p x = u in v$ (sub)expression, the $p=1$
+  \end{itemize}
 \end{definition}
 
 \improvement{A sentence or two on each of the lemmas and theorems below}
