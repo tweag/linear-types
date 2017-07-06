@@ -1587,13 +1587,13 @@ Indeed, we can even use |caseTree| to implement |unpack|, turning it into safe
 ``client code'' -- sitting outside the module that defines |Tree| and the
 trusted code establishing its memory representation.
 
-In this read-only example, linearity was not essential, only
-typestate.  Next we consider an \textsc{API} for writing |Packed
+In this read-only example, linearity was not essential, only phantom types.
+Next we consider an \textsc{API} for writing |Packed
 [Tree]| values bit by bit, where linearity is key.
 %
 In particular, can we also implement |pack| using a public interface?
-\improvement{aspiwack: I don't think the type argument of |Packed| can
-  quite be considered a typestate}
+%% \improvement{aspiwack: I don't think the type argument of |Packed| can
+%%   quite be considered a typestate}
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
