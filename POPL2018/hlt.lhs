@@ -1368,13 +1368,17 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.
 However, |g| might well be multiplicity-polymorphic, with type
 |forall p. (Int -> _ p Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
-Alternatively, eta-expansion to |g (\x. f x)|
+Alternatively, $η$-expansion to |g (\x. f x)|
 makes the expression typeable, as the reader may check.
 
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}).
+
+In \HaskeLL{} on the other hand has limited support for subtyping:
+calls like |(g f)| are well typed, and are elaborated to
+$η$-expansions in \calc{}.
 
 \paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
 %% \begin{code}
