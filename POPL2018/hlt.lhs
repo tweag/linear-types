@@ -1511,7 +1511,8 @@ non-linear code, I/O, etc., and observe how linear code interacts with existing
 libraries and the optimiser of a sophisticated compiler.
 
 Our first method for evaluating the implementation is to simply compile a large
-existing code base together with the following changes: (1) all data constructors are
+existing code base together with the following changes: (1) all
+(non-\textsc{gadt}) data constructors are
 linear by default, as implied by the new type system; and (2) we update standard
 list functions to have linear types (|++|, |concat|, |uncons|).
 %
