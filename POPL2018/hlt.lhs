@@ -440,10 +440,10 @@ Our definition is based on the type of the value concerned:
 \begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
-\item To consume a function exactly once, call it, and consume its result exactly once.
-\item To consume a pair exactly once, evaluate it and consume each component exactly once.
-\item In general, to consume a value of an algebraic data type exactly once, evaluate
-  it and consume all its linear components exactly once
+\item To consume a function exactly once, apply it to one argument, and consume its result exactly once.
+\item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
+\item In general, to consume a value of an algebraic data type exactly once, pattter-match on it,
+  and consume all its linear components exactly once
   (\fref{sec:non-linear-constructors})\footnote{You may deduce that pairs have linear components,
     and indeed they do, as we discuss in \fref{sec:non-linear-constructors}.}.
 \end{itemize}
