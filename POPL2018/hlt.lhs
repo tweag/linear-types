@@ -162,7 +162,7 @@
 % \newtheorem{lemma}{Lemma}
 \newtheorem{remark}{Remark}
 
-\newcommand\HaskeLL{Hask-\textsc{ll}}
+\newcommand\HaskeLL{Hask-\textsc{ll}\xspace{}}
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
 
@@ -417,9 +417,9 @@ a socket should be opened, then bound, and only then used for reading; a malloc'
 block should be freed, and should not be used after that.
 Here, linearity does not affect efficiency, but rather eliminates many bugs.
 \end{itemize}
-We introduce our extension to Haskell, which we call \HaskeLL, by focusing on these
-two use-cases.   In doing so, we introduce a number of ideas that we flesh out in
-subsequent subsections.
+We introduce our extension to Haskell, which we call \HaskeLL{} (Haskell with
+Linear Logic), by focusing on these two use-cases.  In doing so, we introduce a
+number of ideas that we flesh out in subsequent subsections.
 
 \subsection{Operational intuitions}
 \label{sec:consumed}
