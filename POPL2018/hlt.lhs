@@ -2012,83 +2012,6 @@ is the argument to |Socket|, which represents the current state of the
 socket and is used to limit the functions which apply to a socket
 at a given time.
 
-\paragraph{Idris's dependent index monad}
-%
-\jp{What about calling this ``linearity by monad'' and move it to the related work section? (It seems excessive to go into alternative case studiies.)
-   Essentially this is a variant of regions.
-The idea: all linear objects go into the memory of a monad. The monad is indexed by the types of those objects. The bad: everything is in a monad again. Even for natually monadic things (sockets), the error messages something to stomach.  }
-Idris proposes an alternative way to make sockets safer: instead of
-using liear types, use an indexed monad to enforce linearity. Idris
-introduces a generic way to add typestate on top of a monad, the
-|STrans| indexed monad transformer\footnote{See \eg
-  \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
-|STrans| you make sockets part of the monad's state. So we could
-give the following type to bind:
-\begin{code}
-  bind :: SocketAddress -> STrans IO Unbound Bound
-\end{code}
-But that would not do: we may need several sockets, or other
-resources. So |STrans| takes a list of resource states addressed by a
-label. The type of |bind| must then express that the socket belongs to
-the initial state, and return a new state where the state of the
-socket has been changed. This is quite tedious to express, so Idris
-makes good use of its dependent types and defines a new transformer
-|ST| which takes common actions and transforms them into |STrans|
-conditions. So the type of |bind| is:
-\begin{code}
-  bind :: (sock :: Var) -> SocketAddress -> ST IO () [sock ::: Socket Unbound :-> Socket Bound]
-\end{code}
-
-Could we do the same in Haskell today without dependent types? It is probably
-achievable, but painful (the same problem encountered at the end of
-\fref{sec:st-cursors}).
-%
-Haskell's type-level programming capabilities are
-expressive enough to reason on type-level sets. And there is a notion
-of labels that we could use, as singleton types, instead of the |Var|
-type. This is not obvious though, and the error message would be
-uninformative.
-%
-\improvement{aspiwack: I assume it would be quite a bit of a hassle to
-use such |ST| functions in higher order functions, but I'm not sure
-how to phrase that as of today}
-
-\paragraph{Catching errors}
-%
-If we were to try and implement typestate with indexed monad we
-would run into a further complication: exception management. Indeed, |bind|
-may fail (typically because we are trying to bind a port which is
-attached to another socket). So far we have simply assumed that
-failures of socket functions to apply result in catastrophic failure
-which crashes the program (or at least the section of the
-program). However, it is often preferable to handle errors in a
-fine-grained fashion. For this purpose the type of Idris's |bind|
-above, is still not the right one, instead Idris defines:
-\begin{code}
-  bind ::  (sock :: Var) -> SocketAddress ->
-           ST IO (Either () ()) [sock ::: Sock Unbound :-> (Sock Bound `or` Sock Unbound)]
-\end{code}
-Indeed, the return-state of |ST| is a function of the return value of
-|ST|, this uses dependent type in an essential way. This is not
-something Haskell is equipped to handle.\improvement{aspiwack: it is not
-  entirely impossible though, using a variant of |Either| which is a
-  \textsc{gadt} and matching on the phantom type using a type family
-  |or|. It's a tad rigid but feasible. It would quite a large pile of
-  hacks though, I understand why no one does that}
-
-With the linear \textsc{api}, on the other hand, we define:
-\begin{code}
-  bind :: Socket Unbound ⊸ SocketAddress -> Either (Socket Bound) (Socket Unbound)
-\end{code}
-As the state is carried locally by the socket variable, it will be
-decided by a pattern matching without advanced dependent pattern matching.
-
-\improvement{aspiwack: So what are the conclusion? the |ST| thing has
-  one advantage: it doesn't require linear types. The linear-type
-  version seem to be a bit more flexible, and way easier to implement in
-  \HaskeLL{}. What else can we be saying}
-\improvement{aspiwack: actually implement the error-catching version
-  of the \textsc{api}}
 
 \paragraph{Implementing the linear socket \textsc{api}}
 %
@@ -2503,11 +2426,11 @@ extend \HaskeLL{} with borrowing.
 %   about the ``GC heap''?}
 
 
-\subsection{Region-types}
+\subsection{Linearity via monads}
 
 \citet{launchbury_st_1995} taught us
 a conceptually simple approach to lifetimes: the |ST| monad. It has
-a phantom type parameter |s| that is instantiated once at the
+a phantom type parameter |s| (the \emph{region}) that is instantiated once at the
 beginning of the computation by a |runST| function of type:
 \begin{code}
   runST :: (forall s. ST s a) -> a
@@ -2517,75 +2440,112 @@ as mutable cell references, cannot escape the dynamic scope of the call
 to |runST| because they are themselves tagged with the same phantom
 type parameter.
 
+\paragraph{Region-types}
+
+With region-types such as |ST|, we cannot express typestates, but this
+is sufficient to offer a safe \textsc{api} for freezing array or
+ensuring that files are eventually closed.
 This simplicity (one only needs rank-2 polymorphism)
-comes at the cost of strong limitations in practice:
-\begin{itemize}
-% arnaud: The stack story is true, but it is not an easy case to make,
-% so I've taken it out for now. General idea is: in |ST| you can use
-% values as long as their regions lives, so resources can't be closed
-% before |runST| has completed. Whereas with linear types, we can
-% "disappear" a value, at which time we can take the opportunity to
-% close it. It is hard, however to pinpoint a case where it is
-% critical not to use stack-allocation.
+comes at a cost: we've already mentionned in
+\fref{sec:freezing-arrays} that it forces operations to be more
+sequentialised than need be, but more importantly, it does not
+support \emph{prima facie} the interaction of nested regions.
 
-% jp: In many pipeline applications one has conceptually n
-% buffers used sequentially, but only two of them are live
-% simultaneously.
+\citet{kiselyov_regions_2008} show that it is possible to promote
+resources in parent regions to resources in a subregion. But this is
+an explicit and monadic operation, forcing an unnatural imperative
+style of programming where order of evaluation is explicit.
+The HaskellR project~\cite{boespflug_project_2014} uses monadic
+regions in the style of \citeauthor{kiselyov_regions_2008} to safely
+synchronise values shared between two different garbage collectors for
+two different languages. \Citeauthor{boespflug_project_2014} report
+that custom monads make writing code at an interactive prompt
+difficult, compromises code reuse, forces otherwise pure functions to
+be written monadically and rules out useful syntactic facilities like
+view patterns.
 
-\item |ST|-like regions confine to a stack-like allocation discipline,
-  because freeing resources coincide with the static scope of |runST|.
-  Thus lifetimes cannot intersect arbitrarily, limiting the applicability of
-  this technique. This can be a problem for long-lived
-  programs as well as pipeline applications where one
-  has |n| buffers conceptually, but only a sliding window of two of them are
-  live simultaneously.
+In contrast, with linear types, values in two regions hence can safely
+be mixed: elements can be moved from one data structure (or heap) to
+another, linearly, with responsibility for deallocation transferred
+along.
 
-  In our system, even though the lifetimes of linear variables are
-  checked statically, we can make use of continuation-passing style
-  (or Monads) to implement dynamic lifetimes for objects in the linear
-  heap.  Consider for example the primitives |alloc : (A ⊸ r) ⊸ r| and 
-|free  : A ⊸ r ⊸ r|.
-We can write code such as the following, where the lifetimes of |x|, |y|
-and |z| overlap in a non-stack fashion:
-\begin{code}
-alloc   $ \x ->                 {- |x| live -}
-alloc   $ \y ->                 {- |x| and |y| live -}
-free x  $
-alloc   $ \z ->                 {- |y| and |z| live -}
-free y  $                       {- |z| live -}
-free z
-\end{code}
-% $ hint to emacs (parser) that we're not in math mode.
-\info{{Note : $(a →_p b) ⊸ a →_p b$}}{}
 
-%% \item |ST| actions cannot be interleaved with |IO| actions. So in our
-%%   mutable array examples, for instance, it is not possible to provide
-%%   a safe abstraction around |unsafeFreeze :: MArray s a -> ST s (Array
-%%   a)| which will also make it possible to use |IO| actions to fill in
-%%   the array.\jp{I do not understand this item.}
-%% \rn{Neither do I.  Can't the PrimMonad stuff do that?}
-
-\item \citet{kiselyov_regions_2008} show that it is possible to
-  promote resources in parent regions to resources in a subregion. But
-  this is an explicit and monadic operation, forcing an unnatural
-  imperative style of programming where order of evaluation is
-  explicit. Moreover, computations cannot live directly in |IO|, but
-  instead in a wrapper monad. The HaskellR
-  project~\cite{boespflug_project_2014} uses monadic regions in the
-  style of \citeauthor{kiselyov_regions_2008} to safely synchronise
-  values shared between two different garbage collectors for two
-  different languages. \Citeauthor{boespflug_project_2014} report that custom monads make
-  writing code at an interactive prompt difficult, compromises code
-  reuse, forces otherwise pure functions to be written monadically and
-  rules out useful syntactic facilities like view patterns.
+\paragraph{Idris's dependent index monad}
 %
-  In contrast, with linear types, values in two regions
-  hence can safely be mixed:
-  elements can be moved from one data structure (or heap) to another, linearly,
-  with responsibility for deallocation transferred along.
-\end{itemize}
+Essentially this is a variant of regions.
+The idea: all linear objects go into the memory of a monad. The monad is indexed by the types of those objects. The bad: everything is in a monad again. Even for natually monadic things (sockets), the error messages something to stomach.  }
+Idris proposes an alternative way to make sockets safer: instead of
+using liear types, use an indexed monad to enforce linearity. Idris
+introduces a generic way to add typestate on top of a monad, the
+|STrans| indexed monad transformer\footnote{See \eg
+  \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
+|STrans| you make sockets part of the monad's state. So we could
+give the following type to bind:
+\begin{code}
+  bind :: SocketAddress -> STrans IO Unbound Bound
+\end{code}
+But that would not do: we may need several sockets, or other
+resources. So |STrans| takes a list of resource states addressed by a
+label. The type of |bind| must then express that the socket belongs to
+the initial state, and return a new state where the state of the
+socket has been changed. This is quite tedious to express, so Idris
+makes good use of its dependent types and defines a new transformer
+|ST| which takes common actions and transforms them into |STrans|
+conditions. So the type of |bind| is:
+\begin{code}
+  bind :: (sock :: Var) -> SocketAddress -> ST IO () [sock ::: Socket Unbound :-> Socket Bound]
+\end{code}
 
+Could we do the same in Haskell today without dependent types? It is probably
+achievable, but painful (the same problem encountered at the end of
+\fref{sec:st-cursors}).
+%
+Haskell's type-level programming capabilities are
+expressive enough to reason on type-level sets. And there is a notion
+of labels that we could use, as singleton types, instead of the |Var|
+type. This is not obvious though, and the error message would be
+uninformative.
+%
+\improvement{aspiwack: I assume it would be quite a bit of a hassle to
+use such |ST| functions in higher order functions, but I'm not sure
+how to phrase that as of today}
 
+\paragraph{Catching errors}
+%
+If we were to try and implement typestate with indexed monad we
+would run into a further complication: exception management. Indeed, |bind|
+may fail (typically because we are trying to bind a port which is
+attached to another socket). So far we have simply assumed that
+failures of socket functions to apply result in catastrophic failure
+which crashes the program (or at least the section of the
+program). However, it is often preferable to handle errors in a
+fine-grained fashion. For this purpose the type of Idris's |bind|
+above, is still not the right one, instead Idris defines:
+\begin{code}
+  bind ::  (sock :: Var) -> SocketAddress ->
+           ST IO (Either () ()) [sock ::: Sock Unbound :-> (Sock Bound `or` Sock Unbound)]
+\end{code}
+Indeed, the return-state of |ST| is a function of the return value of
+|ST|, this uses dependent type in an essential way. This is not
+something Haskell is equipped to handle.\improvement{aspiwack: it is not
+  entirely impossible though, using a variant of |Either| which is a
+  \textsc{gadt} and matching on the phantom type using a type family
+  |or|. It's a tad rigid but feasible. It would quite a large pile of
+  hacks though, I understand why no one does that}
+
+With the linear \textsc{api}, on the other hand, we define:
+\begin{code}
+  bind :: Socket Unbound ⊸ SocketAddress -> Either (Socket Bound) (Socket Unbound)
+\end{code}
+As the state is carried locally by the socket variable, it will be
+decided by a pattern matching without advanced dependent pattern matching.
+
+\improvement{aspiwack: So what are the conclusion? the |ST| thing has
+  one advantage: it doesn't require linear types. The linear-type
+  version seem to be a bit more flexible, and way easier to implement in
+  \HaskeLL{}. What else can we be saying}
+\improvement{aspiwack: actually implement the error-catching version
+  of the \textsc{api}}
 
 
 % \subsection{Operational aspects of linear languages}
