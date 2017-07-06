@@ -142,7 +142,7 @@
 
 \else
     \newcommand{\Red}[1]{#1}
-    \newcommand{\newaudit}[1]{}
+    \newcommand{\newaudit}[1]{#1}
     \newcommand{\note}[1]{}
     \newenvironment{alt}{}{}
 %    \renewcommand\todo[2]{}
