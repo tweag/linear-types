@@ -1216,10 +1216,7 @@ These operations depend, in turn, on addition and multiplication of multipliciti
 The syntax of multiplicities is given in \fref{fig:syntax}.
 We need the concrete multiplicities $1$ and $ω$ and, to support polymorphism,
 multiplicity variables (ranged over by the metasyntactic
-variables \(p\) and \(q\)).
-Because we
-need to multiply and add multiplicities,
-we also need formal sums and products of multiplicities.
+variables \(p\) and \(q\)) as well as formal sums and products of multiplicities.
 %
 Multiplicity expressions are quotiented by the following equivalence
 relation:
