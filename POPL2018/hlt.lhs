@@ -2809,7 +2809,8 @@ capabilities for safe, compiler-checked use, within pure code.
   %% extraction tools.
   This work has received funding from the European Commission
   through the SAGE project (grant agreement no. 671500).
-  We thank Peter Thiemann for his valuable feedback on a draft of this paper.
+  We thank Manuel Chakravarty and Peter Thiemann for their valuable
+  feedback on early versions of this paper.
 \end{acks}
 
 %% Bibliography
