@@ -646,14 +646,14 @@ its first argument (in this case |write|) must be linear.
 As we shall see in \fref{sec:lin-poly} this is not a new |foldl|, but
 an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
-consumes its input).\jp{actually we never show foldl in \fref{sec:lin-poly}}
+consumes its input).
 
 
 \end{itemize}
 
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
-the unnecessary sequentialisation that we mentioned earlier.\jp{shall we add split?}
+the unnecessary sequentialisation that we mentioned earlier.
 
 Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the main gain
 is in shrinking the trusted code base, because more library code (and it
