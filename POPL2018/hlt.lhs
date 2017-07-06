@@ -177,7 +177,6 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
-\usepackage{wrapfig}
 % \usepackage{framed}
 
 %% Journal information (used by PACMPL format)
