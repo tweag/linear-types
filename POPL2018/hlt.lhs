@@ -1525,7 +1525,6 @@ caseTree ::  Packed (Tree:r) -> _ p
 %
 The interface on the right gives an example of type-safe, {\em read-only}
 access to serialised data for a particular datatype.
-\improvement{aspiwack: the type of |caseTree| in the figure is almost certainly not the right one}
 %
 A |Packed| value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type-safe} serialisation
