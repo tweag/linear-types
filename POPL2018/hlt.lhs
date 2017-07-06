@@ -665,36 +665,9 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 %%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
 %%   freezing like ``create''.}
 
-\vspace{-1mm}
+%\vspace{-1mm}
 \subsection{I/O protocols} \label{sec:io-protocols}
-\vspace{-1mm}
-\begin{figure}[h]
-  \vspace{-4mm}
-\begin{minipage}{0.40 \textwidth} 
-%  \begin{framed}   
-\begin{code}
-  type File
-  openFile :: FilePath -> IO File
-  readLine :: File -> IO ByteString
-  closeFile :: File -> IO ()
-\end{code}
-\vspace{-7mm}
-\caption{Types for traditional file IO} \label{fig:io-traditional}
-%  \end{framed}
-\end{minipage}%
-\begin{minipage}{0.60 \textwidth}
-\begin{code}
-  type File
-  openFile :: FilePath -> IOL 1 File
-  readLine :: File a ⊸ IOL 1 (File, Unrestricted ByteString)
-  closeFile :: File ⊸ IOL ω ()
-\end{code}
-\vspace{-7mm}
-\caption{Types for linear file IO} \label{fig:io-linear}
-\end{minipage}
-\vspace{-2mm}
-\hrulefill
-\end{figure}
+%\vspace{-1mm}
 
 \begin{wrapfigure}[7]{r}[0pt]{6.0cm} % lines, placement, overhang, width
   \vspace{-6mm}
@@ -745,6 +718,35 @@ types for an open or closed |File|. We show applications in \fref{sec:cursors} a
 \subsection{Linear data types}
 \label{sec:linear-constructors}
 \label{sec:data-types}
+
+\begin{figure}
+  \vspace{-4mm}
+\begin{minipage}{0.40 \textwidth} 
+%  \begin{framed}   
+\begin{code}
+  type File
+  openFile :: FilePath -> IO File
+  readLine :: File -> IO ByteString
+  closeFile :: File -> IO ()
+\end{code}
+\vspace{-7mm}
+\caption{Types for traditional file IO} \label{fig:io-traditional}
+%  \end{framed}
+\end{minipage}%
+\begin{minipage}{0.60 \textwidth}
+\begin{code}
+  type File
+  openFile :: FilePath -> IOL 1 File
+  readLine :: File a ⊸ IOL 1 (File, Unrestricted ByteString)
+  closeFile :: File ⊸ IOL ω ()
+\end{code}
+\vspace{-7mm}
+\caption{Types for linear file IO} \label{fig:io-linear}
+\end{minipage}
+\vspace{-2mm}
+\hrulefill
+\end{figure}
+
 
 With the above intutions in mind, what type should we assign to a data
 constructor such as the pairing constructor |(,)|?  Here are two possibilities:
