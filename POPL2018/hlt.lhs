@@ -1387,8 +1387,7 @@ not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $p=1$ and $p=ω$.
 But if we had a richer domain of multiplicities, including
-$0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
-in a dependently typed system}, we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
+$0$ (see \fref{sec:extending-multiplicities}), we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
