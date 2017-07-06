@@ -1494,7 +1494,7 @@ data has motivated small steps in this direction:
 libraries like ``Cap'N Proto''~\footnote{{\url{https://capnproto.org/}}} enable unifying
 in-memory and on-the-wire formats for simple product types (protobufs).
 
-Here is an unusual case where {advanced types can {\em yield performance}} by
+Here is an unusual case where {advanced types can yield {\em performance}} by
 making it practical to code in a previously infeasible style: accessing
 serialised data at a fine grain without copying it.
 
