@@ -601,7 +601,7 @@ There are several things to note here:
 
 \item In our system, \emph{linearity is a property of function arrows,
     not of types} (\fref{sec:lin-arrow}). The way to say that results
-  can be freely shared is to use |Unrestricted|, as in the type of
+  can be freely shared is to use |Unrestricted| (see \fref{sec:data-types}), as in the type of
   |freeze|. Yet we still disinguish the type of mutable arrays
   |MArray| from that of immutable arrays |Array|.\jp{why?}
 
@@ -609,16 +609,19 @@ There are several things to note here:
   specified size, and passes it to the function supplied as the second
   argument to |newMArray|, as a linear value |ma|.
 %
-  That function has the type |MArray a ⊸ Unrestricted b|. This
-  has two consequences.  First, the function is guaranteed to consume |ma|
-  exactly once. In particular it cannot pass |ma| to several
-  functions. Second, it can return a value of any type |Unrestricted
-  b| it wishes, but the payload of type |b| must not be linear (by
-  definition of |Unrestricted|, see \fref{sec:data-types}). As a
-  consequence, in order to access that payload, |newMArray| must force
-  the execution of all the array computations until all linear objects
-  (including |ma|) are consumed. Consequently no pointer to |ma| can
-  escape into the control of the GC.
+  That function (let us call it |k|) has the type |MArray a ⊸
+  Unrestricted b|. This has two consequences.  First, |k| is
+  guaranteed to consume |ma| exactly once. In particular |k| cannot
+  pass |ma| to several functions. Second, it can return a value of any
+  type |Unrestricted b| it wishes, but the payload of type |b| must
+  not be linear (by definition of |Unrestricted|). As a consequence,
+  in order to access that payload, |newMArray| must force the
+  execution of |k ma| until all linear objects (including |ma|) are
+  consumed. This forcing has in turn two consequences. First, it does
+  not matter how many times the result of |newMArray k| is used, |k|
+  needs to be called only once and thus a only single |ma| is ever
+  needed.  Second, no pointer to |ma| can escape into the control of
+  the {\sc GC}.
 
 \item Since |ma| is linear, we cannot pass it directly to multiple
   calls to |write|.  Instead, each call to |write| returns a
@@ -2227,8 +2230,7 @@ kinds'':
   |Type 1| is the kind of linear types and and |Type ω| is the kind of
   unrestricted types.
   \begin{code}
-    data List (p :: Multiplicity) (a :: Type p) :: Type p
-      = [] | a : (List l m a)
+    data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List l m a)
   \end{code}
   The above declaration ensures that the linearity of the list
   inherits the linearity of the contents. A linearity-polymorphic
