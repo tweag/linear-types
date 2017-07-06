@@ -16,7 +16,7 @@ ed:
 	$(MAKE)
 
 clean:
-	rm -f *.tex *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
+	rm -f *.tex *.aux *.bbl *.ptb hlt*.pdf *.toc *.out *.run.xml
 
 %.tex: %.lhs
 	lhs2TeX -o $@ $<

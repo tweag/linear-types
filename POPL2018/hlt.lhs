@@ -654,6 +654,26 @@ consumes its input).
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation we mentioned earlier.
+%
+In fact, {\em futures} are sufficient for parallel updates to |MArray|s; we
+don't need threads.  These work well together with linear functions for
+splitting and recombining array slices:
+
+\noindent
+%\begin{center}
+\begin{minipage}{0.55 \textwidth}  
+\hspace{-3mm}
+\begin{code}
+split :: Int -> MArray a ⊸ (MArray a, MArray a)
+\end{code}
+\end{minipage}%
+\begin{minipage}{0.45 \textwidth}
+\begin{code}
+join  :: (MArray a, MArray a) ⊸ MArray a  
+\end{code}
+\end{minipage}
+%\end{center}
+
 
 Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the main gain
 is in shrinking the trusted code base, because more library code (and it
@@ -664,6 +684,10 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 %% \rn{I have mixed feelings about this.  What about the client of the mutable
 %%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
 %%   freezing like ``create''.}
+
+%\vspace{-1mm}
+\subsection{I/O protocols} \label{sec:io-protocols}
+%\vspace{-1mm}
 
 \begin{figure}
   \vspace{-4mm}
@@ -693,8 +717,18 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \hrulefill
 \end{figure}
 
+Consider the \textsc{api} for files in \fref{fig:io-traditional}, where a
+|File| is a cursor in a physical file.
+%
+Each call
+to |readLine| returns a |ByteString| (the line) and moves the cursor one line
+forward.  But nothing stops us reading a file after we have closed it,
+or forgetting to close it.
+An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
+Using it we can write a simple file-handling program, |firstLine|, \Red{shown here}.
+
 \begin{wrapfigure}[7]{r}[0pt]{6.0cm} % lines, placement, overhang, width
-\vspace{-10mm}
+\vspace{-5mm}
 \begin{code}
 firstLine :: FilePath -> IOL ω Bytestring
 firstLine fp =
@@ -704,25 +738,14 @@ firstLine fp =
       ; return bs }
 \end{code}
 \end{wrapfigure}
-%\vspace{-1mm}
-\subsection{I/O protocols} \label{sec:io-protocols}
-%\vspace{-1mm}
 %
-Consider the \textsc{api} for files in \fref{fig:io-traditional}, where a
-|File| is a cursor in a physical file.
-%
-Each call
-to |readLine| returns a |ByteString| (the line) and moves the cursor one line
-forward.  But nothing stops us reading a file after we have closed it,
-or forgetting to close it.
-An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using it we can write a simple file-handling program, as shown on the right.
-
 Notice several things
 \begin{itemize}
+
 \item Operations on files remain monadic, unlike the case with mutable arrays.
 I/O operations affect the world, and hence must be sequenced.  It is not enough
 to sequence operations on files individually, as it was for arrays.
+
 \item We generalise the |IO| monad so that it expresses whether or not the
 returned value is linear.  We add an extra {\em multiplicity} type parameter |p| to the monad |IOL|,
 where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respectively.
@@ -730,10 +753,18 @@ where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respec
 Now |openFile| returns |IO 1 (File ByteString)|,
 the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
+
+\end{itemize}
+
+% lame hack / workaround
+\begin{itemize}
+
 \item As before, operations on linear values must consume their input
 and return a new one; here |readLine| consumes the |File| and produces a new one.
+
 \item Unlike the |File|, the |ByteString| returned by |readLine| is unrestricted,
 and the type of |readLine| indicates this.
+
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often useful do
