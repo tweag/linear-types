@@ -1518,8 +1518,9 @@ layer as one which {\em reads} byte-ranges only at the type and size they were
 originally {\em written}.  This is a small extension of the memory safety we
 already expect of Haskell's heap --- extended to include the contents of
 bytestrings containing serialised data\footnote{The additional safety ensured
-  here is somewhat lower stakes, as, even it is violated, the serialised values
-  do not contain pointers and cannot segfault the program reading them.}.
+  here is lower-stakes than typical memory-safety, as, even it is violated, the
+  serialised values do not contain pointers and cannot segfault the program
+  reading them.}.
 %
 To preserve this type safety, the |Packed| type {\em must} be abstract.
 %
@@ -1532,11 +1533,11 @@ approach to deserialisation.  Better still is to read the data {\em without}
 copying.  We can manage this feat with |caseTree|, which is analogous to the
 expression ``|case e of {Leaf ... ; Branch ...}|''.
 %
-Lacking builtin syntax, |(caseTree p k1 k2)| takes two continuations
+Lacking built-in syntax, |(caseTree p k1 k2)| takes two continuations
 corresponding to the two branches of the case expression.
 %
 Unlike the case expression, |caseTree| operates on the packed byte stream, reads
-a tag byte, advances the pointer past it, and returns a type safe pointer to the
+a tag byte, advances the pointer past it, and returns a type-safe pointer to the
 fields (\eg |Packed [Int]| in the case of a leaf).
 %% \begin{code}
 %%   caseTree  (pack (Leaf 3))
@@ -1586,9 +1587,11 @@ Indeed, we can even use |caseTree| to implement |unpack|, turning it into safe
 ``client code'' -- sitting outside the module that defines |Tree| and the
 trusted code establishing its memory representation.
 
-What about |pack|?  In this read-only example, linearity was not essential, only
+In this read-only example, linearity was not essential, only
 typestate.  Next we consider an \textsc{API} for writing |Packed
 [Tree]| values bit by bit, where linearity is key.
+%
+In particular, can we also implement |pack| using a public interface?
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
@@ -1606,7 +1609,7 @@ typestate.  Next we consider an \textsc{API} for writing |Packed
 %% the proper addresses and with values of the correct type.
 %
 To create a serialised data constructor, we must write a tag, followed by the
-fields, in order.
+fields.
 %
 A {\em linear} write pointer can ensure all fields are initialised, in order.
 We use a type ``|Needs|'' for write pointers, parameterised by (1) a
@@ -1646,7 +1649,13 @@ buffers in which to write data (similar to |newMArray| from \fref{sec:freezing-a
 \begin{code}
   newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
-The primitives |write|, |read|, |newBuffer|, and |finish| are {\em general}
+%
+We also need to explicitly let go of linear input buffers we've exhausted.
+\begin{code}
+  done :: Packed [] ⊸ ()
+\end{code}
+
+The primitives |write|, |read|, |newBuffer|, |done|, and |finish| are {\em general}
 operations for serialised data, whereas |caseTree| is datatype-specific.
 Further, the module that defines |Tree| exports a datatype-specific way to 
 {\em write} each serialised data constructor:
@@ -1662,7 +1671,7 @@ tag-encoding from the client, and leaving field-writes as future obligations.
 With these building blocks, we can move |pack| and |unpack| outside of the
 private code that defines |Tree|s, which has this minimal interface:
 \begin{code}
-module TreeMod( Tree(..), caseTree, startLeaf, startBranch)
+module TreePrivate( Tree(..), caseTree, startLeaf, startBranch)
 module DataPacked( Packed, Needs, read, write, newBuffer, finish, done )
 \end{code}
 %
@@ -1699,11 +1708,6 @@ follows:
 \begin{code}
 newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
 \end{code}
-%
-We also need to explicitly let go of linear input buffers we've exhausted.
-\begin{code}
-  done :: Packed [] ⊸ ()
-\end{code}
 
 Finally, we have what we need to build a map function that logically operates
 on the leaves of a tree, but reads serialised input and writes serialised
@@ -1715,12 +1719,14 @@ Indeed, in our current \HaskeLL{} implementation ``|mapLeaves (+1) tree|'' touch
 We will return to this map example and benchmark it in \fref{sec:cursor-benchmark}.
 %
 With the safe interface to serialised data, functions like |sumLeaves| and
-|mapLeaves| are not burdensome to program.  The code for |mapLeaves| is shown below, its
-inner loop linearly updates a pair of a read- and write-pointer.
+|mapLeaves| are not burdensome to program.  The code for |mapLeaves| is shown
+below.
 
 %\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 %\vspace{-6mm}
 \begin{code}
+module TreePublic (pack, unpack, writeLeaf, sumLeaves, mapLeaves)
+...
 mapLeaves :: (Int->Int) -> Packed Tree ⊸ Packed Tree
 mapLeaves fn pt = newBuffer (extract ∘ go pt)
   where
@@ -1730,6 +1736,7 @@ mapLeaves fn pt = newBuffer (extract ∘ go pt)
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
 \end{code}
 %\end{wrapfigure}
+%The inner loop linearly updates a pair of a read- and write-pointer.
 
 %% \improvement{This section should assert that the abstraction is
 %%   practical to program with, even comfortable.}
