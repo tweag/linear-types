@@ -1270,7 +1270,7 @@ environment for typechecking $u_k$.  That binding will be linear only if
 \emph{both} $π$ \emph{and} $π_i$ are linear; that is, only if we specify
 that the scrutinee is consumed once, and the $i$'th field of the data constructor $c_k$
 specifies that is it consumed once if the constructor is (\fref{def:consume}).
-
+%
 To put it another way, suppose one of the linear
 fields\footnote{
 Recall \fref{sec:non-linear-constructors}, which described
@@ -2223,29 +2223,34 @@ kinds'':
   The above type ensures that one can mix multiplicities freely
   between the arguments; but the result must be linear if any argument
   is linear.  However, the definition is valid only if |a q| is a
-  subtype of |a (p ∧ q)| for any type family |a :: Multiplicitiy ->
-  Type|. Thus, code-sharing requires not only polymorphism, but a
+  subtype of |a (p ∧ q)| for any type family |a :: (p :: Multiplicitiy) ->
+  Type p|. Thus, code-sharing requires not only polymorphism, but a
   non-trivial subtyping and subkinding system.
 
   Note that, in the above, we parameterize over multiplicities instead
   of parameterizing over kinds directly, as is customary in the
-  literature. We do so to because changing the kinds directly would
-  not be possible in \ghc{}, which already has a complicated kind
-  system, and whose kinds are already parameterized over a so-called
+  literature. We do so because it fits better \ghc{}, whose kinds are
+  already parameterized over a so-called
   levity~\cite{eisenberg_levity_2017}.
 
 
-\item Exensibility.  It is easy to extend our system to any set of
-  ground multiplicities with a ring structure
-  (\fref{sec:extending-multiplicities}), which is useful to support
-  for example affine types and dependent linear types.  In contrast,
-  in a multiple-kind system, such extensions require \textit{ad-hoc}
-  support. Indeed, affine types require changes in the subkinding
-  system, which in turns may impact unification. Additionally, while
-  there exists systems with two-kinds and dependent types, they are
-  only trivial in the sense that no linear arrow can be
-  dependent. Leaving the door open to dependent types is crucial, as
-  this is being explored as a possible extension to \ghc{}.
+\item Compatibility with dependent types.
+  % It is easy to extend our system to any set of
+  % ground multiplicities with a ring structure
+  % (\fref{sec:extending-multiplicities}).
+  % In contrast,
+  % in a multiple-kind system, such extensions require \textit{ad-hoc}
+  % support. Indeed, affine types require changes in the subkinding
+  % system, which in turns may impact unification.
+  % JP: I do not think that this is true with the |Type p| view.
+  Furthermore, linearity on the arrow meshes well with dependent
+  types~\cite{mcbride_rig_2016}.  Consider a typical predicate over
+  files (|P : File → ∗|). It will need to mention its argument several
+  times to relate the file at the start and at the start of a sequence
+  of operations. While this is not a problem in our system, the
+  function |P| is not expressible if |File| is intrinsically
+  linear. Leaving the door open to dependent types is crucial to us,
+  as this is currently explored as a possible extension to \ghc{}.
 
 % Linearity-on-arrow makes it possible to constrain any function to
 % use its arguments linearly, this is useful for the function writer,
