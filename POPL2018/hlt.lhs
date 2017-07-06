@@ -35,6 +35,7 @@
 %format π = "\pi"
 %format ρ = "\rho"
 %format ⅋ = "\parr"
+%format :-> = ":↦"
 %format DataPacked = "\Conid{Data.Packed}"
 %subst keyword a = "\mathsf{" a "}"
 %format mediumSpace = "\hspace{0.6cm}"
@@ -79,10 +80,10 @@
 % \usepackage{fontspec}
 % \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
-\def\frefsecname{Section}
-\def\freffigname{Figure}
-\def\frefdefname{Definition}
-\def\Frefdefname{Definition}
+\def\frefsecname{Sec.}
+\def\freffigname{Fig.}
+\def\frefdefname{Def.}
+\def\Frefdefname{Def.}
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
 \def\frefappendixname{Appendix}
@@ -919,7 +920,7 @@ foldl :: forall p q. (a → _ p b → _ q  a) -> a → _ p [b] → _ q a
 (∘) :: forall p q. (b → _ p c) ⊸ (a → _ q b) → _ p a → _ (p · q) c
 (f ∘ g) x = f (g x)
 \end{code}
-The type of |(·)| says that two functions that accept arguments of arbitrary
+The type of |(∘)| says that two functions that accept arguments of arbitrary
 multiplicities (|p| and |q| respectively) can be composed to form a
 function accepting arguments of multiplicity |p·q| (\ie the
 product of |p| and |q| --- see \fref{def:equiv-multiplicity}).
@@ -2113,7 +2114,7 @@ any node proxy node, one gets the situation where two nodes |n| and
 have different payloads. In this situation the |Scene| has become
 inconsistent and the behaviour of SpriteKit is unpredictable.
 
-In the api of \citet{chakravarty_spritekit_2017}, the burden of checking
+In the {\sc api} of \citet{chakravarty_spritekit_2017}, the burden of checking
 non-duplication is on the programmer.  Using linear types, we can
 switch that burden to the compiler: we change the update function to
 type |Scene ⊸ Scene|, and the |ref| field is made linear too.  Thanks
