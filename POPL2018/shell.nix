@@ -20,7 +20,6 @@ in stdenv.mkDerivation {
                        comment
                        environ
                        fontaxes
-                       framed
                        inconsolata
                        kastrup
                        latexmk
