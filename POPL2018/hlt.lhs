@@ -438,7 +438,7 @@ Our definition is based on the type of the value concerned:
 \begin{itemize}
 \item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
 \item To consume a function exactly once, call it, and consume its result exactly once.
-\item To consume a pair exactly once, evaluate it and consume each of its components exactly once.
+\item To consume a pair exactly once, evaluate it and consume each component exactly once.
 \item In general, to consume a value of an algebraic data type exactly once, evaluate
   it and consume all its linear components exactly once
   (\fref{sec:non-linear-constructors})\footnote{You may deduce that pairs have linear components,
@@ -496,7 +496,7 @@ in particular, |g| can pass that argument to |f|.
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
 \begin{wrapfigure}[7]{r}[0pt]{7.0cm} % lines, placement, overhang, width
-\vspace{-6mm}
+% \vspace{-6mm}
 \begin{code}
   type MArray s a
   type Array a
@@ -591,8 +591,8 @@ immutable arrays |Array|.
 size, and passes it to the function supplied as the second argument to |newMArray|.
 \item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
 lollipop arrow says that the function guarantees to consume the mutable array
-exactly once; it will neither discard it nor use it twice.  We will define
-``consume'' more precisely in \fref{sec:consumed}.
+exactly once; it will neither discard it nor use it twice.
+%We will define ``consume'' more precisely in \fref{sec:consumed}.
 \item Since |ma| is a linear array, we cannot pass it to many calls to
 |write|.  Instead, each call to |write| returns a new array, so that the
 array is single-threaded, by |foldl|, through the sequence of writes.
