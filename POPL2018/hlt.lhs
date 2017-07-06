@@ -727,9 +727,10 @@ and the type of |readLine| indicates this.
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often very useful do
 to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we can use a
-phantom type to encode the state of the resource (similar to a
+phantom type to encode the state of the resource (which we can think
+of as a
 type-level state, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
-types for the File before vs after an operation.
+types for the |File| before vs after an operation.
 
 \subsection{Linear data types}
 \label{sec:linear-constructors}
@@ -1309,11 +1310,11 @@ The details of the meta-theory of \calc{} are deferred to
 \end{itemize}
 
 To that effect we introduce two semantics: a semantics with mutation
-where type-level states are enforced dynamically and a pure semantics
-that tracks linearity carefully, but where ``mutations'' are
-implemented as copying. Both semantics are big step operational
-semantics with laziness in the style of
-\citet{launchbury_natural_1993}.
+where typestates, such as whether an array is mutable or frozen, are
+enforced dynamically and a pure semantics that tracks linearity
+carefully, but where ``mutations'' are implemented as copying. Both
+semantics are big step operational semantics with laziness in the
+style of \citet{launchbury_natural_1993}.
 
 The semantics are instantiated with the arrays of
 \fref{sec:freezing-arrays}. They can be easily extended to support,
@@ -1326,7 +1327,7 @@ deduce:
   The semantics with in-place mutation is observationally equivalent to the pure semantics.
 \end{theorem}
 \begin{theorem}[Progress]\label{thm:progress}
-  Evaluation does not block. In particular, type-level states need not
+  Evaluation does not block. In particular, typestates need not
   be checked dynamically.
 \end{theorem}
 
@@ -1386,8 +1387,7 @@ not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $p=1$ and $p=ω$.
 But if we had a richer domain of multiplicities, including
-$0$ or $2$ for example\footnote{\citet{mcbride_rig_2016} uses 0-multiplicities to express runtime irrelevance
-in a dependently typed system}, we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
+$0$ (see \fref{sec:extending-multiplicities}), we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to hold open the possiblity
@@ -1401,8 +1401,8 @@ lead us to a better assessment of the costs/benefit trade-off here.
 
 We implement \HaskeLL{} as a branch of the leading Haskell compiler,
 \textsc{ghc}, version 8.2.  This branch only modifies type inference and
-type-checking in the compiler, neither the intermediate language
-(Core~\cite{sulzmann_fc_2007}) nor the run-time system are affected.
+type-checking in the compiler, neither the intermediate language~\cite{sulzmann_fc_2007}
+nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies of this paper.
@@ -1592,6 +1592,8 @@ typestate.  Next we consider an \textsc{API} for writing |Packed
 [Tree]| values bit by bit, where linearity is key.
 %
 In particular, can we also implement |pack| using a public interface?
+\improvement{aspiwack: I don't think the type argument of |Packed| can
+  quite be considered a typestate}
 
 %% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
 %% manipulating serialised data.  But, as with arrays, linearity is only necessary
@@ -2686,8 +2688,7 @@ used \emph{at most once}).
 
 The typing rules are mostly unchanged with the \emph{caveat} that
 $\mathsf{case}_π$ must exclude $π=0$ (in particular we see that we
-cannot substitute multiplicity variables by $0$). The variable rule is
-modified as:
+cannot substitute multiplicity variables by $0$). The variable rule becomes:
 $$
 \inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
 $$
@@ -2741,7 +2742,7 @@ other industrial projects.
 
   Variations on this theme occur whenever effects are treated as
   data. Another example is composing file-descriptors with
-  \texttt{epoll}.
+  \texttt{epoll}\improvement{what's that? citation?}.
 
 \item[Inter-language memory management]
   Complex projects with large teams invariably involve a mix of
@@ -2870,7 +2871,7 @@ probably fix this.}
 In accordance with our stated goals in \fref{sec:introduction}, we are
 interested in two key properties of our system: 1. that we can implement
 a linear \textsc{api} with mutation under the hood, while exposing a
-pure interface, and 2. that type-level states are indeed enforced.
+pure interface, and 2. that typestates are indeed enforced.
 
 We introduce two dynamic semantics for \calc{}: a semantics with
 mutation which models the implementation but blocks on incorrect
@@ -2884,7 +2885,7 @@ We prove the two semantics bisimilar, so that type-safety and progress
 can be transported from the denotational semantics to the ordinary
 semantics with mutation. The bisimilarity itself ensures that the
 mutations are not observable and that the semantics is correct in exposing
-a pure semantics. The progress result proves that type-level states need not be
+a pure semantics. The progress result proves that typestates need not be
 tracked dynamically.
 
 \subsection{Preliminaries}
@@ -3311,7 +3312,7 @@ Equipped with this bisimulation, we are ready to prove the theorems of
   $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the derivation can be
   extended.
 
-  In particular, type-level states need not be checked dynamically.
+  In particular, typestates need not be checked dynamically.
 \end{theorem}
 \addtocounter{theorem}{-1}
 }
