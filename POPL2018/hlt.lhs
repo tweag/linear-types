@@ -98,10 +98,8 @@
 \frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
 
-\newcommand{\ghc}{\textsc{ghc}}
-
 \usepackage{xspace}
-
+\newcommand{\ghc}{\textsc{ghc}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
 
@@ -1401,7 +1399,7 @@ lead us to a better assessment of the costs/benefit trade-off here.
 \label{sec:implementation}
 \label{sec:impl}
 
-We are implementing \HaskeLL{} as a branch of the leading Haskell compiler,
+We implement \HaskeLL{} as a branch of the leading Haskell compiler,
 \textsc{ghc}, version 8.2.  This branch only modifies type inference and
 type-checking in the compiler, neither the intermediate language
 (Core~\cite{sulzmann_fc_2007}) nor the run-time system are affected.
@@ -1439,7 +1437,7 @@ for the extra multiplicity argument of the arrow constructor.
 %% This work required roughly 1 man-month to complete.
 
 These figures vindicate our claim that \HaskeLL{} is easy to integrate into an
-existing implementation: despite \textsc{ghc} being 25 years old, we could
+existing implementation: despite \textsc{ghc} being 25 years old, we 
 implement a first version of \HaskeLL{} with reasonable effort.
 
 % \section{Applications}
@@ -1452,12 +1450,11 @@ While many linear type systems have been proposed,
 %
 a {\em retrofitted} linear type system for a mature language like Haskell offers
 the opportunity to implement non-trivial applications mixing linear and
-non-linear code, I/O, etc., and observe how linear vs. non-linear libraries
-interact with optimiser of a sophisticated compiler.
+non-linear code, I/O, etc., and observe how linear libraries
+interact with the optimiser of a sophisticated compiler.
 %
-In this section, we describe a few case study implementations; in
-\fref{sec:implementation} we describe the modified version of the \textsc{ghc}
-compiler that makes them possible.
+In this section, we describe case-studies implementated with the modified
+\ghc  of \fref{sec:implementation}.
 %
 In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
 have not yet implemented, but which motivate this work.
