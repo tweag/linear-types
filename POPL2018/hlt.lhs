@@ -2851,12 +2851,6 @@ capabilities for safe, compiler-checked use, within pure code.
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
 
-\unsure{aspiwack: I ignored the multiplicity polymorphism as it is
-  really of no consequence as long as we don't take higher-rank
-  multiplicity functions. That being said, we speak of multiplicity
-  polymorphism quite a bit. Maybe we can just add them back into the
-  dynamics. The proof, apart from the primitive functions, is trivial
-  anyway.}
 \improvement{aspiwack: In the rules for primitives, I tend to omit the reduction
 of the strict arguments (shuch as indices of arrays). I should
 probably fix this.}
@@ -3006,6 +3000,12 @@ The details of the ordinary evaluation relation are given in
 
 \begin{figure}
   \begin{mathpar}
+    \inferrule{ }{Γ : λp. t ⇓ Γ : λp. t}\text{m.abs}
+
+
+    \inferrule{Γ : e ⇓ Δ : λp.e' \\ Δ : e'[π/q] ⇓ Θ : z} {Γ :
+      e π ⇓ Θ : z} \text{m.app}
+
     \inferrule{ }{Γ : λ_π(x{:}A). e ⇓ Γ : λ_π(x{:}A). e}\text{abs}
 
 
@@ -3057,6 +3057,11 @@ The details of the ordinary evaluation relation are given in
 
 \begin{figure}
   \begin{mathpar}
+\inferrule{ }{Ξ ⊢ (Γ || λp. t ⇓ Γ || λp. t) :_ρ A, Σ}\text{m.abs}
+
+\inferrule{Ξ ⊢ (Γ || e ⇓ Δ || λp.e') :_ρ A, Σ \\ Ξ ⊢ (Δ || e'[π/q] ⇓ Θ || z) :_ρ A, Σ} {(Γ :
+  e π ⇓ Θ : z) :_ρ A, Σ} \text{m.app}
+
 \inferrule{ }{Ξ ⊢ (Γ || λ_π(x{:}A). e ⇓ Γ || λ_π (x{:}A). e) :_ρ A→_π B, Σ}\text{abs}
 
 \inferrule
