@@ -137,6 +137,7 @@
     \newcommandx{\rn}[1]{\todo[]{RRN: #1}} % Peanut gallery comments by Ryan.
     \newcommandx{\simon}[1]{\todo[]{SPJ: #1}}
     \newcommandx{\jp}[1]{\todo[linecolor=blue,bordercolor=blue,backgroundcolor=cyan!10]{JP: #1}{}}
+    \newcommand{\manuel}[1]{\todo[linecolor=purple,bordercolor=purple,backgroundcolor=blue!10]{Manuel: #1}{}}
 
 \else
     \newcommand{\Red}[1]{#1}
@@ -603,7 +604,7 @@ immutable arrays |Array|.
 \item The function |newMArray| allocates a fresh, mutable array of the specified
 size, and passes it to the function supplied as the second argument to |newMArray|.
 
-\item That function has the linear type |(MArray a ⊸ Unrestricted b)|; the
+\item That function has the linear type |(MArray a ⊸ Unrestricted b)|\manuel{We must explain Unrestricted before this point.}; the
 lollipop arrow says it guarantees to consume the array
 exactly once; it will neither discard it nor use it twice.
 %We will define ``consume'' more precisely in \fref{sec:consumed}.
@@ -729,7 +730,7 @@ operations with the |IO| monad. But in fact it is often very useful do
 to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we can use a
 phantom type to encode the state of the resource (which we can think
 of as a
-type-level state, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
+type-level state\manuel{What is that?}, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
 types for the |File| before vs after an operation.
 
 \subsection{Linear data types}
@@ -1211,7 +1212,7 @@ These operations depend, in turn, on addition and multiplication of multipliciti
 The syntax of multiplicities is given in \fref{fig:syntax}.
 We need the concrete multiplicities $1$ and $ω$ and, to support polymorphism,
 multiplicity variables (ranged over by the metasyntactic
-variables \(p\) and \(q\)).
+variables \(π\) and \(μ\)).
 Because we
 need to multiply and add multiplicities,
 we also need formal sums and products of multiplicities.
@@ -1429,7 +1430,7 @@ the output of the branch. We use a supremum operation on
 multiplicities where $1∨0 = ω$ ($0$ stands for a variable absent
 in a branch).
 
-Implementing this branch affects 1152 lines of \textsc{ghc} (for
+Implementing this branch\manuel{which branch? link? JP: Linguistically ``this branch'' refers to the case branch of the previous parag.} affects 1152 lines of \textsc{ghc} (for
 comparison the parts of the compiler that were affected by \HaskeLL{}
 total about 100000 lines of code), including 444 net extra lines. A new
 file responsible for multiplicity operations as well the files
@@ -2123,7 +2124,7 @@ if a node |n| was updated. If it was, it applies the update directly
 onto |ref n| or creates a new imperative node.
 
 Things can go wrong though: if the update function {\em duplicates}
-any node proxy node, one gets the situation where two nodes |n| and
+any proxy node, one gets the situation where two nodes |n| and
 |n'| can point to the same imperative source |ref n = ref n'|, but
 have different payloads. In this situation the |Scene| has become
 inconsistent and the behaviour of SpriteKit is unpredictable.
@@ -2720,9 +2721,9 @@ the program. In particular, it is clear that calls within the argument
 of |borrow| are not tail: a shortcoming of borrowing that we mentioned
 in \fref{sec:uniqueness}.
 
-\subsection{Further applications, drawn from industry}
+\subsection{Future industrial applications}
 \label{sec:industry}
-
+\manuel{Hard to understand.}
 Our own work in an industrial context triggered our efforts to add
 linear types to \textsc{ghc}. We were originally motivated by
 precisely typed protocols for complex interactions and by taming
@@ -2794,7 +2795,7 @@ the language, in the sense that:
 \begin{itemize}
 \item existing programs are valid in the extended language
   \emph{without modification},
-\item such programs retain the same semantics, and
+\item such programs retain the same operational semantics, and in particular
 \item the performance of existing programs is not affected,
 \item yet existing library functions can be reused to serve the
   objectives of resource-sensitive programs with simple changes to
