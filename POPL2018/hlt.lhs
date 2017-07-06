@@ -2679,8 +2679,7 @@ used \emph{at most once}).
 
 The typing rules are mostly unchanged with the \emph{caveat} that
 $\mathsf{case}_π$ must exclude $π=0$ (in particular we see that we
-cannot substitute multiplicity variables by $0$). The variable rule is
-modified as:
+cannot substitute multiplicity variables by $0$). The variable rule becomes:
 $$
 \inferrule{ x :_1 A \leqslant Γ }{Γ ⊢ x : A}
 $$
