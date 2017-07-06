@@ -5,6 +5,16 @@ PaperTools/bibtex/jp.bib:
 	echo "Try 'git submodule update --init'"
 	false
 
+plain:
+	touch no-editing-marks
+	$(MAKE) clean
+	$(MAKE) 
+
+ed:
+	rm -f no-editing-marks
+	$(MAKE) clean
+	$(MAKE)
+
 clean:
 	rm -f *.tex *.aux *.bbl *.ptb *.pdf *.toc *.out *.run.xml
 
@@ -16,3 +26,6 @@ clean:
 
 %.cls: %.ins
 	latex $<
+
+.PHONY: all plain ed clean
+

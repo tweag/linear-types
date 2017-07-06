@@ -499,8 +499,16 @@ in particular, |g| can pass that argument to |f|.
 
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
+
+The Haskell language provides immutable arrays, built with the function |array|\footnote{
+Haskell actually generalises over the type of array indices, but for this
+paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
+\begin{code}
+array :: Int -> [(Int,a)] -> Array a
+\end{code}
+
 \begin{wrapfigure}[7]{r}[0pt]{7.0cm} % lines, placement, overhang, width
-% \vspace{-6mm}
+%\vspace{-6mm}
 \begin{code}
   type MArray s a
   type Array a
@@ -519,12 +527,6 @@ in particular, |g| can pass that argument to |f|.
 \label{fig:array-sigs}
 \end{wrapfigure}
 %
-The Haskell language provides immutable arrays, built with the function |array|\footnote{
-Haskell actually generalises over the type of array indices, but for this
-paper we will assume that the arrays are indexed, from 0, by |Int| indices.}:
-\begin{code}
-array :: Int -> [(Int,a)] -> Array a
-\end{code}
 But how is |array| implemented? A possible answer is ``it is built-in; don't ask''.
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
@@ -533,9 +535,10 @@ in \fref{fig:array-sigs}.
 
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
-array size pairs = runST (do  { ma <- newMArray size
-                              ; forM_ pairs (write ma)
-                              ; return (unsafeFreeze ma) })
+array size pairs = runST
+  (do  { ma <- newMArray size
+       ; forM_ pairs (write ma)
+       ; return (unsafeFreeze ma) })
 \end{code}
 In the first line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
@@ -545,7 +548,28 @@ securely encapsulate an imperative algorithm in a purely-functional context,
 as described in \cite{launchbury_st_1995}.
 
 
-\begin{figure}
+Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
+immutable array, but to avoid an unnecessary copy,
+the two are actually \emph{the same array}.  The intention is, of course, that
+that |unsafeFreeze| should be the last use of the mutable array; but
+nothing stops us continuing to mutate it further, with quite undefined semantics.
+The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the programmer
+has a proof obligation here that the compiler cannot check''.
+
+The other unsatisfactory thing about the monadic approach to array
+construction is that it is over-sequential. Suppose you had a pair of
+mutable arrays, with some updates to perform to each; these updates could
+be done in parallel, but the |ST| monad would serialise them.
+
+
+Linear types allow a more secure and less sequential interface.  \HaskeLL{}
+introduces a new kind of function type: the \emph{linear arrow} |a⊸b|. A linear
+function |f :: a⊸b| must consume its argument \emph{exactly once}.  This new
+arrow is used in a new array \textsc{api}, given in
+\fref{fig:linear-array-sigs}.
+%
+\begin{figure}[h]
+\hrulefill
 \vspace{-2mm}
 \begin{code}
   type MArray a
@@ -564,33 +588,16 @@ as described in \cite{launchbury_st_1995}.
 \label{fig:linear-array-sigs}
 \end{figure}
 
-Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
-immutable array, but to avoid an unnecessary copy,
-the two are actually \emph{the same array}.  The intention is, of course, that
-that |unsafeFreeze| should be the last use of the mutable array; but
-nothing stops us continuing to mutate it further, with quite undefined semantics.
-The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the programmer
-has a proof obligation here that the compiler cannot check''.
-
-The other unsatisfactory thing about the monadic approach to array
-construction is that it is over-sequential. Suppose you had a pair of
-mutable arrays, with some updates to perform to each; these updates could
-be done in parallel, but the |ST| monad would serialise them.
-
-Linear types allow a more secure and less sequential interface.
-\HaskeLL{} introduces a new kind of function type: the \emph{linear
-arrow} |a⊸b|. A linear function |f :: a⊸b| must consume its argument
-\emph{exactly once}.
+\noindent
+Using this \textsc{api} we can define |array| thus:
 %
-This new arrow is used in
-a new array \textsc{api}, given in \fref{fig:linear-array-sigs}.  Using
-this \textsc{api}  we can define |array| thus:
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
 \end{code}
 \simon{I have generalised the type of |newMArray| so it does not have
-to return an unrestricted value.  Is that right?}
+  to return an unrestricted value.  Is that right?}
+%\noindent
 There are several things to note here:
 \begin{itemize}
 
