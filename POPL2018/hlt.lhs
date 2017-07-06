@@ -2986,8 +2986,9 @@ The details of the ordinary evaluation relation are given in
 \begin{description}
 \item[mutable cell] array names are values, hence are not
   reduced. In that they differ from variables.
-\item[newMArray] allocates a fresh array of the given size. Note that
-  the default value is not evaluated: arrays in the environment are
+\item[newMArray] allocates a fresh array of the given size (we write
+  $i$ for an integer value). Note that
+  the value of $a$ is not evaluated: an array in the environment is
   a concrete list of (not necessarily distinct) variables.
 \item[writeArray] Mutates its array argument
 \item[freezeArray] Mutates \emph{the type} of its argument to |Array|
@@ -3032,16 +3033,15 @@ The details of the ordinary evaluation relation are given in
     %%%% Arrays
 
     \inferrule
-    {(Γ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Δ : \varid{Unrestricted}~x}
-    {Γ : \varid{newMArray}~i~a~f ⇓ Δ : \varid{Unrestricted}~x}\text{newMArray}
+    {Γ:n ⇓ Δ:i \\ (Δ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Θ : \varid{Unrestricted}~x}
+    {Γ : \varid{newMArray}~n~a~f ⇓ Θ : \varid{Unrestricted}~x}\text{newMArray}
 
-    \inferrule{ }
-    {(Γ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]) :
-      \varid{write}~l~i~a ⇓ Γ,l :_1 \varid{MArray}~a =
+    \inferrule{Γ:n⇓Δ:i \\ Δ:arr ⇓ (Θ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]):l}
+    {Γ : \varid{write}~arr~n~a ⇓ Θ,l :_1 \varid{MArray}~a =
       [a_1,…,a,…,a_n] : l}\text{write}
 
-    \inferrule{ }
-    { (Γ,l :_1 \varid{MArray}~a = [a_1,…,a_n]) : \varid{freeze}~l ⇓ (Γ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+    \inferrule{Γ:arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]):l}
+    { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
       \varid{Unrestricted}~l}\text{freeze}
 
 
@@ -3098,18 +3098,23 @@ The details of the ordinary evaluation relation are given in
 
 %%%%% Arrays
 
-\inferrule
-{Ξ ⊢ (Γ||f~[a,…,a]) ⇓ Δ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
-{Ξ ⊢ (Γ||\varid{newMArray}~i~a~f ⇓ Δ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
+    % \inferrule{Γ:arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]):l}
+    % { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
+    %   \varid{Unrestricted}~l}\text{freeze}
 
 \inferrule
-{ }
-{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]||\varid{write}~x~i~a
-  ⇓ Γ||[a_1,…,a,…,a_n]) :_ρ \varid{MArray}~a, Σ)}\text{write}
+{Ξ ⊢ (Γ||n ⇓ Δ||i), \varid{Int}, Σ \\ Ξ ⊢ (Δ||f~[a,…,a]) ⇓ Θ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||\varid{newMArray}~n~a~f ⇓ Θ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
 
 \inferrule
-{ }
-{Ξ ⊢ (Γ,x:_1 \varid{MArray}~a = [a_1,…,a_n]||\varid{freeze}~a ⇓ Γ||\varid{Unrestricted}
+{Ξ ⊢ (Γ||n⇓Δ||i) :_ρ \varid{Int}, Σ \\ Ξ ⊢ (Δ||arr⇓Θ||[a_1,…,a_i,…,a_n]) :_ρ
+  \varid{MArray}~a, Σ }
+{Ξ ⊢ (Γ||\varid{write}~x~i~a
+  ⇓ Γ||[a_1,…,a,…,a_n]) :_ρ \varid{MArray}~a, Σ}\text{write}
+
+\inferrule
+{Ξ ⊢ (Γ||arr ⇓ Δ||[a_1,…,a_n]) :_ρ \varid{MArray}~a, Σ}
+{Ξ ⊢ (Γ||\varid{freeze}~arr ⇓ Γ||\varid{Unrestricted}
   [a_1,…,a_n]) :_ρ \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
 
 %%%% /Arrays
