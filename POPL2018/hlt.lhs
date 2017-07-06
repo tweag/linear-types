@@ -2775,7 +2775,7 @@ other industrial projects.
   references must conform to a particular usage pattern which can be
   enforced with linear types. Global references like |StablePtr| can,
   on the other hand, be used unrestrictedly.
-  \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
+%  \rn{Are there specific examples in mind?  Mention the HaskellR effort?}
 
 \item[Destination-passing style]
   \Fref{sec:cursors} is an example of \textsc{api} requiring
