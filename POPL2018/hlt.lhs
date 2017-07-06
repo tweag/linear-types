@@ -589,8 +589,6 @@ this \textsc{api}  we can define |array| thus:
 array :: Int -> [(Int,a)] -> Array a
 array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
 \end{code}
-\simon{I have generalised the type of |newMArray| so it does not have
-to return an unrestricted value.  Is that right?}
 There are several things to note here:
 \begin{itemize}
 
@@ -869,7 +867,7 @@ able to declare data constructors with non-linear types, like this:
 \end{code}
 Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
 constructor |PLU|, with mixed linearity. \improvement{Explain here that
-non-linearity syntax is linear}
+non-gadt syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
 when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
