@@ -2802,7 +2802,7 @@ capabilities for safe, compiler-checked use, within pure code.
   %% extraction tools.
   This work has received funding from the European Commission
   through the SAGE project (grant agreement no. 671500).
-  We thank Manuel Chakravarty and Peter Thiemann for their valuable
+  We thank Manuel Chakravarty, Stephen Dolan and Peter Thiemann for their valuable
   feedback on early versions of this paper.
 \end{acks}
 
@@ -2818,17 +2818,6 @@ capabilities for safe, compiler-checked use, within pure code.
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
-
-
-\improvement{aspiwack: in the |newMArray| rule, I use an illegal form
-  of application. It is straightforward to put in in let-form as is
-  required by the Launchbury semantics, but it should be done. In the
-  |freeze| rule I do the same, but in the return type. Can I
-  reuse the variable carrying the array in the left-hand side
-  (currently omitted, see above) to avoid the complication of creating
-  a new variable? I think so.}
-\improvement{aspiwack: we at least need a |read| primitive on frozen
-  |Array|-s.}
 
 In accordance with our stated goals in \fref{sec:introduction}, we are
 interested in two key properties of our system: 1. that we can implement
@@ -2996,7 +2985,7 @@ The details of the ordinary evaluation relation are given in
     %%%% Arrays
 
     \inferrule
-    {Γ:n ⇓ Δ:i \\ (Δ, l :_1 \varid{MArray}~a = [a,…,a]) : f~l ⇓ Θ : \varid{Unrestricted}~x}
+    {Γ:n ⇓ Δ:i \\ (Δ, l :_1 \varid{MArray}~a = [a,…,a]) : \flet[1] x = l \fin f~x ⇓ Θ : \varid{Unrestricted}~x}
     {Γ : \varid{newMArray}~n~a~f ⇓ Θ : \varid{Unrestricted}~x}\text{newMArray}
 
     \inferrule{Γ:n⇓Δ:i \\ Δ:arr ⇓ (Θ,l:_1 \varid{MArray}~a = [a_1,…,a_i,…,a_n]):l}
@@ -3004,9 +2993,15 @@ The details of the ordinary evaluation relation are given in
       [a_1,…,a,…,a_n] : l}\text{write}
 
     \inferrule{Γ:arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]):l}
-    { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
-      \varid{Unrestricted}~l}\text{freeze}
+    { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n],
+      x :_ω \varid{Array}~a = l) :
+      \varid{Unrestricted}~x}\text{freeze}
 
+    \inferrule
+    {Γ : n ⇓ Δ : i \\ Δ:arr ⇓ (Θ,l :_1 \varid{Array}~a =
+      [a_1,…,a_i,…,a_n]) : l \\ (Θ,l :_1 \varid{Array}~a =
+      [a_1,…,a_i,…,a_n]) : a_i ⇓ Λ : z}
+    {Γ : \varid{read}~arr~n ⇓ Λ : z}
 
     %%%% /Arrays
   \end{mathpar}
@@ -3061,12 +3056,9 @@ The details of the ordinary evaluation relation are given in
 
 %%%%% Arrays
 
-    % \inferrule{Γ:arr ⇓ (Δ,l :_1 \varid{MArray}~a = [a_1,…,a_n]):l}
-    % { Γ : \varid{freeze}~arr ⇓ (Δ,l :_1 \varid{Array}~a = [a_1,…,a_n]) :
-    %   \varid{Unrestricted}~l}\text{freeze}
-
 \inferrule
-{Ξ ⊢ (Γ||n ⇓ Δ||i), \varid{Int}, (arr:_ρ \varid{MArray}~a, Σ) \\ Ξ ⊢ (Δ||f~[a,…,a]) ⇓ Θ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||n ⇓ Δ||i), \varid{Int}, (arr:_ρ \varid{MArray}~a, Σ) \\ Ξ ⊢
+  (Δ||\flet[1] x = [a,…,a] \fin f~x) ⇓ Θ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
 {Ξ ⊢ (Γ||\varid{newMArray}~n~a~f ⇓ Θ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
 
 \inferrule
@@ -3077,8 +3069,14 @@ The details of the ordinary evaluation relation are given in
 
 \inferrule
 {Ξ ⊢ (Γ||arr ⇓ Δ||[a_1,…,a_n]) :_ρ \varid{MArray}~a, Σ}
-{Ξ ⊢ (Γ||\varid{freeze}~arr ⇓ Γ||\varid{Unrestricted}
-  [a_1,…,a_n]) :_ρ \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
+{Ξ ⊢ (Γ||\varid{freeze}~arr ⇓ Δ,x :_1 \varid{Array a} = [a_1,…,a_n]||\varid{Unrestricted}~x
+  ) :_ρ \varid{Unrestricted} (\varid{Array}~a), Σ}\text{freeze}
+
+\inferrule
+{Ξ ⊢ (Γ || n ⇓ Δ || i) :_ρ \varid{Int},Σ \\ Ξ ⊢ (Δ||arr ⇓ Θ ||
+  [a_1,…,a_i,…,a_n])) :_ρ \varid{Array}~a,Σ \\ Ξ ⊢ (Θ || a_i ⇓ Λ || z)
+:_ρ A, Σ}
+{Ξ ⊢ (Γ || \varid{read}~arr~n ⇓ Λ || z) :_ρ a, Σ}
 
 %%%% /Arrays
   \end{mathpar}
