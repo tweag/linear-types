@@ -1425,9 +1425,8 @@ accounts for most of the modifications to existing code.
 As suggested in \fref{sec:typing-contexts}, the multiplicities are an
 output of the algorithm. In order to infer the multiplicities of
 variables in the branches of a |case| expression we need a way to join
-the output of the branch. In \calc{}, we can simply ``guess''\jp{infer?} the
-right value, in the implementation we use a supremum operation on
-multiplicities where $1∨0 = ω$ (where $0$ stands for a variable absent
+the output of the branch. We use a supremum operation on
+multiplicities where $1∨0 = ω$ ($0$ stands for a variable absent
 in a branch).
 
 Implementing this branch affects 1152 lines of \textsc{ghc} (for
