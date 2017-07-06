@@ -2755,9 +2755,9 @@ other industrial projects.
   projects, where they produce bugs which are painful to track down. A
   linear type discipline would prevent such bugs from happening.
 
-  Variations on this theme occur whenever effects are treated as
-  data. Another example is composing file-descriptors with
-  \texttt{epoll}\improvement{what's that? citation?}.
+  %% Variations on this theme occur whenever effects are treated as
+  %% data. Another example is composing file-descriptors with
+  %% \texttt{epoll}\improvement{what's that? citation?}.
 
 \item[Inter-language memory management]
   Complex projects with large teams invariably involve a mix of
