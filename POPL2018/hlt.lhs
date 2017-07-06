@@ -374,11 +374,13 @@ enforcing access protocols for external \textsc{api}s, such as files,
 sockets, channels and other resources.  Our particular contributions
 are these:
 \begin{itemize}
-\item Our extension to Haskell, dubbed \HaskeLL, is
-      \emph{non-invasive}.  Existing programs continue to typecheck,
+\item We describe a new extension to Haskell, dubbed \HaskeLL, using
+      two extended examples (\fref{sec:consumed}-\fref{sec:io-protocols}).
+      The extension is \emph{non-invasive}     
+      Existing programs continue to typecheck,
       and existing data types can be used as-is even in linear parts
       of the program.
-\item The key to this non-invasiveness is that, in contrast to most other
+      The key to this non-invasiveness is that, in contrast to most other
       approaches, we focus on \emph{linarity on the function arrow}
       rather than \emph{linearity in the kinds} (\fref{sec:lin-arrow}).
 \item Every function arrow can be declared linear, including those of
