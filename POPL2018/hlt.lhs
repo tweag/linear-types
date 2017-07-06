@@ -1409,8 +1409,9 @@ lead us to a better assessment of the costs/benefit trade-off here.
 \label{sec:implementation}
 \label{sec:impl}
 
-We implement \HaskeLL{} as a branch of the leading Haskell compiler,
-\textsc{ghc}, version 8.2.  This branch only modifies type inference and
+We implement \HaskeLL{} on top of the leading Haskell compiler,
+\textsc{ghc}, version 8.2\footnote{github URL suppressed for anonymous review}.
+We modify type inference and
 type-checking in the compiler, neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
 %
@@ -1435,7 +1436,10 @@ the output of the branch. We use a supremum operation on
 multiplicities where $1∨0 = ω$ ($0$ stands for a variable absent
 in a branch).
 
-Implementing this branch\manuel{which branch? link? JP: Linguistically ``this branch'' refers to the case branch of the previous parag.} affects 1152 lines of \textsc{ghc} (for
+Implementing \HaskeLL{}
+%% \manuel{which branch? link? JP: Linguistically ``this branch'' refers to the
+%%   case branch of the previous parag.}
+affects 1152 lines of \textsc{ghc} (for
 comparison the parts of the compiler that were affected by \HaskeLL{}
 total about 100000 lines of code), including 444 net extra lines. A new
 file responsible for multiplicity operations as well the files
