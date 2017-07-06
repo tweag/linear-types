@@ -598,41 +598,44 @@ array size pairs = newMArray size (\ma -> freeze (foldl write ma pairs))
 There are several things to note here:
 \begin{itemize}
 
-\item We still disinguish the type of mutable arrays |MArray| from that of
-immutable arrays |Array|.
+\item In our system, \emph{linearity is a property of function arrows,
+    not of types} (\fref{sec:lin-arrow}). The way to say that results
+  can be freely shared is to use |Unrestricted|, as in the type of
+  |freeze|. Yet we still disinguish the type of mutable arrays
+  |MArray| from that of immutable arrays |Array|.\jp{why?}
 
-\item The type of |newMArray| ensures that |MArray| can indeed be
-  implemented as mutable arrays.  Consider an invokation |newMArray
-  k|, which allocates an array |ma|, and return |k ma|. Why can |ma|
-  be implemented as a single mutable array? First, the function |k|
-  has the type |MArray a ⊸ Unrestricted b|, which means that |k| is
-  guaranteed to consume |ma| exactly once. Second, |k| can return any
-  type |b| it wishes, but the value that it constructs must be not be
-  a linear value. In particular, it cannot return the |ma|, nor any
-  pointer to it. (This is what the |Unrestricted| type constructor
-  means -- it is however not a builtin, see \fref{sec:data-types}.)
-  In consequence, however many times the result of |newMArray k| is
-  used, |newMArray| can allocate a single array.
+\item The function |newMArray| allocates a fresh, mutable array of the
+  specified size, and passes it to the function supplied as the second
+  argument to |newMArray|, as a linear value |ma|.
 
-  Finally, in the rest of the {\sc api}, any function which consumes an
-  |MArray a| returns at most a single pointer to it.
+  That function has the linear type |MArray a ⊸ Unrestricted b|. This
+  has two consequences.  First, it is guaranteed to consume |ma|
+  exactly once. In particular it cannot pass |ma| to several
+  functions. Second, it can return a value of any type |Unrestricted
+  b| it wishes, but the payload of type |b| must not be linear (by
+  definition of |Unrestricted|, see \fref{sec:data-types}). As a
+  consequence, in order to access that payload, |newMArray| must force
+  the execution of all the array computations until all linear objects
+  (including |ma|) are consumed. Consequently no pointer to |ma| can
+  escape into the control of the GC.
 
-\item Since |ma| is a linear array, we cannot pass it directly to multiple calls
-  to |write|.  Instead, each call to |write| returns a (logically) new array, so
-  that the array is single-threaded, by |foldl|, through the sequence of writes.
+\item Since |ma| is linear, we cannot pass it directly to multiple
+  calls to |write|.  Instead, each call to |write| returns a
+  (logically) new array, so that the array is single-threaded, by
+  |foldl|, through the sequence of writes.
 
-\item The call to |freeze| consumes the mutable array and produces an immutable one.
-Because it consumes its input, there is no danger of the same mutable array being
-subsequently written to, eliminating the problem with |unsafeFreeze|.
+\item The call to |freeze| consumes the mutable array and produces an
+  immutable one, which can be freely shared.  Because it consumes its
+  input, there is no danger of the same mutable array being
+  subsequently written to, eliminating the problem with
+  |unsafeFreeze|.
 
-\item The result of |freeze| is an immutable array that can be freely shared.
-But in our system, \emph{linearity is a property of function arrows,
-not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
-result of |freeze| can be freely shared (that is what the |Unrestricted|
-type does).
+\item Finally, in the {\sc api}, no function which consumes an |MArray a|
+  returns more than a single pointer to it. (Otherwise we would have
+  concurrent accesses to the array, and reference-transparency would
+  be violated.)
 
-\item Above, |foldl| has the type 
-|(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|,
+\item Above, |foldl| has the type |(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|,
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
@@ -641,7 +644,11 @@ an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
 
+
 \end{itemize}
+
+
+
 The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation that we mentioned earlier.
