@@ -559,7 +559,7 @@ has a proof obligation here that the compiler cannot check''.
 The other unsatisfactory thing about the monadic approach to array
 construction is that it is over-sequential. Suppose you had a pair of
 mutable arrays, with some updates to perform to each; these updates could
-be done in parallel, but the |ST| monad would serialise them.
+be done in {\em parallel}, but the |ST| monad would serialise them.
 
 
 Linear types allow a more secure and less sequential interface.  \HaskeLL{}
@@ -655,25 +655,26 @@ The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation we mentioned earlier.
 %
-In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
-for parallel updates to |MArray|s; we don't need threads.  These work well with
-linear functions for splitting and joining array slices:
+\if{0}
+    In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
+    for parallel updates to |MArray|s; we don't need threads.  These work well with
+    linear functions for splitting and joining array slices:
 
-\noindent
-%\begin{center}
-\begin{minipage}{0.55 \textwidth}  
-\hspace{-3mm}
-\begin{code}
-split :: Int -> MArray a ⊸ (MArray a, MArray a)
-\end{code}
-\end{minipage}%
-\begin{minipage}{0.45 \textwidth}
-\begin{code}
-join  :: (MArray a, MArray a) ⊸ MArray a  
-\end{code}
-\end{minipage}
-%\end{center}
-
+    \noindent
+    %\begin{center}
+    \begin{minipage}{0.55 \textwidth}  
+    \hspace{-3mm}
+    \begin{code}
+    split :: Int -> MArray a ⊸ (MArray a, MArray a)
+    \end{code}
+    \end{minipage}%
+    \begin{minipage}{0.45 \textwidth}
+    \begin{code}
+    join  :: (MArray a, MArray a) ⊸ MArray a  
+    \end{code}
+    \end{minipage}
+    %\end{center}
+\fi{}
 
 Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the
 other major benefit
@@ -727,9 +728,8 @@ forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
 Using it we can write a simple file-handling program, |firstLine|, \Red{shown here}.
-
-\begin{wrapfigure}[7]{r}[0pt]{6.0cm} % lines, placement, overhang, width
-\vspace{-5mm}
+%
+%\begin{wrapfigure}[7]{r}[0pt]{6.0cm} \vspace{-5mm}
 \begin{code}
 firstLine :: FilePath -> IOL ω Bytestring
 firstLine fp =
@@ -738,7 +738,7 @@ firstLine fp =
       ; close f
       ; return bs }
 \end{code}
-\end{wrapfigure}
+%\end{wrapfigure}
 %
 Notice several things
 \begin{itemize}
