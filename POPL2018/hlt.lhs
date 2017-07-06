@@ -733,12 +733,11 @@ and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often very useful do
-to so, as we will see in \fref{sec:cursors} and \fref{sec:sockets}, because we can use a
-phantom type to encode the state of the resource (which we can think
-of as a
-type-level state\manuel{What is that?}, or {\em typestate}~\cite{strom_typestate_1983}), \eg, with separate
-types for the |File| before vs after an operation.
-
+to so, because we can use types
+to witness the state of the resource, \eg, with separate
+types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
+% (which we can think of as a type-level state, or {\em typestate}~\cite{strom_typestate_1983})
+% JP: who cares?
 \subsection{Linear data types}
 \label{sec:linear-constructors}
 \label{sec:data-types}
@@ -1035,7 +1034,6 @@ way we make precise much of the informal discussion above.
 
 
 \subsection{Syntax}
-% \newcommand{\pip}{\mathmakebox[0pt][r]{||~}\phantom{::=}}
 \newcommand{\pip}{\kern 1.18em || }
 \label{sec:syntax}
 
