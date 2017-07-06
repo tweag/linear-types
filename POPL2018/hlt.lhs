@@ -1507,9 +1507,9 @@ serialised data at a fine grain without copying it.
 data Tree = Leaf Int | Branch Tree Tree
 pack    :: Tree ⊸ Packed [Tree]
 unpack  :: Packed [Tree] ⊸ Tree
-caseTree ::  Packed (Tree:r) ⊸
-             (Packed (Int:r) -> _ p a) -> 
-             (Packed (Tree:Tree:r) -> _ p a) -> _ p a
+caseTree ::  Packed (Tree:r) -> _ p
+             (Packed (Int:r) -> _ p a) ⊸
+             (Packed (Tree:Tree:r) -> _ p a) ⊸ a
 \end{code}
 %read :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{wrapfigure}
