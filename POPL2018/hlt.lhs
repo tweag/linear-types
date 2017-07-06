@@ -593,9 +593,9 @@ size, and passes it to the function supplied as the second argument to |newMArra
 lollipop arrow says that the function guarantees to consume the mutable array
 exactly once; it will neither discard it nor use it twice.
 %We will define ``consume'' more precisely in \fref{sec:consumed}.
-\item Since |ma| is a linear array, we cannot pass it to many calls to
-|write|.  Instead, each call to |write| returns a new array, so that the
-array is single-threaded, by |foldl|, through the sequence of writes.
+\item Since |ma| is a linear array, we cannot pass it directly to multilpe calls
+  to |write|.  Instead, each call to |write| returns a (logically) new array, so
+  that the array is single-threaded, by |foldl|, through the sequence of writes.
 \item The call to |freeze| consumes the mutable array and produces an immutable one.
 Because it consumes its input, there is no danger of the same mutable array being
 subsequently written to, eliminating the problem with |unsafeFreeze|.
@@ -605,13 +605,13 @@ not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
 result of |freeze| can be freely shared.  That is what the |Unrestricted|
 type does.  However, |Unrestricted| is just a library type; it does not have to
 be built-in (\fref{sec:data-types}).
-\item The function |foldl| has the type 
-|(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|
+\item Above, |foldl| has the type 
+|(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|,
 which expresses that it consumes its second argument linearly
 (in this case the mutable array), while the function it is given as
 its first argument (in this case |write|) must be linear.
-As we shall see in \fref{sec:lin-poly} this is not new |foldl|, but
-just an instance of a more general, multiplicity-polymorphic version of
+As we shall see in \fref{sec:lin-poly} this is not a new |foldl|, but
+an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
 \end{itemize}
@@ -1304,7 +1304,7 @@ These statements are formalised and proven in \fref{appendix:dynamics}.
 
 \subsection{Design choices \& trade-offs}
 Let us review the design space allowed by \calc{}, the points in the space that
-we chose, and the generalizations that we have left open.
+we chose, and the generalisations that we have left open.
 
 \paragraph{Case rule}
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
@@ -1731,7 +1731,7 @@ For example, we can write a |Leaf| and a |Branch| to the same pointer in an
 interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
 an integer in bytes 1-9, while the branch will place another tag at byte 1.
 %
-%% \Red{If we define a type-safe serialization interface as one where every read at a
+%% \Red{If we define a type-safe serialisation interface as one where every read at a
 %% type returns a whole value written at the same type, then this is a violation.}
 We can receive a corrupted 8-byte integer, clobbered by a tag from an
 interleaved ``alternate future''.
@@ -2577,7 +2577,7 @@ free z
 
 \section{Future work}
 
-\subsection{Controlling program optimizations}
+\subsection{Controlling program optimisations}
 \label{sec:fusion}
 Inlining is a cornerstone of program optimisation, exposing
 opportunities for many program transformations. Yet not every function can
