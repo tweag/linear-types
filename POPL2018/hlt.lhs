@@ -1421,7 +1421,7 @@ accounts for most of the modifications to existing code.
 As suggested in \fref{sec:typing-contexts}, the multiplicities are an
 output of the algorithm. In order to infer the multiplicities of
 variables in the branches of a |case| expression we need a way to join
-the output of the branch. In \calc{}, we can simply ``guess'' the
+the output of the branch. In \calc{}, we can simply ``guess''\jp{infer?} the
 right value, in the implementation we use a supremum operation on
 multiplicities where $1∨0 = ω$ (where $0$ stands for a variable absent
 in a branch).
@@ -2247,7 +2247,7 @@ kinds'':
   levity~\cite{eisenberg_levity_2017}.
 
 
-\item Compatibility with dependent types.
+\item 
   % It is easy to extend our system to any set of
   % ground multiplicities with a ring structure
   % (\fref{sec:extending-multiplicities}).
@@ -2256,8 +2256,8 @@ kinds'':
   % support. Indeed, affine types require changes in the subkinding
   % system, which in turns may impact unification.
   % JP: I do not think that this is true with the |Type p| view.
-  Furthermore, linearity on the arrow meshes well with dependent
-  types~\cite{mcbride_rig_2016}.  Consider a typical predicate over
+  Linearity on the arrow meshes better with dependent
+  types (see \fref{sec:extending-multiplicities}).  Indeed, consider a typical predicate over
   files (|P : File → ∗|). It will need to mention its argument several
   times to relate the file at the start and at the start of a sequence
   of operations. While this is not a problem in our system, the
