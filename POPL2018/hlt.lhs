@@ -732,7 +732,7 @@ and return a new one; here |readLine| consumes the |File| and produces a new one
 and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
-operations with the |IO| monad. But in fact it is often very useful do
+operations with the |IO| monad. But in fact it is often useful do
 to so, because we can use types
 to witness the state of the resource, \eg, with separate
 types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
