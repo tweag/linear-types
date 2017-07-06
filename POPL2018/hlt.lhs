@@ -2437,16 +2437,20 @@ clearer path to implementation in \textsc{ghc}.
 % investing extra effort to enforce invariants or perform low-level
 % systems programming, with control over resources and latency, is still possible.
 
-Rust depends on a feature called \emph{borrowing} to make programs
-more palatable: where \texttt{T} is the type of some owned value,
-\texttt{\&T} is the type of a borrowed value of type
-\texttt{T}. Borrowed value differ from owned values in that they can
-be used in an unrestricted fashion, albeit in a \emph{delimited
-  life-time}.
+In \HaskeLL{} we need to thread linear variables throughout the
+program (consider using several functions of type |T ⊸ T|).  Even
+though this burdend could be alleviated using syntactic sugar, Rust uses
+instead a type-system feature for this purpose: \emph{borrowing}.
 
-This avoids threading variables throughout the program, as function to
-which we would give the type |T ⊸ T| can often have type \texttt{\&T
-  -> ()} in Rust. This does not come without a cost, however: if a
+% If \texttt{T} is the type of some owned value, \texttt{\&T} is the
+% type of a borrowed value of type \texttt{T}.
+
+% JP: This notion is not used later.
+Borrowed values differ from owned values in that they can
+be used in an unrestricted fashion, albeit in a \emph{delimited
+  life-time}\jp{is this time dynamic or static? If static it should be `scope'}.
+
+Borrowing does not come without a cost, however: if a
 function \texttt{f} borrows a value \texttt{v} of type \texttt{T},
 then the caller of the function \emph{must} retain \texttt{v} alive
 until \texttt{f} has returned; the consequence is that Rust cannot, in
@@ -2454,18 +2458,16 @@ general, perform tail-call elimination, crucial to the operation
 behaviour of many functional programs, as some resources must be
 released \emph{after} \texttt{f} has returned.
 
-The reason why Rust programs depend so much on borrowing is that the
-default is that of owned types. \HaskeLL{} aims to hit a different
+The reason that Rust programs depend so much on borrowing is that the
+default is that of owned types\jp{can't parse}. \HaskeLL{} aims to hit a different
 point in the design space where regular non-linear expressions are the
 norm, yet gracefully scaling up investing extra effort to enforce
-linearity invariants. Therefore, threading linear variable, being much
-less common, will not be as painful.
-
-Nevertheless, we have encountered cases where we borrowing, that is
-limiting life-time without imposing linear use, seem to be the right
-notion. Fortunately the notion of multiplicity is extensible, and we
-have devised a provisional approach which, we expect, allows such
-pattern to be expressed. See \fref{sec:extending-multiplicities}.
+linearity invariants is possible.
+% Therefore, threading linear variable, being much less common, will not be as painful.
+% JP: but the reader we don't care; the focus here is on the linear
+% bits. Let not make excuses.
+Nevertheless, we discuss in \fref{sec:extending-multiplicities} how to
+extend \HaskeLL{} with borrowing.
 
 % aspiwack: also not too relevant in the current state of the paper
 %
