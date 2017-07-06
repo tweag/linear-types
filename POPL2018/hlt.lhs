@@ -2710,23 +2710,21 @@ noticed other potential applications of linearity in a variety of
 other industrial projects.
 
 \begin{description}
-\item[Spurious effect duplication]
-  This is a problem that shows up, for instance, in streaming
-  libraries: a stream perform effects so, as data, has suspended
-  effects. Stream manipulations, such as |fmap :: (a->b) -> Stream a
-  -> Stream b| hence duplicate this effect. In many case this
-  duplication can yield to contract violation if both the |Stream a|
-  and |Stream b| are used, \citet[Section
-  2.2]{lippmeier_parallel_2016} demonstrate one particular such
-  violation.
 
-  We have encountered such mistaken duplications in industrial
-  projects, where they produce bugs which are painful to track down. A
-  linear type discipline would prevent such bugs from happening.
+\item[Interface to communication channels] Many real-world
+  applications interface with communications channels (including
+  sockets, but also file logs, etc.).  It is so tempting for
+  functional programmers to give a non-monadic interface to such
+  channels that programmers give in (see \eg the \texttt{streaming}
+  library for Haskell or \cite{lippmeier_parallel_2016}). Thus an
+  external channel may be accessible using a value of type |Stream
+  a|. Unfortunately, when maintaining complex programs it is easy to
+  unknowingly pass two copies of a stream to different functions which
+  compete for access to the channel.  We have encountered such
+  mistaken duplications in industrial projects, where they produce
+  bugs which are painful to track down. A linear type discipline would
+  prevent such bugs from happening.
 
-  %% Variations on this theme occur whenever effects are treated as
-  %% data. Another example is composing file-descriptors with
-  %% \texttt{epoll}\improvement{what's that? citation?}.
 
 \item[Programming foreign heaps] Complex projects with large teams
   invariably involve a mix of programming languages. Reusing legacy
@@ -2755,15 +2753,14 @@ other industrial projects.
   which enables machines in high-performance clusters to copy data
   from the address space in one process to that of a remote process
   directly, bypassing the kernel and even the
-  \textsc{cpu}, thereby avoiding many copies in the process.
+  \textsc{cpu}, thereby avoiding any unnedded copy in the process.
 
-  In \textsc{rdma} one computer allocates a buffer |b|, and other
-  computers write to |b|. When all write operations are completed, we treat |b|
-  as immutable. It is more composable not to allocate |b| as part of
-  the \textsc{rdma} primitives. In other words we want to expose the
-  \textsc{rdma} interface as a destination-passing interface, which is
-  best expressed with linear types. \unsure{Consider removing this
-    section, for lack of space. MB}
+  One could treat a remote memory location as a low-level resource, to
+  be accessed using an imperative {\sc api}. Using linear types, one
+  can instead treat it as a high-level value which can be written to
+  directly (but exactly once). Using linear types the compiler can
+  ensure that, as soon as the writing operation is complete, the
+  destination computer is notified.
 \end{description}
 
 
