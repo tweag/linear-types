@@ -3180,9 +3180,15 @@ when annotated states are well-typed.
   $$
   Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
   $$
-  Where $\flet Γ \fin e$ stands for the grafting of $Γ$ as a block of
-  bindings\improvement{needs more effort in our restricted $\flet[π]$ calculus}, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$
-  for $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
+  Where $\flet Γ \fin e$ stands for the use of $Γ$ as a sequence of
+  let-bindings with the appropriate mulitplicity\footnote{We skip over
+    the case of mutually recursive bindings in our presentation. But
+    we can easily extend the formalism with then. Recursive bindings
+    must be of multiplicity $ω$, and mutually recursive definition are
+    part of a single $\flet$ block. When defining $\flet Γ$ we need to
+    pull a mutually recursive block as a single $\flet$ block as
+    well.}, $\termsOf{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
+  $(e_1~{}_{ρ_1}\!, (…, (e_n~{}_{ρ_n},())))$, and
   $\multiplicatedTypes{e_1 :_{ρ_1} A_1, … , e_n :_{ρ_n} A_n}$ for
   $A_1~{}_{ρ_1}\!⊗(…(A_n~{}_{ρ_n}\!⊗()))$.
 \end{definition}
