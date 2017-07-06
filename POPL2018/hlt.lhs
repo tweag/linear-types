@@ -2733,7 +2733,7 @@ other industrial projects.
 
   Variations on this theme occur whenever effects are treated as
   data. Another example is composing file-descriptors with
-  \texttt{epoll}.
+  \texttt{epoll}\improvement{what's that? citation?}.
 
 \item[Inter-language memory management]
   Complex projects with large teams invariably involve a mix of
