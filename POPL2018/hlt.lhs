@@ -140,7 +140,8 @@
     \newcommand{\manuel}[1]{\todo[linecolor=purple,bordercolor=purple,backgroundcolor=blue!10]{Manuel: #1}{}}
 
 \else
-    \newcommand{\Red}[1]{#1}
+%    \newcommand{\Red}[1]{#1}
+    \newcommand{\Red}[1]{{\color{red}{#1}}}
     \newcommand{\newaudit}[1]{#1}
     \newcommand{\note}[1]{}
     \newenvironment{alt}{}{}
@@ -822,7 +823,7 @@ The key point here is that \emph{the same pair constructor works in both functio
 we do not need a special non-linear pair}.
 
 % \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
-\begin{wrapfigure}[8]{r}[0pt]{4.5cm} \vspace{-6mm} 
+\begin{wrapfigure}[8]{r}[0pt]{4.5cm} \vspace{-8mm} 
 \begin{code}
 data [a] where
   []   :: [a]
@@ -1487,7 +1488,7 @@ existing implementation: despite \textsc{ghc} being 25 years old, we
 implement a first version of \HaskeLL{} with reasonable effort.
 
 % \section{Applications}
-\section{Case Studies}
+\section{Evaluation and Case Studies}
 \label{sec:evaluation}
 \label{sec:applications}
 
@@ -1496,10 +1497,19 @@ While many linear type systems have been proposed,
 %
 a {\em retrofitted} linear type system for a mature language like Haskell offers
 the opportunity to implement non-trivial applications mixing linear and
-non-linear code, I/O, etc., and observe how linear libraries
-interact with the optimiser of a sophisticated compiler.
+non-linear code, I/O, etc., and observe how linear code interacts with existing
+libraries and the optimiser of a sophisticated compiler.
+
+Our first method for evaluating the implementation is to simply compile a large
+existing code base together with the following changes: (1) all data constructors are
+linear by default, as implied by the new type system; and (2) we update standard
+list functions to have linear types (|++|, |concat|, |uncons|).
 %
-In this section, we describe case-studies implementated with the modified
+Under these conditions, we verified that the base GHC libraries and the nofib
+benchmark suites compile successfully: 195K lines of Haskell, providing
+preliminary evidence of backwards compatibility.
+
+In the remainder of section, we describe case-studies implementated with the modified
 \ghc  of \fref{sec:implementation}.
 %
 In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
