@@ -746,7 +746,7 @@ constructor such as the pairing constructor |(,)|?  Here are two possibilities:
 \end{code}
 \vspace{-4mm}
 \end{center}
-Using the definition in \fref{sec:consumed}, the former is clearly the right
+Using the definition in \fref{sec:consumed}, the former is clearly the correct
 choice: if the result of |(,) e1 e2| is consumed exactly once,
 then (by \fref{def:consume}),
 |e1| and |e2| are each consumed exactly once; and hence |(,)| is linear it its
