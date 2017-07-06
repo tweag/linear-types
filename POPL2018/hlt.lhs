@@ -1383,7 +1383,7 @@ known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}).
 %
-In \HaskeLL{} on the other hand has limited support for subtyping:
+\HaskeLL{} on the other hand has limited support for subtyping:
 calls like |(g f)| are well typed, and are elaborated to
 $η$-expansions in \calc{}.
 
@@ -2454,7 +2454,8 @@ instead a type-system feature for this purpose: \emph{borrowing}.
 % JP: This notion is not used later.
 Borrowed values differ from owned values in that they can
 be used in an unrestricted fashion, albeit in a \emph{delimited
-  life-time}\jp{is this time dynamic or static? If static it should be `scope'}.
+  life-time}\jp{is this time dynamic or static? If static it should be
+  `scope' --- aspiwack: the lifetime is statically scoped in this case}.
 
 Borrowing does not come without a cost, however: if a
 function \texttt{f} borrows a value \texttt{v} of type \texttt{T},
