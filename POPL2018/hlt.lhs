@@ -601,18 +601,26 @@ There are several things to note here:
 \item We still disinguish the type of mutable arrays |MArray| from that of
 immutable arrays |Array|.
 
-\item The function |newMArray| allocates a fresh, mutable array of the specified
-size, and passes it to the function supplied as the second argument to |newMArray|.
+\item The type of |newMArray| ensures that |MArray| can indeed be
+  implemented as mutable arrays.  Consider an invokation |newMArray
+  k|, which allocates an array |ma|, and return |k ma|. Why can |ma|
+  be implemented as a single mutable array? First, the function |k|
+  has the type |MArray a ⊸ Unrestricted b|, which means that |k| is
+  guaranteed to consume |ma| exactly once. Second, |k| can return any
+  type |b| it wishes, but the value that it constructs must be not be
+  a linear value. In particular, it cannot return the |ma|, nor any
+  pointer to it. (This is what the |Unrestricted| type constructor
+  means -- it is however not a builtin, see \fref{sec:data-types}.)
+  In consequence, however many times the result of |newMArray k| is
+  used, |newMArray| can allocate a single array.
 
-\item That function has the linear type |(MArray a ⊸ Unrestricted b)|\manuel{We must explain Unrestricted before this point.}; the
-lollipop arrow says it guarantees to consume the array
-exactly once; it will neither discard it nor use it twice.
-%We will define ``consume'' more precisely in \fref{sec:consumed}.
+  Finally, in the rest of the {\sc api}, any function which consumes an
+  |MArray a| returns at most a single pointer to it.
 
 \item Since |ma| is a linear array, we cannot pass it directly to multiple calls
   to |write|.  Instead, each call to |write| returns a (logically) new array, so
   that the array is single-threaded, by |foldl|, through the sequence of writes.
-  
+
 \item The call to |freeze| consumes the mutable array and produces an immutable one.
 Because it consumes its input, there is no danger of the same mutable array being
 subsequently written to, eliminating the problem with |unsafeFreeze|.
@@ -620,15 +628,8 @@ subsequently written to, eliminating the problem with |unsafeFreeze|.
 \item The result of |freeze| is an immutable array that can be freely shared.
 But in our system, \emph{linearity is a property of function arrows,
 not of types} (\fref{sec:lin-arrow}), so we need some way to say that the
-result of |freeze| can be freely shared.  That is what the |Unrestricted|
-type does.  However, |Unrestricted| is just a library type; it does not have to
-be built-in (\fref{sec:data-types}).
-
-\item \newaudit{Only {\em one} pointer exclusively reaches an |MArray|; this is not a primitive
-  notion, but an emergent property of a carefully designed \textsc{api}.
-  In particular, |newMArray| provides {\em only} linear |MArray| array bindings,
-  % forces the computation to use the |MArray| and
-  which {\em cannot} escape inside |Unrestricted| results.}
+result of |freeze| can be freely shared (that is what the |Unrestricted|
+type does).
 
 \item Above, |foldl| has the type 
 |(a ⊸ b ⊸ a) -> a ⊸ [b] ⊸ a|,
