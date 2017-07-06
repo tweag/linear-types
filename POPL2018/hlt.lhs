@@ -3103,13 +3103,13 @@ The details of the ordinary evaluation relation are given in
     %   \varid{Unrestricted}~l}\text{freeze}
 
 \inferrule
-{Ξ ⊢ (Γ||n ⇓ Δ||i), \varid{Int}, Σ \\ Ξ ⊢ (Δ||f~[a,…,a]) ⇓ Θ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
+{Ξ ⊢ (Γ||n ⇓ Δ||i), \varid{Int}, (arr:_ρ \varid{MArray}~a, Σ) \\ Ξ ⊢ (Δ||f~[a,…,a]) ⇓ Θ||\varid{Unrestricted}~x) :_1 \varid{Unrestricted}~B, Σ}
 {Ξ ⊢ (Γ||\varid{newMArray}~n~a~f ⇓ Θ||\varid{Unrestricted}~x) :_ρ \varid{Unrestricted}~B, Σ}\text{newMArray}
 
 \inferrule
-{Ξ ⊢ (Γ||n⇓Δ||i) :_ρ \varid{Int}, Σ \\ Ξ ⊢ (Δ||arr⇓Θ||[a_1,…,a_i,…,a_n]) :_ρ
+{Ξ ⊢ (Γ||n⇓Δ||i) :_ρ \varid{Int}, (arr:_ρ \varid{MArray}~a, Σ) \\ Ξ ⊢ (Δ||arr⇓Θ||[a_1,…,a_i,…,a_n]) :_ρ
   \varid{MArray}~a, Σ }
-{Ξ ⊢ (Γ||\varid{write}~x~i~a
+{Ξ ⊢ (Γ||\varid{write}~arr~n~a
   ⇓ Γ||[a_1,…,a,…,a_n]) :_ρ \varid{MArray}~a, Σ}\text{write}
 
 \inferrule
