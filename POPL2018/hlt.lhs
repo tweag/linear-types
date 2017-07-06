@@ -655,9 +655,9 @@ The |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation we mentioned earlier.
 %
-In fact, {\em futures} are sufficient for parallel updates to |MArray|s; we
-don't need threads.  These work well together with linear functions for
-splitting and recombining array slices:
+In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
+for parallel updates to |MArray|s; we don't need threads.  These work well with
+linear functions for splitting and joining array slices:
 
 \noindent
 %\begin{center}
@@ -675,7 +675,8 @@ join  :: (MArray a, MArray a) ⊸ MArray a
 %\end{center}
 
 
-Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the main gain
+Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the
+other major benefit
 is in shrinking the trusted code base, because more library code (and it
 can be particularly gnarly code) is statically typechecked.  Clients who
 use only {\em immutable} arrays do not see the inner workings of the library, and will
