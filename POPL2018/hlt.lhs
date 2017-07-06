@@ -3285,8 +3285,6 @@ those of the denotational evaluation which witnesses the bisimulation.
   \end{itemize}
 \end{definition}
 
-\improvement{A sentence or two on each of the lemmas and theorems below}
-
 \begin{lemma}[Safety]\label{lem:actual_type_safety}
   The denotation assignment relation defines a simulation of the
   ordinary evaluation by the denotational evaluation, both in the
