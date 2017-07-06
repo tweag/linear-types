@@ -2470,83 +2470,40 @@ another, linearly, with responsibility for deallocation transferred
 along.
 
 
-\paragraph{Idris's dependent index monad}
+\paragraph{Idris's dependent indexed monad}
 %
-Essentially this is a variant of regions.
-The idea: all linear objects go into the memory of a monad. The monad is indexed by the types of those objects. The bad: everything is in a monad again. Even for natually monadic things (sockets), the error messages something to stomach.  }
-Idris proposes an alternative way to make sockets safer: instead of
-using liear types, use an indexed monad to enforce linearity. Idris
-introduces a generic way to add typestate on top of a monad, the
-|STrans| indexed monad transformer\footnote{See \eg
-  \url{http://docs.idris-lang.org/en/latest/st/index.html}}. With
-|STrans| you make sockets part of the monad's state. So we could
-give the following type to bind:
-\begin{code}
-  bind :: SocketAddress -> STrans IO Unbound Bound
-\end{code}
-But that would not do: we may need several sockets, or other
-resources. So |STrans| takes a list of resource states addressed by a
-label. The type of |bind| must then express that the socket belongs to
-the initial state, and return a new state where the state of the
-socket has been changed. This is quite tedious to express, so Idris
-makes good use of its dependent types and defines a new transformer
-|ST| which takes common actions and transforms them into |STrans|
-conditions. So the type of |bind| is:
+To go beyond simple regions, Idris introduces  a generic way to add typestate on top of a monad, the
+|ST| indexed monad transformer\footnote{See \eg
+  \url{http://docs.idris-lang.org/en/latest/st/index.html}. Where you
+  will also discover that |ST| is actually defined in terms of a more
+  primitive |STrans|}. The basic
+idea is that everything which must be single-threaded~--~and that we
+would track with linearity~--~become part of the state of the
+monad. For instance, coming back to the sockets of \fref{sec:sockets},
+the type of |bind| would be as follows:
 \begin{code}
   bind :: (sock :: Var) -> SocketAddress -> ST IO () [sock ::: Socket Unbound :-> Socket Bound]
 \end{code}
+Where |sock| is a reference into the monads's state, and |Socket Unbound| is
+the type of |sock| before |bind|, and |Socket Bound|, the type of
+|sock| after |bind|.
 
-Could we do the same in Haskell today without dependent types? It is probably
-achievable, but painful (the same problem encountered at the end of
-\fref{sec:st-cursors}).
-%
-Haskell's type-level programming capabilities are
-expressive enough to reason on type-level sets. And there is a notion
-of labels that we could use, as singleton types, instead of the |Var|
-type. This is not obvious though, and the error message would be
-uninformative.
-%
-\improvement{aspiwack: I assume it would be quite a bit of a hassle to
-use such |ST| functions in higher order functions, but I'm not sure
-how to phrase that as of today}
-
-\paragraph{Catching errors}
-%
-If we were to try and implement typestate with indexed monad we
-would run into a further complication: exception management. Indeed, |bind|
-may fail (typically because we are trying to bind a port which is
-attached to another socket). So far we have simply assumed that
-failures of socket functions to apply result in catastrophic failure
-which crashes the program (or at least the section of the
-program). However, it is often preferable to handle errors in a
-fine-grained fashion. For this purpose the type of Idris's |bind|
-above, is still not the right one, instead Idris defines:
+Idris uses its dependent types to associate a state to the value of
+its first argument. Dependent types are put to even greater use for
+error management where the state of the socket depends on whether
+|bind| succeeded or not:
 \begin{code}
+  -- In Idris, |bind| uses a type-level function (|or|) to handle errors
   bind ::  (sock :: Var) -> SocketAddress ->
            ST IO (Either () ()) [sock ::: Sock Unbound :-> (Sock Bound `or` Sock Unbound)]
-\end{code}
-Indeed, the return-state of |ST| is a function of the return value of
-|ST|, this uses dependent type in an essential way. This is not
-something Haskell is equipped to handle.\improvement{aspiwack: it is not
-  entirely impossible though, using a variant of |Either| which is a
-  \textsc{gadt} and matching on the phantom type using a type family
-  |or|. It's a tad rigid but feasible. It would quite a large pile of
-  hacks though, I understand why no one does that}
-
-With the linear \textsc{api}, on the other hand, we define:
-\begin{code}
+  -- In \HaskeLL{}, by contrast, the typestate is part of the return type
   bind :: Socket Unbound ⊸ SocketAddress -> Either (Socket Bound) (Socket Unbound)
 \end{code}
-As the state is carried locally by the socket variable, it will be
-decided by a pattern matching without advanced dependent pattern matching.
-
-\improvement{aspiwack: So what are the conclusion? the |ST| thing has
-  one advantage: it doesn't require linear types. The linear-type
-  version seem to be a bit more flexible, and way easier to implement in
-  \HaskeLL{}. What else can we be saying}
-\improvement{aspiwack: actually implement the error-catching version
-  of the \textsc{api}}
-
+%
+The support for dependent types in \textsc{ghc} is not as
+comprehensive as Idris's. But it is conceivable to implement such an
+indexed monad transformer in Haskell. However, this is not an easy task,
+and we can anticipate that the error messages would be hard to stomach.
 
 % \subsection{Operational aspects of linear languages}
 
