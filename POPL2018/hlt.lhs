@@ -155,6 +155,7 @@
     \newcommand{\rn}[1]{}
     \newcommand{\simon}[1]{}
     \newcommand{\jp}[1]{}
+    \newcommand{\manuel}[1]{}
 \fi
 
 % Link in bibliography interpreted as hyperlinks.
