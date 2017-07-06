@@ -2762,7 +2762,8 @@ other industrial projects.
   as immutable. It is more composable not to allocate |b| as part of
   the \textsc{rdma} primitives. In other words we want to expose the
   \textsc{rdma} interface as a destination-passing interface, which is
-  best expressed with linear types.
+  best expressed with linear types. \unsure{Consider removing this
+    section, for lack of space. MB}
 \end{description}
 
 
