@@ -80,10 +80,10 @@
 % \usepackage{fontspec}
 % \usepackage{unicode-math}
 \usepackage[plain]{fancyref}
-\def\frefsecname{Section}
-\def\freffigname{Figure}
-\def\frefdefname{Definition}
-\def\Frefdefname{Definition}
+\def\frefsecname{Sec.}
+\def\freffigname{Fig.}
+\def\frefdefname{Def.}
+\def\Frefdefname{Def.}
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
 \def\frefappendixname{Appendix}
@@ -2088,7 +2088,7 @@ any node proxy node, one gets the situation where two nodes |n| and
 have different payloads. In this situation the |Scene| has become
 inconsistent and the behaviour of SpriteKit is unpredictable.
 
-In the api of \citet{chakravarty_spritekit_2017}, the burden of checking
+In the {\sc api} of \citet{chakravarty_spritekit_2017}, the burden of checking
 non-duplication is on the programmer.  Using linear types, we can
 switch that burden to the compiler: we change the update function to
 type |Scene ⊸ Scene|, and the |ref| field is made linear too.  Thanks
