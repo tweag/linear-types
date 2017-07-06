@@ -1550,7 +1550,7 @@ The standard approach is to deserialise data into an in-heap, pointer-based repr
 % (that is, a recursive Haskell data type),
 process it, and then serialise the result for transmission.
 %
-This process is exceedingly inefficient, but tolerated, because the alternative
+This process is inefficient, but nevertheless tolerated, because the alternative
 --- computing directly with serialised data --- is far too difficult to program.
 %
 Nevertheless, the potential performance gain of working directly with serialised
