@@ -46,6 +46,7 @@
 %format IOL = "\varid{IO}_{\varid{L}}"
 %format returnIOL = "\varid{return}_{\varid{IO}_{\varid{L}}}"
 %format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
+%format `bindIOL` = "~`" bindIOL "\!`\,{}~"
 %format unIOL = "\varid{unIO}_{\varid{L}}"
 %format forM_ = "\varid{forM}\_"
 %format mapM_ = "\varid{mapM}\_"
