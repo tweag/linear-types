@@ -1345,7 +1345,8 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 
 In order to prove that our type system meets its stated goals, we
 introduce an operational semantics. The details are deferred to
-\fref{appendix:dynamics}, let us give, however, an overview.
+\fref{appendix:dynamics}, which is included in the anonymous
+supplementary material submitted with the article, let us give, however, an overview.
 
 \paragraph{Of consuming exactly once}
 The operational semantics is a big-step operational semantics with
