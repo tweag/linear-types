@@ -1377,7 +1377,10 @@ The operational semantics differs from
 Since the operational semantics gets stuck if a 1-variable is used
 more than once, the progress theorem (well typed programs do not get
 stuck) shows that linear functions do indeed consume their argument
-exactly once if their result is consumed exactly once. \simon{not true!}
+at most once if their result is consumed exactly once. The 1-variables
+are in fact used exactly once: it
+is a consequence of type preservation that evaluating of closed term
+of a basic type (say |Bool|) returns an environment with no 1-variables.
 
 Our preservation and progress theorems then look like this,
 writing $a,b$ for states of the evaluation:
