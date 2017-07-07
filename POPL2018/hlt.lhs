@@ -118,6 +118,12 @@
 \newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
 
+%% Metatheory
+\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
+\newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
+\newcommand{\ta}[2]{γ(#1)(#2)}
+%% /Metatheory
+
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
 
 
@@ -1373,8 +1379,8 @@ functions consume their argument exactly once if their result is
 consumed exactly once.
 
 Of course, we still need to verify the usual properties of type
-preservation and progress for our evaluation. That is, keeping the
-form of the evaluation states abstract:
+preservation and progress for our evaluation. That is, writing $a,b$
+for states of the evaluation:
 
 \begin{theorem}[Type preservation]\label{thm:type-safety}
   If $a$ is well typed, and $a⇓b$, or $a⇓^*b$ then $b$ is well-typed.
@@ -1386,44 +1392,58 @@ form of the evaluation states abstract:
 These theorem are proved in \fref{sec:denotational}.
 
 \paragraph{In-place update \& typestate}
+But we're not done yet! We have also claimed that linear types can be
+used to implement some operations as in-place updates, and that
+typestates (like whether an array is mutable or frozen) are actually
+enforced by the type system. Let us prove these too.
 
-\improvement{aspiwack: add a type preservation property, some more
-  explanation about the semantics. Explain the thing about removing
-  the linear variables from the heap when you read it. Explain the key
-  technical details (big-step semantics, partial proofs). Speak of
-  pure semantics first, theorems for both semantics.}
-The details of the metatheory of \calc{} are deferred to
-\fref{appendix:dynamics}. Our goal is to establish two properties:
+To that effect, we introduce a second, distinct, semantics. It is also
+a big-step, \citeauthor{launchbury_natural_1993}-style
+semantics. However, it has much less type annotation and it doesn't
+remove anything from the environment. In that it is much more like
+\citeauthor{launchbury_natural_1993}'s semantics. However
 \begin{itemize}
-\item That a pure linear interface can be implemented using mutations
-  under the hood, like in \fref{sec:freezing-arrays}.
-\item That the usage protocol resources is enforced by the type
-  system, like in \fref{sec:io-protocols}
+\item Environments are enriched with mutable references (for the sake
+  of concreteness, they are all references to arrays but they could be
+  anything)
+\item Typestates are implemented by mutating the type of such
+  references, functions can block if the type of the references isn't
+  correct: that is, we track typestates dynamically
 \end{itemize}
+The idea, with the latter, is that progress will show that we are
+never blocked by typestates, in other words, that they are enforced
+statically and that an implementation will not need to track them.
 
-To that effect we introduce two semantics: a semantics with mutation
-where typestates, such as whether an array is mutable or frozen, are
-enforced dynamically and a pure semantics that tracks linearity
-carefully, but where ``mutations'' are implemented as copying. Both
-semantics are big step operational semantics with laziness in the
-style of \citet{launchbury_natural_1993}.
+It is hard to reason on a lazy language with mutation. But what we are
+trying to show is that we are using mutation carefully enough so that
+they behave as pure data. And to formalise this, we relate this
+semantics with mutation to our pure semantics above. Specifically, we
+show that they are \emph{bisimilar}.
 
-The semantics are instantiated with the arrays of
-\fref{sec:freezing-arrays}. They can be easily extended to support,
-for instance, a real-world token and file handles as in
-\fref{sec:io-protocols}.
+From the bisimilarity we can directly lift the type-preservation and
+progress from the pure semantics. That is, write $σ,τ$ for states of
+this evaluation with mutation:
 
-We then prove the two semantics to be bisimilar from which we can
-deduce:
-\begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
-  The semantics with in-place mutation is observationally equivalent to the pure semantics.
-\end{theorem}
+\todo{aspiwack: put the theorems here}
 \begin{theorem}[Progress]\label{thm:progress}
   Evaluation does not block. In particular, typestates need not
   be checked dynamically.
 \end{theorem}
 
-These statements are formalised and proven in \fref{appendix:dynamics}.
+But just as importantly, we can prove that, indeed, we cannot observe
+mutations, and despite using them as our implementation device, the
+semantics we expose is pure. More precisely, we prove that the two
+semantics are observationally equivalent: any observation, which we
+reduce to a boolean test, is identical in either semantics.
+\begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
+  The semantics with in-place mutation is observationally equivalent
+  to the pure semantics.
+
+  That is, for any closed term of type $\varid{Bool}$, if $e$ evaluates
+  to the value $z$ with the pure semantics, and to the value $z'$ with
+  the semantics with mutation, then $z=z'$.
+\end{theorem}
+These three theorems are proved in \fref{sec:bisimilarity}.
 
 \subsection{Design choices \& trade-offs}
 Let us review the design space allowed by \calc{}, the points in the space that
@@ -2864,10 +2884,6 @@ capabilities for safe, compiler-checked use, within pure code.
 \appendix
 \section{Semantics and soundness of \calc{}}
 \label{appendix:dynamics}
-
-\newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
-\newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
-\newcommand{\ta}[2]{γ(#1)(#2)}
 
 In accordance with our stated goals in \fref{sec:introduction}, we are
 interested in two key properties of our system: 1. that we can implement
