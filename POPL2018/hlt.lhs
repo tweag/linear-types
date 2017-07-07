@@ -1531,7 +1531,7 @@ have not yet implemented, but which motivate this work.
 
 
 % \subsection{Serialised tree traversals}
-\subsection{Application 1: Computing directly with serialised data}
+\subsection{Computing directly with serialised data}
 %------------------------------------------------------------------
 \label{sec:cursors}
 
