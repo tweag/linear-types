@@ -731,7 +731,7 @@ to |readLine| returns a |ByteString| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using it we can write a simple file-handling program, |firstLine|, \Red{shown here}.
+Using it we can write a simple file-handling program, |firstLine|, shown here.
 %
 %\begin{wrapfigure}[7]{r}[0pt]{6.0cm} \vspace{-5mm}
 \begin{code}
