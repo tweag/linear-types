@@ -2437,8 +2437,7 @@ instead a type-system feature for this purpose: \emph{borrowing}.
 % JP: This notion is not used later.
 Borrowed values differ from owned values in that they can
 be used in an unrestricted fashion, albeit in a \emph{delimited
-  life-time}\jp{is this time dynamic or static? If static it should be
-  `scope' --- aspiwack: the lifetime is statically scoped in this case}.
+  scope}.
 
 Borrowing does not come without a cost, however: if a
 function \texttt{f} borrows a value \texttt{v} of type \texttt{T},
