@@ -1337,7 +1337,7 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
   the linear variables from the heap when you read it. Explain the key
   technical details (big-step semantics, partial proofs). Speak of
   pure semantics first, theorems for both semantics.}
-The details of the meta-theory of \calc{} are deferred to
+The details of the metatheory of \calc{} are deferred to
 \fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
 \item That a pure linear interface can be implemented using mutations
@@ -3206,7 +3206,7 @@ will only consider the evaluation of well-typed states.
 
 \subsection{Bisimilarity and all that}
 
-The crux of our meta-theory is that the two semantics are
+The crux of our metatheory is that the two semantics are
 bisimilar. Bisimilarity allows to tranport properties from the
 denational semantics, on which it is easy to reason, and the ordinary
 semantics which is close to the implementation. It also makes it
