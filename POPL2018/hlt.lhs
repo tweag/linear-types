@@ -1418,7 +1418,9 @@ It is hard to reason on a lazy language with mutation. But what we are
 trying to show is that we are using mutation carefully enough so that
 they behave as pure data. And to formalise this, we relate this
 semantics with mutation to our pure semantics above. Specifically, we
-show that they are \emph{bisimilar}.
+show that they are \emph{bisimilar}. This is similar to
+\citet{amani_cogent_2016}, who also have a language with linear types
+with a both pure and imperative semantics.
 
 From the bisimilarity we can directly lift the type-preservation and
 progress from the pure semantics. That is, write $σ,τ$ for states of
@@ -1492,9 +1494,8 @@ makes the expression typeable, as the reader may check.
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
-\citet{pottier_subtyping_1998}).\unsure{Stephen Dolan disagrees with
-  this claim. His POPL2016 \emph{MLsub} paper with Alan Microft being
-  the counter argument.}
+\citet{pottier_subtyping_1998}; for a counterpoint, see
+\citet{dolan_mlsub_2017}).
 %
 \HaskeLL{} on the other hand has limited support for subtyping:
 calls like |(g f)| are well typed, and are elaborated to
@@ -3512,4 +3513,4 @@ extended so that one evaluates to |False| and the other to |True|.
 %  LocalWords:  Finalisers effectful subtyping parameterised Inlining
 %  LocalWords:  inlining cardinality forM mapM pessimisation APIs RTS
 %  LocalWords:  SpriteKit chakravarty spritekit IORef ImperativeNode
-%  LocalWords:  invariants
+%  LocalWords:  invariants observationally
