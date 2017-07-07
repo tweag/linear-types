@@ -2213,7 +2213,7 @@ kinds'':
   |Type 1| is the kind of linear types and and |Type ω| is the kind of
   unrestricted types.
   \begin{code}
-    data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List l m a)
+    data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List p m a)
   \end{code}
   The above declaration ensures that the linearity of the list
   inherits the linearity of the contents. A linearity-polymorphic
