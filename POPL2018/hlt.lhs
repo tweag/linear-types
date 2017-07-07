@@ -3196,6 +3196,12 @@ will only consider the evaluation of well-typed states.
 \end{lemma}
 \begin{proof}
   By induction on the typed-reduction.
+
+  The case of the linear variable rule is interesting, as it uses the
+  fact that, by the constructor rule, $x :_1 B$ can only be used in
+  the typing of the variable $x$, it is absent from the context when
+  type-checking $Σ$. In particular note how the rule \emph{must}
+  remove $x$ from the environment in order to preserve typing.
 \end{proof}
 
 \subsection{Bisimilarity and all that}
@@ -3301,19 +3307,40 @@ Equipped with this bisimulation, we are ready to prove the theorems of
   By liveness (\fref{lem:liveness}) it is sufficient to prove the case
   of the denotational semantics.
 
-  Let us also note that if we erase all multiplicity from the
-  denotational semantics, then we get a completely standard semantics
-  for simply typed $λ$-calculus, in which progress is known to
-  hold. So we it suffices to show that multiplicity annotations do not prevent the
-  head of the partial derivation to match a rule.
-
-  In other word, we must prove that a state of the form
-  $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not reachable. Notice that
-  $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed state because it
-  reduces to $x:_1B = x:_{ωπ} B$ for some $π$, which never holds. By
-  type preservation (\fref{lem:type-safety}),
-  $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ cannot be the head of a partial
-  derivation.
+  The proof of progress for the denotational semantics is almost
+  entirely standard. The only unusual rule is the linear variable
+  rule, in which there are two things of notice:
+  \begin{itemize}
+  \item The linear variable rule blocks if $ρ = ω$
+  \item The linear variable rule removes the variable $x$ from the
+    environment.
+  \end{itemize}
+  Therefore it suffices to show that the former case never arises. And
+  that whenever a variable is evaluated, then it appears in the
+  environment.
+  \begin{itemize}
+  \item Notice that $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed
+    state because it reduces to $x:_1B = x:_{ωπ} B$ for some $π$,
+    which never holds. By type preservation (\fref{lem:type-safety}),
+    $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ cannot be the head of a partial
+    derivation.
+  \item Similarly $Ξ⊢Γ||x :_1 A,Σ$ where $x∉Γ$ is not well-typed, and
+    hence cannot be the head of a partial derivation\footnote{Notice
+      that it is an invariant of the denotational evaluation, that
+      variables in $Ξ$ are not reachable from $e$. This is only true
+      because let-bindings are not recursive. In the case that they
+      are recursive, the shared variable rule make it possible to run
+      into a situation where $x$ is evaluated and part of $Ξ$, in
+      which case the reduction blocks: this models so-called
+      \emph{black-holing} in which ill-founded recursive lazy
+      definitions report an error rather than looping. This
+      presentation follows \citet{launchbury_natural_1993}, and in
+      presence of such recursion, progress must be extended to say
+      that partial derivation can be either extended or is in a black
+      hole. An alternative solution is to change the shared variable
+      rule to loop instead of blocking in case of such ill-founded
+      recursion.}.
+  \end{itemize}
 \end{proof}
 
 Observational equivalence, which means, for \calc{}, that an
