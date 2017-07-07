@@ -2686,7 +2686,7 @@ reduction: |(\x -> x ++ x ) expensive ⟶ expensive ++ expensive|.
 
 Many compilers can discover safe inlining opportunities by analysing
 source code and determine how many times functions use their
-arguments.  (In \textsc{ghc} this analysis is called a cardinality
+arguments.  (In \textsc{ghc} it is called the cardinality
 analysis~\cite{sergey_cardinality_2014}). A limitation of such an
 analysis is that it is necessarily heuristic (the problem is
 undecidable for Haskell). Because inlining is crucial to efficiency, programmers
