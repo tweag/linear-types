@@ -1424,10 +1424,16 @@ From the bisimilarity we can directly lift the type-preservation and
 progress from the pure semantics. That is, write $σ,τ$ for states of
 this evaluation with mutation:
 
-\todo{aspiwack: put the theorems here}
+\begin{theorem}[Type preservation]\label{thm:type-preservation}
+  For any well-typed $σ$, if $σ⇓τ$ or $σ⇓^*τ$, then $τ$ is
+  well-typed.
+\end{theorem}
 \begin{theorem}[Progress]\label{thm:progress}
-  Evaluation does not block. In particular, typestates need not
-  be checked dynamically.
+  Evaluation does not block. That is, for any partial evaluation
+  $σ⇓^*τ$, for $σ$ well-typed, the evaluation can be
+  extended.
+
+  In particular, typestates need not be checked dynamically.
 \end{theorem}
 
 But just as importantly, we can prove that, indeed, we cannot observe
@@ -2888,7 +2894,9 @@ capabilities for safe, compiler-checked use, within pure code.
 In accordance with our stated goals in \fref{sec:introduction}, we are
 interested in two key properties of our system: 1. that we can implement
 a linear \textsc{api} with mutation under the hood, while exposing a
-pure interface, and 2. that typestates are indeed enforced.
+pure interface, and 2. that typestates are indeed enforced. This
+appendix establishes these results in accordance to
+\fref{sec:metatheory} where they were presented.
 
 We introduce two dynamic semantics for \calc{}: a semantics with
 mutation which models the implementation but blocks on incorrect
@@ -3400,11 +3408,11 @@ those of the denotational evaluation which witnesses the bisimulation.
   That is:
   \begin{itemize}
   \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
-    $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
-    that $Γ:e⇓Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+    $Ξ ⊢ (Γ'||e' ⇓ Δ'||z') :_ρ A,Σ$, there exists a state $Δ:z$ such
+    that $Γ:e'⇓Δ:z'$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z') :_ρ A,Σ}$.
   \item for all $\ta{Γ:e}{Ξ ⊢ (Γ'||e) :_ρ A,Σ}$ such that
-    $Ξ ⊢ (Γ'||e ⇓^* Δ'||z) :_ρ A,Σ$, there exists a state $Δ:z$ such
-    that $Γ:e⇓^*Δ:z$ and $\ta{Δ:z}{Ξ ⊢ (Δ'||z) :_ρ A,Σ}$.
+    $Ξ ⊢ (Γ'||e ⇓^* Δ'||t) :_ρ A,Σ$, there exists a state $Δ:t'$ such
+    that $Γ:e⇓^*Δ:z$ and $\ta{Δ:t}{Ξ ⊢ (Δ'||t') :_ρ A,Σ}$.
   \end{itemize}
 \end{lemma}
 \begin{proof}
@@ -3412,14 +3420,27 @@ those of the denotational evaluation which witnesses the bisimulation.
   $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$ (resp. $Ξ ⊢ (Γ'||e ⇓ Δ'||z) :_ρ A,Σ$).
 \end{proof}
 
-Equipped with this bisimulation, we are ready to prove the theorems of
-\fref{sec:metatheory}.
+Equipped with this bisimulation, we are ready to prove the soundness
+properties of the ordinary semantics. We say that a state $Γ:e$ is
+well-typed if there exists an annotated state $Ξ⊢Γ'||e':_ρ A,Σ$, such
+that $\ta{Γ:e}{Ξ⊢Γ'||e':_ρ A,Σ}$.
 
+{
+\renewcommand{\thetheorem}{\ref{thm:type-preservation}}
+\begin{theorem}[Type preservation]
+  For any well-typed $Γ:e$, if $Γ:e⇓Δ:t$ or $Γ:e⇓^*Δ:t$, then $Δ:t$ is
+  well-typed.
+\end{theorem}
+\addtocounter{theorem}{-1}
+}
+\begin{proof}
+  This is precisely the same statement as \fref{lem:actual_type_safety}
+\end{proof}
 {
 \renewcommand{\thetheorem}{\ref{thm:progress}}
 \begin{theorem}[Progress]
   Evaluation does not block. That is, for any partial derivation of
-  $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$ or of $Γ:e⇓?$, the derivation can be
+  $Γ:e⇓?$, for $Γ:e$ well-typed, the derivation can be
   extended.
 
   In particular, typestates need not be checked dynamically.
