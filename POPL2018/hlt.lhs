@@ -2705,7 +2705,6 @@ in \fref{sec:uniqueness}.
 
 \subsection{Future industrial applications}
 \label{sec:industry}
-\manuel{Hard to understand.}
 Our own work in an industrial context triggered our efforts to add
 linear types to \textsc{ghc}. We were originally motivated by
 precisely typed protocols for complex interactions and by taming
@@ -2715,20 +2714,20 @@ other industrial projects.
 
 \begin{description}
 
-\item[Interface to communication channels] Many real-world
-  applications interface with communications channels (including
-  sockets, but also file logs, etc.).  It is so tempting for
-  functional programmers to give a non-monadic interface to such
-  channels that programmers give in (see \eg the \texttt{streaming}
-  library for Haskell or \cite{lippmeier_parallel_2016}). Thus an
-  external channel may be accessible using a value of type |Stream
-  a|. Unfortunately, when maintaining complex programs it is easy to
-  unknowingly pass two copies of a stream to different functions which
-  compete for access to the channel.  We have encountered such
-  mistaken duplications in industrial projects, where they produce
-  bugs which are painful to track down. A linear type discipline would
-  prevent such bugs from happening.
+\item[Effectful stream manipulation] Consider, for instance, a stream
+  |s :: Stream a| iterating through a file, and suppose that streams
+  are equipped with |fmap :: (a->b)->Stream a->Stream b|. Let us then
+  take |s' = fmap f s|. Then |s| and |s'| are two different values
+  referencing the same file descriptor.
 
+  Using both |s| and |s'| in the same program is usually not intended,
+  nor desirable, and may have unsafe behaviour, like reading the file
+  descriptor after it has been closed (see also \citet[Section
+  2.2]{lippmeier_parallel_2016}).
+
+  We have encountered such mistaken sharing in industrial projects,
+  where they produce bugs which are painful to track down. A linear
+  type discipline would prevent such bugs from happening.
 
 \item[Programming foreign heaps] Complex projects with large teams
   invariably involve a mix of programming languages. Reusing legacy
@@ -2740,10 +2739,10 @@ other industrial projects.
   B what objects in language A's heap still have live references in
   the call stack of language B to avoid too eager garbage collection.
 
-  For instance, users of \texttt{inline-java} call the \textsc{JVM}
-  from Haskell via the \textsc{JNI}. The \textsc{JVM} implicitly
+  For instance, users of \texttt{inline-java} call the \textsc{jvm}
+  from Haskell via the \textsc{jni}. The \textsc{jvm} implicitly
   creates so-called \emph{local references} any time we request a Java
-  object from the \textsc{JVM}. The references count as \textsc{GC}
+  object from the \textsc{jvm}. The references count as \textsc{gc}
   roots that prevent eager garbage collection. For performance, local
   references have a restricted scope: they are purely thread-local and
   never survive the call frame in which they were created. Both
