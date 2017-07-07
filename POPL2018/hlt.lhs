@@ -515,7 +515,7 @@ array :: Int -> [(Int,a)] -> Array a
   type MArray s a
   type Array a
 
-  newMArray :: Int -> a -> ST s (MArray s a)
+  newMArray :: Int -> ST s (MArray s a)
   read  :: MArray s a -> Int -> ST s a
   write :: MArray s a -> (Int, a) -> ST s ()
   unsafeFreeze :: MArray s a -> ST s (Array a)
@@ -533,8 +533,7 @@ But how is |array| implemented? A possible answer is ``it is built-in; don't ask
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
 definition of |array|, using library functions whose types are given
-in \fref{fig:array-sigs}.\improvement{the definition is not actually
-  well-typed: |newMArray| does not have its second argument}
+in \fref{fig:array-sigs}.
 
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
@@ -568,8 +567,7 @@ Linear types allow a more secure and less sequential interface.  \HaskeLL{}
 introduces a new kind of function type: the \emph{linear arrow} |a⊸b|. A linear
 function |f :: a⊸b| must consume its argument \emph{exactly once}.  This new
 arrow is used in a new array \textsc{api}, given in
-\fref{fig:linear-array-sigs}.\improvement{|newMArray| should probably
-  take an |a| argument as well}
+\fref{fig:linear-array-sigs}.
 %
 \begin{figure}[h]
 \hrulefill
@@ -1353,6 +1351,11 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 \subsection{Metatheory}
 \label{sec:metatheory}
 
+\improvement{aspiwack: add a type preservation property, some more
+  explanation about the semantics. Explain the thing about removing
+  the linear variables from the heap when you read it. Explain the key
+  technical details (big-step semantics, partial proofs). Speak of
+  pure semantics first, theorems for both semantics.}
 The details of the meta-theory of \calc{} are deferred to
 \fref{appendix:dynamics}. Our goal is to establish two properties:
 \begin{itemize}
