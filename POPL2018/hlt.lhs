@@ -376,12 +376,12 @@ are these:
 \begin{itemize}
 \item We describe a new extension to Haskell, dubbed \HaskeLL, using
       two extended examples (\fref{sec:consumed}-\fref{sec:io-protocols}).
-      The extension is \emph{non-invasive}     
-      Existing programs continue to typecheck,
+      The extension is \emph{non-invasive}:
+      existing programs continue to typecheck,
       and existing data types can be used as-is even in linear parts
       of the program.
       The key to this non-invasiveness is that, in contrast to most other
-      approaches, we focus on \emph{linarity on the function arrow}
+      approaches, we focus on \emph{linearity on the function arrow}
       rather than \emph{linearity in the kinds} (\fref{sec:lin-arrow}).
 \item Every function arrow can be declared linear, including those of
       constructor types. This results in data-types which can store
@@ -445,7 +445,7 @@ Our definition is based on the type of the value concerned:
 \item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
 \item To consume a function exactly once, apply it to one argument, and consume its result exactly once.
 \item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
-\item In general, to consume a value of an algebraic data type exactly once, pattter-match on it,
+\item In general, to consume a value of an algebraic data type exactly once, pattern-match on it,
   and consume all its linear components exactly once
   (\fref{sec:non-linear-constructors})\footnote{You may deduce that pairs have linear components,
     and indeed they do, as we discuss in \fref{sec:non-linear-constructors}.}.
@@ -533,7 +533,8 @@ But how is |array| implemented? A possible answer is ``it is built-in; don't ask
 But in reality \textsc{ghc} implements |array| using more primitive pieces, so that library authors
 can readily implement more complex variations --- and they certainly do: see for example \fref{sec:cursors}.  Here is the
 definition of |array|, using library functions whose types are given
-in \fref{fig:array-sigs}.
+in \fref{fig:array-sigs}.\improvement{the definition is not actually
+  well-typed: |newMArray| does not have its second argument}
 
 \begin{code}
 array :: Int -> [(Int,a)] -> Array a
@@ -567,7 +568,8 @@ Linear types allow a more secure and less sequential interface.  \HaskeLL{}
 introduces a new kind of function type: the \emph{linear arrow} |a⊸b|. A linear
 function |f :: a⊸b| must consume its argument \emph{exactly once}.  This new
 arrow is used in a new array \textsc{api}, given in
-\fref{fig:linear-array-sigs}.
+\fref{fig:linear-array-sigs}.\improvement{|newMArray| should probably
+  take an |a| argument as well}
 %
 \begin{figure}[h]
 \hrulefill
