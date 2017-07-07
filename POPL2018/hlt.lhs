@@ -412,8 +412,12 @@ are these:
       Our prototype performs linearity \emph{inference}, but a systematic
       treatment of type inference for linearity in our system remains open.
 \end{itemize}
-There is a rich literature on linear type systems, as we discuss in a long
-related work section (\fref{sec:related}).
+Retrofits often involve compromise and ad-hoc choices, but in fact we
+have found that, as well as fitting into Haskell, our design holds
+together in its own right.  We hope that it may perhaps serve as a
+template for similar work in other languages.  There is a rich
+literature on linear type systems, as we discuss in a long related
+work section (\fref{sec:related}).
 
 \section{Motivation and intuitions}
 \label{sec:programming-intro}
@@ -827,9 +831,7 @@ we do not need a special non-linear pair}.
 % \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
 \begin{wrapfigure}[8]{r}[0pt]{4.5cm} \vspace{-8mm} 
 \begin{code}
-data [a] where
-  []   :: [a]
-  (:)  :: a ⊸ [a] ⊸ [a]
+data [a] = [] | a : [a]
 \end{code}
 \begin{code}
 (++) :: [a] ⊸ [a] ⊸ [a]
@@ -838,9 +840,11 @@ data [a] where
 \end{code}
 \end{wrapfigure}
 %  
-The same idea applies to all existing Haskell data types: we (re-)define
-their constuctors to use a linear arrow.  For example here is a declaration
-of \HaskeLL{}'s list type:
+The same idea applies to all existing Haskell data types: in
+\HaskeLL{} we treat all data types defined using legacy Haskell-98
+(non-GADT) syntax as defining constructors with linear arrows.
+For example here is a declaration of \HaskeLL{}'s list type,
+whose constructor |(:)| uses linear arrows:
 
 %% \begin{wrapfigure}[4]{r}[0pt]{4cm} \vspace{-6mm} % lines, placement, overhang, width
 %% \begin{code}
