@@ -27,8 +27,8 @@ clean:
 	latexmk -pdf $*
 
 rlt.pdf: hlt.pdf
-	pdftk hlt.pdf cat 1-28 output $@
-
+	pdftk $< cat 1-28 output temp.pdf
+	pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
 appendix.pdf: hlt.pdf
 	pdftk hlt.pdf cat 29-end output $@
 
