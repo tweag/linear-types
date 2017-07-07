@@ -1346,37 +1346,34 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 
 In order to prove that our type system meets its stated goals, we
 introduce an operational semantics. The details are deferred to
-\fref{appendix:dynamics}, which is included in the anonymous
-supplementary material submitted with the article, let us give, however, an overview.
+\fref{appendix:dynamics}, included in the anonymous
+supplementary material submitted with the article.
 
 \paragraph{Of consuming exactly once}
-The operational semantics is a big-step operational semantics with
-laziness in the style of \citet{launchbury_natural_1993}. In such a
-big-step semantics it is easier to represent laziness than in a
-small-step semantics. On the other hand, big-step semantics are
-inconvenient when it comes to speak about properties such as
-progress. To that effect, we use a technique from
-\citet{gunter_partial-big-step_1993} and, from a big-step evaluation
-relation $a⇓b$, define \emph{partial derivations} from which makes it
-possible to define a \emph{partial evaluation} relation $a⇓^*b$ (see
+The operational semantics is a big-step operational semantics for
+lazy evaluation in the style of \citet{launchbury_natural_1993}.
+Following
+\citet{gunter_partial-big-step_1993}, starting from a big-step evaluation
+relation $a⇓b$, we define \emph{partial derivations} and from there a
+\emph{partial evaluation} relation $a⇓^*b$ (see
 \fref{sec:partial-derivations}). Progress is then expressed as the
 fact that a derivation of $a⇓^*b$ can always be extended.
 
 The operational semantics differs from
 \citeauthor{launchbury_natural_1993}'s in two major respects:
 \begin{itemize}
-\item The reduction state are heavily annotated with type
-  information. These type annotation are used for the proofs.
+\item The reduction states are heavily annotated with type
+  information. These type annotations are used for the proofs.
 \item Variables in the environments are annotated by a multiplicity
-  ($1$ or $ω$), $ω$-variables are ordinary variables, when such a
-  variable is forced it is replaced by its value (this implements lazy
+  ($1$ or $ω$), $ω$-variables are ordinary variables. When such a
+  variable is forced it is replaced by its value (to model lazy
   sharing), but $1$-variables \emph{must be consumed exactly once}:
-  when they are forced, they are definitively removed from the
+  when they are forced, they are removed from the
   environment.
 \end{itemize}
-The latter point, combined with the fact that the reduction is indexed
+The latter property, combined with the fact that the reduction is indexed
 by whether we intend to consume the term under consideration exactly
-once or an arbitrary number of time shows that, as promised, linear
+once or an arbitrary number of time is used to show that linear
 functions consume their argument exactly once if their result is
 consumed exactly once.
 
@@ -1394,16 +1391,13 @@ for states of the evaluation:
 These theorem are proved in \fref{sec:denotational}.
 
 \paragraph{In-place update \& typestate}
-But we're not done yet! We have also claimed that linear types can be
+We furthermore claim that linear types can be
 used to implement some operations as in-place updates, and that
 typestates (like whether an array is mutable or frozen) are actually
-enforced by the type system. Let us prove these too.
+enforced by the type system.
 
-To that effect, we introduce a second, distinct, semantics. It is also
-a big-step, \citeauthor{launchbury_natural_1993}-style
-semantics. However, it has much less type annotation and it doesn't
-remove anything from the environment. In that it is much more like
-\citeauthor{launchbury_natural_1993}'s semantics. However
+To prove this, we introduce a second, distinct, semantics. It is also
+a Launchbury style semantics. It differs in the following way:
 \begin{itemize}
 \item Environments are enriched with mutable references (for the sake
   of concreteness, they are all references to arrays but they could be
@@ -1412,8 +1406,8 @@ remove anything from the environment. In that it is much more like
   references, functions can block if the type of the references isn't
   correct: that is, we track typestates dynamically
 \end{itemize}
-The idea, with the latter, is that progress will show that we are
-never blocked by typestates, in other words, that they are enforced
+The idea, with the latter is that progress will show that we are
+never blocked by typestates. In other words, they are enforced
 statically and that an implementation will not need to track them.
 
 It is hard to reason on a lazy language with mutation. But what we are
