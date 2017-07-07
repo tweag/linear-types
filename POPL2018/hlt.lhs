@@ -561,7 +561,6 @@ array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
 as described in \cite{launchbury_st_1995}.
 
-
 Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
 immutable array, but to avoid an unnecessary copy,
 the two are actually \emph{the same array}.  The intention is, of course, that
@@ -571,7 +570,7 @@ The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the p
 has a proof obligation here that the compiler cannot check''.
 
 The other unsatisfactory thing about the monadic approach to array
-construction is that it is over-sequential. Suppose you had a pair of
+construction is that it is overly sequential. Suppose you had a pair of
 mutable arrays, with some updates to perform to each; these updates could
 be done in {\em parallel}, but the |ST| monad would serialise them.
 
@@ -639,13 +638,12 @@ As we shall see in \fref{sec:lin-poly} this is not a new |foldl|, but
 an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
-
-
 \end{itemize}
+
 There are three factors that ensure that a unique |MArray| is needed
 in any given application |x = newMArray k|, and in turn that
 update-in-place is safe. First, |newMArray| introduces {\em only}
-a linear |ma :: MArray|.  Second, in the {\sc api}, no function that
+a linear |ma :: MArray|.  Second, no function that
 consumes an |MArray a| returns more than a {\em single} pointer to it;
 so |k| can never obtain two pointers to |ma|.  Third, |k| must wrap its
 result in |Unrestricted|. This means that even if |x| is used in an
@@ -657,8 +655,8 @@ evaluated).
 With this mutable array \textsc{api},
 the |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
-the unnecessary sequentialisation we mentioned earlier, and creates
-opportunities for purely functional parallelism.
+the unnecessary sequentialisation we mentioned earlier and opens the
+possibility of exploiting more parallelism at runtime.
 %
 \if{0}
     In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
@@ -732,7 +730,7 @@ to |readLine| returns a |ByteString| (the line) and moves the cursor one line
 forward.  But nothing stops us reading a file after we have closed it,
 or forgetting to close it.
 An alternative \textsc{api} using linear types is given in \fref{fig:io-linear}.
-Using it we can write a simple file-handling program, |firstLine|, shown here.
+Using it we can write a simple file handling program, |firstLine|, shown here.
 %
 %\begin{wrapfigure}[7]{r}[0pt]{6.0cm} \vspace{-5mm}
 \begin{code}
@@ -774,7 +772,7 @@ and the type of |readLine| indicates this.
 \end{itemize}
 It may seem tiresome to have to thread the |File| as well as sequence
 operations with the |IO| monad. But in fact it is often useful do
-to so, because we can use types
+to do so, because we can use types
 to witness the state of the resource, \eg, with separate
 types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
 % (which we can think of as a type-level state, or {\em typestate}~\cite{strom_typestate_1983})
@@ -815,7 +813,7 @@ So much for construction; what about pattern matching?  Consider
 |f1| is an ordinary Haskell function. Even though the data constructor |(,)| has
 a linear type, that does \emph{not} imply that the pattern-bound variables |a| and |b|
 must be consumed exactly once; and indeed they are not.
-And, thus |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
+Therefore, |f1| does not have the linear type |(Int,Int) ⊸ (Int,Int)|.
 Why not?  If the result of |(f1 t)| is consumed once, is |t| guaranteed to be consumed
 once?  No: |t| is guaranteed to be evaluated once, but its first component is then
 consumed twice and its second component not at all, contradicting \Fref{def:consume}.
@@ -843,7 +841,6 @@ data [a] where
 The same idea applies to all existing Haskell data types: we (re-)define
 their constuctors to use a linear arrow.  For example here is a declaration
 of \HaskeLL{}'s list type:
-
 
 %% \begin{wrapfigure}[4]{r}[0pt]{4cm} \vspace{-6mm} % lines, placement, overhang, width
 %% \begin{code}
@@ -933,8 +930,8 @@ Instead of defining a pair with mixed linearity, we can also write
 
   f :: (MArray Int, Unrestricted Int) ⊸  MArray Int
 \end{code}
-The type |(Unrestricted t)| is very like ``|!t|'' in linear logic, but to us
-it is just a library data type.
+The type |(Unrestricted t)| is very much like ``|!t|'' in linear
+logic, but in our setting it is just an ordinary user-defined data type.
 We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
 a pair of a linear |MArray| and an unrestricted array element:
 \begin{code}
@@ -1051,7 +1048,7 @@ which is inherited by the specialised form of pair, |IORes| that an
 compiler, further reducing the size of the trusted code base.
 \subsection{Linearity and strictness}
 
-It is tempting to suppose that, since a linear function consumes its
+It is tempting to assume that, since a linear function consumes its
 argument exactly once, then it must also be strict.  But not so!
 For example
 \begin{code}
@@ -1069,7 +1066,7 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 \label{sec:statics}
 \label{sec:calculus}
 
-It would be impractical to formalise all of \HaskeLL{}, so instead we
+It would be impractical to formalise all of \HaskeLL{}. So instead we
 formalise a core calculus, \calc{}, which exhibits all the key features
 of \HaskeLL{}, including data types and multiplicity polymorphism.  In this
 way we make precise much of the informal discussion above.
