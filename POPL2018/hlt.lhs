@@ -2639,28 +2639,29 @@ cardinality \emph{declarations}. Formalising and implementing the
 integration of multiplicity annotations in the cardinality analysis is
 left as future work.
 
-Another important optimisation for lazy languages is full-laziness,
-which attempt to maximize sharing of sub-expressions. Unfortunately,
-full-laziness is sometimes a pessimisation, as in the following example,
-which is a simplified version of an issue that occurs in
-practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
-\begin{code}
-main = forM_ [1..5] (\i -> mapM_ print [1 .. N])
-\end{code}
-If |mapM_| is not inlined, then full-laziness transforms the above into
-\begin{code}
-main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
-\end{code}
-Even though one would expect the above program to use constant space
-(because the list |[1..N]| is produced lazily), when the intermediate
-list |[1..N]| is shared between runs of |mapM_ print [1 .. N]|, the
-memory residency becomes proportional to |N|. We conjecture
-that linearity annotations can be used to guide full-laziness:
-arguments to linear functions should not be shared. Indeed, being used
-only once, it always is more memory-efficient to re-create them at
-each invokation. In this case, if |mapM_| is given the type |(a ⊸ IO
-b) -> [a] ⊸ IO ()|, the compiler would see that sharing of |[1..N]|
-should be avoided.
+
+% Another important optimisation for lazy languages is full-laziness,
+% which attempt to maximize sharing of sub-expressions. Unfortunately,
+% full-laziness is sometimes a pessimisation, as in the following example,
+% which is a simplified version of an issue that occurs in
+% practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
+% \begin{code}
+% main = forM_ [1..5] (\i -> mapM_ print [1 .. N])
+% \end{code}
+% If |mapM_| is not inlined, then full-laziness transforms the above into
+% \begin{code}
+% main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
+% \end{code}
+% Even though one would expect the above program to use constant space
+% (because the list |[1..N]| is produced lazily), when the intermediate
+% list |[1..N]| is shared between runs of |mapM_ print [1 .. N]|, the
+% memory residency becomes proportional to |N|. We conjecture
+% that linearity annotations can be used to guide full-laziness:
+% arguments to linear functions should not be shared. Indeed, being used
+% only once, it always is more memory-efficient to re-create them at
+% each invokation. In this case, if |mapM_| is given the type |(a ⊸ IO
+% b) -> [a] ⊸ IO ()|, the compiler would see that sharing of |[1..N]|
+% should be avoided.
 
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
