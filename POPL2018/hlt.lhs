@@ -2780,20 +2780,33 @@ other industrial projects.
 
 \begin{description}
 
-\item[Effectful stream manipulation] Consider, for instance, a stream
-  |s :: Stream a| iterating through a file, and suppose that streams
-  are equipped with |fmap :: (a->b)->Stream a->Stream b|. Let us then
-  take |s' = fmap f s|. Then |s| and |s'| are two different values
-  referencing the same file descriptor.
+\item[Streaming I/O] Program inputs and outputs are frequently much
+  larger than the available RAM on any single node. Rather than
+  building complex pipelines with brittle explicit loops copying data
+  piecemeal to spare our precious RAM, one approach is to compose
+  combinators that transform, split and merge data wholemeal but in
+  a streaming fashion. These combinators manipulate first-class {\em
+    streams} and guarantee bounded memory usage, as in the below
+  infinitely running echo service:
+  \begin{code}
+    receive :: Socket -> IOStream Msg
+    send :: Socket -> IOStream Msg -> IO ()
 
-  Using both |s| and |s'| in the same program is usually not intended,
-  nor desirable, and may have unsafe behaviour, like reading the file
-  descriptor after it has been closed (see also \citet[Section
-  2.2]{lippmeier_parallel_2016}).
+    echo isock osock = send osock (receive isock)
+  \end{code}
+  However, reifying sequences of |IO| actions (socket reads) in this
+  way runs the risk that effects might be duplicated inadvertently. In
+  the above example, we wouldn't want to inadvertently hand over the
+  receive stream to multiple consumers, or the abstraction of
+  wholemeal I/O programming would be broken (like in \citet[Section
+    2.2]{lippmeier_parallel_2016}), because neither consumer would
+  ultimately see the same values from the stream. If say one consumer
+  reads in the stream first, the second consumer would see all but an
+  empty stream --- not what the first consumer saw.
 
-  We have encountered such mistaken sharing in industrial projects,
-  where they produce bugs which are painful to track down. A linear
-  type discipline would prevent such bugs from happening.
+  We have seen this very error several times in industrial projects,
+  where the symptoms are bugs whose root cause are painful to track
+  down. A linear type discipline would prevent such bugs.
 
 \item[Programming foreign heaps] Complex projects with large teams
   invariably involve a mix of programming languages. Reusing legacy
