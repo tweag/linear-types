@@ -86,6 +86,8 @@
 \def\Frefdefname{Def.}
 \def\freflemname{Lemma}
 \def\Freflemname{Lemma}
+\def\frefthmname{Theorem}
+\def\Frefthmname{Theorem}
 \def\frefappendixname{Appendix}
 \def\Frefappendixname{Appendix}
 \def\fancyrefdeflabelprefix{def}
@@ -94,6 +96,9 @@
 \def\fancyreflemlabelprefix{lem}
 \frefformat{plain}{\fancyreflemlabelprefix}{{\freflemname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyreflemlabelprefix}{{\Freflemname}\fancyrefdefaultspacing#1}
+\def\fancyrefthmlabelprefix{thm}
+\frefformat{plain}{\fancyrefthmlabelprefix}{{\frefthmname}\fancyrefdefaultspacing#1}
+\Frefformat{plain}{\fancyrefthmlabelprefix}{{\Frefthmname}\fancyrefdefaultspacing#1}
 \def\fancyrefappendixlabelprefix{appendix}
 \frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
@@ -1331,6 +1336,56 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 
 \subsection{Metatheory}
 \label{sec:metatheory}
+
+In order to prove that our type system meets its stated goals, we
+introduce an operational semantics. The details are deferred to
+\fref{appendix:dynamics}, let us give, however, an overview.
+
+\paragraph{Of consuming exactly once}
+The operational semantics is a big-step operational semantics with
+laziness in the style of \citet{launchbury_natural_1993}. In such a
+big-step semantics it is easier to represent laziness than in a
+small-step semantics. On the other hand, big-step semantics are
+inconvenient when it comes to speak about properties such as
+progress. To that effect, we use a technique from
+\citet{gunter_partial-big-step_1993} and, from a big-step evaluation
+relation $a⇓b$, define \emph{partial derivations} from which makes it
+possible to define a \emph{partial evaluation} relation $a⇓^*b$ (see
+\fref{sec:partial-derivations}). Progress is then expressed as the
+fact that a derivation of $a⇓^*b$ can always be extended.
+
+The operational semantics differs from
+\citeauthor{launchbury_natural_1993}'s in two major respects:
+\begin{itemize}
+\item The reduction state are heavily annotated with type
+  information. These type annotation are used for the proofs.
+\item Variables in the environments are annotated by a multiplicity
+  ($1$ or $ω$), $ω$-variables are ordinary variables, when such a
+  variable is forced it is replaced by its value (this implements lazy
+  sharing), but $1$-variables \emph{must be consumed exactly once}:
+  when they are forced, they are definitively removed from the
+  environment.
+\end{itemize}
+The latter point, combined with the fact that the reduction is indexed
+by whether we intend to consume the term under consideration exactly
+once or an arbitrary number of time shows that, as promised, linear
+functions consume their argument exactly once if their result is
+consumed exactly once.
+
+Of course, we still need to verify the usual properties of type
+preservation and progress for our evaluation. That is, keeping the
+form of the evaluation states abstract:
+
+\begin{theorem}[Type preservation]\label{thm:type-safety}
+  If $a$ is well typed, and $a⇓b$, or $a⇓^*b$ then $b$ is well-typed.
+\end{theorem}
+\begin{theorem}[Progress]\label{thm:progress-denotational}
+  Evaluation does not block. That is, for any partial evaluation
+  $a⇓^*b$, where $a$ is well-typed, the derivation can be extended.
+\end{theorem}
+These theorem are proved in \fref{sec:denotational}.
+
+\paragraph{In-place update \& typestate}
 
 \improvement{aspiwack: add a type preservation property, some more
   explanation about the semantics. Explain the thing about removing
@@ -2835,6 +2890,7 @@ a pure semantics. The progress result proves that typestates need not be
 tracked dynamically.
 
 \subsection{Preliminaries}
+\label{sec:partial-derivations}
 
 Our operational semantics are big-step semantics with laziness in the
 style of \citet{launchbury_natural_1993}. In such semantics, sharing
@@ -3185,15 +3241,19 @@ when annotated states are well-typed.
 \end{definition}
 
 The denotation semantics preserves the well-typedness of annotated
-states throughout the evaluation\fref{lem:type-safety}. From then on, we
+states throughout the evaluation\fref{thm:type-safety}. From then on, we
 will only consider the evaluation of well-typed states.
 
-\begin{lemma}[Denotational evaluation preserves typing]\label{lem:type-safety}
+{
+\renewcommand{\thetheorem}{\ref{thm:type-safety}}
+\begin{theorem}[Type preservation]
   If  $Ξ ⊢ (Γ||t ⇓ Δ||z) :_ρ A, Σ$, or $Ξ ⊢ (Γ||t ⇓^* Δ||z) :_ρ A, Σ$ then
   $$
   Ξ ⊢ (Γ||t :_ρ A),Σ \text{\quad{}implies\quad{}} Ξ ⊢ (Δ||z :_ρ A),Σ.
   $$
-\end{lemma}
+\end{theorem}
+\addtocounter{theorem}{-1}
+}
 \begin{proof}
   By induction on the typed-reduction.
 
@@ -3204,7 +3264,54 @@ will only consider the evaluation of well-typed states.
   remove $x$ from the environment in order to preserve typing.
 \end{proof}
 
+{
+\renewcommand{\thetheorem}{\ref{thm:progress-denotational}}
+\begin{theorem}[Progress]
+  Evaluation does not block. That is, for any partial derivation of
+  $Ξ ⊢ (Γ'||e ⇓ ?) :_ρ A,Σ$, the derivation can be
+  extended.
+\end{theorem}
+\addtocounter{theorem}{-1}
+}
+\begin{proof}
+  The proof of progress, for the denotational semantics, is almost
+  entirely standard. The only unusual rule is the linear variable
+  rule, in which there are two things of notice:
+  \begin{itemize}
+  \item The linear variable rule blocks if $ρ = ω$
+  \item The linear variable rule removes the variable $x$ from the
+    environment.
+  \end{itemize}
+  Therefore it suffices to show that the former case never arises. And
+  that whenever a variable is evaluated, then it appears in the
+  environment.
+  \begin{itemize}
+  \item Notice that $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed
+    state because it reduces to $x:_1B = x:_{ωπ} B$ for some $π$,
+    which never holds. By type preservation (\fref{thm:type-safety}),
+    $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ cannot be the head of a partial
+    derivation.
+  \item Similarly $Ξ⊢Γ||x :_1 A,Σ$ where $x∉Γ$ is not well-typed, and
+    hence cannot be the head of a partial derivation\footnote{Notice
+      that it is an invariant of the denotational evaluation, that
+      variables in $Ξ$ are not reachable from $e$. This is only true
+      because let-bindings are not recursive. In the case that they
+      are recursive, the shared variable rule make it possible to run
+      into a situation where $x$ is evaluated and part of $Ξ$, in
+      which case the reduction blocks: this models so-called
+      \emph{black-holing} in which ill-founded recursive lazy
+      definitions report an error rather than looping. This
+      presentation follows \citet{launchbury_natural_1993}, and in
+      presence of such recursion, progress must be extended to say
+      that partial derivation can be either extended or is in a black
+      hole. An alternative solution is to change the shared variable
+      rule to loop instead of blocking in case of such ill-founded
+      recursion.}.
+  \end{itemize}
+\end{proof}
+
 \subsection{Bisimilarity and all that}
+\label{sec:bisimilarity}
 
 The crux of our metatheory is that the two semantics are
 bisimilar. Bisimilarity allows to tranport properties from the
@@ -3305,42 +3412,7 @@ Equipped with this bisimulation, we are ready to prove the theorems of
 }
 \begin{proof}
   By liveness (\fref{lem:liveness}) it is sufficient to prove the case
-  of the denotational semantics.
-
-  The proof of progress for the denotational semantics is almost
-  entirely standard. The only unusual rule is the linear variable
-  rule, in which there are two things of notice:
-  \begin{itemize}
-  \item The linear variable rule blocks if $ρ = ω$
-  \item The linear variable rule removes the variable $x$ from the
-    environment.
-  \end{itemize}
-  Therefore it suffices to show that the former case never arises. And
-  that whenever a variable is evaluated, then it appears in the
-  environment.
-  \begin{itemize}
-  \item Notice that $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ is not a well-typed
-    state because it reduces to $x:_1B = x:_{ωπ} B$ for some $π$,
-    which never holds. By type preservation (\fref{lem:type-safety}),
-    $Ξ⊢Γ,x:_1 B = e||x :_ω A,Σ$ cannot be the head of a partial
-    derivation.
-  \item Similarly $Ξ⊢Γ||x :_1 A,Σ$ where $x∉Γ$ is not well-typed, and
-    hence cannot be the head of a partial derivation\footnote{Notice
-      that it is an invariant of the denotational evaluation, that
-      variables in $Ξ$ are not reachable from $e$. This is only true
-      because let-bindings are not recursive. In the case that they
-      are recursive, the shared variable rule make it possible to run
-      into a situation where $x$ is evaluated and part of $Ξ$, in
-      which case the reduction blocks: this models so-called
-      \emph{black-holing} in which ill-founded recursive lazy
-      definitions report an error rather than looping. This
-      presentation follows \citet{launchbury_natural_1993}, and in
-      presence of such recursion, progress must be extended to say
-      that partial derivation can be either extended or is in a black
-      hole. An alternative solution is to change the shared variable
-      rule to loop instead of blocking in case of such ill-founded
-      recursion.}.
-  \end{itemize}
+  of the denotational semantics. Which follows from \fref{thm:progress-denotational}
 \end{proof}
 
 Observational equivalence, which means, for \calc{}, that an
