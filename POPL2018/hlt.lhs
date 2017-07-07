@@ -1408,15 +1408,15 @@ a Launchbury style semantics. It differs in the following way:
 \end{itemize}
 The idea, with the latter is that progress will show that we are
 never blocked by typestates. In other words, they are enforced
-statically and that an implementation will not need to track them.
+statically and can be erased at runtime.
 
 It is hard to reason on a lazy language with mutation. But what we are
 trying to show is that we are using mutation carefully enough so that
-they behave as pure data. And to formalise this, we relate this
+they behave as pure data. To formalise this, we relate this
 semantics with mutation to our pure semantics above. Specifically, we
 show that they are \emph{bisimilar}. This is similar to
 \citet{amani_cogent_2016}, who also have a language with linear types
-with a both pure and imperative semantics.
+with both a pure and imperative semantics.
 
 From the bisimilarity we can directly lift the type-preservation and
 progress from the pure semantics. That is, write $σ,τ$ for states of
@@ -1434,8 +1434,8 @@ this evaluation with mutation:
   In particular, typestates need not be checked dynamically.
 \end{theorem}
 
-But just as importantly, we can prove that, indeed, we cannot observe
-mutations, and despite using them as our implementation device, the
+Just as importantly, we can prove that, indeed, we cannot observe
+mutations. Further, despite using them as our implementation device, the
 semantics we expose is pure. More precisely, we prove that the two
 semantics are observationally equivalent: any observation, which we
 reduce to a boolean test, is identical in either semantics.
@@ -1450,8 +1450,8 @@ reduce to a boolean test, is identical in either semantics.
 These three theorems are proved in \fref{sec:bisimilarity}.
 
 \subsection{Design choices \& trade-offs}
-Let us review the design space allowed by \calc{}, the points in the space that
-we chose, and the generalisations that we have left open.
+We could as well have picked different points in the design space for
+\calc{}. We review some of the choices we made in this section.
 
 \paragraph{Case rule}
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
@@ -1463,8 +1463,8 @@ data Pair p q a b where
 fst :: Pair 1 ω a b ⊸ a
 fst x = case _ 1 x of Pair a b -> a
 \end{code}
-But now multiplicity polymorphism infects all basic data types (such as pairs), and it
-is hard to forsee all the consequences.  Moreover, |let| is annotated so it seems
+But now multiplicity polymorphism infects all basic data types (such
+as pairs), with knock-on consequences.  Moreover, |let| is annotated so it seems
 reasonable to annotate |case| in the same way.
 
 To put it another way, $\varid{case}_ω$ allows us to meaningfully inhabit
@@ -1490,11 +1490,11 @@ makes the expression typeable, as the reader may check.
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
-\citet{pottier_subtyping_1998}; for a counterpoint, see
-\citet{dolan_mlsub_2017}).
+\citet{pottier_subtyping_1998}, but also \citet{dolan_mlsub_2017} for
+a counterpoint).
 %
-\HaskeLL{}, however, has limited support for subtyping:
-calls like |(g f)| are well typed, and are elaborated to
+\HaskeLL{} has limited support for subtyping:
+calls like |(g f)| are well-typed. But these are elaborated to their
 $η$-expansions in \calc{}.
 
 \paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
@@ -1511,17 +1511,16 @@ But if we had a richer domain of multiplicities, including
 $0$ (see \fref{sec:extending-multiplicities}), we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
-For now, we accept more conservative rules, in order to hold open the possiblity
-of extending the multiplicity domain later.  But there is an up-front cost,
-of somewhat less polymorphism than we might expect.  We hope that experience will
-lead us to a better assessment of the costs/benefit trade-off here.
+For now, we accept more conservative rules, in order to keep open the possiblity
+of extending the multiplicity domain later.  There is an up-front
+cost to this: we have less polymorphism than we might expect.
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
 \label{sec:impl}
 
 We implement \HaskeLL{} on top of the leading Haskell compiler,
-\textsc{ghc}, version 8.2\footnote{github URL suppressed for anonymous review}.
+\textsc{ghc}, version 8.2\footnote{URL suppressed for anonymous review}.
 The implementation modifies type inference and
 type-checking in the compiler. Neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
@@ -1529,15 +1528,10 @@ nor the run-time system are affected.
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies presented in
 in this paper (see \fref{sec:evaluation}).
-%
-Our \HaskeLL{} implementation is compatible with most, but not all, of
-\textsc{ghc}'s extensions (one notable incompatible extension is
-pattern-synonyms, the details of which have yet to be worked out).
 
-In order to implement the linear arrow, we followed the design of
-\calc{} and added a multiplicity annotation to function arrows, as an
-additional argument of the type constructor for arrows of
-\textsc{ghc}'s type checker. The constructor for arrow types is
+In order to implement the linear arrow, we added a multiplicity
+annotation to function arrows as in \calc{}.
+The constructor for arrow types is
 constructed and destructed frequently in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
@@ -1552,17 +1546,11 @@ Implementing \HaskeLL{}
 %% \manuel{which branch? link? JP: Linguistically ``this branch'' refers to the
 %%   case branch of the previous parag.}
 affects 1,152 lines of \textsc{ghc} (in subsystems of the compiler
-that together amount to more than 100k lines of code), including 444 net extra lines. A new
-file responsible for multiplicity operations as well as the files
-responsible for the environment manipulation and type inference of
-patterns account for almost half of the affected lines. The rest spans
-over a 100 files, most of which have 2 or 3 lines modified to account
-for the extra multiplicity argument of the arrow constructor.
-%% This work required roughly 1 man-month to complete.
-
-These figures vindicate our claim that \HaskeLL{} is easy to integrate into an
-existing implementation: despite \textsc{ghc} being 25 years old, we 
-implement a first version of \HaskeLL{} with reasonable effort.
+that together amount to more than 100k lines of code), including 444
+net extra lines. These figures support our claim that \HaskeLL{} is
+easy to integrate into an existing implementation: despite
+\textsc{ghc} being 25 years old, we implement a first version of
+\HaskeLL{} with reasonable effort.
 
 % \section{Applications}
 \section{Evaluation and Case Studies}
