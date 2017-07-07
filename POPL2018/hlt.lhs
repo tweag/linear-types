@@ -1379,7 +1379,7 @@ more than once, the progress theorem (well typed programs do not get
 stuck) shows that linear functions do indeed consume their argument
 exactly once if their result is consumed exactly once. \simon{not true!}
 
-Our preservation and progress theorems then look like htis,
+Our preservation and progress theorems then look like this,
 writing $a,b$ for states of the evaluation:
 
 \begin{theorem}[Type preservation]\label{thm:type-safety}
