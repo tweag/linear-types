@@ -45,7 +45,10 @@ rlt-full.pdf: hlt.pdf
 appendix.pdf: hlt.pdf
 	pdftk hlt.pdf cat 29-end output $@
 
-supplementary.zip: rlt-full.pdf appendix.pdf
+README.md: supplementary-readme.md
+	cp $< $@
+
+supplementary.zip: rlt-full.pdf appendix.pdf README.md
 	zip $@ $^
 
 %.cls: %.ins
