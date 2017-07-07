@@ -2781,9 +2781,9 @@ other industrial projects.
 \begin{description}
 
 \item[Streaming I/O] Program inputs and outputs are frequently much
-  larger than the available RAM on any single node. Rather than
+  larger than the available \textsc{ram} on any single node. Rather than
   building complex pipelines with brittle explicit loops copying data
-  piecemeal to spare our precious RAM, one approach is to compose
+  piecemeal to spare our precious \textsc{ram}, one approach is to compose
   combinators that transform, split and merge data wholemeal but in
   a streaming fashion. These combinators manipulate first-class {\em
     streams} and guarantee bounded memory usage, as in the below
