@@ -11,6 +11,7 @@ in stdenv.mkDerivation {
                   haskellPackages.lhs2tex
                   biber
                   pdftk
+                  zip
                   (texlive.combine {
                        inherit (texlive)
                        algorithm2e

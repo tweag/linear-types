@@ -1,6 +1,15 @@
 all: hlt.pdf
 
-submission: rlt.pdf appendix.pdf
+submission: rlt.pdf supplementary.zip
+	@echo %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	@echo
+	@echo Submission instructions:
+	@echo
+	@echo Submit rlt.pdf as the main document
+	@echo and supplementary.zip as the archive
+	@echo of supplementary material
+	@echo
+	@echo %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules:"
@@ -29,8 +38,15 @@ clean:
 rlt.pdf: hlt.pdf
 	pdftk $< cat 1-28 output temp.pdf
 	pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
+
+rlt-full.pdf: hlt.pdf
+	cp $< $@
+
 appendix.pdf: hlt.pdf
 	pdftk hlt.pdf cat 29-end output $@
+
+supplementary.zip: rlt-full.pdf appendix.pdf
+	zip $@ $^
 
 %.cls: %.ins
 	latex $<
