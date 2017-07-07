@@ -2888,6 +2888,7 @@ capabilities for safe, compiler-checked use, within pure code.
 
 
 %% Appendix
+\clearpage
 \appendix
 \section{Semantics and soundness of \calc{}}
 \label{appendix:dynamics}

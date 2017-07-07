@@ -10,6 +10,7 @@ in stdenv.mkDerivation {
   buildInputs = [ # orgEmacs
                   haskellPackages.lhs2tex
                   biber
+                  pdftk
                   (texlive.combine {
                        inherit (texlive)
                        algorithm2e

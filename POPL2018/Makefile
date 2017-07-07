@@ -1,5 +1,7 @@
 all: hlt.pdf
 
+submission: rlt.pdf appendix.pdf
+
 PaperTools/bibtex/jp.bib:
 	echo "Get the submodules:"
 	echo "Try 'git submodule update --init'"
@@ -24,8 +26,13 @@ clean:
 %.pdf: %.tex  ../PaperTools/bibtex/jp.bib ../local.bib acmart.cls
 	latexmk -pdf $*
 
+rlt.pdf: hlt.pdf
+	pdftk hlt.pdf cat 1-28 output $@
+
+appendix.pdf: hlt.pdf
+	pdftk hlt.pdf cat 29-end output $@
+
 %.cls: %.ins
 	latex $<
 
-.PHONY: all plain ed clean
-
+.PHONY: all submission plain ed clean
