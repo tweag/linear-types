@@ -1527,20 +1527,20 @@ lead us to a better assessment of the costs/benefit trade-off here.
 
 We implement \HaskeLL{} on top of the leading Haskell compiler,
 \textsc{ghc}, version 8.2\footnote{github URL suppressed for anonymous review}.
-We modify type inference and
+The implementation modifies type inference and
 type-checking in the compiler. Neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
 %
 Our implementation of multiplicity polymorphism is incomplete, but the current
 prototype is sufficient for the examples and case studies presented in
-in this paper.
+in this paper (see \fref{sec:evaluation}).
 %
 Our \HaskeLL{} implementation is compatible with most, but not all, of
 \textsc{ghc}'s extensions (one notable incompatible extension is
 pattern-synonyms, the details of which have yet to be worked out).
 
 In order to implement the linear arrow, we followed the design of
-\calc{} and added a multiplicity annotation to arrows, as an
+\calc{} and added a multiplicity annotation to function arrows, as an
 additional argument of the type constructor for arrows of
 \textsc{ghc}'s type checker. The constructor for arrow types is
 constructed and destructed frequently in \textsc{ghc}'s type checker, and this
