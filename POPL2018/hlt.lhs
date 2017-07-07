@@ -3052,7 +3052,7 @@ The details of the ordinary evaluation relation are given in
     {Γ : n ⇓ Δ : i \\ Δ:arr ⇓ (Θ,l :_1 \varid{Array}~a =
       [a_1,…,a_i,…,a_n]) : l \\ (Θ,l :_1 \varid{Array}~a =
       [a_1,…,a_i,…,a_n]) : a_i ⇓ Λ : z}
-    {Γ : \varid{read}~arr~n ⇓ Λ : z}
+    {Γ : \varid{index}~arr~n ⇓ Λ : z}
 
     %%%% /Arrays
   \end{mathpar}
@@ -3127,7 +3127,7 @@ The details of the ordinary evaluation relation are given in
 {Ξ ⊢ (Γ || n ⇓ Δ || i) :_ρ \varid{Int},Σ \\ Ξ ⊢ (Δ||arr ⇓ Θ ||
   [a_1,…,a_i,…,a_n])) :_ρ \varid{Array}~a,Σ \\ Ξ ⊢ (Θ || a_i ⇓ Λ || z)
 :_ρ A, Σ}
-{Ξ ⊢ (Γ || \varid{read}~arr~n ⇓ Λ || z) :_ρ a, Σ}
+{Ξ ⊢ (Γ || \varid{index}~arr~n ⇓ Λ || z) :_ρ a, Σ}
 
 %%%% /Arrays
   \end{mathpar}
