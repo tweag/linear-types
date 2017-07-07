@@ -1497,7 +1497,7 @@ subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}; for a counterpoint, see
 \citet{dolan_mlsub_2017}).
 %
-\HaskeLL{} on the other hand has limited support for subtyping:
+\HaskeLL{}, however, has limited support for subtyping:
 calls like |(g f)| are well typed, and are elaborated to
 $η$-expansions in \calc{}.
 
