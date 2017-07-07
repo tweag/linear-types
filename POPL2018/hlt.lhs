@@ -604,14 +604,12 @@ There are several things to note here:
   specified size, and passes it to the function supplied as the second
   argument to |newMArray|, as a {\em linear} value |ma|.
 
-\item We still disinguish the type of mutable arrays |MArray| from that of
-  immutable arrays |Array|. Only immutable arrays are allowed to be non-linear
-  (unrestricted).
-  %% In our system, \emph{linearity is a property of function arrows,
-  %%   not of types} (\fref{sec:lin-arrow}).
-  The way to say that results
-  can be freely shared is to use |Unrestricted| (\fref{sec:data-types}), as in the type of
-  |freeze|. 
+\item Even though linearity is a property of function arrows, not of
+  types (\fref{sec:lin-arrow}), we still disinguish the type of
+  mutable arrays |MArray| from that of immutable arrays |Array|, because in this {\sc api}
+  only immutable arrays are {\em allowed} to be non-linear (unrestricted).  The
+  way to say that results can be freely shared is to use
+  |Unrestricted| (\fref{sec:data-types}), as in the type of |freeze|.
 
 \item Because |freeze| consumes its input, there is no danger of the same
   mutable array being subsequently written to, eliminating the problem with
@@ -630,42 +628,25 @@ an instance of a more general, multiplicity-polymorphic version of
 a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
 
-\item Finally, in the {\sc api}, no function that consumes an |MArray a|
-  returns more than a {\em single} pointer to it.  Together with the fact
-  that |newMArray| introduces {\em only} linear |MArray| bindings, this ensures {\bf
-    uniqueness}, which in turn allows update-in-place.
-%  (Otherwise we would could retain old values of the array, and could not update-in-place.)
-%  have concurrent accesses to the array, and reference-transparency would be violated.
 
 \end{itemize}
+There are three factors that ensure that a unique |MArray| is needed
+in any given application |x = newMArray k|, and in turn that
+update-in-place is safe. First, |newMArray| introduces {\em only}
+a linear |ma :: MArray|.  Second, in the {\sc api}, no function that
+consumes an |MArray a| returns more than a {\em single} pointer to it;
+so |k| can never obtain two pointers to |ma|.  Third, |k| must wrap its
+result in |Unrestricted|. This means that even if |x| is used in an
+unrestricted way, it suffices to call |k| a single time to obtain the
+result, and in turn no mutable pointer to |ma| can {\em escape} when
+|newArray| returns (\ie{} when the |b| result of |newArray| is
+evaluated).
 
-In an application, |newMArray k|, we see the principle that \emph{linearity is a
-  property of function arrows, not of types} in action (elaborated in
-\fref{sec:lin-arrow}).
-%
-  That function |k| has the type |MArray a ⊸ Unrestricted b|. 
-%  This has two consequences.  First, |k| is guaranteed to consume |ma| exactly once.
-  %  In particular |k| cannot  pass |ma| to multiple functions.
-  It consumes the input array once and can return a value of any
-  type |Unrestricted b| it wishes, but the payload of type |b| must
-  {\em not} be linear (by definition of |Unrestricted|).
-  %
-%%   As a consequence, in order to access that payload, |newMArray| must force the
-%%   execution of |k ma| until all linear objects (including |ma|) are
-%%   consumed. This forcing means: (1) it does
-%%   not matter how many times the result of |newMArray k| is used;
-%%   and (2) |k| needs to be called only once and thus a only single |ma| is ever
-%%   needed.
-%% %
-%%  Second, no pointer to |ma| can escape into the control of the {\sc GC}.
-  This implies that no mutable pointer to |ma| can {\em escape} when |newArray|
-  returns (\ie{} when the |b| result of |newArray| is evaluated).
-  
 With this mutable array \textsc{api},
 the |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
-the unnecessary sequentialisation we mentioned earlier, \newaudit{and creates
-opportunities for purely functional parallelism.}
+the unnecessary sequentialisation we mentioned earlier, and creates
+opportunities for purely functional parallelism.
 %
 \if{0}
     In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
@@ -2164,7 +2145,7 @@ updateable arrays, etc.) and some types are inherently unrestricted
 %
 However, after scratching the surface we have discovered that
 ``linearity via arrows'' has an edge over ``linearity via
-kinds'':
+kinds''.
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
