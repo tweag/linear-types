@@ -1365,22 +1365,22 @@ The operational semantics differs from
 \begin{itemize}
 \item The reduction states are heavily annotated with type
   information. These type annotations are used for the proofs.
+\item Reduction is indexed by whether we intend to consume the term
+  under consideration exactly once or an arbitrary number of times
 \item Variables in the environments are annotated by a multiplicity
   ($1$ or $ω$), $ω$-variables are ordinary variables. When such a
   variable is forced it is replaced by its value (to model lazy
   sharing), but $1$-variables \emph{must be consumed exactly once}:
-  when they are forced, they are removed from the
-  environment.
+  when they are forced, they are removed from the environment. So
+  reduction would get stuck if a 1-variable was used more than once.
 \end{itemize}
-The latter property, combined with the fact that the reduction is indexed
-by whether we intend to consume the term under consideration exactly
-once or an arbitrary number of time is used to show that linear
-functions consume their argument exactly once if their result is
-consumed exactly once.
+Since the operational semantics gets stuck if a 1-variable is used
+more than once, the progress theorem (well typed programs do not get
+stuck) shows that linear functions do indeed consume their argument
+exactly once if their result is consumed exactly once. \simon{not true!}
 
-Of course, we still need to verify the usual properties of type
-preservation and progress for our evaluation. That is, writing $a,b$
-for states of the evaluation:
+Our preservation and progress theorems then look like htis,
+writing $a,b$ for states of the evaluation:
 
 \begin{theorem}[Type preservation]\label{thm:type-safety}
   If $a$ is well typed, and $a⇓b$, or $a⇓^*b$ then $b$ is well-typed.
@@ -1389,7 +1389,7 @@ for states of the evaluation:
   Evaluation does not block. That is, for any partial evaluation
   $a⇓^*b$, where $a$ is well-typed, the derivation can be extended.
 \end{theorem}
-These theorem are proved in \fref{sec:denotational}.
+These theorems are proved in \fref{sec:denotational}.
 
 \paragraph{In-place update \& typestate}
 We furthermore claim that linear types can be
