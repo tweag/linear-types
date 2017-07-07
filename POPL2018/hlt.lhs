@@ -1519,7 +1519,7 @@ existing code base together with the following changes: (1) all
 linear by default, as implied by the new type system; and (2) we update standard
 list functions to have linear types (|++|, |concat|, |uncons|).
 %
-Under these conditions, we verified that the base GHC libraries and the nofib
+Under these conditions, we verified that the base \textsc{ghc} libraries and the nofib
 benchmark suites compile successfully: 195K lines of Haskell, providing
 preliminary evidence of backwards compatibility.
 
