@@ -2152,14 +2152,16 @@ Another popular choice
 \cite{wadler_linear_1990,mazurak_lightweight_2010,morris_best_2016,tov_practical_2011}
 is to separate types into two kinds: a linear kind and an unrestricted
 kind. Values with a type whose kind is linear are linear, and the
-others are unrestricted.  In a typical design making this choice,
-every type constructor exists in two flavours: one which constructs a
-linear type and one which constructs an unrestricted type. (Thus in
-particular such systems feature ``linear arrows'', but they have a
-completely different interpretation from ours.) This choice is
-attractive on the surface because, intuitively, some types are
-inherently linear (file handles, updateable arrays, etc.) and some
-types are inherently unrestricted (|Int|, |Bool|, etc.).
+others are unrestricted. (Thus in particular such systems feature
+``linear arrows'', but they have a completely different interpretation
+from ours.) This choice is attractive on the surface because,
+intuitively, some types are inherently linear (file handles,
+updateable arrays, etc.) and some types are inherently unrestricted
+(|Int|, |Bool|, etc.).
+%
+However, after scratching the surface we have discovered that
+``linearity via arrows'' has an edge over ``linearity via
+kinds'':
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
@@ -2173,13 +2175,7 @@ types are inherently unrestricted (|Int|, |Bool|, etc.).
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-However, after scratching the surface we have discovered that
-``linearity via arrows'' has an edge over ``linearity via
-kinds'':
-\begin{itemize}
-
-
-\item Better subsumption properties.  When retrofitting linear types
+\paragraph{Better code reuse}  When retrofitting linear types
   in an existing language, it is important to share has much code as
   possible between linear and non-linear code. In a system with
   linearity on arrows, the subsumption relation (linear arrows subsume
@@ -2212,7 +2208,7 @@ kinds'':
   duplicated, and its contents with it.) Consequently, sharing data
   types also requires polymorphism.  For example, in a two-kinds
   system, the |List| type may look like so, if one assumes a that
-  |Type 1| is the kind of linear types and and |Type ω| is the kind of
+  |Type 1| is the kind of linear types and |Type ω| is the kind of
   unrestricted types.
   \begin{code}
     data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List p m a)
@@ -2240,7 +2236,8 @@ kinds'':
   levity~\cite{eisenberg_levity_2017}.
 
 
-\item 
+
+  \paragraph{Dependent types}
   % It is easy to extend our system to any set of
   % ground multiplicities with a ring structure
   % (\fref{sec:extending-multiplicities}).
@@ -2294,10 +2291,9 @@ kinds'':
 %   control thanks this kind of polymorphism (see Simon's email):
 %   TYPE : Linearity -> KIND
 
-\end{itemize}
 
-An advantage of ``linearity via kinds'' is the possibility to directly
-declare the linearity of values returned by a function---not just that
+Yet, an advantage of ``linearity via kinds'' is the possibility to directly
+declare the linearity of values returned by a function -- not just that
 of the argument of a function. In contrast, in our system if one wants
 to indicate that a returned value is linear, we have to
 use a double-negation trick. That is, given $f : A → (B ⊸ !r) ⊸ r$,
