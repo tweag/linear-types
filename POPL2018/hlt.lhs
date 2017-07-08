@@ -526,7 +526,7 @@ array :: Int -> [(Int,a)] -> Array a
 \end{code}
 
 \begin{wrapfigure}[7]{r}[0pt]{7.0cm} % lines, placement, overhang, width
-%\vspace{-6mm}
+\vspace{-8mm}
 \begin{code}
   type MArray s a
   type Array a
