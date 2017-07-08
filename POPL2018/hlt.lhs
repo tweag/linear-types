@@ -699,7 +699,7 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 %\vspace{-1mm}
 
 \begin{figure}
-  \vspace{-4mm}
+  % \vspace{-4mm}
 \begin{minipage}{0.40 \textwidth} 
 %  \begin{framed}   
 \begin{code}
@@ -761,11 +761,6 @@ where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respec
 Now |openFile| returns |IOL 1 (File ByteString)|,
 the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
-
-\end{itemize}
-
-% lame hack / workaround
-\begin{itemize}
 
 \item As before, operations on linear values must consume their input
 and return a new one; here |readLine| consumes the |File| and produces a new one.
