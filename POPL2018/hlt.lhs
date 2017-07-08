@@ -1396,7 +1396,7 @@ typestates (like whether an array is mutable or frozen) are actually
 enforced by the type system.
 
 To prove this, we introduce a second, distinct, semantics. It is also
-a Launchbury style semantics. It differs from the first one in the following ways:
+a Launchbury style semantics. It differs from \citet{launchbury_natural_1993} in the following ways:
 \begin{itemize}
 \item Environments are enriched with mutable references (for the sake
   of concreteness, they are all references to arrays but they could be
@@ -1417,7 +1417,7 @@ show that they are \emph{bisimilar}. This\jp{this technique? this result?} is si
 \citet{amani_cogent_2016}, who also have a language with linear types
 with both a pure and imperative semantics.
 
-Bisimilarity allows to lift the type-preservation and
+Bisimilarity allows us to lift the type-preservation and
 progress from the pure semantics. That is, writing $σ,τ$ for states of
 this evaluation with mutation:
 
@@ -1435,7 +1435,7 @@ this evaluation with mutation:
 
 Just as importantly, we can prove that, indeed, we cannot observe
 mutations. More precisely, we prove that the pure semantics and the
-mutation-based semantics are observationally equivalent: any observation, which we
+semantics with mutation are observationally equivalent: any observation, which we
 reduce to a boolean test, is identical in either semantics.
 \begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
   The semantics with in-place mutation is observationally equivalent
