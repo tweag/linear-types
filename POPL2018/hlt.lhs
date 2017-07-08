@@ -644,13 +644,13 @@ a single |foldl| (where ``multiplicity'' refers to how many times a function
 consumes its input).
 \end{itemize}
 
-There are three factors that ensure that a unique |MArray| is needed
+Three factors ensure that a unique |MArray| is needed
 in any given application |x = newMArray k|, and in turn that
 update-in-place is safe. First, |newMArray| introduces {\em only}
 a linear |ma :: MArray|.  Second, no function that
 consumes an |MArray a| returns more than a {\em single} pointer to it;
 so |k| can never obtain two pointers to |ma|.  Third, |k| must wrap its
-result in |Unrestricted|. This means that even if |x| is used in an
+result in |Unrestricted|. This third point means that even if |x| is used in an
 unrestricted way, it suffices to call |k| a single time to obtain the
 result, and in turn no mutable pointer to |ma| can {\em escape} when
 |newArray| returns (\ie{} when the |b| result of |newArray| is
