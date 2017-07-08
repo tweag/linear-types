@@ -828,18 +828,6 @@ then indeed |t| is consumed exactly once.
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special non-linear pair}.
 
-% \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
-\begin{wrapfigure}[8]{r}[0pt]{4.5cm} \vspace{-8mm} 
-\begin{code}
-data [a] = [] | a : [a]
-\end{code}
-\begin{code}
-(++) :: [a] ⊸ [a] ⊸ [a]
-[]      ++ ys = ys
-(x:xs)  ++ ys = x : (xs ++ ys)
-\end{code}
-\end{wrapfigure}
-%  
 The same idea applies to all existing Haskell data types: in
 \HaskeLL{} we treat all data types defined using legacy Haskell-98
 (non-GADT) syntax as defining constructors with linear arrows.
@@ -853,6 +841,18 @@ whose constructor |(:)| uses linear arrows:
 %% (x:xs)  ++ ys = x : (xs ++ ys)
 %% \end{code}
 %% \end{wrapfigure}
+%
+% \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
+\begin{wrapfigure}[8]{r}[0pt]{4.5cm} % \vspace{-8mm}
+\begin{code}
+data [a] = [] | a : [a]
+\end{code}
+\begin{code}
+(++) :: [a] ⊸ [a] ⊸ [a]
+[]      ++ ys = ys
+(x:xs)  ++ ys = x : (xs ++ ys)
+\end{code}
+\end{wrapfigure}
 %
 Just as with pairs, this is not a new, linear list type: this \emph{is}
 \HaskeLL{}'s list type, and all existing Haskell functions will work
