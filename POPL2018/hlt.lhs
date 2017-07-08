@@ -2781,7 +2781,7 @@ other industrial projects.
   wholemeal I/O programming would be broken (like in \citet[Section
     2.2]{lippmeier_parallel_2016}), because neither consumer would
   ultimately see the same values from the stream. If say one consumer
-  reads in the stream first, the second consumer would see all but an
+  reads in the stream first, the second consumer would see an
   empty stream --- not what the first consumer saw.
 
   We have seen this very error several times in industrial projects,
