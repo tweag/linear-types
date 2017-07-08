@@ -2827,7 +2827,7 @@ other industrial projects.
 
 
 
-\section{Conclusions}
+\section{Conclusion}
 
 This article demonstrates how an existing lazy language, such
 as Haskell, can be extended with linear types, without compromising
