@@ -27,7 +27,7 @@ ed:
 	$(MAKE)
 
 clean:
-	rm -f *.tex *.aux *.bbl *.ptb hlt*.pdf *.toc *.out *.run.xml
+	rm -f *.tex *.aux *.bbl *.ptb hlt*.pdf rlt*.pdf *.toc *.out *.run.xml *.zip
 
 %.tex: %.lhs
 	lhs2TeX -o $@ $<
@@ -38,6 +38,7 @@ clean:
 rlt.pdf: hlt.pdf
 	pdftk $< cat 1-28 output temp.pdf
 	pdftk $< dump_data_utf8 | pdftk temp.pdf update_info_utf8 - output $@
+	rm -f temp.pdf
 
 rlt-full.pdf: hlt.pdf
 	cp $< $@
@@ -53,5 +54,7 @@ supplementary.zip: rlt-full.pdf appendix.pdf README.md
 
 %.cls: %.ins
 	latex $<
+
+.INTERMEDIATE: rlt-full.pdf appendix.pdf README.md
 
 .PHONY: all submission plain ed clean
