@@ -1369,13 +1369,13 @@ The operational semantics differs from
   when they are forced, they are removed from the environment. So
   reduction would get stuck if a 1-variable was used more than once.
 \end{itemize}
-Since the operational semantics gets stuck if a 1-variable is used
-more than once, the progress theorem (well typed programs do not get
-stuck) shows that linear functions do indeed consume their argument
-at most once if their result is consumed exactly once. The 1-variables
-are in fact used exactly once: it
-is a consequence of type preservation that evaluating of closed term
-of a basic type (say |Bool|) returns an environment with no 1-variables.
+Because the operational semantics gets stuck if a 1-variable is used
+more than once, the progress theorem
+(\fref{thm:progress-denotational}) shows that linear functions do
+indeed consume their argument at most once if their result is consumed
+exactly once. The 1-variables are in fact used exactly once: it is a
+consequence of type preservation that evaluation of a closed term of a
+basic type (say |Bool|) returns an environment with no 1-variables.
 
 Our preservation and progress theorems then look like this,
 writing $a,b$ for states of the evaluation:
@@ -1390,13 +1390,13 @@ writing $a,b$ for states of the evaluation:
 These theorems are proved in \fref{sec:denotational}.
 
 \paragraph{In-place update \& typestate}
-We furthermore claim that linear types can be
-used to implement some operations as in-place updates, and that
+Furthermore, linear types can be
+used to implement some operations as in-place updates, and
 typestates (like whether an array is mutable or frozen) are actually
 enforced by the type system.
 
 To prove this, we introduce a second, distinct, semantics. It is also
-a Launchbury style semantics. It differs in the following way:
+a Launchbury style semantics. It differs from the first one in the following ways:
 \begin{itemize}
 \item Environments are enriched with mutable references (for the sake
   of concreteness, they are all references to arrays but they could be
@@ -1405,20 +1405,20 @@ a Launchbury style semantics. It differs in the following way:
   references, functions can block if the type of the references isn't
   correct: that is, we track typestates dynamically
 \end{itemize}
-The idea, with the latter is that progress will show that we are
+The idea behind the latter is that progress will show that we are
 never blocked by typestates. In other words, they are enforced
 statically and can be erased at runtime.
 
-It is hard to reason on a lazy language with mutation. But what we are
-trying to show is that we are using mutation carefully enough so that
+It is hard to reason on a lazy language with mutation. But what we
+show is that we are using mutation carefully enough so that
 they behave as pure data. To formalise this, we relate this
 semantics with mutation to our pure semantics above. Specifically, we
-show that they are \emph{bisimilar}. This is similar to
+show that they are \emph{bisimilar}. This\jp{this technique? this result?} is similar to
 \citet{amani_cogent_2016}, who also have a language with linear types
 with both a pure and imperative semantics.
 
-From the bisimilarity we can directly lift the type-preservation and
-progress from the pure semantics. That is, write $σ,τ$ for states of
+Bisimilarity allows to lift the type-preservation and
+progress from the pure semantics. That is, writing $σ,τ$ for states of
 this evaluation with mutation:
 
 \begin{theorem}[Type preservation]\label{thm:type-preservation}
@@ -1434,9 +1434,8 @@ this evaluation with mutation:
 \end{theorem}
 
 Just as importantly, we can prove that, indeed, we cannot observe
-mutations. Further, despite using them as our implementation device, the
-semantics we expose is pure. More precisely, we prove that the two
-semantics are observationally equivalent: any observation, which we
+mutations. More precisely, we prove that the pure semantics and the
+mutation-based semantics are observationally equivalent: any observation, which we
 reduce to a boolean test, is identical in either semantics.
 \begin{theorem}[Observational equivalence]\label{thm:obs-equiv}
   The semantics with in-place mutation is observationally equivalent
