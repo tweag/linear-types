@@ -1,9 +1,9 @@
 % -*- latex -*-
 
 %% For double-blind review submission
-\documentclass[acmsmall,10pt,review,anonymous]{acmart}
+\documentclass[acmsmall,10pt]{acmart}
 \settopmatter{printfolios=true,printacmref=false}
-\def\draftmode{}
+% \def\draftmode{}
 
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
@@ -920,7 +920,7 @@ constructor |PLU|, with mixed linearity. \improvement{Explain here that
 non-gadt syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
-when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
+when \emph{pattern-matching} on |PLU| we are therefore free use the second argument
 in an unrestricted way, even if the |PLU| value itself is linear.
 
 Instead of defining a pair with mixed linearity, we can also write
@@ -995,7 +995,7 @@ is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
-  bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+  bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 \end{code}
 The idea is that if |m :: IOL 1 t|, then |m| is an input/output
 computation that returns a linear value of type |t|.  But what does it mean to
@@ -1033,7 +1033,7 @@ and that implementation too is illuminated by linearity, like so:
 data World
 newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
 data IORes p a where
-  IOR :: World ⊸ a -> _ p IOR p a
+  IOR :: World ⊸ a -> _ p IORes p a
 
 bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 bindIOL (IOL m) k = IOL (\w ->   case m w of
