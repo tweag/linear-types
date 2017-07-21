@@ -1,9 +1,9 @@
 % -*- latex -*-
 
 %% For double-blind review submission
-\documentclass[acmsmall,10pt]{acmart}
+\documentclass[acmsmall,10pt,review,anonymous]{acmart}
 \settopmatter{printfolios=true,printacmref=false}
-% \def\draftmode{}
+\def\draftmode{}
 
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
@@ -920,7 +920,7 @@ constructor |PLU|, with mixed linearity. \improvement{Explain here that
 non-gadt syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
-when \emph{pattern-matching} on |PLU| we are therefore free use the second argument
+when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
 in an unrestricted way, even if the |PLU| value itself is linear.
 
 Instead of defining a pair with mixed linearity, we can also write
@@ -995,7 +995,7 @@ is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
-  bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+  bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 \end{code}
 The idea is that if |m :: IOL 1 t|, then |m| is an input/output
 computation that returns a linear value of type |t|.  But what does it mean to
@@ -1033,7 +1033,7 @@ and that implementation too is illuminated by linearity, like so:
 data World
 newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
 data IORes p a where
-  IOR :: World ⊸ a -> _ p IORes p a
+  IOR :: World ⊸ a -> _ p IOR p a
 
 bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 bindIOL (IOL m) k = IOL (\w ->   case m w of
@@ -2087,7 +2087,7 @@ analysis~\cite{strom_typestate_1983}.
 In the |File| \textsc{api} of \fref{sec:io-protocols}, we made files
 safer to use at the cost of having to thread a file handle
 explicitely: each function consumes a file handle and returns a fresh
-one. We can make this cost into an opporunity: we have the option of
+one. We can make this cost into an opportunity: we have the option of
 returning a handle \emph{with a different type} from that of the
 handle we consumed! So by adjoining a phantom type to sockets to track
 their state, we can effectively encode the proper sequencing of socket
@@ -2815,7 +2815,7 @@ other industrial projects.
   which enables machines in high-performance clusters to copy data
   from the address space in one process to that of a remote process
   directly, bypassing the kernel and even the
-  \textsc{cpu}, thereby avoiding any unneeded copy in the process.
+  \textsc{cpu}, thereby avoiding any unnedded copy in the process.
 
   One could treat a remote memory location as a low-level resource, to
   be accessed using an imperative {\sc api}. Using linear types, one
