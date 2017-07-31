@@ -716,7 +716,7 @@ be unaffected.  Our second use-case has a much more direct impact on library cli
 \begin{code}
   type File
   openFile :: FilePath -> IOL 1 File
-  readLine :: File a ⊸ IOL 1 (File, Unrestricted ByteString)
+  readLine :: File ⊸ IOL 1 (File, Unrestricted ByteString)
   closeFile :: File ⊸ IOL ω ()
 \end{code}
 \vspace{-7mm}
@@ -740,9 +740,9 @@ Using it we can write a simple file handling program, |firstLine|, shown here.
 \begin{code}
 firstLine :: FilePath -> IOL ω Bytestring
 firstLine fp =
-  do  { f <- open fp
+  do  { f <- openFile fp
       ; (f, Unrestricted bs) <- readLine f
-      ; close f
+      ; closeFile f
       ; return bs }
 \end{code}
 %\end{wrapfigure}
@@ -758,7 +758,7 @@ to sequence operations on files individually, as it was for arrays.
 returned value is linear.  We add an extra {\em multiplicity} type parameter |p| to the monad |IOL|,
 where |p| can be |1| or |ω|, indicating a linear or unrestricted result, respectively.
 %
-Now |openFile| returns |IOL 1 (File ByteString)|,
+Now |openFile| returns |IOL 1 File|,
 the ``|1|'' indicating that the returned |File| must be used linearly.
 We will return to how |IOL| is defined in \fref{sec:linear-io}.
 
