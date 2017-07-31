@@ -920,7 +920,7 @@ constructor |PLU|, with mixed linearity. \improvement{Explain here that
 non-gadt syntax is linear}
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
-when \emph{pattern-matchinng} on |PLU| we are therefore free use the second argument
+when \emph{pattern-matching} on |PLU| we are therefore free to use the second argument
 in an unrestricted way, even if the |PLU| value itself is linear.
 
 Instead of defining a pair with mixed linearity, we can also write
@@ -1011,7 +1011,7 @@ combinators of |IOL| can be used in the familiar way. The difference
 with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
-  do  { f <- openFile s   -- |openFile :: FilePath -> IOL 1 (File ByteString)|
+  do  { f <- openFile s   -- |openFile :: FilePath -> IOL 1 File|
       ; d <- getDate      -- |getDate  :: IOL ω Date|
       ; e[f,d] }
 \end{code}
@@ -1506,7 +1506,7 @@ not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $p=1$ and $p=ω$.
 But if we had a richer domain of multiplicities, including
-$0$ (see \fref{sec:extending-multiplicities}), we would be able to prove $x :_p Int ⊢ x : Int$, and rightly
+$0$ (see \fref{sec:extending-multiplicities}), we wouldn't be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to keep open the possiblity
@@ -2716,7 +2716,7 @@ more, following \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}. The general setting for \calc{} is an
 ordered-semiring of multiplicities (with a join operation for type
 inference).  In particular, in order to support dependent types, we
-additionally need a $0$ multiplicity. We may may want to add a
+additionally need a $0$ multiplicity. We may want to add a
 multiplicity for affine arguments (\ie  arguments which can be
 used \emph{at most once}).
 
