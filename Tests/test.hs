@@ -1,7 +1,10 @@
 {-# LANGUAGE LambdaCase, GADTs #-}
+{-# LANGUAGE RebindableSyntax #-}
 -- run with $ ./inplace/bin/ghc-stage1 test.hs
 
 module Test where
+
+import Prelude ( Int, Bool(..), fromIntegral, fromInteger, error )
 
 -- Bindings whose name starts with "incorrect" must fail, the rest shouldn't
 
@@ -43,13 +46,14 @@ correctApp4 x = f (f x)
     f :: Int ⊸ Int
     f y = y
 
-incorrectIf :: Bool -> Int ⊸ Int
-incorrectIf x n =
-  if x then n else 0
+-- DEACTIVATED: doesn't work with rebindable syntax
+-- incorrectIf :: Bool -> Int ⊸ Int
+-- incorrectIf x n =
+--   if x then n else 0
 
-correctIf :: Bool -> a ⊸ a
-correctIf x n =
-  if x then n else n
+-- correctIf :: Bool -> a ⊸ a
+-- correctIf x n =
+--   if x then n else n
 
 incorrectCase :: Bool -> Int ⊸ Int
 incorrectCase x n =
@@ -193,3 +197,42 @@ correctWhere a = g a
 
     g :: Int ⊸ Int
     g x = f x
+
+-- Rebindable do notation
+
+(>>=) :: a ⊸ (a ⊸ b) ⊸ b
+(>>=) x f = f x
+
+-- Not sure why `fail` and return are needed in my examples
+fail :: a
+fail = error "fail"
+
+return :: a ⊸ a
+return x = x
+
+correctDo = do
+  x <- ()
+  (y,z) <- ((),x)
+  () <- y
+  () <- z
+  ()
+
+incorrectDo1 = do
+  x <- ()
+  (y,z) <- ((),())
+  () <- y
+  () <- z
+  ()
+
+incorrectDo2 = do
+  x <- ()
+  (y,z) <- ((),x)
+  () <- y
+  ()
+
+incorrectDo3 = do
+  x <- ()
+  (y,z) <- (x,x)
+  () <- y
+  () <- z
+  ()
