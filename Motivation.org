@@ -226,7 +226,7 @@ See https://jyp.github.io/pdf/Organ.pdf for how this may look like.
 * Diminishing GC pressure
 Because linear values cannot be shared, they should in principle not
 be subject to GC. Indeed, the consumer of the value (pattern matching)
-may very well perform de-allocation of the spot. Thus linear values
+may very well perform de-allocation on the spot. Thus linear values
 can be stored in a heap outside of GC control. Alone, this strategy
 will diminish GC usage, but may increase the total running time of the
 program (if only because allocation in the GC heap is so efficient
