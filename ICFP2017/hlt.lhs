@@ -1819,7 +1819,7 @@ or unrestricted.
 In effect, this distinction imposes a clean separation between the linear world
 and the unrestricted world. An advantage of this approach is that it
 instantiates both to linear types and to uniqueness types depending on
-how they the two worlds relate, and even have characteristics of
+how two worlds relate, and even have characteristics of
 both~\cite{devries_linearity_2017}.
 
 Such approaches have been very successful for theory: see for instance
