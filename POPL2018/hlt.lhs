@@ -2223,66 +2223,68 @@ kinds''.
 % linearity. So this discussion is subsumed by the upcoming discussion
 % on polymorphism.
 
-\paragraph{Better code reuse}  When retrofitting linear types
-  in an existing language, it is important to share has much code as
-  possible between linear and non-linear code. In a system with
-  linearity on arrows, the subsumption relation (linear arrows subsume
-  unrestricted arrows) and the scaling of context in the application
-  rule mean that much linear code can be used as-is from unrestricted
-  code, and be properly promoted. Indeed, assuming lists as defined in
-  \fref{sec:compatibility} and:
-  \begin{code}
-    (++) :: [a] ⊸ [a] ⊸ [a]   -- Append two lists
-    cycle :: [a] → [a]        -- Repeat a list, infinitely
-  \end{code}
-  The following definition type-checks, even though |++| is applied to
-  unrestricted values and used in an unrestricted context.
-  \begin{code}
-    f :: [a] → [a] → [a]
-    f xs ys = cycle (xs ++ ys)
-  \end{code}
-  In contrast, in a two-kind system, a function must declare the
-  \emph{exact} linearity of its return value. Consequently, to make a
-  function promotable from linear to unrestriced, its declaration must
-  use polymorphism over kinds. We show how this may look like below;
-  but first we need to discuss data types.
 
-  As seen in \fref{sec:programming-intro}, in \HaskeLL{} the reuse of linear
-  code extends to data types: the usual parametric data types (lists,
-  pairs, etc.) work both with linear and unrestricted values. On the
-  contrary, if linearity depends on the kind, then if a linear value
-  is contained in a type, the container type must be linear
-  too. (Indeed, an unrestricted container could be discarded or
-  duplicated, and its contents with it.) Consequently, sharing data
-  types also requires polymorphism.  For example, in a two-kinds
-  system, the |List| type may look like so, if one assumes a that
-  |Type 1| is the kind of linear types and |Type ω| is the kind of
-  unrestricted types.
-  \begin{code}
-    data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List p m a)
-  \end{code}
-  The above declaration ensures that the linearity of the list
-  inherits the linearity of the contents. A linearity-polymorphic
-  |(++)| function could have the definition, assuming the |(∧)|
-  operator takes the minimum of multiplicities.
-  \begin{code}
-    (++) :: List p (a p) -> List q (a q) -> List (p ∧ q) (a (p ∧ q))
-    [] ++ xs = xs
-    (x:xs) ++ ys = x : (xs ++ ys)
-  \end{code}
-  The above type ensures that one can mix multiplicities freely
-  between the arguments; but the result must be linear if any argument
-  is linear.  However, the definition is valid only if |a q| is a
-  subtype of |a (p ∧ q)| for any type family |a :: (p :: Multiplicitiy) ->
-  Type p|. Thus, code-sharing requires not only polymorphism, but a
-  non-trivial subtyping and subkinding system.
+% \paragraph{Better code reuse}  When retrofitting linear types
+%   in an existing language, it is important to share has much code as
+%   possible between linear and non-linear code. In a system with
+%   linearity on arrows, the subsumption relation (linear arrows subsume
+%   unrestricted arrows) and the scaling of context in the application
+%   rule mean that much linear code can be used as-is from unrestricted
+%   code, and be properly promoted. Indeed, assuming lists as defined in
+%   \fref{sec:compatibility} and:
+%   \begin{code}
+%     (++) :: [a] ⊸ [a] ⊸ [a]   -- Append two lists
+%     cycle :: [a] → [a]        -- Repeat a list, infinitely
+%   \end{code}
+%   The following definition type-checks, even though |++| is applied to
+%   unrestricted values and used in an unrestricted context.
+%   \begin{code}
+%     f :: [a] → [a] → [a]
+%     f xs ys = cycle (xs ++ ys)
+%   \end{code}
+%   In contrast, in a two-kind system, a function must declare the
+%   \emph{exact} linearity of its return value. Consequently, to make a
+%   function promotable from linear to unrestriced, its declaration must
+%   use polymorphism over kinds. We show how this may look like below;
+%   but first we need to discuss data types.
 
-  Note that, in the above, we parameterize over multiplicities instead
-  of parameterizing over kinds directly, as is customary in the
-  literature. We do so because it fits better \ghc{}, whose kinds are
-  already parameterized over a so-called
-  levity~\cite{eisenberg_levity_2017}.
+%   As seen in \fref{sec:programming-intro}, in \HaskeLL{} the reuse of linear
+%   code extends to data types: the usual parametric data types (lists,
+%   pairs, etc.) work both with linear and unrestricted values. On the
+%   contrary, if linearity depends on the kind, then if a linear value
+%   is contained in a type, the container type must be linear
+%   too. (Indeed, an unrestricted container could be discarded or
+%   duplicated, and its contents with it.) Consequently, sharing data
+%   types also requires polymorphism.  For example, in a two-kinds
+%   system, the |List| type may look like so, if one assumes a that
+%   |Type 1| is the kind of linear types and |Type ω| is the kind of
+%   unrestricted types.
+%   \begin{code}
+%     data List (p :: Multiplicity) (a :: Type p) :: Type p = [] | a : (List p m a)
+%   \end{code}
+%   The above declaration ensures that the linearity of the list
+%   inherits the linearity of the contents. A linearity-polymorphic
+%   |(++)| function could have the definition, assuming the |(∧)|
+%   operator takes the minimum of multiplicities.
+%   \begin{code}
+%     (++) :: List p (a p) -> List q (a q) -> List (p ∧ q) (a (p ∧ q))
+%     [] ++ xs = xs
+%     (x:xs) ++ ys = x : (xs ++ ys)
+%   \end{code}
+%   The above type ensures that one can mix multiplicities freely
+%   between the arguments; but the result must be linear if any argument
+%   is linear.  However, the definition is valid only if |a q| is a
+%   subtype of |a (p ∧ q)| for any type family |a :: (p :: Multiplicitiy) ->
+%   Type p|. Thus, code-sharing requires not only polymorphism, but a
+%   non-trivial subtyping and subkinding system.
 
+%   Note that, in the above, we parameterize over multiplicities instead
+%   of parameterizing over kinds directly, as is customary in the
+%   literature. We do so because it fits better \ghc{}, whose kinds are
+%   already parameterized over a so-called
+%   levity~\cite{eisenberg_levity_2017}.
+
+%JP: the above argument is flawed; the type for List is wrong.
 
 
   \paragraph{Dependent types}
