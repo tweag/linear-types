@@ -2292,12 +2292,12 @@ kinds''.
   % support. Indeed, affine types require changes in the subkinding
   % system, which in turns may impact unification.
   % JP: I do not think that this is true with the |Type p| view.
-  Linearity on the arrow meshes better with dependent
-  types (see \fref{sec:extending-multiplicities}).  Indeed, consider a typical predicate over
-  files (|P : File → ∗|). It will need to mention its argument several
-  times to relate the file at the start and at the start of a sequence
-  of operations. While this is not a problem in our system, the
-  function |P| is not expressible if |File| is intrinsically
+  Linearity on the arrow meshes better with dependent types (see
+  \fref{sec:extending-multiplicities}).  Indeed, consider a typical
+  predicate over files (|P : File → ∗|). It may need to mention its
+  argument several times to relate several possible sequences of
+  operations on the file. While this is not a problem in our system,
+  the function |P| is not expressible if |File| is intrinsically
   linear. Leaving the door open to dependent types is crucial to us,
   as this is currently explored as a possible extension to \ghc{}.
 
