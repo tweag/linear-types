@@ -1452,6 +1452,15 @@ We could as well have picked different points in the design space for
 \calc{}. We review some of the choices we made in this section.
 
 \paragraph{Case rule}
+Thanks to $\varid{case}_ω$, we can use linear arrows on all data
+types. Indeed we can write the following and have |fst| typecheck:
+\begin{code}
+data Pair a b where
+  Pair :: a ⊸ b ⊸ Pair a b
+
+fst :: Pair a b -> a
+fst x = case _ ω x of Pair a b -> a
+\end{code}
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
 Consider |fst| again.  We could instead have
 \begin{code}
