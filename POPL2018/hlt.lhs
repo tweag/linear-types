@@ -2191,7 +2191,8 @@ the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
-
+\todo{Discuss the various support for linearity in Idris.}
+\todo{Discuss ATS}
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
