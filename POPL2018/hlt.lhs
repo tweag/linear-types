@@ -2211,14 +2211,14 @@ is to separate types into two kinds: a linear kind and an unrestricted
 kind. Values with a type whose kind is linear are linear, and the
 others are unrestricted. (Thus in particular such systems feature
 ``linear arrows'', but they have a completely different interpretation
-from ours.) This choice is attractive on the surface because,
-intuitively, some types are inherently linear (file handles,
+from ours.) While this does not match linear logic (there is no such
+thing as a linear proposition), it is attractive on the surface
+because, intuitively, some types are inherently linear (file handles,
 updateable arrays, etc.) and some types are inherently unrestricted
-(|Int|, |Bool|, etc.).
-%
-However, after scratching the surface we have discovered that
-``linearity via arrows'' has an edge over ``linearity via
-kinds''.
+(|Int|, |Bool|, etc.).  However, after scratching the surface we have
+discovered that ``linearity via arrows'' has an edge over ``linearity
+via kinds''.
+
 
 %   Two kinds is also more easily compatible with using different
 % representations for linear and non-linear values, though this would
