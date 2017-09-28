@@ -2880,8 +2880,12 @@ capabilities for safe, compiler-checked use, within pure code.
   %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
   %% acknowledge financial support and will be used by metadata
   %% extraction tools.
-  This work has received funding from the European Commission
-  through the SAGE project (grant agreement no. 671500).
+  This work has received funding from the European Commission through
+  the SAGE project (grant agreement no. 671500), as well as from
+  Swedish Research Council via the establishment of the Centre for
+  Linguistic Theory and Studies in Probability (CLASP) at the
+  University of Gothenburg.
+  %
   We thank Manuel Chakravarty, Stephen Dolan and Peter Thiemann for their valuable
   feedback on early versions of this paper.
 \end{acks}
