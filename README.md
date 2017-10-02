@@ -1,3 +1,3 @@
-# Linear types in GHC
+# Retrofitting linear types: artifact repository
 
-Drafts, notes and resources for adding linear typing to GHC.
+_Instructions will be here_

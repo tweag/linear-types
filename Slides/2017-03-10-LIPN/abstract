@@ -1,9 +1,0 @@
-Title: Retrofitting linear types
-Authors: Jean-Philippe Bernardy, Arnaud Spiwack
-Abstract:
-
-Type systems based on linear logic and their friends have proved that they are both capable of expressing a wealth of interesting abstractions. Among these the ability to mix garbage-collected and explicitly managed data in the same language. This is of prime interest for distributed computations that need to reduce latency induced by GC pauses: a smaller GC heap is a happier GC heap.
-
-I had always had the belief that to add linear types to a language was a rather intrusive procedure and that a language with linear types would basically be an entirely new language. The Rust language is a case in point: it has a linear-like type system, but it's a very different language from your run-of-the-mill functional language.
-
-This turns out not to be the case: this talk presents a way to extend a functional programming language. We are targeting Haskell but there is little specific to Haskell in this presentation. I will focus mostly on the type system and how it can be generalised: among other things the type system extends to dependent types.
