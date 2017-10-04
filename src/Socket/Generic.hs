@@ -1,4 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-} -- TODO: probably because Socket is not a newtype. FIXME at some point
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -34,7 +33,7 @@ import qualified System.Socket.Protocol.TCP as S
 newtype Socket p (s :: State) = S { unS :: S.Socket S.Inet6 S.Stream p}
 type S p = S.Socket S.Inet6 S.Stream p
 type SocketAddress = S.SocketAddress S.Inet6
--- TODO: this should be abstract too, in a type family
+
 data State
   = Unbound
   | Bound

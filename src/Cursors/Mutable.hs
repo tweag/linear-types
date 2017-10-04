@@ -14,7 +14,6 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TypeInType #-}
--- {-# LANGUAGE TypeFamilies #-}
 
 module Cursors.Mutable
     ( -- * Cursors, with their implementation revealed:
@@ -68,9 +67,6 @@ import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 -- value of the (second) type parameter can be extracted.
 type Needs (l :: [Type]) t = (# Int#, Addr# #)
 
--- type family Foo (l :: [Type]) t
--- type instance Foo l t = (# Int#, Addr# #)
-
 -- | A "has" cursor is a pointer to a series of consecutive,
 -- serialized values.  It can be read multiple times.
 newtype Has (l :: [Type]) = Has ByteString
@@ -112,8 +108,7 @@ readC (Has bs) =
 readIntC :: forall rst . Has (Int ': rst) -> (Int, Has rst)
 readIntC (Has bs) = (ByteArray.headInt bs,
                      Has (ByteString.drop (sizeOf (undefined::Int)) bs))
--- TODO: use a RULES pragma to substitute this for readC automatically.
-    
+
 {-# INLINE fstC #-}
 -- | Equivalent to the first value returned by @readC@.
 fstC :: forall a rst . Storable a => Has (a ': rst) -> a
@@ -160,7 +155,6 @@ toHas (Packed b) = Has b
 -- memory layout of a particular type (when packed).
 unsafeCastNeeds :: Needs l1 a ⊸ Needs l2 a
 unsafeCastNeeds x = x
--- unsafeCastNeeds (# i,p #) = (# i,p #)
 
 {-# INLINE unsafeCastHas #-}
 unsafeCastHas :: Has l1 ⊸ Has l2
@@ -173,8 +167,6 @@ finish = unsafeCastLinear f
  where
  f (# ix, ptr #) = unsafeUnrestricted
       (Has (unsafePerformIO (U.unsafePackMallocCStringLen (Ptr ptr, I# ix))))
-
--- finish (Needs bs) = Has `mapU` ByteArray.freeze bs
 
 {-# INLINABLE untup #-}
 -- | We /could/ create a general approach to safe coercions for data
@@ -193,7 +185,6 @@ withOutput :: Int -> (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
 withOutput sz = unsafeCastLinear f
  where
    f fn = unsafePerformIO $ do 
-            -- ByteArray.alloc regionSize $ \ bs -> fn (Needs bs)
             -- DANGER: don't float out:
             Ptr p <- mallocBytes sz
             return $! fn (# 0#, p #)
@@ -228,22 +219,3 @@ traceHas# :: String -> Has# a ⊸ Has# a
 traceHas# str = unsafeCastLinear
                 (\x -> case unsafePerformIO (putStrLn (str++showHas# x)) of
                         () -> x)
-
--- Tests:
---------------------------------------------------------------------------------
-{-
-foo :: Needs '[Int, Bool] Double
-foo = undefined
-
-bar :: Needs '[Bool] Double
-bar = writeC (3::Int) foo
-
-_test01 :: Needs '[Int] a ⊸ Needs '[] a
-_test01 x = writeC (3::Int) x
-
-test02 :: Needs '[] Double
-test02 = writeC True bar
-
-_test03 :: Double
-_test03 = fst (readC (getUnrestricted (finish test02)))
--}

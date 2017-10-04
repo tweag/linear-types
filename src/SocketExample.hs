@@ -9,7 +9,7 @@ module SocketExample where
 
 import Data.ByteString.Char8 ()
 import Data.String (String, fromString)
-import IO hiding (close)
+import IO
 import Linear.Std
 import Prelude (fromInteger, (++), show)
 import qualified Prelude as P

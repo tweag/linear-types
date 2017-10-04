@@ -15,22 +15,11 @@ module Cursors.ST
       -- * Public cursor interface
     , allocC 
     , writeC, readC
---    , readIntC
---    , fstC, rstC, fstCM, fromHas
     , toHas
     , finish
---    , withOutput, withC, withC2
--- , tup, untup
--- , hasByteSize
-      
-    --   -- * Utilities for unboxed usage
-    -- , Has#, withHas#, unsafeCastHas#
-    -- , readIntHas#, readWord8Has#
-    -- , traceHas#
-      
+
     -- * Unsafe interface
     , unsafeCastNeeds, unsafeCastHas
-    -- , unsafeDropBytes
 
     -- * Packed Tree-specific interface
     , writeLeaf, writeBranchTag, caseTree
@@ -39,7 +28,6 @@ module Cursors.ST
 
 import qualified PackedTree as PT
 import GHC.ST
--- import ByteArray as BA
 import GHC.Types(Type)
 import Foreign.Storable
 import Data.ByteString (ByteString)
@@ -49,7 +37,6 @@ import Foreign.Ptr
 import Foreign.Marshal.Alloc (mallocBytes)
 import Foreign.C.String (CString)
 import GHC.IO (unsafeIOToST, unsafeSTToIO)
--- import GHC.Magic (runRW#)
 import System.IO.Unsafe (unsafePerformIO)
 --------------------------------------------------------------------------------
 
@@ -98,8 +85,6 @@ writeC :: Storable a =>
 allocC :: Int -> ST s (Needs s '[a] a)
 allocC sz = do str <- unsafeIOToST (mallocBytes sz)
                return $! MkNeeds 0 str
-
--- TODO: unsafeFreeze
 
 {-# INLINE readC #-}
 readC :: forall a s rst . Storable a =>

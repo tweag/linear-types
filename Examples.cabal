@@ -63,7 +63,7 @@ library
                        socket
   default-language:    Haskell2010
   -- Bring disabled warnings back later:
-  ghc-options:  -Wall -fno-warn-unused-top-binds -fno-warn-unused-imports -Wno-deprecations -O2 -funbox-strict-fields 
+  ghc-options:  -Wall -fno-warn-unused-top-binds -fno-warn-unused-imports -Wno-deprecations -fno-warn-orphans -fno-warn-name-shadowing -O2 -funbox-strict-fields
 
   if flag(pure)
     cpp-options: -DPUREMODE
@@ -76,7 +76,7 @@ library
 test-suite test-Examples
   type: exitcode-stdio-1.0
   hs-source-dirs: test
-  ghc-options:         -Wall -Wno-deprecations -fno-warn-orphans 
+  ghc-options:         -Wall -Wno-deprecations -fno-warn-orphans -fno-warn-name-shadowing
   other-extensions: CPP
   main-is: Main.hs
   if flag(pure)
@@ -91,7 +91,6 @@ test-suite test-Examples
         , hspec
         , QuickCheck
   default-language:    Haskell2010
-
 
 executable bench-cursor
   hs-source-dirs:      bench

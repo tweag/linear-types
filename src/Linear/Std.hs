@@ -30,7 +30,6 @@ const x _ = x
 swap :: (a,b) ⊸ (b,a)
 swap (x,y) = (y,x)
 
--- TODO: make strict
 -- | As long as this function is only for the sake of demonstration, let's give
 -- it a different name than the prelude one so that it doesn't force hiding
 -- Prelude's foldl.

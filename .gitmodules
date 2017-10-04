@@ -1,9 +1,3 @@
-[submodule "PaperTools"]
-	path = PaperTools
-	url = https://github.com/jyp/PaperTools.git
-[submodule "deps/hyperion"]
-	path = deps/hyperion
-	url = https://github.com/tweag/hyperion.git
 [submodule "criterion-external"]
 	path = criterion-external
 	url = git@github.com:rrnewton/criterion-external.git

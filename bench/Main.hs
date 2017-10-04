@@ -11,11 +11,9 @@ module Main where
 import qualified Data.ByteString as BS
 import qualified ByteArray as BA
 import PackedTree
--- import Linear.Common
 import Linear.Std (getUnrestricted)
 import Linear.Unsafe
 
--- import Criterion
 import Data.Word
 import Data.Time.Clock
 import System.Environment
@@ -47,8 +45,6 @@ timePrint act = do
   putStrLn $ show (diffUTCTime t2 t1)
              ++", alloc "++ comma(bytesAllocated s2 - bytesAllocated s1)
              ++" or "++ comma(abs(c2-c1))
---  putStrLn $ "Before: "++show s1
---  putStrLn $ "After: "++show s2++"\n"
   return x
 
 comma :: (Show a,Num a) => a -> String

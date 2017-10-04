@@ -1,4 +1,3 @@
-
 -- | An interface for mutable byte arrays, handled linearly.
 
 {-# LANGUAGE BangPatterns #-}
@@ -8,7 +7,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE CPP #-}
--- {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module ByteArray
     ( WByteArray,
@@ -42,8 +40,6 @@ import Linear.Unsafe
 import Prelude hiding (rem,($))
 import System.IO.Unsafe (unsafePerformIO, unsafeDupablePerformIO)
 
--- import GHC.IO
---import GHC.Prim (RealWorld, State#)
 import GHC.Prim (Word#, Char#, Int#, plusAddr#, indexIntOffAddr#,
                  indexCharOffAddr#, ord#, int2Word#)
 import GHC.Magic (runRW#)
@@ -53,9 +49,6 @@ import GHC.Int (Int(..))
 import GHC.Word (Word8(..))
 import Data.IORef
 ---------------------------------
-
--- type Token = State# RealWorld
-
 
 {-# INLINE incCounter #-}
 {-# INLINE readCounter #-}
@@ -96,8 +89,6 @@ newtype ReadM a = ReadM { unReadM :: CString -> MutCounter -> Int -> IO a }
     -- ^ Takes an offset into the bytes, total size, and returns a new
     -- offset at each step.
     
---  deriving (Monad, Functor, Applicative)
-
 instance Functor ReadM where
 
 instance Applicative ReadM where
@@ -125,10 +116,6 @@ runReadM bs (ReadM fn) = unsafeDupablePerformIO $
       do cntr <- newCounter
          fn cstr cntr (BS.length bs)
 
--- runReadM :: WByteArray -> ReadM a -> a
--- runReadM ba (ReadM fn) = unsafeDupablePerformIO (fn ba)
-
-                         
 data WByteArray = WBA { offset :: !MutCounter
                       , bytes  :: !CString
                       }
@@ -137,8 +124,7 @@ instance Show WByteArray where
   show WBA{offset,bytes} =
     let off = unsafePerformIO (readCounter offset) in
     "WByteArray <offset "++ show off ++ ">"
-    -- "WByteArray <"++show bytes ++ ", offset at "++show offset++" = "++ show off ++ ">"
-                
+
 {-# NOINLINE alloc #-}
 -- | Allocate and use a mutable, linear byte array.
 alloc :: Int -> (WByteArray ⊸ Unrestricted b) ⊸ Unrestricted b
@@ -147,13 +133,10 @@ alloc i f = forceUnrestricted $ f $ unsafePerformIO (allocWBA i)
 allocWBA :: Int -> IO WByteArray
 allocWBA i= do              
      str <- mallocBytes (i) -- Remark: can't use @alloca@ as the pointer will usually survive the scope
-     -- pokeElemOff str i (0::CChar) -- Null terminated.  But there may be other zeros!  Not a real CString.
      cnt <- newCounter
      return $! WBA{ offset = cnt
                   , bytes  = str
                   }
--- Todo: @alloc@ should handle exception and free the pointer it allocates.
-
 
 {-# INLINE writeByte #-}
 -- | Write a single byte to the end of a byte array.
@@ -187,17 +170,6 @@ freeze = unsafeCastLinear f
      freeCounter offset
      ByteString.unsafePackMallocCStringLen (bytes,sz)
 
---    pack (project (unsafeUnrestricted wba))
---    pack (project (unsafeUnrestricted wba))
---   where
---    project :: Unrestricted WByteArray ⊸ Unrestricted CStringLen
---    project (Unrestricted (WBA{orig, pos})) = Unrestricted (orig,pos `minusPtr` orig)
-
-    -- pack :: Unrestricted CStringLen ⊸ Unrestricted ByteString
-    -- pack (Unrestricted cstr) = Unrestricted $ unsafePerformIO $ do
-    --     freeCounter 
-    --     ByteString.unsafePackMallocCStringLen cstr
-
 {-# INLINE headStorable #-}
 -- TODO: bound checking
 headStorable :: Storable a => ByteString -> a
@@ -218,7 +190,6 @@ headStorableOfM bs = ReadM $ \_ _ _ ->
 headWord8' :: ByteString -> Char#
 headWord8' (PS (ForeignPtr addr _) (I# offset) _)=
     indexCharOffAddr# (plusAddr# addr offset) 0#    
---    (error "FINISHMe -- read from Addr# directly" :: Word#)
 
 {-# INLINE headWord8 #-}
 headWord8 :: ByteString -> Word8
@@ -259,8 +230,7 @@ withHeadStorable2 bs f = (# x, y #)
     ByteString.unsafeUseAsCString bs $ \ cstr ->  do
       !r <- peek (castPtr cstr)
       case f r of
-        (# a,b #) -> return (a,b)  -- Sigh... 
-
+        (# a,b #) -> return (a,b)
 
 ------------------------------------------------------------
 
