@@ -1,15 +1,15 @@
 % -*- latex -*-
 
 %% For double-blind review submission
-\documentclass[acmsmall,10pt,review,anonymous]{acmart}
-\settopmatter{printfolios=true,printacmref=false}
-\def\draftmode{}
+% \documentclass[acmsmall,10pt,review,anonymous]{acmart}
+% \settopmatter{printfolios=true,printacmref=false}
+% \def\draftmode{}
 
 %% For single-blind review submission
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
 
 %% For final camera-ready submission
-%% \documentclass[acmsmall,10pt]{acmart}\settopmatter{}
+\documentclass[acmsmall,10pt]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
 \InputIfFileExists{no-editing-marks}{
@@ -2064,7 +2064,7 @@ of the plot we see tree size exceeding cache size.
       $[a_1, …, a_n]$ can be represented by the type
       $(a_1, (…, (a_n,())))$.}
 
-    \todo{copy actual \textsc{api}}
+    \improvement{copy actual \textsc{api}}
 \fi{}}
 
 
@@ -2191,8 +2191,8 @@ the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
-\todo{Discuss the various support for linearity in Idris.}
-\todo{Discuss ATS}
+\improvement{Discuss the various support for linearity in Idris.}
+\improvement{Discuss ATS}
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
@@ -2880,11 +2880,13 @@ capabilities for safe, compiler-checked use, within pure code.
   %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
   %% acknowledge financial support and will be used by metadata
   %% extraction tools.
-  This work has received funding from the European Commission through
-  the SAGE project (grant agreement no. 671500), as well as from
-  Swedish Research Council via the establishment of the Centre for
-  Linguistic Theory and Studies in Probability (CLASP) at the
-  University of Gothenburg.
+  This work has received funding from the \grantsponsor{ERC}{European
+    Commission}{https://erc.europa.eu/} through the \textsc{sage} project
+  (Grant agreement
+  no. \grantnum[http://www.sagestorage.eu]{ERC}{671500}), as well as
+  from \grantsponsor{VR}{Swedish Research Council}{https://www.vr.se/}
+  via the establishment of the Centre for Linguistic Theory and
+  Studies in Probability (\textsc{clasp}) at the University of Gothenburg.
   %
   We thank Manuel Chakravarty, Stephen Dolan and Peter Thiemann for their valuable
   feedback on early versions of this paper.
