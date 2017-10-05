@@ -147,6 +147,34 @@ provided tests to run it.
 
 ### Section 5.3
 
+The implementation of a pure API on top of a mutable API, described in
+Section 5.3 of the article, is implemented in
+[`src/Purify.hs`](src/Purify.hs).
+
+The names are a bit different than in the article, where things have
+been simplified a little: mutable trees are named `MTree` and
+immutable ones are named `Tree`. The API function that is exposed is
+`updateTree`.
+
+Compared to Haskell SpriteKit, which inspired this example, we don't
+implement many of the optimisation which are necessary make this sort
+of abstraction efficient. But this optimisation code would occur
+entirely in the unsafe, non-linear code, where we have access to
+exactly the same programming techniques as Haskell SpriteKit.
+
+The only place where linearity comes into play is in the `updateTree`
+function, where it is a limitation posed on the caller in order to
+ensure safety.
+
+Tests for this implementation appear under the heading "Purify" when
+running the command
+
+```
+$ stack test
+```
+
+These tests are implemented in
+[`test/PurifySpec.hs`](test/PurifySpec.hs).
 
 Source installation
 ===================
