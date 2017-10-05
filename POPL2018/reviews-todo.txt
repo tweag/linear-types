@@ -56,16 +56,22 @@
 > I do wonder why they chose not to support with (ie, additive
 > conjunction).  The paper doesn't even mention it.  Is there a problem
 > with it?
-> 
+
+TODO
+
 > Comments for author
 > -------------------
 > page 2: The statement that motivations for linear type systems all come
 > down to in-place update and protocols, is much too strong.  Better to
 > say those are the motivations that interest the authors.
-> 
+
+Done
+
 > page 3, "The result of (unsafeArray ma) is a new immutable array..."
 > Shouldn't unsafeArray be freezeArray?
-> 
+
+Fixed
+
 > page 5: When the paper sets up IO_L, I was asking why not thread the
 > world, which the paper eventually did.  Maybe forward-reference it?
 > 

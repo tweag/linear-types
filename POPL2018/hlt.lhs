@@ -425,8 +425,7 @@ work section (\fref{sec:related}).
 Informally, \emph{a function is ``linear'' if it consumes its argument exactly once}.
 (It is ``affine'' if it consumes it at most once.)  A linear type system
 gives a static guarantee that a claimed linear function really is linear.
-There are many motivations for linear type systems, but they mostly come down
-to two questions:
+There are many motivations for linear type systems, but here we focus on two of them:
 \begin{itemize}
 \item \emph{Is it safe to update this value in-place} (\fref{sec:freezing-arrays})?
 That depends on whether there
@@ -565,9 +564,9 @@ array as required.  All this is done in the |ST| monad, using |runST| to
 securely encapsulate an imperative algorithm in a purely-functional context,
 as described in \cite{launchbury_st_1995}.
 
-Why is |unsafeFreeze| unsafe?  The result of |(unsafeArray ma)| is a new
+Why is |unsafeFreeze| unsafe?  The result of |(unsafeFreeze ma)| is a new
 immutable array, but to avoid an unnecessary copy,
-the two are actually \emph{the same array}.  The intention is, of course, that
+it is actually |ma|.  The intention is, of course, that
 that |unsafeFreeze| should be the last use of the mutable array; but
 nothing stops us continuing to mutate it further, with quite undefined semantics.
 The ``unsafe'' in the function name is a \textsc{ghc} convention meaning ``the programmer
