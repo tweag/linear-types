@@ -10,6 +10,8 @@ GHCTAG=popl18
 GHCREPO=tweag/linear-types:$(GHCTAG)
 
 
+all: docs
+
 #all: ./bin/criterion-interactive
 #	stack docker pull
 
@@ -41,13 +43,20 @@ build2:
 	stack --docker test --no-run-tests
 	stack --docker bench --no-bench
 
-# For running inside or outside the container:
+# For building inside or outside the container:
 #===============================================================================
 
 ./bin/criterion-interactive:
 	mkdir -p ./bin
 	cd ./criterion-external; stack install --local-bin-path=../bin
 
+docs: Artifact_HOWTO_Guide.html
+Artifact_HOWTO_Guide.html: README.md
+#	which pandoc || stack --resolver=lts-8.6 install pandoc
+	pandoc $^ -o $@
+
+# Run the benchmarks and tests (inside or outside a container)
+#===============================================================================
 
 # Just an example of ONE benchmark you might run:
 bench: ./bin/criterion-interactive docker
