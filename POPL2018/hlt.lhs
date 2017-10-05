@@ -386,7 +386,7 @@ enforcing access protocols for external \textsc{api}s, such as files,
 sockets, channels and other resources.  Our particular contributions
 are these:
 \begin{itemize}
-\item We describe a new extension to Haskell, dubbed \HaskeLL, using
+\item We describe an extension to Haskell for linear types, dubbed \HaskeLL, using
       two extended examples (\fref{sec:consumed}-\fref{sec:io-protocols}).
       The extension is \emph{non-invasive}:
       existing programs continue to typecheck,
@@ -1032,7 +1032,7 @@ and that implementation too is illuminated by linearity, like so:
 data World
 newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
 data IORes p a where
-  IOR :: World ⊸ a -> _ p IOR p a
+  IOR :: World ⊸ a -> _ p IORes p a
 
 bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 bindIOL (IOL m) k = IOL (\w ->   case m w of
@@ -1175,7 +1175,7 @@ $π_i$ in $π$.
     \caserule
 
     \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{π} A₁ …  x_n:_{π} A_n ⊢ u : C }
-    { Δ+q\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+    { Δ+π\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
     {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
@@ -1513,8 +1513,8 @@ also have |id :: forall p. Int → _ p Int|?  But as it stands, our rules do
 not accept it. To do so we would need $x :_p Int ⊢ x : Int$.  Looking
 at the (var) rule in \fref{fig:typing}, we can prove that premise by case analysis,
 trying $p=1$ and $p=ω$.
-But if we had a richer domain of multiplicities, including
-$0$ (see \fref{sec:extending-multiplicities}), we wouldn't be able to prove $x :_p Int ⊢ x : Int$, and rightly
+But if we had a domain of multiplicities which includes
+$0$ (see \fref{sec:extending-multiplicities}), we would not be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
 For now, we accept more conservative rules, in order to keep open the possiblity
@@ -2723,7 +2723,7 @@ more, following \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}. The general setting for \calc{} is an
 ordered-semiring of multiplicities (with a join operation for type
 inference).  In particular, in order to support dependent types, we
-additionally need a $0$ multiplicity. We may want to add a
+additionally need a $0$ multiplicity.   We may want to add a
 multiplicity for affine arguments (\ie  arguments which can be
 used \emph{at most once}).
 

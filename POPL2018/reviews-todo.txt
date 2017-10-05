@@ -1,3 +1,13 @@
+Meta:
+
+TODO means: to be looked into
+MAYBE means: already looked into but is unclear that a reasonable-effort fix exists.
+NOPE: won't attempt to fix
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO [1]: explain eta-expansion business and relation to subtyping better.
+
 > POPL '18 Paper #2 Reviews and Comments
 > ===========================================================================
 > Paper #2 Retrofitting Linear Types
@@ -74,48 +84,76 @@ Fixed
 
 > page 5: When the paper sets up IO_L, I was asking why not thread the
 > world, which the paper eventually did.  Maybe forward-reference it?
-> 
+
+TODO
+
 > page 8: In the line of code "IOR :: World -o a ->_p IOR p a", I think
 > the second IOR should be IORes.
-> 
+
+Fixed
+
 > page 10, fig 6: In the let rule, shouldn't the q be pi?
-> 
+
+Fixed
+
 > page 11, definition 3.4: I was really surprised there weren't more
 > rules here.  In particular, it seems like you can't do much of
 > anything with variables.
-> 
+
+MAYBE: explain that we don't need that.
+
 > page 14: In "But if we had a richer domain of multiplicities ... we
 > would be able to prove x :_p Int |- x : Int ..."  I think it is
 > supposed to say "we would NOT be able to prove".
-> 
+
+We in fact mean what we wrote. If p can be 0 then the judgement cannot
+hold. (Clarified a bit in the text.)
+
 > Is this why the rules in definition 3.4 seem so impoverished?
-> 
 > I can see why strict or affine assumptions would be interesting, but
 > beyond that I don't see the motivation.
-> 
+
+MAYBE
+
 > page 14, "We use a supremum operation on multiplicities where 1 \/ 0 =
 > omega (0 stands for a variable absent in a branch."  I'm afraid I had
 > no idea what the paper was talking about here.
-> 
+
+TODO
+
 > page 15: I think the code for packed trees must use some Haskell
 > feature I don't know.  To me, "pack :: Tree -o Packed [Tree]" means
 > that pack returns what ML would call a "tree list packed".  But
 > it appears that the type operator Packed is actually being indexed by
 > a list of trees?
-> 
+
+TODO: refer to the feature
+
 > page 15: In the code for packed trees, I think the linear arrows in
 > caseTree need to be unrestricted arrows.  Only one of the two arms is
 > going to be used, but the typing given promises they will both be
 > used.  I think one needs with to make this work in a linear way.
-> 
+
+TODO: Reviewer seems correct. ryan/aspiwack: please confirm.
+
 > section 6.3: I'm not sure that Rust's ownership types and linear
 > typing are as different as the paper makes them out to be.
-> 
+
+MAYBE
+
 > section 7.2: I was tantalized by the claim that you need a 0
 > multiplicity to support dependent types.  I wish the paper explained
-> this.  I also didn't understand the brief discussion of lifetimes at
+> this.
+
+MAYBE: add: Indeed, when checking a dependent type such as $(x:A) →
+B$, one must consider that $B$ makes no use of variables, thus
+multiply its type-checking context by $0$.
+
+> I also didn't understand the brief discussion of lifetimes at
 > all.
-> 
+
+MAYBE
+
 > Reaction to author response
 > ---------------------------
 > I already liked the paper, so my opinion hasn't changed.
@@ -179,14 +217,18 @@ Fixed
 > subtyping, but section 2.6 talks of "incomparable" types, so there is
 > subtyping in somebody's head. What's going on? We get towards the
 > truth much later (p14): no subtyping in theory, voodoo in practice.
-> 
+
+DUPLICATE [1]
+
 > By the way, it occurs to me to wonder whether
 > 
 >   repeat 0 ++ [1]
 > 
 > really consumes its second argument, or whether we have a sneaky
 > source of affinity here.
-> 
+
+TODO: (jp: don't understand)
+
 > It would be interesting to consider whether the present work might
 > extend to legitimising some form of destructive update for linearly
 > managed inductive data. I am reminded of Hoare's 1974 article on
@@ -194,7 +236,7 @@ Fixed
 > in an imperative setting. I am also reminded of Hofmann and
 > colleagues' work on destructive case analysis liberating "money"
 > (i.e., memory) which could be "spent" on data (without allocating).
-> 
+>
 > A further question is whether we might ever persuade a variant of (++)
 > to run in constant time for linear lists by holding on to the last
 > cons-cell in the list as well as the first, then overwriting the tail
@@ -231,21 +273,31 @@ Fixed
 > 
 > p1 Indeed "linear type systems have not made it": I invite you to
 > speculate as to why.
-> 
+
+NOPE
+
 > p1 I'm amused to read of "kinds" at all. Don't types have "types"
 > these days? At this stage "linearity in the kinds" is rather
 > vague. "Separate languages of linear and non-linear types" might take
 > longer but be clearer.
-> 
+
+NOPE
+
 > p1 I see "data types" and "data-types": please pick one spelling,
 > e.g. "datatypes".
-> 
+
+TODO
+
 > p2 Hask-LL is explained on its *second* usage: when I saw the first
 > usage, I guessed, but still, the first should get the explanation.
-> 
+
+Fixed
+
 > p2 I wonder if the remarks of 2.8 deserve to be promoted into 2.1, as
 > they really convey important ideas that help develop intuition.
-> 
+
+MAYBE
+
 > p3 I see an uninitialized array: is that how it's done?
 > 
 > p3 Oversequentiality from the ST monad: is there a parallel <*> for
