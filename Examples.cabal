@@ -21,11 +21,14 @@ library
         Cursors.PureStorable,
         Cursors.ST,
 
-        IO,
-        Purify,
+        -- Section 5.2 of the paper:
         Socket,
         Socket.Generic,
         SocketExample,
+        Socket.IO,
+
+        -- Section 5.3 of the paper:
+        Purify,
 
         -- Common utilities:
         ByteArray,

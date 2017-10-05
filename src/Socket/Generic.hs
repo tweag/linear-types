@@ -26,15 +26,16 @@ module Socket.Generic where
 import Data.ByteString (ByteString)
 import Data.Coerce
 import GHC.TypeLits (Symbol)
-import IO hiding (return)
-import Linear.Std
-import Linear.Unsafe (unsafeUnrestricted)
 import Prelude hiding (($))
 import qualified System.Socket as S
 import qualified System.Socket.Family.Inet6 as S
 import qualified System.Socket.Type.Stream as S
 import qualified System.Socket.Protocol.TCP as S
 
+import Socket.IO hiding (return)
+import Linear.Std
+import Linear.Unsafe (unsafeUnrestricted)
+    
 newtype Socket p (s :: State) = S { unS :: S.Socket S.Inet6 S.Stream p}
 type S p = S.Socket S.Inet6 S.Stream p
 type SocketAddress = S.SocketAddress S.Inet6

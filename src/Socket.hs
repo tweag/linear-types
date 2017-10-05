@@ -16,7 +16,7 @@ module Socket where
 -- tcp sockets).
 
 import Data.ByteString (ByteString)
-import IO hiding (return)
+import Socket.IO hiding (return)
 import Linear.Std
 import Linear.Unsafe (unsafeUnrestricted)
 import Prelude hiding (($))

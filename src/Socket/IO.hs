@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module IO where
+module Socket.IO where
 
 import qualified Prelude as P
 import System.IO (Handle)

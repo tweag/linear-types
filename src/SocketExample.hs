@@ -12,11 +12,12 @@ module SocketExample where
 
 import Data.ByteString.Char8 ()
 import Data.String (String, fromString)
-import IO
 import Linear.Std
 import Prelude (fromInteger, (++), show)
 import qualified Prelude as P
+
 import Socket
+import Socket.IO
 import Socket.Generic (State(..))
 import qualified System.Socket as S
 import qualified System.Socket.Family.Inet6 as S
