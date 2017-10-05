@@ -6,7 +6,7 @@ BASETAG=tweag/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
 # The base image for the extended GHC:
-GHCTAG=0.1.5
+GHCTAG=popl18
 GHCREPO=tweag/linear-types:$(GHCTAG)
 
 
