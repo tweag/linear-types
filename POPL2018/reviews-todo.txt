@@ -1,0 +1,516 @@
+> POPL '18 Paper #2 Reviews and Comments
+> ===========================================================================
+> Paper #2 Retrofitting Linear Types
+> 
+> 
+> Review #2A
+> ===========================================================================
+> * Updated: 16 Sep 2017 1:52:34pm EDT
+> 
+> Overall merit
+> -------------
+> 5. Accept - will argue for
+> 
+> Reviewer expertise
+> ------------------
+> Y. Knowledgeable
+> 
+> Paper summary
+> -------------
+> This paper proposes a strategy for retrofitting linear-logic features
+> into Haskell.  This is a nice paper and I would like to see it
+> presented at the conference.  They have what seems to be a very
+> workable design (which has practical value in its own right) and some
+> new theoretical ideas.  Nothing here is especially deep,
+> mathematically speaking, but that's fine.
+> 
+> The basic idea is to take linear logic seriously, and set up the type
+> system the way that linear logic demands.  I'm not sure why this idea
+> hasn't been employed before.  Far too many past proposals have talked
+> about "linear types."  The very phrase suggest a mismatch with linear
+> logic: In linear logic, it is a *hypothesis* that is linear (or not).
+> There is no such thing as a linear type.  Given that unsteady
+> foundation, all sorts of confusing questions arise, such as: when a
+> "nonlinear" type appears as part of a "linear" type, is it linear or
+> not?
+> 
+> By correctly observing that a hypothesis (not a type) is linear or
+> not, the authors avoid a panoply of unnecessary problems.  In the
+> paper, they focus on the linear function space (ie, the type of
+> functions that introduce linear hypotheses) rather than the linear
+> hypotheses themselves, but that emphasis seems to work the way they
+> develop the ideas.
+> 
+> The idea of multiplicity polymorphism is nice and (as far as I know)
+> novel.  It allows the same code (including library code) to be used in
+> a linear or unrestricted fashion.
+> 
+> The only real misstep is a design choice in multiplicity polymorphism
+> in the case form weakens the connection to linear logic, allowing:
+> 
+> !(A * B) -o !A * !B
+> 
+> But, to their credit, the authors are upfront about this fact, which I
+> otherwise would have missed.
+> 
+> I do wonder why they chose not to support with (ie, additive
+> conjunction).  The paper doesn't even mention it.  Is there a problem
+> with it?
+> 
+> Comments for author
+> -------------------
+> page 2: The statement that motivations for linear type systems all come
+> down to in-place update and protocols, is much too strong.  Better to
+> say those are the motivations that interest the authors.
+> 
+> page 3, "The result of (unsafeArray ma) is a new immutable array..."
+> Shouldn't unsafeArray be freezeArray?
+> 
+> page 5: When the paper sets up IO_L, I was asking why not thread the
+> world, which the paper eventually did.  Maybe forward-reference it?
+> 
+> page 8: In the line of code "IOR :: World -o a ->_p IOR p a", I think
+> the second IOR should be IORes.
+> 
+> page 10, fig 6: In the let rule, shouldn't the q be pi?
+> 
+> page 11, definition 3.4: I was really surprised there weren't more
+> rules here.  In particular, it seems like you can't do much of
+> anything with variables.
+> 
+> page 14: In "But if we had a richer domain of multiplicities ... we
+> would be able to prove x :_p Int |- x : Int ..."  I think it is
+> supposed to say "we would NOT be able to prove".
+> 
+> Is this why the rules in definition 3.4 seem so impoverished?
+> 
+> I can see why strict or affine assumptions would be interesting, but
+> beyond that I don't see the motivation.
+> 
+> page 14, "We use a supremum operation on multiplicities where 1 \/ 0 =
+> omega (0 stands for a variable absent in a branch."  I'm afraid I had
+> no idea what the paper was talking about here.
+> 
+> page 15: I think the code for packed trees must use some Haskell
+> feature I don't know.  To me, "pack :: Tree -o Packed [Tree]" means
+> that pack returns what ML would call a "tree list packed".  But
+> it appears that the type operator Packed is actually being indexed by
+> a list of trees?
+> 
+> page 15: In the code for packed trees, I think the linear arrows in
+> caseTree need to be unrestricted arrows.  Only one of the two arms is
+> going to be used, but the typing given promises they will both be
+> used.  I think one needs with to make this work in a linear way.
+> 
+> section 6.3: I'm not sure that Rust's ownership types and linear
+> typing are as different as the paper makes them out to be.
+> 
+> section 7.2: I was tantalized by the claim that you need a 0
+> multiplicity to support dependent types.  I wish the paper explained
+> this.  I also didn't understand the brief discussion of lifetimes at
+> all.
+> 
+> Reaction to author response
+> ---------------------------
+> I already liked the paper, so my opinion hasn't changed.
+> 
+> 
+> 
+> Review #2B
+> ===========================================================================
+> 
+> Overall merit
+> -------------
+> 6. Strong accept - a clear accept
+> 
+> Reviewer expertise
+> ------------------
+> X. Expert
+> 
+> Paper summary
+> -------------
+> 
+> This paper introduces a linearly typed extension to Haskell in an
+> advanced state of readiness. The design is carefully engineered for
+> backward compatibility. Standard metatheoretic results are
+> delivered. Nontrivial examples give proof of concept.
+> 
+> Pro:
+>   * To paraphrase Phil Wadler, this paper could change the world!
+>   * The design has an excellent power-to-weight ratio.
+>   * The presentation is good, with small examples motivating the
+>   unfolding ideas, and a substantial compelling finale.
+> 
+> Contra:
+>   * Some of the related work is skipped over in haste.
+>   * There is a lurking story about subtyping which should be tackled
+>   head on (even if it is the empty story).
+>   * The metatheory is not machine-checked.
+> 
+> It is no mean feat to take a well established language such as Haskell
+> and retrofit a feature so apparently different as linear typing to it.
+> The approach here is not to treat linear types as a wholly separated
+> subsystem, but to refine the analysis of demand inherent in the function
+> type: if you need one out, how many must you put in (exactly one, or a
+> supply)? The "linear arrow" is characterized in terms of consumption,
+> fitting neatly with the underlying paradigm of lazy evaluation. The
+> definition of consumption leads to a default interpretation of data
+> constructors as linear and defined functions as unrestricted, but both
+> can be overridden.
+> 
+> The idea that taking
+> 
+>     (++) :: [a] -o [a] -o [a]
+> 
+> "only strengthens the contract" and "does not restrict its usage" is
+> attractive, but is it quite true? Can I still define
+> 
+>     concat = foldr (++) []
+> 
+> ? That is, is there some form of subtyping which says I can give a
+> linear function where a "don't care" function is demanded, or do I
+> sometimes need to do a little eta-expansion? The rules show no sign of
+> subtyping, but section 2.6 talks of "incomparable" types, so there is
+> subtyping in somebody's head. What's going on? We get towards the
+> truth much later (p14): no subtyping in theory, voodoo in practice.
+> 
+> By the way, it occurs to me to wonder whether
+> 
+>   repeat 0 ++ [1]
+> 
+> really consumes its second argument, or whether we have a sneaky
+> source of affinity here.
+> 
+> It would be interesting to consider whether the present work might
+> extend to legitimising some form of destructive update for linearly
+> managed inductive data. I am reminded of Hoare's 1974 article on
+> Recursive Data Structures, advocating datatypes and pattern matching
+> in an imperative setting. I am also reminded of Hofmann and
+> colleagues' work on destructive case analysis liberating "money"
+> (i.e., memory) which could be "spent" on data (without allocating).
+> 
+> A further question is whether we might ever persuade a variant of (++)
+> to run in constant time for linear lists by holding on to the last
+> cons-cell in the list as well as the first, then overwriting the tail
+> pointer. Laziness might make that more difficult, of course.
+> 
+> The approach to the metatheory treats a small calculus, polymorphic
+> only in multiplicities: this seems a reasonable approach in the first
+> instance, but the assumption that the two notions of polymorphism
+> actually implemented do not interfere may be somewhat casual. The
+> results indicate that something of this sort should work, but full
+> formalization (in the modern sense, with computers) would add
+> confidence.
+> 
+> Concerning related work, I'd agree that it's best to leave the
+> detailed technical comparison to the end, but it might help at least
+> to name influential prior work up front and reassure readers
+> experiencing slight deja-vu that it is not an accident. Meanwhile, in
+> terms of "the competition", I cannot help wondering whether Morris's
+> "Best of Both Worlds" system might merit a closer look. The present
+> take-down of linearity-in-the-kinds is a bit of a straw man. It may be
+> worth looking at linearity in ATS: it has certainlty been used to
+> great effect. The treatment of Idris is also rather out of date and
+> does not come with an appropriate citation in references, merely a
+> footnote: Idris now has a form of uniqueness typing, as well as the
+> indexing of monads, and the two play well together.
+> 
+> Overall, though, I am very pleased to see this paper and looking
+> forward to trying out Hask-LL.
+> 
+> Comments for author
+> -------------------
+> 
+> I'll enumerate some smaller things, as they occur to me.
+> 
+> p1 Indeed "linear type systems have not made it": I invite you to
+> speculate as to why.
+> 
+> p1 I'm amused to read of "kinds" at all. Don't types have "types"
+> these days? At this stage "linearity in the kinds" is rather
+> vague. "Separate languages of linear and non-linear types" might take
+> longer but be clearer.
+> 
+> p1 I see "data types" and "data-types": please pick one spelling,
+> e.g. "datatypes".
+> 
+> p2 Hask-LL is explained on its *second* usage: when I saw the first
+> usage, I guessed, but still, the first should get the explanation.
+> 
+> p2 I wonder if the remarks of 2.8 deserve to be promoted into 2.1, as
+> they really convey important ideas that help develop intuition.
+> 
+> p3 I see an uninitialized array: is that how it's done?
+> 
+> p3 Oversequentiality from the ST monad: is there a parallel <*> for
+> the ST applicative?
+> 
+> p3 The linear arrow has already been introduced by this point.
+> 
+> p3 When you don't say, right at its first use, that Unrestricted is
+> like the !  of linear logic, I begin to wonder whether there is a
+> subtle reason why it is not. Please do not wait until p7 to draw this
+> connection.
+> 
+> p4 The *API* for MArray indeed has a crucial role to play in ensuring
+> that once an array is frozen it can no longer be mutated. Is there a
+> safety check for the design of APIs?
+> 
+> p5 It's interesting to read that I/O must be sequenced. A large part
+> of the fun you can have with uniqueness types in Clean is that you can
+> use uniquely held tokens to "chop up the world" into separated regions
+> which can be manipulated independently without interference. Perhaps
+> the same is true here.
+> 
+> p6 I'm amused by the I vs We tussle at the beginning of 2.5.
+> 
+> p7 You say "in the world of monads each computation has an explicit
+> continuation". A pedant asks in what way that is true of Maybe.
+> 
+> p9 The ellpisis-in-formal-notations police would prefer a notation for
+> bunches of stuff that is both more formal and more compact, such as
+> you use for the k constructors. By the time you reach the case rule on
+> p10, you'll be glad you did, or I will, anyway.
+> 
+> p10 It's important to note that contexts are up to permutation, which
+> you can get away with while you don't have type dependency or other
+> sorts of polymorphism forcing you to keep contexts in order. Your
+> simplifying assumption is more helpful than you let on.
+> 
+> Reaction to author response
+> ---------------------------
+> 
+> Thanks for clarifying the core/surface distinction, which eases my
+> subtyping worries a little. Please say something about systematic
+> eta-expansion in the revised version. In any case, thanks for your
+> hard work!
+> 
+> 
+> 
+> Review #2C
+> ===========================================================================
+> 
+> Overall merit
+> -------------
+> 5. Accept - will argue for
+> 
+> Reviewer expertise
+> ------------------
+> Y. Knowledgeable
+> 
+> Paper summary
+> -------------
+> Summary:
+> 
+> This paper describes how to add linear types to Haskell in a way that
+> is backwards compatible with existing code.  A key design choice
+> involved following guidance from linear logic and introducing linear
+> data via linear functions, as opposed to introducing two kinds for
+> each data type, a "linear" and "non-linear" kind.  This design choice
+> leads to better code reuse.  After declaring all non-GADT data
+> constructors linear by default and updating some standard library
+> functions, the GHC libraries and nofib benchmark suites type check
+> (195K lines of Haskell).  The implementation required only 444 net extra
+> lines of code (and modifications to about 1,000 LOC).
+> 
+> Pros:
+> 
+> + a surprising result (retrofitting Haskell with linear types actually works!)
+> 
+> + a deep, interesting design paper with lots of thoughtful analysis of 
+>   design decisions -- design papers are hard to write and
+>   the community usually asks for more of them
+> 
+> + clear examples
+> 
+> + one of the most useful and informative related work sections I have read
+>   just about anywhere
+> 
+> Cons:
+> 
+> - not much I can think of (a few minor typos, a question I have below)
+> 
+> Analysis:
+> 
+> I was quite surprised that it would be possible to add linear types to
+> the full GHC implementation in such a seemless and useful way, and
+> with such little effort.  If someone had suggested to me that they
+> were going to try I would have been skeptical.  Past attempts I have
+> seen at this sort of language design have gotten bogged down in too
+> much polymorphism and complex mechanisms for allowing linear objects
+> to be non-linear for certain extents.
+> 
+> In addition, this language design paper takes many pages to explain
+> related work and alternative choices the authors might have made.  I
+> found this discussion very enlightening and I think it will have great
+> long-term value.
+> 
+> Hence, overall, I would very much like to see this paper accepted.
+> 
+> Question for rebuttal:
+> 
+> The main technical puzzle I have about this paper is that if you change
+> some element of the standard library f from 
+> 
+> f : t1 -> t2
+> 
+> to
+> 
+> f : t1 -o t2
+> 
+> then if f is ever used as an argument to some other function g:
+> 
+> g : (t1 -> t2) -> t3
+> 
+> then
+> 
+> g f
+> 
+> should not type check (according to the discussion of subtyping on pg 14).
+> 
+> Consequently, I was surprised that in section 5, the types of list library 
+> functions were updated from t1 -> t2 to t1 -o t2 and yet 195K lines of Haskell 
+> libraries continued to type check.  How is that possible?  Does that mean
+> that in those 195K lines, ++, cons, uncons (and whatever other functions
+> were changed) are never used as arguments to other functions?  Is there
+> something I'm missing?
+> 
+> Comments for author
+> -------------------
+> definition 2.1: "To consume a value of atomic base type (like Int or
+> Ptr) exactly once, just evaluate it." -- I usually use the word "value"
+> to me an object that cannot be evaluated any further, such as "3".  Hence,
+> I don't know what the authors mean here when they suggest that one such
+> "evaluate" a value.  Given "3" how does one "consume it exactly once"?
+> 
+> fig 1:  The type of runST was given as:
+> 
+> (all a. ST s a) -> a
+> 
+> but that seems to be a typo.  Is it not:
+> 
+> all a. (all s. ST s a) -> a
+> 
+> section 2:  In general, this section is well written and provides a lot of
+> useful examples.  However, all of the examples are "positive" examples,
+> showing expressions that do type check.  I believe I would have more quickly understood
+> the key invariants if I had also seen some negative examples -- code that
+> does not type check.  For instance, on seeing a type such as this:
+> 
+> write :: MArray a -o (Int, a) -> MArray a
+> 
+> on pg 3, my immediate question was what happens if the function is
+> partially applied.  for instance:
+> 
+> let x - write m in
+> let y = x in
+> ...
+> 
+> we now have 2 (aliased) closures contain references to m.  Can both be
+> used?  eg:
+> 
+> x (2,c);
+> y (2,d)
+> 
+> Can we ignore the let y = ...:
+> 
+> x (2,c);
+> x (2,d)
+> 
+> I figured out how this works, but only when I had read through section 3.
+> It would have been nice for this reader if that issue had discussed
+> such closures or perhaps other negative examples earlier.
+> 
+> pg 5, l 14:  "Now openFile returns ..."  In the code, the function
+> is called "open" not openFile
+> 
+> pg 6: "As before, giving a more precise type to ++ only strengthens
+> the contract that ++ offers to its callers; it does not restrict its
+> usage."  -- at this point, I am wondering about higher-order functions
+> and whether a function g that declares it needs an argument t1 -> t2 can
+> take an argument t1 -o t2.  for instance:
+> 
+> g :: (t1 -> t2) -> t3
+> f :: t1 -o t2
+> 
+> Is the application:
+> 
+> g f
+> 
+> legal?  Similarly, I need to know that in order to validate the
+> statement "For an existing language, being able to strengthen (+), and
+> similar functions, in a backwards-compatible way is a huge boon."
+> Skimming forward, I see this exact example is covered on pg 14, and
+> it turns out that it is handle by eta-expansion, not subtyping.  I would
+> have liked to have known this earlier.
+> 
+> (Another note I made: It seems that section 2.6 begins to explain this
+> issue and it seems the solution is multiplicity polymorphism.  Still,
+> it seems to me that the statement "being able to strengthen (+), and
+> similar functions, in a backwards-compatible way is a huge boon." is
+> misleading.  You can't strengthen the type of (+) in a fully backwards
+> compatible way -- if it is used in higher-order functions, those
+> functions need to be made into multiplicity-polymorphic functions.)
+> 
+> -- "It would be impractical to formalise all of Hask-ll."  -- minor:
+> some people would disagree.  There is a trend towards formalizaing and
+> mechanically proving properties of full languages.  I'd delete or
+> rephrase that sentence.
+> 
+> Reaction to author response
+> ---------------------------
+> Thanks for answering my technical puzzle!
+> 
+> 
+> 
+> Response1 Response by Ryan Newton <rrnewton@indiana.edu>
+> ===========================================================================
+> 
+> We thank the reviewers for their helpful comments, and are
+> particularly delighted with Reviewer 2’s summary “This paper could
+> change the world”.  In our revision we will clarify the issues raised
+> in their detailed comments.  Here we concentrate only on the biggest
+> issues..
+> 
+> The main question posed by Reviewers B & C (the “main technical
+> puzzle”, as Reviewer C writes) is the following
+> (paraphrased). Assuming we have
+> 
+> ```haskell
+> g :: (A -> B) -> C
+> f :: A ⊸ B
+> ```
+> 
+> Does `g f` typecheck? Or as Reviewer B formulates it, “[c]an I still
+> define `concat = foldr (++) []`”.
+> 
+> The answer is “no” for the **core language**, but “yes” for the
+> **surface language**. More precisely, `g f` does **not** type check in
+> the core language, but the eta-expanded version `g (\x -> f x)`
+> does. Hence, in the surface language (and this is the crucial point),
+> we do accept `g f` (as well as `concat = foldr (++) []`) and we
+> elaborate it into the eta-expanded form `g (\x -> f x)`.
+> 
+> Most importantly, this is already standard practice in GHC: a similar
+> situation arises when using rank-2 types. For example, the core
+> language of GHC also does not accept `g f` for ```haskell g :: (forall
+> a. (Eq a, Show a) => a -> Int) -> Char f :: forall a. (Show a, Eq a)
+> => a -> Int ``` However, the surface language, again, accepts `g f`,
+> and elaborates it into `g (/\a (d1:Eq a) (d2:Show a). f a d2 d1)` as
+> well. We failed to explain this eta-expansion trick in the paper
+> although, as the reviewers point out, it is very important.  We will
+> make sure to include this explanation in the revised version.  (Full
+> disclosure: in Haskell, eta expansion can affect semantics, because of
+> the presence of `seq`. But GHC already accepts this infelicity to gain
+> the expressiveness, so we are adding nothing new.)
+> 
+> Reviewer A asks “I do wonder why they chose not to support with (ie,
+> additive conjunction). The paper doesn't even mention it. Is there a
+> problem with it?”. We don’t provide native support for for additive
+> conjunction because nothing is lost by using an encoding. In fact
+> something is gained, because we can vary the ⊥: `type With bot a b =
+> Either (a⊸bot) (b⊸bot) ⊸ bot` (for a pure version, universally
+> quantify overall all `bot`). Because this is mostly an orthogonal
+> issue, and would take significant space to articulate clearly, we
+> omitted it entirely.  We’d be happy to elaborate in a revised version,
+> and would welcome guidance from the PC about whether to do so.
