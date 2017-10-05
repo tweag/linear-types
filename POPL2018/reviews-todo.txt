@@ -299,42 +299,62 @@ Fixed
 MAYBE
 
 > p3 I see an uninitialized array: is that how it's done?
-> 
+
+MAYBE
+
 > p3 Oversequentiality from the ST monad: is there a parallel <*> for
 > the ST applicative?
-> 
+
+MAYBE: where is the discussion we wrote at first?
+
 > p3 The linear arrow has already been introduced by this point.
-> 
+
+NOPE
+
 > p3 When you don't say, right at its first use, that Unrestricted is
 > like the !  of linear logic, I begin to wonder whether there is a
 > subtle reason why it is not. Please do not wait until p7 to draw this
 > connection.
-> 
+
+Fixed
+
 > p4 The *API* for MArray indeed has a crucial role to play in ensuring
 > that once an array is frozen it can no longer be mutated. Is there a
 > safety check for the design of APIs?
-> 
+
+TODO. There is indeed not. But this is the bane of all APIs.
+
 > p5 It's interesting to read that I/O must be sequenced. A large part
 > of the fun you can have with uniqueness types in Clean is that you can
 > use uniquely held tokens to "chop up the world" into separated regions
 > which can be manipulated independently without interference. Perhaps
 > the same is true here.
-> 
+
+NOPE
+
 > p6 I'm amused by the I vs We tussle at the beginning of 2.5.
-> 
+
+Fixed
+
 > p7 You say "in the world of monads each computation has an explicit
 > continuation". A pedant asks in what way that is true of Maybe.
-> 
+
+NOPE
+
 > p9 The ellpisis-in-formal-notations police would prefer a notation for
 > bunches of stuff that is both more formal and more compact, such as
 > you use for the k constructors. By the time you reach the case rule on
 > p10, you'll be glad you did, or I will, anyway.
-> 
+
+MAYBE
+
 > p10 It's important to note that contexts are up to permutation, which
 > you can get away with while you don't have type dependency or other
 > sorts of polymorphism forcing you to keep contexts in order. Your
 > simplifying assumption is more helpful than you let on.
-> 
+
+MAYBE
+
 > Reaction to author response
 > ---------------------------
 > 
@@ -432,7 +452,9 @@ MAYBE
 > that in those 195K lines, ++, cons, uncons (and whatever other functions
 > were changed) are never used as arguments to other functions?  Is there
 > something I'm missing?
-> 
+
+DUPLICATE [1]
+
 > Comments for author
 > -------------------
 > definition 2.1: "To consume a value of atomic base type (like Int or
@@ -440,7 +462,9 @@ MAYBE
 > to me an object that cannot be evaluated any further, such as "3".  Hence,
 > I don't know what the authors mean here when they suggest that one such
 > "evaluate" a value.  Given "3" how does one "consume it exactly once"?
-> 
+
+MAYBE rename value to what?
+
 > fig 1:  The type of runST was given as:
 > 
 > (all a. ST s a) -> a
@@ -448,7 +472,9 @@ MAYBE
 > but that seems to be a typo.  Is it not:
 > 
 > all a. (all s. ST s a) -> a
-> 
+
+Fixed
+
 > section 2:  In general, this section is well written and provides a lot of
 > useful examples.  However, all of the examples are "positive" examples,
 > showing expressions that do type check.  I believe I would have more quickly understood
@@ -456,11 +482,13 @@ MAYBE
 > does not type check.  For instance, on seeing a type such as this:
 > 
 > write :: MArray a -o (Int, a) -> MArray a
-> 
+
+NOPE
+
 > on pg 3, my immediate question was what happens if the function is
 > partially applied.  for instance:
 > 
-> let x - write m in
+> let x = write m in
 > let y = x in
 > ...
 > 
@@ -478,10 +506,14 @@ MAYBE
 > I figured out how this works, but only when I had read through section 3.
 > It would have been nice for this reader if that issue had discussed
 > such closures or perhaps other negative examples earlier.
-> 
+
+NOPE
+
 > pg 5, l 14:  "Now openFile returns ..."  In the code, the function
 > is called "open" not openFile
-> 
+
+Fixed
+
 > pg 6: "As before, giving a more precise type to ++ only strengthens
 > the contract that ++ offers to its callers; it does not restrict its
 > usage."  -- at this point, I am wondering about higher-order functions
@@ -501,7 +533,7 @@ MAYBE
 > Skimming forward, I see this exact example is covered on pg 14, and
 > it turns out that it is handle by eta-expansion, not subtyping.  I would
 > have liked to have known this earlier.
-> 
+
 > (Another note I made: It seems that section 2.6 begins to explain this
 > issue and it seems the solution is multiplicity polymorphism.  Still,
 > it seems to me that the statement "being able to strengthen (+), and
@@ -509,12 +541,16 @@ MAYBE
 > misleading.  You can't strengthen the type of (+) in a fully backwards
 > compatible way -- if it is used in higher-order functions, those
 > functions need to be made into multiplicity-polymorphic functions.)
-> 
+ 
+DUPLICATE [1]
+
 > -- "It would be impractical to formalise all of Hask-ll."  -- minor:
 > some people would disagree.  There is a trend towards formalizaing and
 > mechanically proving properties of full languages.  I'd delete or
 > rephrase that sentence.
-> 
+
+Fixed
+ 
 > Reaction to author response
 > ---------------------------
 > Thanks for answering my technical puzzle!

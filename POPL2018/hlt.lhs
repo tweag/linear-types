@@ -623,7 +623,7 @@ There are several things to note here:
   mutable arrays |MArray| from that of immutable arrays |Array|, because in this {\sc api}
   only immutable arrays are {\em allowed} to be non-linear (unrestricted).  The
   way to say that results can be freely shared is to use
-  |Unrestricted| (\fref{sec:data-types}), as in the type of |freeze|.
+  |Unrestricted| (our version of linear logic's |!| modality, see \fref{sec:data-types}), as in the type of |freeze|.
 
 \item Because |freeze| consumes its input, there is no danger of the same
   mutable array being subsequently written to, eliminating the problem with
@@ -900,7 +900,7 @@ upd (a1, a2) n  | n >= 10    = (write a1 n 'x', a2)
 \subsection{Unrestricted data constructors}
 \label{sec:non-linear-constructors}
 
-Suppose I want to pass a linear |MArray| and an unrestricted |Int| to a function |f|.
+Suppose we want to pass a linear |MArray| and an unrestricted |Int| to a function |f|.
 We could give |f| the signature |f :: MArray Int ⊸ Int -> MArray Int|.  But suppose
 we wanted to uncurry the function; we could then give it the type
 \begin{code}
@@ -1064,10 +1064,10 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 \label{sec:statics}
 \label{sec:calculus}
 
-It would be impractical to formalise all of \HaskeLL{}. So instead we
-formalise a core calculus, \calc{}, which exhibits all the key features
-of \HaskeLL{}, including data types and multiplicity polymorphism.  In this
-way we make precise much of the informal discussion above.
+We do not formalise all of \HaskeLL{}, but rather a core calculus,
+\calc{} which exhibits all key features, including data types and
+multiplicity polymorphism.  This way we make precise much of the
+informal discussion above.
 
 
 \subsection{Syntax}
@@ -2541,7 +2541,7 @@ a conceptually simple approach to lifetimes: the |ST| monad. It has
 a phantom type parameter |s| (the \emph{region}) that is instantiated once at the
 beginning of the computation by a |runST| function of type:
 \begin{code}
-  runST :: (forall s. ST s a) -> a
+  runST :: forall a. (forall s. ST s a) -> a
 \end{code}
 This way, resources that are allocated during the computation, such
 as mutable cell references, cannot escape the dynamic scope of the call
