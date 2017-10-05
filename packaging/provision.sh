@@ -31,6 +31,8 @@ SYSRUNDEPS=libgmp-dev
 # of GHC. This will be a really big single step to avoid storing
 # intermediary files in the unionfs layer:
 
+LINEAR_SHA=9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f
+
 apt-get update -y
 apt-get install -y --no-install-recommends $SYSBUILDDEPS $SYSRUNDEPS
 git clone --recursive git://git.haskell.org/ghc.git $GHCBUILD
