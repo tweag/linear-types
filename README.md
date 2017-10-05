@@ -83,6 +83,12 @@ ways to fool the type checker into accepting non-linear
 definitions. The README has a [list of known
 ones](https://github.com/tweag/ghc/blob/9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f/README.md#bugs).
 
+As mentionned in the article, our prototype only implements
+monomorphic multiplicities. Polymorphic multiplicities as well as
+multiplicity-parametric types are missing. Our case studies don't need
+these missing features except the socket example in [Section
+5.2](section-5-2), where we had to work around it.
+
 Section 5: Evaluation and case studies
 --------------------------------------
 
