@@ -3,7 +3,7 @@ synopsis:            Examples implemented using Linear types in Haskell.
 description:         Examples corresponding to those in the POPL'18 Linear Haskell submission.
 name:                Examples
 version:             0.1.0.0
-sauthor:              Ryan Newton
+author:              Ryan Newton
 maintainer:          rrnewton@gmail.com
 build-type:          Simple
 cabal-version:       >=1.10

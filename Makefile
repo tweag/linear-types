@@ -40,7 +40,7 @@ image: fetch
 build2:
 	stack docker pull
 	stack --docker build
-	stack --docker test --no-run-tests
+#	stack --docker test --no-run-tests
 	stack --docker bench --no-bench
 
 # For building inside or outside the container:
