@@ -97,6 +97,48 @@ Section 5: Evaluation and case studies
 
 ### Section 5.2
 
+The implementation of the socket abstraction with typestate depends on
+the [`src/IO.hs`](src/IO.hs) module to represent the
+multiplicity-parametric IO monad (which we name `IO'` in the
+implementation), as described in the article. As
+multiplicity-parametric data types are not implemented in our
+prototype, as mentionned [above](section-4-implementation), we emulate
+multiplicity parametricity using a type family.
+
+This puts this use-case on shiftier grounds than more the other case
+studies: it is quite easy, still, to fool the type-checker into
+accepting unsafe, non-linear, functions where linear functions are
+expected.
+
+The implementation of the abstraction is done in
+[`src/Socket/Generic.hs`](src/Socket/Generic.hs), where we go beyond
+what the article describes and don't actually specify the type-level
+automaton which describes the evolution of the socket's
+typestate. That is: neither the precondition, nor the postcondition
+the API functions are fixed. Instead, all the API functions are
+parametrised by the type-level automaton, given as a typeclass. The
+reason for this is that the actual protocol sequence of actions to
+take with a socket depends on the network protocol of the socket
+(_e.g._ TCP, UPD, …).
+
+This `src/Socket/Generic.hs` module is implemented as a wrapper around
+the `socket` library, and illustrate how we intend to use linearity to
+add guarantees to APIs which are not necessarily defined in terms of
+linearity. Some complications occur, however, due to the fact that the
+library's `IO` and our `IO'` are different types, and `IO` is treated
+specially by Haskell.
+
+The `Generic` API is not safe, per se: when defining a protocol, it is
+the library writer's responsibility to provide the rules that sockets
+of this protocol must obey. This is done in file
+[`src/Socket.hs`](src/Socket.hs) for the case of TCP. It is convenient
+to also give a specialised type to API functions at a given protocol
+because the types become more simpler and help type inference a
+lot. We also do this in `src/Socket.hs`.
+
+Finally, you can find a small example of usage of this API in
+[`scr/SocketExample.hs`](src/SocketExample.hs). But we have not
+provided tests to run it.
 
 ### Section 5.3
 
