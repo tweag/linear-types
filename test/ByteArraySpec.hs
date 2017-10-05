@@ -66,8 +66,6 @@ spec = do
           in
             test (ByteArray.freeze (ByteArray.writeStorable p (ByteArray.writeStorable n w)))
 
--- Still a double-free exception:
-
       prop "are written then read once correctly" $ \ (n :: Int) ->
         getUnrestricted $ ByteArray.alloc 128 $ \ w ->
           let
