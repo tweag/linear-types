@@ -14,9 +14,14 @@ module Socket.Generic where
 --   * Sending end: create -> connect -> send
 -- But can differ depending on the protocol.
 --
--- This module provides a protocol-parametric API for socket. Each protocol can
+-- This module provides a protocol-parametric API for sockets. Each protocol can
 -- declare rules in the form of a deterministic finite automaton to enforce the
 -- appropriate protocol
+--
+-- This module is implemented as a wrapper around the socket library
+--
+-- [url] https://www.stackage.org/package/socket
+
 
 import Data.ByteString (ByteString)
 import Data.Coerce

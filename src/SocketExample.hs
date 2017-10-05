@@ -2,10 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module SocketExample where
+-- | This short example is based on the hello-world example of the socket
+-- library which can be found here:
+--
+-- https://github.com/lpeterse/haskell-socket/blob/0136260f1baf0a7114f41cf6e773396c4856c1d6/examples/HelloWorldServer.hs
+--
 
--- import Control.Exception ( bracket, catch )
--- import Control.Monad ( forever )
+module SocketExample where
 
 import Data.ByteString.Char8 ()
 import Data.String (String, fromString)
@@ -36,21 +39,6 @@ main = do
   putStrLn "Listening socket ready..."
   forever acceptAndHandle s3
 
-  --  bracket
-  -- ( socket :: IO (Socket Inet6 Stream TCP) )
-  -- ( \s-> do
-  --   close s
-  --   putStrLn "Listening socket closed."
-  -- )
-  -- ( \s-> do
-  --   setSocketOption s (ReuseAddress True)
-  --   setSocketOption s (V6Only False)
-  --   bind s (SocketAddressInet6 inet6Any 8080 0 0)
-  --   listen s 5
-  --   putStrLn "Listening socket ready..."
-  --   forever $ acceptAndHandle s `catch` \e-> print (e :: SocketException)
-  -- )
-
 acceptAndHandle :: Socket 'Listening ⊸ IO' 'One (Socket 'Listening)
 acceptAndHandle s = do
   (s', p1) <- accept s
@@ -58,14 +46,3 @@ acceptAndHandle s = do
   (p2, Unrestricted _) <- send p1 "Hello world!"
   close p2
   returnL s'
-
-  --  bracket
-  -- ( accept s )
-  -- ( \(p, addr)-> do
-  --   close p
-  --   putStrLn $ "Closed connection to " ++ show addr
-  -- )
-  -- ( \(p, addr)-> do
-  --   putStrLn $ "Accepted connection from " ++ show addr
-  --   sendAll p "Hello world!" msgNoSignal
-  -- )
