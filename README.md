@@ -92,6 +92,11 @@ these missing features except the socket example in [Section
 Section 5: Evaluation and case studies
 --------------------------------------
 
+Because we haven't, as of yet, modified the types of function in
+Haskell's standard library, we rewrote, for our purposes, a few
+standard library functions with linear types in the
+[`src/Linear/`](src/Linear/) directory.
+
 ### Section 5.1
 
 
