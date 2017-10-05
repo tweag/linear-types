@@ -1,0 +1,62 @@
+{
+    "variables": {
+        "ssh_name": "ubuntu",
+        "ssh_pass": "ubuntu",
+        "host_name": "linear-haskell"
+    },
+    "provisioners": [
+        {
+            "type":"shell",
+            "execute_command": "echo {{user `ssh_pass`}} | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+            "script":"provision.sh"
+        }
+    ],
+    "builders": [{
+        "name": "virtualbox",
+        "type": "virtualbox-iso",
+        "headless": true,
+        "guest_os_type": "Ubuntu_64",
+        "vboxmanage": [
+            ["modifyvm","{{.Name}}","--memory","4096"]
+        ],
+        "disk_size": 10000,
+        "iso_url": "http://releases.ubuntu.com/16.04.3/ubuntu-16.04.3-server-amd64.iso",
+        "iso_checksum": "f3532991e031cae75bcf5e695afb844dd278fff9",
+        "iso_checksum_type": "sha1",
+        "http_directory": ".",
+        "http_port_min": "9001",
+        "http_port_max": "9001",
+        "ssh_username": "{{user `ssh_name`}}",
+        "ssh_password": "{{user `ssh_pass`}}",
+        "ssh_pty" : "true",
+        "ssh_wait_timeout": "15m",
+        "shutdown_command": "echo {{user `ssh_pass`}} | sudo -S shutdown -P now",
+        "boot_command": [
+            "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+            "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+            "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+            "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+            "/install/vmlinuz<wait>",
+            " auto<wait>",
+            " console-setup/ask_detect=false<wait>",
+            " console-setup/layoutcode=us<wait>",
+            " console-setup/modelcode=pc105<wait>",
+            " debconf/frontend=noninteractive<wait>",
+            " debian-installer=en_US<wait>",
+            " fb=false<wait>",
+            " initrd=/install/initrd.gz<wait>",
+            " kbd-chooser/method=us<wait>",
+            " keyboard-configuration/layout=USA<wait>",
+            " keyboard-configuration/variant=USA<wait>",
+            " locale=en_US<wait>",
+            " netcfg/get_domain=vm<wait>",
+            " netcfg/get_hostname=vagrant<wait>",
+            " grub-installer/bootdev=/dev/sda<wait>",
+            " noapic<wait>",
+            " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg",
+            " -- <wait>",
+            "<enter><wait>"
+        ],
+        "boot_wait": "10s"
+    }]
+}
