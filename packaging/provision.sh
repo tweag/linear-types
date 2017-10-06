@@ -22,7 +22,7 @@ echo 'PATH=/root/.cabal/bin:/root/.local/bin:/opt/cabal/2.0/bin:/opt/ghc/8.2.1/b
 . /home/ubuntu/.bashrc
 
 # Install lubuntu
-apt-get install --no-install-recommends lubuntu-desktop
+apt-get install -y --no-install-recommends lubuntu-desktop
 
 # Compile GHC
 GHCBUILD=/home/ubuntu/ghc_linear
@@ -51,7 +51,7 @@ cd $GHCBUILD && git clean -xdf && git submodule foreach --recursive "git clean -
 apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7
 
 # Checks out sources for the artifacts
-ARTIFACT_REF=bdc96bb8cd38ff5806e40b32978ae64d54023ce0
+ARTIFACT_REF=ce3d921fe51d412d8e63004617c7d5d3e96597d7
 ARTIFACT_HOME=/home/ubuntu/artifact
 git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git $ARTIFACT_HOME
 cd $ARTIFACT_HOME && git checkout $ARTIFACT_REF
@@ -62,7 +62,7 @@ chown -R ubuntu:ubuntu $ARTIFACT_HOME
 
 # Build dependencies for benches
 apt-get install -y make xz-utils gnuplot
-cd artifact/ && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
+cd $ARTIFACT_HOME && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
 cd $ARTIFACT_HOME && git submodule foreach --recursive "git clean -xdf"
 
 # Sets up permissions for repositories
