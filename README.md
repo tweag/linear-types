@@ -1,10 +1,10 @@
 ## TODOs
 
-- [ ] Suggest to ignore the many compilation warnings
+- [x] Suggest to ignore the many compilation warnings
 - [x] Instruction to compile with different implementation for cursors
 - [ ] Instruction to interpret the benchmark reports
-- [ ] One-liner to check out the repository
-- [ ] Don't forget `git submodule update --init` in instructions and packaging
+- [x] One-liner to check out the repository
+- [x] Don't forget `git submodule update --init` in instructions and packaging
 
 - [x] Describe the purpose of the two different container layers
 
@@ -17,6 +17,10 @@ case-studies for the article _Retrofitting linear types_ accepted at
 POPL'18. Details of individual case studies can be found in
 [the dedicated section below](#section-5-evaluation-and-case-studies)
 
+To clone this repository at the appropriate commit:
+
+    $ git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git
+    $ git checkout <TODO:COMMIT NUMBER>
 
 Quick Start Instructions
 ========================
@@ -29,9 +33,12 @@ assume that you follow this guide starting from the directory that
 contains this file.
 
 The easiest way to use this artifact is to rely on the Docker support,
-including pre-built images that are hosted by dockerhub.com.  The host
+including pre-built images that are hosted by dockerhub.com. The host
 system needs only GNU make plus an installation of Docker:
    https://docs.docker.com/engine/installation/
+   
+If Docker is not a convenient solution we provide a Virtual Machine
+(see [Alternative installation methods](#alternative-installation-methods)).
 
 We have tested this artifact with Linux as the host system, but Mac OS
 with the Docker CLI should work as well.
