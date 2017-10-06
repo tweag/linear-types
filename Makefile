@@ -1,7 +1,7 @@
 
 
 # The image for the examples/benchmarks
-VER=0.0.9
+VER=0.0.10
 BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
@@ -40,12 +40,14 @@ test1:
 
 # --------------------
 
-# Option (2): instead use stack and only GHC comes from a docker image.
+# Option (2): instead use stack on the host and /only/ GHC comes from a docker image.
 build2:
 # Don't run the tests and benchmarks on "build":
 	stack docker pull
 	stack --docker build
 	stack --docker test --no-run-tests
+# Build the dependencies on the host, not in a docker image.
+	$(MAKE) STACK_ARGS="--no-docker --no-system-ghc --install-ghc" all-deps
 
 # Test with both pure and mutable cursor implementations:
 test2:
@@ -55,6 +57,8 @@ test2:
 
 # Targets for use inside or outside the container:
 #===============================================================================
+
+all-deps: ./bin/criterion-interactive ./bin/hsbencher-graph
 
 ./bin/criterion-interactive: 
 	cd ./deps; stack $(STACK_ARGS) install criterion-external
@@ -78,6 +82,7 @@ example_bench: ./bin/criterion-interactive
 
 # A full run of the Cursors benchmark suite:
 run-bench:
+# By default this runs on the host, even if the binary was built inside the docker container.
 	./run_all_cursor_benches.sh
 
 clean:
@@ -85,4 +90,4 @@ clean:
 	stack clean || echo ok
 	cd deps; stack clean || echo ok
 
-.PHONY: all example_bench run-bench clean build1 build2 test1 test2
+.PHONY: all example_bench run-bench clean build1 build2 test1 test2 all-deps
