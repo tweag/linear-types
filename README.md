@@ -5,6 +5,8 @@
 - [ ] Instruction to interpret the benchmark reports
 - [ ] Don't forget `git submodule update --init` in instructions and packaging
 
+- [ ] Describe the purpose of the two different container layers
+
 
 Retrofitting linear types: artifact repository
 ==============================================
@@ -50,7 +52,7 @@ If instead............
 Basic Tests
 ===========
 
-    stack test --flag Examples:pure
+    stack test --flag Examples:-pure
     stack test --flag Examples:pure
 
 
@@ -105,6 +107,21 @@ standard library functions with linear types in the
 [`src/Linear/`](src/Linear/) directory.
 
 ### Section 5.1
+
+TODO: Finish this... reproduce fig 7.
+
+
+#### Run the benchmarks
+
+TODO: Finish......
+
+
+    make build
+    make bench
+
+#### Plot the results
+
+TODO: Finish......
 
 
 ### Section 5.2
