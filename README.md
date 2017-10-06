@@ -23,7 +23,9 @@ Quick Start Instructions
 This artifact consists of the tarball or Git checkout that contains
 this README, plus the modified version of GHC
 [found on Github](#section-4-implementation).  We will refer to the
-machine you downloaded this artifact to as the "host system".
+machine you downloaded this artifact to as the "host system".  We
+assume that you follow this guide starting from the directory that
+contains this file.
 
 The easiest way to use this artifact is to rely on the Docker support,
 including pre-built images that are hosted by dockerhub.com.  The host
@@ -190,21 +192,34 @@ standard library functions with linear types in the
 
 ### Section 5.1
 
-TODO: Finish this... reproduce fig 7.
+In this section, the main task is to benchmark different approaches to
+operating on serialized tree data, and in particular the "type safe
+linear cursors" approach.
 
+If you built or fetched the artifact (2), corresponding to the Docker
+image `parfunc/linear-haskell-popl18-artifact`, then you already have
+a binary executable for the benchmark harness as well as the scripts
+that run it.
 
-#### Run the benchmarks
+To run the benchmarks fully inside docker, you only need to do this:
 
-TODO: Finish......
+    cd plots
+    make docker-bench
 
+That will build the third docker image, run benchmarks, store the
+resulting plots inside it, and finally extract the plots back to the
+host system.  It will take a while.
 
-    make build
+Benchmarking inside Docker should have neglible impact for this
+example, because the benchmark program does not perform file or
+network IO.
+
+However, if the host system happens to be Linux, you may be able to
+run the benchmarks outside Docker, with:
+
     make bench
-
-#### Plot the results
-
-TODO: Finish......
-
+    cd plots
+    make
 
 ### Section 5.2
 
