@@ -64,7 +64,6 @@ chown -R ubuntu:ubuntu $ARTIFACT_HOME
 apt-get install -y make xz-utils gnuplot
 cd artifact/ && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
 cd $ARTIFACT_HOME && git submodule foreach --recursive "git clean -xdf"
-rm -rf /home/ubuntu/.stack
 
 # Sets up permissions for repositories
 chown -R ubuntu:ubuntu $GHCBUILD
