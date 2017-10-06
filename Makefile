@@ -53,9 +53,14 @@ test2:
 # Targets for use inside or outside the container:
 #===============================================================================
 
-./bin/criterion-interactive:
+./bin:
 	mkdir -p ./bin
+
+./bin/criterion-interactive: ./bin
 	cd ./criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
+
+./bin/hsbencher-graph: ./bin
+	cd ./deps/hsbencher; ; stack $(STACK_ARGS) install --local-bin-path=../../bin
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md

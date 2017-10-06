@@ -16,9 +16,12 @@ RUN cd /examples && stack --no-docker test  --no-run-tests
 ADD ./criterion-external /examples/criterion-external
 
 ADD ./Makefile        /examples/Makefile
-RUN make STACK_ARGS="--install-ghc" bin/criterion-interactive && \
-    rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
-    rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2
+RUN stack --resolver=lts-8.6 setup --install-ghc
+RUN make STACK_ARGS="--no-docker" bin/criterion-interactive 
+RUN make STACK_ARGS="--no-docker" bin/hsbencher-graph
+# If we combined all steps that need GHC 8.0, we could clean up like this:
+#   rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
+#   rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2
 
 # Attempt to build with (linear) GHC 8.2.  vector-algorithms dependency fails to build:
 # RUN make STACK_ARGS="--skip-ghc-check --resolver=nightly-2017-10-06" bin/criterion-interactive
