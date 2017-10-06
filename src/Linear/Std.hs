@@ -1,4 +1,4 @@
--- | Derived utilities that use the Unsafe bits.
+-- | Standard library functions with linear types.
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
@@ -15,7 +15,6 @@ import Linear.Common
 import Linear.Unsafe
 import Prelude hiding (($))
 import Debug.Trace
-import System.IO.Unsafe(unsafePerformIO)
 
 -- * Linear version of some standard function
 
@@ -38,19 +37,33 @@ foldlL _reduce acc [] = acc
 foldlL reduce acc (a:l) = foldlL reduce (reduce acc a) l
 
 -- * Comonoids and data types
+--
+-- The classes and instances below are not used in the artifact, they are
+-- important concepts when programming with linear types. So they are included
+-- for reference.
 
 -- | The laws of comonoids are dual to that of monoid:
 --
 -- * first drop (dup a) ≃ a
 -- * first dup (dup a) ≃ (second dup (dup a))
 -- * …
+--
+-- Comonoids support duplication linearly. For instance by copy, like Bool,
+-- below, or because @a@ is really unrestricted, like Unrestricted below.
 class Comonoid a where
   drop :: a ⊸ ()
   dup :: a ⊸ (a,a)
 
--- [aspiwack] I don't know that there is a standard notion for @move@.
+-- | A natural extension of Comonoid where the "copy" is unrestricted
 class Comonoid a => UComonoid a where
   move :: a ⊸ Unrestricted a
+
+instance Comonoid Bool where
+  drop True = ()
+  drop False = ()
+
+  dup True = (True,True)
+  dup False = (False,False)
 
 instance Comonoid (Unrestricted a) where
   drop (Unrestricted _) = ()
@@ -58,29 +71,3 @@ instance Comonoid (Unrestricted a) where
 
 instance UComonoid (Unrestricted a) where
   move (Unrestricted x) = Unrestricted (Unrestricted x)
-
-
-instance Comonoid Int where
-  drop = unsafeCastLinear almostDropInt
-    where
-      -- it matters, for correctness, that the int is forced
-      almostDropInt :: Int -> ()
-      almostDropInt (I# _) = ()
-  dup = unsafeCastLinear $ almostDupInt
-    where
-      -- it matters, for correctness, that the int is forced
-      almostDupInt :: Int -> (Int,Int)
-      almostDupInt (I# i) = (I# i, I# i)
-
-instance UComonoid Int where
-  move = unsafeCastLinear $ almostMoveInt
-    where
-      -- it matters, for correctness, that the int is forced
-      almostMoveInt :: Int -> Unrestricted Int
-      almostMoveInt (I# i) = (Unrestricted (I# i))
-
--- | Trace a value in a linear context.
-lintrace :: String -> a ⊸ a
-lintrace str = trace str (\x -> x)
---    case unsafePerformIO (putStrLn str) of
---                    () -> x

@@ -1,5 +1,5 @@
--- | The root of the dependence hierarchy -- the most widely used bits
--- included everywhere else.  This is reexported by Linear.Std.
+-- | The root of the dependence hierarchy -- shared between Linear.Std and
+-- Linear.Unsafe. This is reexported by Linear.Std.
 
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
@@ -12,18 +12,11 @@ import GHC.Types (Type, TYPE, RuntimeRep)
     
 -- * Unrestricted
 
--- RRN [2017.06.27] Possible GHC Bug.  Making this a newtype causes segfaults.
--- newtype Unrestricted a where
-data Unrestricted a where
-    Unrestricted :: -- forall (r :: RuntimeRep) (a :: TYPE r) .
-                    a -> Unrestricted a
-  deriving Show
-                         
-{-
+-- | The Unrestricted data type uses the GADT syntax with a standard arrow (->)
+-- to indicate that its content is always unrestricted
 data Unrestricted a where
     Unrestricted :: a -> Unrestricted a
-  deriving (Show,Eq)
--}
+  deriving Show
 
 {-# INLINE getUnrestricted #-}
 getUnrestricted :: Unrestricted a ⊸ a
@@ -37,17 +30,6 @@ mapU f (Unrestricted a) = Unrestricted (f a)
 forceUnrestricted :: Unrestricted a ⊸ Unrestricted a
 forceUnrestricted (Unrestricted a) = Unrestricted a
 
-linerror :: forall (a :: Type) (r :: RuntimeRep) (b :: TYPE r)  .
-            String -> a ⊸ b
-linerror = error
-
--- Hard-coded constant:
---------------------------------------------------------------------------------
--- | Size allocated for each regions: 4KB.
+-- | A hard-coded size constant allocated for each regions
 regionSize :: Int
-regionSize =
-  -- 4096 -- in Bytes
-  500 *1000*1000
---  5 * 1000 * 1000 * 1000
-
-           
+regionSize = 500 *1000*1000

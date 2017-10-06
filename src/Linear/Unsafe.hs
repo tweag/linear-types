@@ -1,10 +1,10 @@
 {-# LANGUAGE GADTs #-}
-
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE RankNTypes #-}
+
+-- | Unsafe primitives to work with linearity.
 
 module Linear.Unsafe where
 
