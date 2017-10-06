@@ -227,6 +227,9 @@ run the benchmarks outside Docker, with:
     cd plots
     make
 
+The virtual machine has the required dependencies to run the above
+commands though, of course, the benchmark results may be unreliable.
+
 ### Section 5.2
 
 The implementation of the socket abstraction with typestate depends on

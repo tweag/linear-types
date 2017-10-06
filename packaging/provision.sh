@@ -14,7 +14,7 @@ gpg --keyserver ha.pool.sks-keyservers.net --recv-keys C5705533DA4F78D8664B5DC05
 gpg --batch --verify stack.tar.gz.asc stack.tar.gz
 tar -xf stack.tar.gz -C /usr/local/bin --strip-components=1
 /usr/local/bin/stack config set system-ghc --global true
-rm -rf "$GNUPGHOME"
+rm -rf "$GNUPGHOME" stack.tar.gz.asc stack.tar.gz
 
 # Setting up the PATH
 touch /home/ubuntu/.bashrc && chown ubuntu:ubuntu /home/ubuntu/.bashrc
@@ -34,7 +34,7 @@ SYSRUNDEPS=libgmp-dev
 # of GHC. This will be a really big single step to avoid storing
 # intermediary files in the unionfs layer:
 
-LINEAR_SHA=9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f
+LINEAR_SHA=0eedc7bf14a96d54736cbe82dd6ff198c4de35ce
 
 apt-get update -y
 apt-get install -y --no-install-recommends $SYSBUILDDEPS $SYSRUNDEPS
@@ -49,7 +49,6 @@ cd $GHCBUILD && ./boot && ./configure
 cd $GHCBUILD make && make install
 cd $GHCBUILD && git clean -xdf && git submodule foreach --recursive "git clean -xdf"
 apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7
-rm -rf /var/lib/apt/lists/*
 
 # Checks out sources for the artifacts
 ARTIFACT_REF=bdc96bb8cd38ff5806e40b32978ae64d54023ce0
@@ -57,6 +56,15 @@ ARTIFACT_HOME=/home/ubuntu/artifact
 git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git $ARTIFACT_HOME
 cd $ARTIFACT_HOME && git checkout $ARTIFACT_REF
 
+# Build dependencies for benches
+apt-get install -y make xz-utils gnuplot
+cd artifact/ && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
+
 # Sets up permissions for repositories
 chown -R ubuntu:ubuntu $GHCBUILD
 chown -R ubuntu:ubuntu $ARTIFACT_HOME
+
+
+
+# Final cleaning of apt lists to spare a little upload space
+rm -rf /var/lib/apt/lists/*
