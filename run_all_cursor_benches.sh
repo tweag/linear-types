@@ -3,7 +3,7 @@
 set -xe
 
 # Build the executable
-stack build --no-run-benchmarks
+stack $STACK_ARGS build --no-run-benchmarks
 
 # Find the executable, and assume it runs OUTSIDE docker:
 EXE=`stack $STACK_ARGS exec -- which bench-cursor`
