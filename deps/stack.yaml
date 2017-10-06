@@ -11,11 +11,11 @@ packages:
 #       583d174a1fade0c8570c8e89d5e6d5a706057f11 # - fix up hsbencher-ingest
 #       d56b059e773f9c80a2c0af6163965c37b41ec5d5 # hsbencher-graph 0.8
 #       1c949322d619b74d63f9d2b8010e0594731381c5 # hsbencher-graph 0.10
-       f73986f61f9c9ac2a80e079571372f428c26785c # update to use lts-8.6
+#       f73986f61f9c9ac2a80e079571372f428c26785c # update to use lts-8.6
+        2ead0c6003e47b028572264b9e98a6fcf7bbde9b # hsbencher-graph 0.13
    subdirs:
     - hsbencher
     - hsbencher-graph
-    - hsbencher-fusion
     - cat-csv
    extra-dep: false
 

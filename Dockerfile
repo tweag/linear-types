@@ -10,8 +10,8 @@ ADD ./bench           /examples/bench
 ADD ./test            /examples/test
 ADD ./src             /examples/src
 
-RUN cd /examples && stack --no-docker build
-RUN cd /examples && stack --no-docker test  --no-run-tests 
+RUN stack --no-docker build
+RUN stack --no-docker test  --no-run-tests 
 
 # Install GHC 8.0 to build these dependencies (executables):
 RUN cd /tmp && stack --resolver=lts-8.6 --no-docker setup --no-system-ghc
@@ -27,3 +27,8 @@ RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 
 # Attempt to build with (linear) GHC 8.2.  vector-algorithms dependency fails to build:
 # RUN make STACK_ARGS="--skip-ghc-check --resolver=nightly-2017-10-06" bin/criterion-interactive
+
+
+RUN apt-get install -y gnuplot
+ADD ./plots         /examples/plots
+RUN cd plots && make
