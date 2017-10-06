@@ -298,3 +298,17 @@ These tests are implemented in
 [`test/PurifySpec.hs`](test/PurifySpec.hs).
 
 
+VM Instructions
+===============
+
+_In progress_
+
+- Import VM
+- Install Vbox guest additions
+  - Add optical drive (setting > storages > add optical drive)
+  - After boot: Devices > insert guest additions CD image
+  - CD appears on desktop, right-click > open in terminal
+  - `$ sudo ./VBoxLinuxAdditions.run`
+- Device > Shared Clipboard > Bidirectional
+- Reboot (_e.g._ `$ sudo reboot 0`)
+- Terminal: global menu > system tools > LXTerminal

@@ -21,6 +21,9 @@ touch /home/ubuntu/.bashrc && chown ubuntu:ubuntu /home/ubuntu/.bashrc
 echo 'PATH=/root/.cabal/bin:/root/.local/bin:/opt/cabal/2.0/bin:/opt/ghc/8.2.1/bin:/opt/happy/1.19.5/bin:/opt/alex/3.1.7/bin:$PATH' > /home/ubuntu/.bashrc
 . /home/ubuntu/.bashrc
 
+# Install lubuntu
+apt-get install --no-install-recommends lubuntu-desktop
+
 # Compile GHC
 GHCBUILD=/home/ubuntu/ghc_linear
 SYSBUILDDEPS="autoconf automake make wget xz-utils libtool ncurses-dev"
