@@ -16,13 +16,15 @@ TAG=`hostname -s`_`date +"%s"`
 RUNDIR=run_${TAG}
 MYDAT=dataset_${TAG}.csv
 
+# Vary this to make the benchmarks complete faster or slower:
+MAXDEPTH=24
+
 function go() {
   echo "Running benchmarks with output to dir: $RUNDIR"
     
   for name in sumtree maptree;
   do
-#    for (( depth=1; depth <= 24; depth++ ))
-    for (( depth=1; depth <= 2; depth++ ))      
+    for (( depth=1; depth <= ${MAXDEPTH}; depth++ ))
     do
       echo
       echo "Benchmarking tree depth $depth"
