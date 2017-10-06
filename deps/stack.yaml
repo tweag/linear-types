@@ -1,5 +1,6 @@
 local-bin-path: ../bin
 resolver: lts-8.6
+system-ghc: false
 
 packages:
  - ./criterion-external
