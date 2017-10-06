@@ -34,4 +34,6 @@ RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 
 RUN apt-get install -y gnuplot
 ADD ./plots         /examples/plots
+
+ADD ./run_all_cursor_benches.sh  /examples/
 # RUN cd plots && make

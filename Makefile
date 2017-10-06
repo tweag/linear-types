@@ -1,7 +1,7 @@
 
 
 # The image for the examples/benchmarks
-VER=0.0.7
+VER=0.0.8
 BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
