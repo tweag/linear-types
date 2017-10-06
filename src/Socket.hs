@@ -5,15 +5,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Socket where
+-- | This module implements the typestate automaton for TCP. The implementation
+-- of the API per se is in Socket.Generic.
 
--- | Sockets follow a rather long-winded protocol which looks like:
---   * Receiving end: create -> bind -> listen -> accept -> receive
---   * Sending end: create -> connect -> send
---
--- This module implements this protocol in type-states using linear type. We
--- follow a simplified version of the api in the @socket@ library (assuming only
--- tcp sockets).
+module Socket where
 
 import Data.ByteString (ByteString)
 import Socket.IO hiding (return)
@@ -37,6 +32,12 @@ instance G.Rule S.TCP "accept" 'Listening 'Listening
 instance G.Rule S.TCP "connect" 'Unbound 'Connected
 instance G.Rule S.TCP "send" 'Connected 'Connected
 instance G.Rule S.TCP "receive" 'Connected 'Connected
+
+-- * Specialised types for the functions in Socket.Generic
+--
+-- Notice how there is no code: we're just giving new type signatures to all of
+-- these functions. The type signatures are forced to obey the rules of the
+-- automaton given above.
 
 socket ::  IO' 'One (Socket 'Unbound)
 socket = G.socket
