@@ -38,7 +38,7 @@ with the Docker CLI should work as well.
 The following one-liner will bring up a ghci interpreter with support
 for linear types:
 
-    docker run -it tweag/linear-types:popl18
+    $ docker run -it tweag/linear-types:popl18
 
 After which you can type in a simple function with a linear type:
 
@@ -99,11 +99,11 @@ to follow these steps:
 
  * Build and install the modified [GHC from Github](#section-4-implementation).
    Make sure that linear version of `ghc` is in PATH (version 8.2.0.20170809).
- * Run `stack --no-docker test` in this directory, with
+ * Run `$ stack --no-docker test` in this directory, with
    the modified GHC in scope.
- * Run `STACK_ARGS=--no-docker ./run_all_cursor_benches.sh` to run all
+ * Run `$ STACK_ARGS=--no-docker ./run_all_cursor_benches.sh` to run all
    the benchmarks.
- * Switch to `plots` and run `make`
+ * Run `$ cd plots && make`
 
 You can look at `Dockerfile` and `deps/ghc-docker/Dockerfile` for
 example commands to install the dependencies, such as GNU plot.
@@ -137,7 +137,7 @@ version from dockerhub.  If you would rather spend CPU time than
 download bandwidth, you can build the image yourself with by running
 the following before the above commands:
 
-    make build
+    $ make build
 
 (Likewise you can build the `tweag/linear-types` GHC image with the
 script `deps/ghc-docker/update-docker.sh`).
@@ -209,8 +209,8 @@ that run it.
 
 To run the benchmarks fully inside docker, you only need to do this:
 
-    cd plots
-    make docker-bench
+    $ cd plots
+    $ make docker-bench
 
 That will build the third docker image, run benchmarks, store the
 resulting plots inside it, and finally extract the plots back to the
@@ -223,9 +223,9 @@ network IO.
 However, if the host system happens to be Linux, you may be able to
 run the benchmarks outside Docker, with:
 
-    make run-bench
-    cd plots
-    make
+    $ make run-bench
+    $ cd plots
+    $ make
 
 The virtual machine has the required dependencies to run the above
 commands though, of course, the benchmark results may be unreliable.
