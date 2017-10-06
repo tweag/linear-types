@@ -2,53 +2,60 @@
 
 # The image for the examples/benchmarks
 VER=0.0.1
-BASETAG=tweag/linear-haskell-popl18-artifact
+BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
-# The base image for the extended GHC:
+# The underlying image for the extended, linear GHC:
 GHCTAG=popl18
 GHCREPO=tweag/linear-types:$(GHCTAG)
 
 
 all: docs
 
-#all: ./bin/criterion-interactive
-#	stack docker pull
-
-# The Dockerfile in this directory is for debugging
-#debug:
-#	docker build -t debug/linear-types .
-#	stack --docker-image debug/linear-types build
-#	stack --docker-image debug/linear-types test --no-run-tests
-#	stack --docker-image debug/linear-types exec bash
-
-# Fetch the upstream image.
-fetch:
-	docker pull $(GHCREPO)
-
-# Commands for running from outside the container:
+# Commands for running from *outside* the container:
 #===============================================================================
+# Here are two ways to build the examples and benchmarks.
 
 # Option (1): Build the benchmark container as a second docker image:
 build1: image
 image: fetch
 #	(git clean -fxd || echo ok)
 	docker build -t $(TAG) -t $(BASETAG):latest . 
+# Fetch the upstream image.
+fetch:
+	docker pull $(GHCREPO)
+
+push1:
+	docker push $(TAG)
+
+shell:
+	docker run -it $(TAG) bash
+
+# Test with both pure and mutable cursor implementations:
+test1:
+	docker run -it $(TAG) make STACK_ARGS="--no-docker" test2
+
+# --------------------
 
 # Option (2): instead use stack and only GHC comes from a docker image.
-# Build but don't run the tests and benchmarks.
 build2:
+# Don't run the tests and benchmarks on "build":
 	stack docker pull
 	stack --docker build
-#	stack --docker test --no-run-tests
-	stack --docker bench --no-bench
+	stack --docker test --no-run-tests
 
-# For building inside or outside the container:
+# Test with both pure and mutable cursor implementations:
+test2:
+	stack $(STACK_ARGS) test --flag Examples:-pure
+#	stack $(STACK_ARGS) test --flag Examples:pure
+
+
+# Targets for use inside or outside the container:
 #===============================================================================
 
 ./bin/criterion-interactive:
 	mkdir -p ./bin
-	cd ./criterion-external; stack install --local-bin-path=../bin
+	cd ./criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md
@@ -59,19 +66,11 @@ Artifact_HOWTO_Guide.html: README.md
 #===============================================================================
 
 # Just an example of ONE benchmark you might run:
-bench: ./bin/criterion-interactive docker
-	stack bench --no-run-benchmarks
-#	./bin/criterion-interactive ./criterion-external/time_interactive.sh
-#	./bin/criterion-interactive ./go_bench.sh sumtree ST 5 -- -o report.h
+example_bench: ./bin/criterion-interactive docker
+	stack build
 	./bin/criterion-interactive stack exec -- bench-cursor sumtree packed 5 -- -o report.h
-
-# Test with both pure and mutable cursor implementations:
-test:
-	stack test --flag Examples:pure
-	stack test --flag Examples:-pure
-
 
 clean:
 	rm -rf bin/*
 
-.PHONY: all test debug bench clean docker
+.PHONY: all example_bench clean build1 build2 test1 test2

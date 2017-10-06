@@ -1,13 +1,24 @@
-FROM tweag/linear-types:0.1.5
+FROM tweag/linear-types:popl18
 
-# RUN apt-get install -y valgrind gdb
+RUN apt-get install -y make xz-utils
 
-ADD ./stack.yaml      /src/stack.yaml
-ADD ./Examples.cabal  /src/Examples.cabal
-ADD ./bench           /src/bench
-ADD ./test            /src/test
-ADD ./src             /src/src
+WORKDIR /examples
 
-RUN cd /src && stack --no-docker build
-RUN cd /src && stack --no-docker test  --no-run-tests 
-RUN cd /src && stack --no-docker build --no-bench
+ADD ./stack.yaml      /examples/stack.yaml
+ADD ./Examples.cabal  /examples/Examples.cabal
+ADD ./bench           /examples/bench
+ADD ./test            /examples/test
+ADD ./src             /examples/src
+
+RUN cd /examples && stack --no-docker build
+RUN cd /examples && stack --no-docker test  --no-run-tests 
+
+ADD ./criterion-external /examples/criterion-external
+
+ADD ./Makefile        /examples/Makefile
+RUN make STACK_ARGS="--install-ghc" bin/criterion-interactive && \
+    rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
+    rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2
+
+# Attempt to build with (linear) GHC 8.2.  vector-algorithms dependency fails to build:
+# RUN make STACK_ARGS="--skip-ghc-check --resolver=nightly-2017-10-06" bin/criterion-interactive

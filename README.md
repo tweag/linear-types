@@ -46,9 +46,16 @@ definitions. See [below](#section-4-implementation) for more details.
 If instead............
 [source installation](#source-installation)
 
+
+Basic Tests
+===========
+
+    stack test --flag Examples:pure
+    stack test --flag Examples:pure
+
+
 Article sections
 ================
-
 
 Section 4: Implementation
 -------------------------

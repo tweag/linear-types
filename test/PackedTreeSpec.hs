@@ -6,7 +6,7 @@
 
 module PackedTreeSpec (spec) where
 
-#ifdef PUREMODE
+#if PUREMODE
 #warning "Testing with PURE cursors, not internally mutable."
 import Cursors.PureStorable
 #else
@@ -34,9 +34,15 @@ spec = do
     describe "Cursor: write leaf" $ do
       prop "leaf written then read once" $ \ (n :: Int) -> 
         let x :: Unrestricted (Has '[Tree])
-            x = withOutput (\oc -> finish (writeLeaf n oc))
+            x = withOutput (treeMaxByteSize 1)
+                           (\oc -> finish (writeLeaf n oc))
         in 
         unpackTree (fromHas (getUnrestricted x)) == Leaf n
 
       prop "pack then unpack" $ \ (t :: Tree) ->
-        t == unpackTree (packTree t)
+        t == unpackTree (packTree (treeDepth t) t)
+
+treeDepth :: Tree -> Int
+treeDepth (Leaf _) = 1
+treeDepth (Branch l r) = 1 + max (treeDepth l) (treeDepth r)
+

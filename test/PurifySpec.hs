@@ -5,7 +5,7 @@ import Purify
 import Linear.Std
 import Prelude hiding (($))
 import Test.Hspec
-import Test.Hspec.QuickCheck (prop)
+-- import Test.Hspec.QuickCheck (prop)
 
 leaf :: IO (MTree Int)
 leaf = newTree VLeaf

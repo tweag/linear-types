@@ -89,7 +89,7 @@ packTree dep tr0 = fromHas $ getUnrestricted $
 
 unpackTree :: Packed Tree -> Tree
 unpackTree = foldTree Leaf Branch
-
+             
 ---------------------------------------------------
 
 -- Here we manually write functions agains the packed representation.

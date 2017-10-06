@@ -179,8 +179,9 @@ tup (Needs x) = Needs x
 
 {-# INLINABLE withOutput #-}
 -- | Allocate a fresh output cursor and compute with it.
-withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-withOutput fn =
+withOutput :: forall a b. Int -> (Needs '[a] a ⊸ Unrestricted b)
+                              ⊸ Unrestricted b
+withOutput _sz fn =
     frc $ fn (Needs mempty)
   where
     frc :: Unrestricted b ⊸ Unrestricted b

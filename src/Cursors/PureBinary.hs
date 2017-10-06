@@ -95,8 +95,9 @@ finish :: Needs '[] a ⊸ Unrestricted (Has '[a])
 finish (Needs bs) = unsafeUnrestricted $ Has (toBS bs)
 
 -- | Allocate a fresh output cursor and compute with it.
-withOutput :: forall a b. (Needs '[a] a ⊸ Unrestricted b) ⊸ Unrestricted b
-withOutput fn =
+withOutput :: forall a b. Int -> (Needs '[a] a ⊸ Unrestricted b)
+                              ⊸ Unrestricted b
+withOutput _sz fn =
     force $ fn (Needs mempty)
   where
     force :: Unrestricted b ⊸ Unrestricted b
