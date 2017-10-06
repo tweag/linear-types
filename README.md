@@ -1,11 +1,11 @@
 ## TODOs
 
 - [ ] Suggest to ignore the many compilation warnings
-- [ ] Instruction to compile with different implementation for cursors
+- [x] Instruction to compile with different implementation for cursors
 - [ ] Instruction to interpret the benchmark reports
 - [ ] Don't forget `git submodule update --init` in instructions and packaging
 
-- [ ] Describe the purpose of the two different container layers
+- [x] Describe the purpose of the two different container layers
 
 
 Retrofitting linear types: artifact repository
@@ -76,7 +76,7 @@ But it's also possible to download the Docker image for (1), and then
 build (2) via the Haskell stack tool (using its underlying Docker
 integration).  Our goal is to maximize flexibility, and thus give the
 reader of this artifact workarounds in case of any problems.
- 
+
 
 ## Alternative installation methods
 
@@ -115,16 +115,22 @@ Once you've downloaded this artifact, you can run some internal tests.
 If you have stack and Docker on the host system, then you can test
 simply with:
 
-	stack docker pull
-    stack test --flag Examples:-pure
-    stack test --flag Examples:pure
+	$ stack docker pull
+    $ stack test --flag Examples:-pure
+    $ stack test --flag Examples:pure
+
+In the virtual machine there is no docker but all the dependencies are
+installed use the following instead:
+
+    $ stack --no-docker test --flag Examples:pure
+    $ stack --no-docker test --flag Examples:-pure
 
 If you don't have stack, then you will want to do everything inside
 Docker, where a version of stack is included:
 
-    docker run -it parfunc/linear-haskell-popl18-artifact bash
-    stack --no-docker test --flag Examples:pure
-    stack --no-docker test --flag Examples:-pure
+    $ docker run -it parfunc/linear-haskell-popl18-artifact:0.0.8 bash
+    $ stack --no-docker test --flag Examples:pure
+    $ stack --no-docker test --flag Examples:-pure
 
 The above `docker run` command will download the precached binary
 version from dockerhub.  If you would rather spend CPU time than
