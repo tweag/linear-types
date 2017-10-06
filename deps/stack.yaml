@@ -1,7 +1,8 @@
-local-bin-path: ../../bin
+local-bin-path: ../bin
 resolver: lts-8.6
 
 packages:
+ - ./criterion-external
  - location:
     git: https://github.com/iu-parfunc/HSBencher.git
     commit:

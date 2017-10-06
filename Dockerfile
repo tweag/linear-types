@@ -14,13 +14,13 @@ RUN cd /examples && stack --no-docker build
 RUN cd /examples && stack --no-docker test  --no-run-tests 
 
 # Install GHC 8.0 to build these dependencies (executables):
-RUN cd /tmp && stack --resolver=lts-8.6 --no-docker setup --no-system-ghca
+RUN cd /tmp && stack --resolver=lts-8.6 --no-docker setup --no-system-ghc
 # RUN cd deps/hsbencher && stack --no-docker setup --install-ghc
-ADD ./deps/hsbencher          /examples/deps/hsbencher
+ADD ./deps/stack.yaml         /examples/deps/stack.yaml
 ADD ./deps/criterion-external /examples/deps/criterion-external
 ADD ./Makefile                /examples/Makefile
-RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/criterion-interactive 
+RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 # If we combined all steps that need GHC 8.0, we could clean up like this:
 #   rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
 #   rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2

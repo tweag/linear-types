@@ -57,10 +57,10 @@ test2:
 	mkdir -p ./bin
 
 ./bin/criterion-interactive: ./bin
-	cd ./deps/criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
+	cd ./deps; stack $(STACK_ARGS) install criterion-external
 
 ./bin/hsbencher-graph: ./bin
-	cd ./deps/hsbencher; stack $(STACK_ARGS) install hsbencher hsbencher-graph
+	cd ./deps; stack $(STACK_ARGS) install hsbencher hsbencher-graph
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md
