@@ -57,7 +57,7 @@ test2:
 	mkdir -p ./bin
 
 ./bin/criterion-interactive: ./bin
-	cd ./criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
+	cd ./deps/criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
 
 ./bin/hsbencher-graph: ./bin
 	cd ./deps/hsbencher; stack $(STACK_ARGS) install hsbencher hsbencher-graph
