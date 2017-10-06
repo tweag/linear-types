@@ -1,0 +1,32 @@
+local-bin-path: ../
+# resolver: lts-5.16
+resolver: lts-8.6
+
+packages:
+ - location:
+    git: https://github.com/iu-parfunc/HSBencher.git
+    commit:
+#      4afaf46ec0cec20047d10f733e1dedd4687d1ffd - changed [2017.04.13]
+#      45ac4f58651b73331ca785c0dd057fb9f0c9295f - changed [2017.04.13]
+#       583d174a1fade0c8570c8e89d5e6d5a706057f11 # - fix up hsbencher-ingest
+#       d56b059e773f9c80a2c0af6163965c37b41ec5d5 # hsbencher-graph 0.8
+#       1c949322d619b74d63f9d2b8010e0594731381c5 # hsbencher-graph 0.10
+       f73986f61f9c9ac2a80e079571372f428c26785c # update to use lts-8.6
+   subdirs:
+    - hsbencher
+    - hsbencher-graph
+    - hsbencher-fusion
+    - cat-csv
+
+# Lame duplication: should somehow be able to use the hsbencher
+# repo's stack.yaml...
+# ================================================================================
+ - location:
+     git: https://github.com/bos/criterion
+     commit: fa26f39a187f422adbb513ea459ee2700301f804
+   extra-dep: true
+
+extra-deps:
+- criterion-1.1.3.0
+- handa-gdata-0.7.0.3
+- simple-sql-parser-0.4.1
