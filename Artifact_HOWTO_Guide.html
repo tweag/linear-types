@@ -1,0 +1,103 @@
+<h2 id="todos">TODOs</h2>
+<ul>
+<li>[ ] Suggest to ignore the many compilation warnings</li>
+<li>[ ] Instruction to compile with different implementation for cursors</li>
+<li>[ ] Instruction to interpret the benchmark reports</li>
+<li><p>[ ] Don't forget <code>git submodule update --init</code> in instructions and packaging</p></li>
+<li><p>[ ] Describe the purpose of the two different container layers</p></li>
+</ul>
+<h1 id="retrofitting-linear-types-artifact-repository">Retrofitting linear types: artifact repository</h1>
+<p>This artifact is composed of the Linear Haskell GHC prototype and case-studies for the article <em>Retrofitting linear types</em> accepted at POPL'18. Details of individual case studies can be found in <a href="#section-5-evaluation-and-case-studies">the dedicated section below</a></p>
+<h1 id="quick-start-instructions">Quick Start Instructions</h1>
+<p>This artifact consists of the tarball or Git checkout that contains this README, plus the modified version of GHC <a href="#section-4-implementation">found on Github</a>. We will refer to the machine you downloaded this artifact to as the &quot;host system&quot;. We assume that you follow this guide starting from the directory that contains this file.</p>
+<p>The easiest way to use this artifact is to rely on the Docker support, including pre-built images that are hosted by dockerhub.com. The host system needs only GNU make plus an installation of Docker: https://docs.docker.com/engine/installation/</p>
+<p>We have tested this artifact with Linux as the host system, but Mac OS with the Docker CLI should work as well.</p>
+<p>The following one-liner will bring up a ghci interpreter with support for linear types:</p>
+<pre><code>docker run -it tweag/linear-types:popl18</code></pre>
+<p>After which you can type in a simple function with a linear type:</p>
+<pre><code>f :: Int ⊸ Int; f x = x</code></pre>
+<p>You may also check that the following non-linear function raises a type error:</p>
+<pre><code>g :: Int ⊸ (Int,Int) ; g x = (x,x)</code></pre>
+<p>Note that the current prototype only supports the unicode version of the linear arrow (⊸). There is not yet an ASCII syntax. Further, the standard libraries have not yet been modified to linearize function types, so only the very basics will be usable in linear function definitions. See <a href="#section-4-implementation">below</a> for more details.</p>
+<h3 id="software-to-run-the-benchmarks">Software to run the benchmarks</h3>
+<p>To get ready to run the benchmarks from section 5.1, you'll have to install some additional software. Ultimately, the code/data you need will fall into three buckets:</p>
+<ol style="list-style-type: decimal">
+<li>modified GHC with linear types</li>
+<li>benchmark programs and supporting scripts</li>
+<li>resulting benchmark data and plots</li>
+</ol>
+<p>If using Docker, you can run all three steps inside Docker building three different docker images. They will have these names respectively:</p>
+<ul>
+<li>tweag/linear-types</li>
+<li>parfunc/linear-haskell-popl18-artifact</li>
+<li>parfunc/linear-haskell-popl18-artifact-plots</li>
+</ul>
+<p>But it's also possible to download the Docker image for (1), and then build (2) via the Haskell stack tool (using its underlying Docker integration). Our goal is to maximize flexibility, and thus give the reader of this artifact workarounds in case of any problems.</p>
+<h2 id="alternative-installation-methods">Alternative installation methods</h2>
+<h3 id="full-virtual-machine">Full Virtual Machine</h3>
+<p>If you don't want to use Docker, you can use a full virtual machine found at the following address:</p>
+<p>http://TODO:FINISHME-URL-HERE</p>
+<p>Import the virtual machine into VirtualBox.</p>
+<p>TODO:FINSHME: Instructions for connecting to / using the VM.</p>
+<h3 id="full-source-based-installation">Full source-based installation</h3>
+<p>If instead you want to build everything directly on the host system without any kind of virtualization or containerization, you will need to follow these steps:</p>
+<ul>
+<li>Build and install the modified <a href="#section-4-implementation">GHC from Github</a>. Make sure that linear version of <code>ghc</code> is in PATH (version 8.2.0.20170809).</li>
+<li>Run <code>stack --no-docker test</code> in this directory, with the modified GHC in scope.</li>
+<li>Run <code>STACK_ARGS=--no-docker ./run_all_cursor_benches.sh</code> to run all the benchmarks.</li>
+<li>Switch to <code>plots</code> and run <code>make</code></li>
+</ul>
+<p>You can look at <code>Dockerfile</code> and <code>deps/ghc-docker/Dockerfile</code> for example commands to install the dependencies, such as GNU plot.</p>
+<h1 id="basic-tests">Basic Tests</h1>
+<p>Once you've downloaded this artifact, you can run some internal tests. If you have stack and Docker on the host system, then you can test simply with:</p>
+<pre><code>stack docker pull
+stack test --flag Examples:-pure
+stack test --flag Examples:pure</code></pre>
+<p>If you don't have stack, then you will want to do everything inside Docker, where a version of stack is included:</p>
+<pre><code>docker run -it parfunc/linear-haskell-popl18-artifact bash
+stack --no-docker test --flag Examples:pure
+stack --no-docker test --flag Examples:-pure</code></pre>
+<p>The above <code>docker run</code> command will download the precached binary version from dockerhub. If you would rather spend CPU time than download bandwidth, you can build the image yourself with by running the following before the above commands:</p>
+<pre><code>make build</code></pre>
+<p>(Likewise you can build the <code>tweag/linear-types</code> GHC image with the script <code>deps/ghc-docker/update-docker.sh</code>).</p>
+<p>You may want to look through the <code>Makefile</code> contained in this directory, as it provides alternative ways of doing things, as well as examples of commands you may want to run.</p>
+<h1 id="article-sections">Article sections</h1>
+<h2 id="section-4-implementation">Section 4: Implementation</h2>
+<p>Our current implementation of linear types can be found at the git commit reference <a href="https://github.com/tweag/ghc/commit/9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f">9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f</a> (this reference can also be found in the <a href="deps/ghc-docker/Dockerfile"><code>Dockerfile</code></a> that we use to build the Docker images). It is implemented on top of the commit <a href="https://github.com/ghc/ghc/commit/9410a4c8a710fc59ad8b03b94302d7cb6b9c92f3">9410a4c8a710fc59ad8b03b94302d7cb6b9c92f3</a>.</p>
+<p>You can inspect the diff for the entire implementation with the following commands:</p>
+<pre><code>$ git clone https://github.com/tweag/ghc &amp;&amp; cd ghc
+$ git diff 9410a4c8a710fc59ad8b03b94302d7cb6b9c92f3 9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f</code></pre>
+<p>Use the following variant of <code>git diff</code> to get a summary of the changes</p>
+<pre><code>$ git diff --stat 9410a4c8a710fc59ad8b03b94302d7cb6b9c92f3 9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f</code></pre>
+<p>To go further, our implementation comes with a <a href="https://github.com/tweag/ghc/blob/9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f/README.md">README</a>, with detailed usage instructions.</p>
+<p>Bare in mind that this implementation is still a prototype, and there are still various ways to fool the type checker into accepting non-linear definitions. The README has a <a href="https://github.com/tweag/ghc/blob/9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f/README.md#bugs">list of known ones</a>.</p>
+<p>As mentionned in the article, our prototype only implements monomorphic multiplicities. Polymorphic multiplicities as well as multiplicity-parametric types are missing. Our case studies don't need these missing features except the socket example in <a href="section-5-2">Section 5.2</a>, where we had to work around it.</p>
+<h2 id="section-5-evaluation-and-case-studies">Section 5: Evaluation and case studies</h2>
+<p>Because we haven't, as of yet, modified the types of function in Haskell's standard library, we rewrote, for our purposes, a few standard library functions with linear types in the <a href="src/Linear/"><code>src/Linear/</code></a> directory.</p>
+<h3 id="section-5.1">Section 5.1</h3>
+<p>In this section, the main task is to benchmark different approaches to operating on serialized tree data, and in particular the &quot;type safe linear cursors&quot; approach.</p>
+<p>If you built or fetched the artifact (2), corresponding to the Docker image <code>parfunc/linear-haskell-popl18-artifact</code>, then you already have a binary executable for the benchmark harness as well as the scripts that run it.</p>
+<p>To run the benchmarks fully inside docker, you only need to do this:</p>
+<pre><code>cd plots
+make docker-bench</code></pre>
+<p>That will build the third docker image, run benchmarks, store the resulting plots inside it, and finally extract the plots back to the host system. It will take a while.</p>
+<p>Benchmarking inside Docker should have neglible impact for this example, because the benchmark program does not perform file or network IO.</p>
+<p>However, if the host system happens to be Linux, you may be able to run the benchmarks outside Docker, with:</p>
+<pre><code>make run-bench
+cd plots
+make</code></pre>
+<h3 id="section-5.2">Section 5.2</h3>
+<p>The implementation of the socket abstraction with typestate depends on the <a href="src/Socket/IO.hs"><code>src/Socket/IO.hs</code></a> module to represent the multiplicity-parametric IO monad (which we name <code>IO'</code> in the implementation), as described in the article. As multiplicity-parametric data types are not implemented in our prototype, as mentionned <a href="section-4-implementation">above</a>, we emulate multiplicity parametricity using a type family.</p>
+<p>This puts this use-case on shiftier grounds than more the other case studies: it is quite easy, still, to fool the type-checker into accepting unsafe, non-linear, functions where linear functions are expected.</p>
+<p>The implementation of the abstraction is done in <a href="src/Socket/Generic.hs"><code>src/Socket/Generic.hs</code></a>, where we go beyond what the article describes and don't actually specify the type-level automaton which describes the evolution of the socket's typestate. That is: neither the precondition, nor the postcondition the API functions are fixed. Instead, all the API functions are parametrised by the type-level automaton, given as a typeclass. The reason for this is that the actual protocol sequence of actions to take with a socket depends on the network protocol of the socket (<em>e.g.</em> TCP, UPD, …).</p>
+<p>This <code>src/Socket/Generic.hs</code> module is implemented as a wrapper around the <code>socket</code> library, and illustrate how we intend to use linearity to add guarantees to APIs which are not necessarily defined in terms of linearity. Some complications occur, however, due to the fact that the library's <code>IO</code> and our <code>IO'</code> are different types, and <code>IO</code> is treated specially by Haskell.</p>
+<p>The <code>Generic</code> API is not safe, per se: when defining a protocol, it is the library writer's responsibility to provide the rules that sockets of this protocol must obey. This is done in file <a href="src/Socket.hs"><code>src/Socket.hs</code></a> for the case of TCP. It is convenient to also give a specialised type to API functions at a given protocol because the types become more simpler and help type inference a lot. We also do this in <code>src/Socket.hs</code>.</p>
+<p>Finally, you can find a small example of usage of this API in <a href="src/SocketExample.hs"><code>scr/SocketExample.hs</code></a>. But we have not provided tests to run it.</p>
+<h3 id="section-5.3">Section 5.3</h3>
+<p>The implementation of a pure API on top of a mutable API, described in Section 5.3 of the article, is implemented in <a href="src/Purify.hs"><code>src/Purify.hs</code></a>.</p>
+<p>The names are a bit different than in the article, where things have been simplified a little: mutable trees are named <code>MTree</code> and immutable ones are named <code>Tree</code>. The API function that is exposed is <code>updateTree</code>.</p>
+<p>Compared to Haskell SpriteKit, which inspired this example, we don't implement many of the optimisation which are necessary make this sort of abstraction efficient. But this optimisation code would occur entirely in the unsafe, non-linear code, where we have access to exactly the same programming techniques as Haskell SpriteKit.</p>
+<p>The only place where linearity comes into play is in the <code>updateTree</code> function, where it is a limitation posed on the caller in order to ensure safety.</p>
+<p>Tests for this implementation appear under the heading &quot;Purify&quot; when running the command</p>
+<pre><code>$ stack test</code></pre>
+<p>These tests are implemented in <a href="test/PurifySpec.hs"><code>test/PurifySpec.hs</code></a>.</p>

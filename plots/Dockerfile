@@ -3,7 +3,7 @@
 FROM parfunc/linear-haskell-popl18-artifact:0.0.6
 
 # Run the benchmarks to produce results:
-RUN cd /examples && make STACK_ARGS="--no-docker" bench
+RUN cd /examples && make STACK_ARGS="--no-docker" run-bench
 
 # Generate the plots via gnuplot:
 RUN cd /examples/plots && make 

@@ -45,7 +45,7 @@ TAG=parfunc/linear-haskell-popl18-artifact-plots
 # Run and plot the benchmarks under docker, cache the results as a
 # Docker image.  Extract the results to the host as well.
 docker-bench:
-	docker build -t $(TAG) .
+	docker build --no-cache=true -t $(TAG) .
 	mkdir -p $(TMPD)/
 	echo "cp -av /examples/plots /host/ && chown -R "$(shell id -u):$(shell id -g)" /host" | \
           docker run --rm -iv$(TMPD):/host $(TAG) bash

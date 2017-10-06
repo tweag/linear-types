@@ -77,7 +77,7 @@ example_bench: ./bin/criterion-interactive
 	./bin/criterion-interactive stack exec -- bench-cursor sumtree packed 5 -- -o report.h
 
 # A full run of the Cursors benchmark suite:
-bench:
+run-bench:
 	./run_all_cursor_benches.sh
 
 clean:
@@ -85,4 +85,4 @@ clean:
 	stack clean || echo ok
 	cd deps; stack clean || echo ok
 
-.PHONY: all example_bench clean build1 build2 test1 test2
+.PHONY: all example_bench run-bench clean build1 build2 test1 test2

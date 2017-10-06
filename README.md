@@ -217,7 +217,7 @@ network IO.
 However, if the host system happens to be Linux, you may be able to
 run the benchmarks outside Docker, with:
 
-    make bench
+    make run-bench
     cd plots
     make
 
