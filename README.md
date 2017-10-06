@@ -11,21 +11,30 @@
 Retrofitting linear types: artifact repository
 ==============================================
 
-This artifact is composed of the case-studies for the article
-_Retrofitting linear types_ accepted at POPL'18. Details of individual
-case studies can be found in [the dedicated section
-below](#section-5-evaluation-and-case-studies)
+This artifact is composed of the Linear Haskell GHC prototype and
+case-studies for the article _Retrofitting linear types_ accepted at
+POPL'18. Details of individual case studies can be found in
+[the dedicated section below](#section-5-evaluation-and-case-studies)
 
 
 Quick Start Instructions
 ========================
 
+This artifact consists of the tarball or Git checkout that contains
+this README, plus the modified version of GHC
+[found on Github](#section-4-implementation).  We will refer to the
+machine you downloaded this artifact to as the "host system".
+
 The easiest way to use this artifact is to rely on the Docker support,
 including pre-built images that are hosted by dockerhub.com.  The host
-system needs only an installation of Docker:
+system needs only GNU make plus an installation of Docker:
    https://docs.docker.com/engine/installation/
 
-You can bring up a ghci interpreter with linear types
+We have tested this artifact with Linux as the host system, but Mac OS
+with the Docker CLI should work as well.
+
+The following one-liner will bring up a ghci interpreter with support
+for linear types:
 
     docker run -it tweag/linear-types:popl18
 
@@ -44,17 +53,90 @@ standard libraries have not yet been modified to linearize function
 types, so only the very basics will be usable in linear function
 definitions. See [below](#section-4-implementation) for more details.
 
+### Software to run the benchmarks
 
-If instead............
-[source installation](#source-installation)
+To get ready to run the benchmarks from section 5.1, you'll have to
+install some additional software.  Ultimately, the code/data you need
+will fall into three buckets:
 
+ (1) modified GHC with linear types
+ (2) benchmark programs and supporting scripts
+ (3) resulting benchmark data and plots
+
+If using Docker, you can run all three steps inside Docker building
+three different docker images.  They will have these names respectively:
+
+ * tweag/linear-types
+ * parfunc/linear-haskell-popl18-artifact
+ * parfunc/linear-haskell-popl18-artifact-plots
+ 
+But it's also possible to download the Docker image for (1), and then
+build (2) via the Haskell stack tool (using its underlying Docker
+integration).  Our goal is to maximize flexibility, and thus give the
+reader of this artifact workarounds in case of any problems.
+ 
+
+## Alternative installation methods
+
+### Full Virtual Machine
+
+If you don't want to use Docker, you can use a full virtual machine
+found at the following address:
+
+  http://TODO:FINISHME-URL-HERE
+
+Import the virtual machine into VirtualBox.
+
+TODO:FINSHME: Instructions for connecting to / using the VM.
+
+### Full source-based installation
+
+If instead you want to build everything directly on the host system
+without any kind of virtualization or containerization, you will need
+to follow these steps:
+
+ * Build and install the modified [GHC from Github](#section-4-implementation).
+   Make sure that linear version of `ghc` is in PATH (version 8.2.0.20170809).
+ * Run `stack --no-docker test` in this directory, with
+   the modified GHC in scope.
+ * Run `STACK_ARGS=--no-docker ./run_all_cursor_benches.sh` to run all
+   the benchmarks.
+ * Switch to `plots` and run `make`
+
+You can look at `Dockerfile` and `deps/ghc-docker/Dockerfile` for
+example commands to install the dependencies, such as GNU plot.
 
 Basic Tests
 ===========
 
+Once you've downloaded this artifact, you can run some internal tests.
+If you have stack and Docker on the host system, then you can test
+simply with:
+
+	stack docker pull
     stack test --flag Examples:-pure
     stack test --flag Examples:pure
 
+If you don't have stack, then you will want to do everything inside
+Docker, where a version of stack is included:
+
+    docker run -it parfunc/linear-haskell-popl18-artifact bash
+    stack --no-docker test --flag Examples:pure
+    stack --no-docker test --flag Examples:-pure
+
+The above `docker run` command will download the precached binary
+version from dockerhub.  If you would rather spend CPU time than
+download bandwidth, you can build the image yourself with by running
+the following before the above commands:
+
+    make build
+
+(Likewise you can build the `tweag/linear-types` GHC image with the
+script `deps/ghc-docker/update-docker.sh`).
+
+You may want to look through the `Makefile` contained in this
+directory, as it provides alternative ways of doing things, as well as
+examples of commands you may want to run.
 
 Article sections
 ================
@@ -200,5 +282,4 @@ $ stack test
 These tests are implemented in
 [`test/PurifySpec.hs`](test/PurifySpec.hs).
 
-Source installation
-===================
+

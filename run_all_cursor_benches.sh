@@ -3,10 +3,10 @@
 set -xe
 
 # Build the executable
-stack bench --no-run-benchmarks
+stack build --no-run-benchmarks
 
 # Find the executable, and assume it runs OUTSIDE docker:
-EXE=`stack exec -- which bench-cursor`
+EXE=`stack $STACK_ARGS exec -- which bench-cursor`
 CRIT="./bin/criterion-interactive"
 set +x
 
