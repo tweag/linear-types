@@ -128,7 +128,7 @@ installed use the following instead:
 If you don't have stack, then you will want to do everything inside
 Docker, where a version of stack is included:
 
-    $ docker run -it parfunc/linear-haskell-popl18-artifact:0.0.8 bash
+    $ docker run -it parfunc/linear-haskell-popl18-artifact:0.0.9 bash
     $ stack --no-docker test --flag Examples:pure
     $ stack --no-docker test --flag Examples:-pure
 
