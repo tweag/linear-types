@@ -60,7 +60,7 @@ test2:
 	cd ./criterion-external; stack $(STACK_ARGS) install --local-bin-path=../bin
 
 ./bin/hsbencher-graph: ./bin
-	cd ./deps/hsbencher; ; stack $(STACK_ARGS) install --local-bin-path=../../bin
+	cd ./deps/hsbencher; stack $(STACK_ARGS) install --local-bin-path=../../bin
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md

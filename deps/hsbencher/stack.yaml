@@ -1,5 +1,4 @@
-local-bin-path: ../
-# resolver: lts-5.16
+local-bin-path: ../../bin
 resolver: lts-8.6
 
 packages:
