@@ -56,15 +56,19 @@ ARTIFACT_HOME=/home/ubuntu/artifact
 git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git $ARTIFACT_HOME
 cd $ARTIFACT_HOME && git checkout $ARTIFACT_REF
 
-# Build dependencies for benches
-apt-get install -y make xz-utils gnuplot
-cd artifact/ && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
-
 # Sets up permissions for repositories
 chown -R ubuntu:ubuntu $GHCBUILD
 chown -R ubuntu:ubuntu $ARTIFACT_HOME
 
+# Build dependencies for benches
+apt-get install -y make xz-utils gnuplot
+cd artifact/ && su ubuntu -c 'make STACK_ARGS="--install-ghc" bin/criterion-interactive bin/hsbencher-graph'
+cd $ARTIFACT_HOME && git submodule foreach --recursive "git clean -xdf"
+rm -rf /home/ubuntu/.stack
 
+# Sets up permissions for repositories
+chown -R ubuntu:ubuntu $GHCBUILD
+chown -R ubuntu:ubuntu $ARTIFACT_HOME
 
 # Final cleaning of apt lists to spare a little upload space
 rm -rf /var/lib/apt/lists/*
