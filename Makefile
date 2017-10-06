@@ -61,10 +61,10 @@ test2:
 all-deps: ./bin/criterion-interactive ./bin/hsbencher-graph
 
 ./bin/criterion-interactive: 
-	cd ./deps; stack $(STACK_ARGS) install criterion-external
+	cd ./deps; stack $(STACK_ARGS) install --install-ghc criterion-external
 
 ./bin/hsbencher-graph: 
-	cd ./deps; stack $(STACK_ARGS) install hsbencher hsbencher-graph
+	cd ./deps; stack $(STACK_ARGS) install --install-ghc hsbencher hsbencher-graph
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md

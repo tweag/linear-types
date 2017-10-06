@@ -16,8 +16,9 @@ TAG=`hostname -s`_`date +"%s"`
 RUNDIR=run_${TAG}
 MYDAT=dataset_${TAG}.csv
 
-# Vary this to make the benchmarks complete faster or slower:
-MAXDEPTH=24
+# Vary this to make the benchmarks complete faster or slower.
+# Here we set a default value if not set in the environment:
+: ${MAXDEPTH:=24}
 
 function go() {
   echo "Running benchmarks with output to dir: $RUNDIR"
