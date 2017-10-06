@@ -1,4 +1,9 @@
--- | 
+-- | This modules emulates a multiplicity-parametric IO monad. We use a
+-- type-family to work around the absence of multiplicity parametricity in the
+-- GHC implementation. It does not work quite satisfactorily yet, as when the
+-- type annotation is a type family, GHC currently assumes, conservatively, that
+-- its expecting an unrestricted function. This should lead to type-checking
+-- failures but, because of a bug, the faulty application is generally accepted.
 
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE DataKinds #-}

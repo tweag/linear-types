@@ -127,7 +127,7 @@ TODO: Finish......
 ### Section 5.2
 
 The implementation of the socket abstraction with typestate depends on
-the [`src/IO.hs`](src/IO.hs) module to represent the
+the [`src/Socket/IO.hs`](src/Socket/IO.hs) module to represent the
 multiplicity-parametric IO monad (which we name `IO'` in the
 implementation), as described in the article. As
 multiplicity-parametric data types are not implemented in our
