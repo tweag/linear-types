@@ -30,8 +30,8 @@ RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 
 # Run the benchmarks DURING the Docker build step.  This caches the
 # resulting data in the generated image.
-RUN make bench
+# RUN make bench
 
 RUN apt-get install -y gnuplot
 ADD ./plots         /examples/plots
-RUN cd plots && make
+# RUN cd plots && make
