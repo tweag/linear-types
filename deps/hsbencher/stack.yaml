@@ -26,6 +26,8 @@ packages:
      commit: fa26f39a187f422adbb513ea459ee2700301f804
    extra-dep: true
 
+allow-newer: true
+   
 extra-deps:
 - criterion-1.1.3.0
 - handa-gdata-0.7.0.3
