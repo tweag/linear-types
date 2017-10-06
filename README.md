@@ -3,6 +3,7 @@
 - [ ] Suggest to ignore the many compilation warnings
 - [x] Instruction to compile with different implementation for cursors
 - [ ] Instruction to interpret the benchmark reports
+- [ ] One-liner to check out the repository
 - [ ] Don't forget `git submodule update --init` in instructions and packaging
 
 - [x] Describe the purpose of the two different container layers
@@ -87,9 +88,51 @@ found at the following address:
 
   http://TODO:FINISHME-URL-HERE
 
-Import the virtual machine into VirtualBox.
+Import the virtual machine into VirtualBox. The virtual machine runs
+lubuntu and has all the necessary dependencies and source code for
+this artifact. The virtual machine does not have docker, so follow the
+dockerless instructions below
 
-TODO:FINSHME: Instructions for connecting to / using the VM.
+Your username is _ubuntu_ and your password _ubuntu_.
+
+#### Guest additions
+
+If you want to benefit from a shared clipboard between the virtual
+machine and your computer, you will need to install the Virtualbox
+guest additions.
+
+- Add an optical drive to the newly imported virtual machine
+  (settings > storages > add optical drive)
+- Start the virtual machine
+- Use Virtualbox's menu above the virtual machine:
+  Devices > insert guest additions CD image
+- The guest additions CD will appear on the desktop. Open with
+  right-click > open in terminal
+- Run `$ sudo ./VBoxLinuxAdditions.run` (your password is _ubuntu_)
+- In Virtualbox's menu above the virtual machine:
+  Device > Shared Clipboard > Bidirectional (or the setting that you like)
+- Reboot the machine (_e.g._ `$ sudo reboot 0`)
+
+#### Navigating the machine
+
+The source code for the artifact is in the directory `~/artifact`. You
+will also find the source code for linear GHC (see
+[implementation](#section-4-implementation)) in `~/ghc_linear`. The
+git directories are preserved in order to be able to inspect history.
+
+To open a terminal window, choose System tools > LXTerminal in the
+desktop's global menu.
+
+To install additional packages, use (once, in order to get the package
+lists)
+
+    $ sudo apt update
+
+then
+
+    $ sudo apt install <desired packages>
+
+Your password is _ubuntu_.
 
 ### Full source-based installation
 
@@ -305,19 +348,3 @@ $ stack test
 
 These tests are implemented in
 [`test/PurifySpec.hs`](test/PurifySpec.hs).
-
-
-VM Instructions
-===============
-
-_In progress_
-
-- Import VM
-- Install Vbox guest additions
-  - Add optical drive (setting > storages > add optical drive)
-  - After boot: Devices > insert guest additions CD image
-  - CD appears on desktop, right-click > open in terminal
-  - `$ sudo ./VBoxLinuxAdditions.run`
-- Device > Shared Clipboard > Bidirectional
-- Reboot (_e.g._ `$ sudo reboot 0`)
-- Terminal: global menu > system tools > LXTerminal
