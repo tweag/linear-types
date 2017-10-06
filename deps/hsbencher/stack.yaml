@@ -16,6 +16,7 @@ packages:
     - hsbencher-graph
     - hsbencher-fusion
     - cat-csv
+   extra-dep: false
 
 # Lame duplication: should somehow be able to use the hsbencher
 # repo's stack.yaml...
