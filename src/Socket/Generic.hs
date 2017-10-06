@@ -12,15 +12,18 @@ module Socket.Generic where
 -- | Sockets follow a rather long-winded protocol which looks like:
 --   * Receiving end: create -> bind -> listen -> accept -> receive
 --   * Sending end: create -> connect -> send
--- But can differ depending on the protocol.
+-- But the actual sequence can differ depending on the protocol.
 --
 -- This module provides a protocol-parametric API for sockets. Each protocol can
 -- declare rules in the form of a deterministic finite automaton to enforce the
--- appropriate protocol
+-- appropriate protocol.
 --
 -- This module is implemented as a wrapper around the socket library
 --
 -- [url] https://www.stackage.org/package/socket
+--
+-- The wrapper uses unsafe functions to mediate between the socket library with
+-- no type-level guarantees and the linear typestate API.
 
 
 import Data.ByteString (ByteString)
@@ -35,10 +38,15 @@ import qualified System.Socket.Protocol.TCP as S
 import Socket.IO hiding (return)
 import Linear.Std
 import Linear.Unsafe (unsafeUnrestricted)
-    
+
+-- | The sockets with typestates are defined as a newtype around socket. A
+-- @S.Inet6@ and @S.Stream@ are fixed for the sake of this presentation. A more
+-- fully-fledged API would have these as parameters as well.
 newtype Socket p (s :: State) = S { unS :: S.Socket S.Inet6 S.Stream p}
 type S p = S.Socket S.Inet6 S.Stream p
 type SocketAddress = S.SocketAddress S.Inet6
+
+-- * Typestate and type-level automata
 
 data State
   = Unbound
@@ -46,13 +54,15 @@ data State
   | Listening
   | Connected
 
--- Initial state of the protocol
+-- | Initial state of the protocol
 type family Initial p :: State
 
--- Transition rules of the automaton, the second argument is named after the
--- function that it applies to. The first argument is the protocol this rule
--- applies to.
+-- | Transition rules of the automaton, the second argument is named after the
+-- corresponding API function that it. The first argument is the protocol to
+-- which this rule applies.
 class Rule p (action :: Symbol) (pre :: State) (post :: State) | p action pre -> post
+
+-- * Wrapper around socket primitives
 
 socket :: forall p. S.Protocol p => IO' 'One (Socket p (Initial p))
 socket = coerce $ unsafeIOtoIO1 (S.socket :: IO (S p))
@@ -105,7 +115,8 @@ receive sock = unsafeIOtoIO1 (unsafeReceive (unsafeUnrestricted sock))
       chunk <- S.receive sock 4096 mempty
       return (coerce sock, Unrestricted chunk)
 
--- We could also have precondition for close
+-- | We can close any socket. An alternative would be to also have precondition
+-- for close.
 close :: forall p s. Socket p s -> IO' 'Ω ()
 close sock = unsafeIOtoIOΩ (unsafeClose (unsafeUnrestricted sock))
   where

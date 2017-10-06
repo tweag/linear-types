@@ -45,8 +45,11 @@ type family Arrow l a b where
   Arrow 'One a b = a ⊸ b
   Arrow 'Ω a b = a -> b
 
--- type Arrow (l::Weight) a b = ()
-          
+-- * Monadic combinators
+--
+-- (>>=), (>>) and fail are used by -XRebindableSyntax to interprete the do
+-- notation.
+
 (>>=) :: IO' l a ⊸ (Arrow l a (IO' l' b)) ⊸ IO' l' b
 (>>=) = P.undefined
 
@@ -56,6 +59,7 @@ type family Arrow l a b where
 fail :: IO' l a
 fail = P.error "IO': pattern-matching failure"
 
+-- | Linear variant of 'return'
 returnL :: a ⊸ IO' 'One a
 returnL = P.undefined
 
