@@ -9,8 +9,11 @@ TAG=$(BASETAG):$(VER)
 GHCTAG=popl18
 GHCREPO=tweag/linear-types:$(GHCTAG)
 
+all: build test docs
 
-all: docs
+# By default use the Dockerized versions:
+build: build1
+test:  test1
 
 # Commands for running from *outside* the container:
 #===============================================================================
@@ -76,6 +79,16 @@ example_bench: ./bin/criterion-interactive
 # A full run of the Cursors benchmark suite:
 bench:
 	./run_all_cursor_benches.sh
+
+TMPD=/tmp/output_$(shell date +%s)
+
+# If we've run the benchmarks INSIDE Docker and we want to pull out the resulting plots.
+extract:
+	mkdir -p $(TMPD)/
+	echo "cp -av /examples/plots /host/ && chown -R "$(shell id -u):$(shell id -g)" /host" | \
+          docker run --rm -iv${TMPD}:/host $(TAG) bash
+	rsync -vrplt $(TMPD)/*.csv ./plots/
+	rsync -vrplt $(TMPD)/*.pdf ./plots/
 
 clean:
 	rm -rf bin/*
