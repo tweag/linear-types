@@ -1,14 +1,3 @@
-## TODOs
-
-- [x] Suggest to ignore the many compilation warnings
-- [x] Instruction to compile with different implementation for cursors
-- [ ] Instruction to interpret the benchmark reports
-- [x] One-liner to check out the repository
-- [x] Don't forget `git submodule update --init` in instructions and packaging
-
-- [x] Describe the purpose of the two different container layers
-
-
 Retrofitting linear types: artifact repository
 ==============================================
 
