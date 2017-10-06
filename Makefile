@@ -1,7 +1,7 @@
 
 
 # The image for the examples/benchmarks
-VER=0.0.3
+VER=0.0.4
 BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
@@ -68,11 +68,18 @@ Artifact_HOWTO_Guide.html: README.md
 #===============================================================================
 
 # Just an example of ONE benchmark you might run:
-example_bench: ./bin/criterion-interactive docker
-	stack build
+# Assumes you have run "build1" or "build2".
+# In the former case, this had better be invoked from INSIDE the Docker container.
+example_bench: ./bin/criterion-interactive 
 	./bin/criterion-interactive stack exec -- bench-cursor sumtree packed 5 -- -o report.h
+
+# A full run of the Cursors benchmark suite:
+bench:
+	./run_all_cursor_benches.sh
 
 clean:
 	rm -rf bin/*
+	stack clean || echo ok
+	cd deps; stack clean || echo ok
 
 .PHONY: all example_bench clean build1 build2 test1 test2

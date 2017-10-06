@@ -5,15 +5,20 @@ all: default sumtree_other_plot.pdf sumtree_packed_plot.pdf
 
 .PHONY: all default clean publish
 
+# This will start off pointing to preloaded data, but be overwritten
+# once you run the benchmarks yourself.
 DATA=default_dataset.csv
+# DATA=swarm_benchmark03.csv
 
 # By default we normalize to the status-quo way of doing things:
 # Unpack serialized data, operate on it, and repack it.
 BASELINE=unpack-repack
 
+HSBG=../bin/hsbencher-graph
+
 # This uses hsbencher-graph-0.13
 sumtree_all_plot.pdf:
-	hsbencher-graph ${DATA} \
+	${HSBG} ${DATA} \
           --title="Summing binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
           --ylabel="Speedup over unpack-repack version" \
@@ -23,14 +28,14 @@ sumtree_all_plot.pdf:
           --factor=${BASELINE} --inverse
 
 maptree_plot.pdf:
-	hsbencher-graph ${DATA} \
+	${HSBG} ${DATA} \
           --title="Mapping (+1) over binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
           --ylabel="Speedup over unpack-repack version" \
 	  --renames=renames.txt \
           --ylog -x ARGS -y MEDIANTIME --key VARIANT --filtEq=PROGNAME,maptree \
           --lines --GPL -o maptree_plot.csv --template template_keyhigh.gpl \
-          --inverse-ratio=${BASELINE}
+          --factor=${BASELINE} --inverse
 
 clean:
 	rm -f *_plot.csv *_plot.gpl *_plot.pdf
@@ -44,7 +49,7 @@ publish: default
 # =============================================================
 
 sumtree_packed_plot.pdf:
-	hsbencher-graph ${DATA} \
+	${HSBG} ${DATA} \
           --title="Summing binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
           --ylabel="Speedup over regular/boxed version" \
@@ -54,7 +59,7 @@ sumtree_packed_plot.pdf:
           --factor=boxed --inverse
 
 sumtree_other_plot.pdf:
-	hsbencher-graph ${DATA} \
+	${HSBG} ${DATA} \
           --title="Summing binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
           --ylabel="Speedup over regular/boxed version" \

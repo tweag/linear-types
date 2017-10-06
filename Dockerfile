@@ -24,10 +24,13 @@ RUN make STACK_ARGS="--no-docker --no-system-ghc" bin/hsbencher-graph
 # If we combined all steps that need GHC 8.0, we could clean up like this:
 #   rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
 #   rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2
-
 # Attempt to build with (linear) GHC 8.2.  vector-algorithms dependency fails to build:
 # RUN make STACK_ARGS="--skip-ghc-check --resolver=nightly-2017-10-06" bin/criterion-interactive
 
+
+# Run the benchmarks DURING the Docker build step.  This caches the
+# resulting data in the generated image.
+RUN make bench
 
 RUN apt-get install -y gnuplot
 ADD ./plots         /examples/plots
