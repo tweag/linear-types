@@ -49,8 +49,8 @@ docker-bench:
 	mkdir -p $(TMPD)/
 	echo "cp -av /examples/plots/* /host/ && chown -R "$(shell id -u):$(shell id -g)" /host" | \
           docker run --rm -iv$(TMPD):/host $(TAG) bash
-	cp -f $(TMPD)/*.csv ./
-	cp -f $(TMPD)/*.pdf ./
+	cp -af $(TMPD)/*.csv ./
+	cp -af $(TMPD)/*.pdf ./
 
 clean:
 	rm -f *_plot.csv *_plot.gpl *_plot.pdf
