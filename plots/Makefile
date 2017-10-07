@@ -17,7 +17,7 @@ BASELINE=unpack-repack
 HSBG=../bin/hsbencher-graph
 
 # This uses hsbencher-graph-0.13
-sumtree_all_plot.pdf:
+sumtree_all_plot.pdf: $(DATA)
 	${HSBG} ${DATA} \
           --title="Summing binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
@@ -27,7 +27,7 @@ sumtree_all_plot.pdf:
           --lines --GPL -o sumtree_all_plot.csv --template template_keyhigh.gpl \
           --factor=${BASELINE} --inverse
 
-maptree_plot.pdf:
+maptree_plot.pdf: $(DATA)
 	${HSBG} ${DATA} \
           --title="Mapping (+1) over binary tree leaves" \
           --xlabel="Depth of complete binary tree" \
