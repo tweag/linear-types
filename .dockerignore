@@ -1,5 +1,5 @@
 *~
 .#*
 *.dump-*
-.stack-work
-.git
+**/.stack-work
+**/.git
