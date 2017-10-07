@@ -34,7 +34,7 @@ SYSRUNDEPS=libgmp-dev
 # of GHC. This will be a really big single step to avoid storing
 # intermediary files in the unionfs layer:
 
-LINEAR_SHA=0eedc7bf14a96d54736cbe82dd6ff198c4de35ce
+LINEAR_SHA=9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f
 
 apt-get update -y
 apt-get install -y --no-install-recommends $SYSBUILDDEPS $SYSRUNDEPS
@@ -51,7 +51,7 @@ cd $GHCBUILD && git clean -xdf && git submodule foreach --recursive "git clean -
 apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7
 
 # Checks out sources for the artifacts
-ARTIFACT_REF=ce3d921fe51d412d8e63004617c7d5d3e96597d7
+ARTIFACT_REF=29a010b32f8b826fd5e21477596c2b760e8259ff
 ARTIFACT_HOME=/home/ubuntu/artifact
 git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git $ARTIFACT_HOME
 cd $ARTIFACT_HOME && git checkout $ARTIFACT_REF
