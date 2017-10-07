@@ -1,7 +1,7 @@
 
 
 # The image for the examples/benchmarks
-VER=0.0.10.99
+VER=0.0.11
 BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
@@ -83,7 +83,7 @@ example_bench: ./bin/criterion-interactive
 # A full run of the Cursors benchmark suite:
 run-bench:
 # By default this runs on the host, even if the binary was built inside the docker container.
-	./run_all_cursor_benches.sh
+	MAXDEPTH=3 ./run_all_cursor_benches.sh
 
 clean:
 	rm -rf bin/*

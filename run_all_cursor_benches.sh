@@ -23,7 +23,7 @@ MYDAT=dataset_${TAG}.csv
 function go() {
   echo "Running benchmarks with output to dir: $RUNDIR"
     
-  for name in sumtree maptree;
+  for name in maptree sumtree;
   do
     for (( depth=1; depth <= ${MAXDEPTH}; depth++ ))
     do
