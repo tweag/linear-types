@@ -20,7 +20,7 @@ ADD ./deps/stack.yaml         /examples/deps/stack.yaml
 ADD ./deps/criterion-external /examples/deps/criterion-external
 
 RUN cd ./deps; stack --no-docker --no-system-ghc install criterion-external
-RUN cd ./deps; stack --no-docker --no-system-ghc install hsbencher-graph hsbencher-ingest-log
+RUN cd ./deps; stack --no-docker --no-system-ghc install hsbencher hsbencher-graph
 # If we combined all steps that need GHC 8.0, we could clean up like this:
 #   rm -rf ~/.stack/snapshots/x86_64-linux/lts-8.6/ && \
 #   rm -rf ~/.stack/programs/x86_64-linux/ghc-8.0.2
