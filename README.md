@@ -11,6 +11,10 @@ To clone this repository at the appropriate commit:
     $ git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git
     $ git checkout <TODO:COMMIT NUMBER>
 
+Alternatively you can download the [Virtual Machine
+image](full-virtual-machine) which contains all the material for this
+artifact.
+
 Quick Start Instructions
 ========================
 
