@@ -9,7 +9,7 @@ POPL'18. Details of individual case studies can be found in
 To clone this repository at the appropriate commit:
 
     $ git clone --recursive --single-branch -b artifact https://github.com/tweag/linear-types.git
-    $ git checkout <TODO:COMMIT NUMBER>
+    $ git checkout 6df797d3cc44643e8c56935cd724ae1f1eafbb6e
 
 Alternatively you can download the [Virtual Machine
 image](#full-virtual-machine) which contains all the material for this
@@ -86,7 +86,7 @@ reader of this artifact workarounds in case of any problems.
 If you don't want to use Docker, you can use a full virtual machine
 found at the following address:
 
-  http://TODO:FINISHME-URL-HERE
+  https://drive.google.com/open?id=0B6I9jXt0vQKpZTBNYjg2MVdQWHc
 
 Import the virtual machine into VirtualBox. The virtual machine runs
 lubuntu and has all the necessary dependencies and source code for
