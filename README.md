@@ -12,7 +12,7 @@ To clone this repository at the appropriate commit:
     $ git checkout <TODO:COMMIT NUMBER>
 
 Alternatively you can download the [Virtual Machine
-image](full-virtual-machine) which contains all the material for this
+image](#full-virtual-machine) which contains all the material for this
 artifact.
 
 Quick Start Instructions
@@ -266,7 +266,7 @@ network IO.
 However, if the host system happens to be Linux, you may be able to
 run the benchmarks outside Docker, with:
 
-    $ make run-bench
+    $ make STACK_ARGS="--no-docker" run-bench
     $ cd plots
     $ make
 
