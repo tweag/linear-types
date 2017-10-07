@@ -39,10 +39,11 @@ function go() {
           echo "VARIANT: $variant"
           echo "ARGS:" \"${depth}\"
           set -x
-          $CRIT $EXE $name $variant $depth -- \
-                -o     $RUNDIR/report_${variant}_${depth}.html \
-                --json $RUNDIR/report_${variant}_${depth}.json \
-                --csv  $RUNDIR/report_${variant}_${depth}.csv
+          $CRIT $EXE $name $variant $depth --
+# Optionally we can write out the criterion reports to peruse the details:
+#                -o     $RUNDIR/report_${variant}_${depth}.html \
+#                --json $RUNDIR/report_${variant}_${depth}.json \
+#                --csv  $RUNDIR/report_${variant}_${depth}.csv
           set +x
           echo "END_BENCHMARK"
           echo

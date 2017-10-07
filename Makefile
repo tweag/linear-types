@@ -1,7 +1,7 @@
 
 
 # The image for the examples/benchmarks
-VER=0.0.12
+VER=0.0.13
 BASETAG=parfunc/linear-haskell-popl18-artifact
 TAG=$(BASETAG):$(VER)
 
@@ -64,7 +64,7 @@ all-deps: ./bin/criterion-interactive ./bin/hsbencher-graph
 	cd ./deps; stack $(STACK_ARGS) install --install-ghc criterion-external
 
 ./bin/hsbencher-graph: 
-	cd ./deps; stack $(STACK_ARGS) install --install-ghc hsbencher hsbencher-graph
+	cd ./deps; stack $(STACK_ARGS) install --install-ghc hsbencher hsbencher-graph hsbencher-ingest-log
 
 docs: Artifact_HOWTO_Guide.html
 Artifact_HOWTO_Guide.html: README.md
