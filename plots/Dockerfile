@@ -1,6 +1,6 @@
 
 # Inherit the benchmarks and all the tools:
-FROM parfunc/linear-haskell-popl18-artifact:0.0.10
+FROM parfunc/linear-haskell-popl18-artifact:0.0.12
 
 # ADD . /examples/plots
 
