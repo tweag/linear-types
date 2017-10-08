@@ -390,14 +390,14 @@ are these:
       two extended examples (\fref{sec:consumed}-\fref{sec:io-protocols}).
       The extension is \emph{non-invasive}:
       existing programs continue to typecheck,
-      and existing data types can be used as-is even in linear parts
+      and existing datatypes can be used as-is even in linear parts
       of the program.
       The key to this non-invasiveness is that, in contrast to most other
       approaches, we focus on \emph{linearity on the function arrow}
       rather than \emph{linearity in the kinds} (\fref{sec:lin-arrow}).
 \item Every function arrow can be declared linear, including those of
-      constructor types. This results in data-types which can store
-      both linear values, in addition to unrestricted ones (\fref{sec:data-types}).
+      constructor types. This results in datatypes which can store
+      both linear values, in addition to unrestricted ones (\fref{sec:datatypes}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
@@ -460,7 +460,7 @@ Our definition is based on the type of the value concerned:
 \item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
 \item To consume a function exactly once, apply it to one argument, and consume its result exactly once.
 \item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
-\item In general, to consume a value of an algebraic data type exactly once, pattern-match on it,
+\item In general, to consume a value of an algebraic datatype exactly once, pattern-match on it,
   and consume all its linear components exactly once
   (\fref{sec:non-linear-constructors})\footnote{You may deduce that pairs have linear components,
     and indeed they do, as we discuss in \fref{sec:non-linear-constructors}.}.
@@ -623,7 +623,7 @@ There are several things to note here:
   mutable arrays |MArray| from that of immutable arrays |Array|, because in this {\sc api}
   only immutable arrays are {\em allowed} to be non-linear (unrestricted).  The
   way to say that results can be freely shared is to use
-  |Unrestricted| (our version of linear logic's |!| modality, see \fref{sec:data-types}), as in the type of |freeze|.
+  |Unrestricted| (our version of linear logic's |!| modality, see \fref{sec:datatypes}), as in the type of |freeze|.
 
 \item Because |freeze| consumes its input, there is no danger of the same
   mutable array being subsequently written to, eliminating the problem with
@@ -775,9 +775,9 @@ to witness the state of the resource, \eg, with separate
 types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
 % (which we can think of as a type-level state, or {\em typestate}~\cite{strom_typestate_1983})
 % JP: who cares?
-\subsection{Linear data types}
+\subsection{Linear datatypes}
 \label{sec:linear-constructors}
-\label{sec:data-types}
+\label{sec:datatypes}
 
 
 With the above intutions in mind, what type should we assign to a data
@@ -822,8 +822,8 @@ then indeed |t| is consumed exactly once.
 The key point here is that \emph{the same pair constructor works in both functions;
 we do not need a special non-linear pair}.
 
-The same idea applies to all existing Haskell data types: in
-\HaskeLL{} we treat all data types defined using legacy Haskell-98
+The same idea applies to all existing Haskell datatypes: in
+\HaskeLL{} we treat all datatypes defined using legacy Haskell-98
 (non-GADT) syntax as defining constructors with linear arrows.
 For example here is a declaration of \HaskeLL{}'s list type,
 whose constructor |(:)| uses linear arrows:
@@ -929,7 +929,7 @@ Instead of defining a pair with mixed linearity, we can also write
   f :: (MArray Int, Unrestricted Int) ⊸  MArray Int
 \end{code}
 The type |(Unrestricted t)| is very much like ``|!t|'' in linear
-logic, but in our setting it is just an ordinary user-defined data type.
+logic, but in our setting it is just an ordinary user-defined datatype.
 We saw it used in \fref{fig:linear-array-sigs}, where the result of |read| was
 a pair of a linear |MArray| and an unrestricted array element:
 \begin{code}
@@ -984,11 +984,11 @@ extension is not turned on.
 \subsection{Linear input/output} \label{sec:linear-io}
 
 In \fref{sec:io-protocols} we introduced the |IOL|
-monad.\footnote{|IOL p| is not a monad in the strict sense, |p| and
-  |q| can be different in |bindIOL|, it is however a relative
+monad.\footnote{|IOL p| is not a monad in the strict sense, because |p| and
+  |q| can be different in |bindIOL|. However it is a relative
   monad~\cite{altenkirch_monads_2010}. The details, involving the
   functor |data Mult p a = Mult :: a -> _ p Mult p a| and linear
-  arrows, are left as an exercise to the reader}
+  arrows, are left as an exercise to the reader.}
 But how does it work?  |IOL|
 is just a generalisation of the |IO| monad, thus:
 \begin{code}
@@ -1065,7 +1065,7 @@ But |f| is certainly not strict: |f undefined| is not |undefined|.
 \label{sec:calculus}
 
 We do not formalise all of \HaskeLL{}, but rather a core calculus,
-\calc{} which exhibits all key features, including data types and
+\calc{} which exhibits all key features, including datatypes and
 multiplicity polymorphism.  This way we make precise much of the
 informal discussion above.
 
@@ -1127,13 +1127,13 @@ much of this information, but we do not address the challenges of type
 inference here.
 
 The types of \calc{} (see \fref{fig:syntax}) are simple types with
-arrows (albeit multiplicity-annotated ones), data types, and
+arrows (albeit multiplicity-annotated ones), datatypes, and
 multiplicity polymorphism.
 We use the following abbreviations:
 \(A → B ≝  A →_ω B\) and
 \(A ⊸ B ≝ A →_1 B\).
 
-Data type declarations (see \fref{fig:syntax}) are of the following form:
+datatype declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
   \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
 \end{align*}
@@ -1341,7 +1341,7 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 
 In order to prove that our type system meets its stated goals, we
 introduce an operational semantics. The details are deferred to
-\fref{appendix:dynamics}, included in the anonymous
+\fref{appendix:dynamics}, included in the anonymous\todo{FIXME}
 supplementary material submitted with the article.
 
 \paragraph{Of consuming exactly once}
@@ -1395,14 +1395,14 @@ typestates (like whether an array is mutable or frozen) are actually
 enforced by the type system.
 
 To prove this, we introduce a second, distinct, semantics. It is also
-a Launchbury style semantics. It differs from \citet{launchbury_natural_1993} in the following ways:
+a Launchbury-style semantics. It differs from \citet{launchbury_natural_1993} in the following ways:
 \begin{itemize}
 \item Environments are enriched with mutable references (for the sake
   of concreteness, they are all references to arrays but they could be
-  anything)
+  anything).
 \item Typestates are implemented by mutating the type of such
-  references, functions can block if the type of the references isn't
-  correct: that is, we track typestates dynamically
+  references, functions can block if the type of the references is not
+  correct: that is, we track typestates dynamically.
 \end{itemize}
 The idea behind the latter is that progress will show that we are
 never blocked by typestates. In other words, they are enforced
@@ -1412,7 +1412,7 @@ It is hard to reason on a lazy language with mutation. But what we
 show is that we are using mutation carefully enough so that
 they behave as pure data. To formalise this, we relate this
 semantics with mutation to our pure semantics above. Specifically, we
-show that they are \emph{bisimilar}. This\jp{this technique? this result?} is similar to
+show that they are \emph{bisimilar}. This\jp{this technique? this result?} is similar to\jp{use citep or fix the sentence}
 \citet{amani_cogent_2016}, who also have a language with linear types
 with both a pure and imperative semantics.
 
@@ -1469,7 +1469,7 @@ data Pair p q a b where
 fst :: Pair 1 ω a b ⊸ a
 fst x = case _ 1 x of Pair a b -> a
 \end{code}
-But now multiplicity polymorphism infects all basic data types (such
+But now multiplicity polymorphism infects all basic datatypes (such
 as pairs), with knock-on consequences.  Moreover, |let| is annotated so it seems
 reasonable to annotate |case| in the same way.
 
@@ -1490,18 +1490,30 @@ then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.
 However, |g| might well be multiplicity-polymorphic, with type
 |forall p. (Int -> _ p Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
-Alternatively, $η$-expansion to |g (\x. f x)|
-makes the expression typeable, as the reader may check.
 
 The lack of subtyping is a deliberate choice in our design: it is well
 known that Hindley-Milner-style type inference does not mesh well with
 subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}, but also \citet{dolan_mlsub_2017} for
 a counterpoint).
-%
-\HaskeLL{} has limited support for subtyping:
-calls like |(g f)| are well-typed. But these are elaborated to their
-$η$-expansions in \calc{}.
+
+While |(g f)| is ill-typed in \calc{}, it is acceptable in \HaskeLL{}.
+The reason is that the $η$-expansion to |g (\x. f x)| makes the
+expression typeable, and that such expansions is done in \HaskeLL{}.
+Indeed, such $η$-expansion is already standard practice in GHC: a
+similar situation arises when using rank-2 types. For example, the
+core language of GHC also does not accept |g f| for
+\begin{code}
+g :: (forall a. (Eq a, Show a) => a -> Int) -> Char
+f :: forall a. (Show a, Eq a) => a -> Int
+\end{code}
+However, the surface language, again, accepts |g f|,
+and elaborates it into |g (/\a (d1:Eq a) (d2:Show a). f a d2 d1)| as
+well.
+\todo{Full
+disclosure: in Haskell, eta expansion can affect semantics, because of
+the presence of `seq`. But GHC already accepts this infelicity to gain
+the expressiveness, so we are adding nothing new.}
 
 \paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
 %% \begin{code}
@@ -1526,7 +1538,7 @@ cost to this: we have less polymorphism than we might expect.
 \label{sec:impl}
 
 We implement \HaskeLL{} on top of the leading Haskell compiler,
-\textsc{ghc}, version 8.2\footnote{URL suppressed for anonymous review}.
+\textsc{ghc}, version 8.2\todo{fixme: url}\footnote{URL suppressed for anonymous review}.
 The implementation modifies type inference and
 type-checking in the compiler. Neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
@@ -1595,8 +1607,8 @@ have not yet implemented, but which motivate this work.
 
 While \fref{sec:freezing-arrays} covered simple mutable arrays, we now
 turn to a related but more complicated application: operating directly on binary,
-serialised representations of algebraic data-types
-(as in \citet{vollmer_gibbon_2017}).
+serialised representations of algebraic datatypes
+(like \citet{vollmer_gibbon_2017} do).
 % and \cite{yang_compact_2015}.
 %
 %% Modern service-oriented software, running in data-centers, spends a great deal
@@ -1607,7 +1619,7 @@ services that communicate via serialised data in text or binary formats, carried
 by remote procedure calls.
 %
 The standard approach is to deserialise data into an in-heap, pointer-based representation,
-% (that is, a recursive Haskell data type),
+% (that is, a recursive Haskell datatype),
 process it, and then serialise the result for transmission.
 %
 This process is inefficient, but nevertheless tolerated, because the alternative
@@ -2255,10 +2267,10 @@ via kinds''.
   \emph{exact} linearity of its return value. Consequently, to make a
   function promotable from linear to unrestriced, its declaration must
   use polymorphism over kinds. We show how this may look like below;
-  but first we need to discuss data types.
+  but first we need to discuss datatypes.
 
   As seen in \fref{sec:programming-intro}, in \HaskeLL{} the reuse of linear
-  code extends to data types: the usual parametric data types (lists,
+  code extends to datatypes: the usual parametric datatypes (lists,
   pairs, etc.) work both with linear and unrestricted values. On the
   contrary, if linearity depends on the kind, then if a linear value
   is contained in a type, the container type must be linear
@@ -3208,7 +3220,7 @@ well-typed state.
 
   Let us remark that
   \begin{itemize}
-  \item We have not introduced type parameters in data types, but it
+  \item We have not introduced type parameters in datatypes, but it
     is straightforward to do so
   \item We annotate the data constructor with the multiplicity $π$,
     which is not mandated by the syntax. It will make things simpler.

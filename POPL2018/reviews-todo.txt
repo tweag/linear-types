@@ -6,8 +6,6 @@ NOPE: won't attempt to fix
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO [1]: explain eta-expansion business and relation to subtyping better.
-
 > POPL '18 Paper #2 Reviews and Comments
 > ===========================================================================
 > Paper #2 Retrofitting Linear Types
@@ -218,7 +216,7 @@ MAYBE
 > subtyping in somebody's head. What's going on? We get towards the
 > truth much later (p14): no subtyping in theory, voodoo in practice.
 
-DUPLICATE [1]
+DONE
 
 > By the way, it occurs to me to wonder whether
 > 
@@ -286,7 +284,7 @@ NOPE
 > p1 I see "data types" and "data-types": please pick one spelling,
 > e.g. "datatypes".
 
-TODO
+DONE
 
 > p2 Hask-LL is explained on its *second* usage: when I saw the first
 > usage, I guessed, but still, the first should get the explanation.
@@ -453,7 +451,7 @@ MAYBE
 > were changed) are never used as arguments to other functions?  Is there
 > something I'm missing?
 
-DUPLICATE [1]
+DONE
 
 > Comments for author
 > -------------------
@@ -542,7 +540,7 @@ Fixed
 > compatible way -- if it is used in higher-order functions, those
 > functions need to be made into multiplicity-polymorphic functions.)
  
-DUPLICATE [1]
+DONE
 
 > -- "It would be impractical to formalise all of Hask-ll."  -- minor:
 > some people would disagree.  There is a trend towards formalizaing and
