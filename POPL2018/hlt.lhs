@@ -1490,7 +1490,7 @@ For example, if
 \end{code}
 then the call |(g f)| is ill-typed, even though |f| provides more
 guarantees than |g| requires.
-However, |g| might well be multiplicity-polymorphic, with type
+On the other hand, |g| might well be multiplicity-polymorphic, with type
 |forall p. (Int -> _ p Int) -> Bool|; in which case |(g f)| is, indeed, typeable.
 
 The lack of subtyping is a deliberate choice in our design: it is well
@@ -1499,23 +1499,23 @@ subtyping (see, for example, the extensive exposition by
 \citet{pottier_subtyping_1998}, but also \citet{dolan_mlsub_2017} for
 a counterpoint).
 
-While |(g f)| is ill-typed in \calc{}, it is acceptable in \HaskeLL{}.
-The reason is that the $η$-expansion to |g (\x. f x)| makes the
-expression typeable, and that such expansions is done in \HaskeLL{}.
-Indeed, such $η$-expansion is already standard practice in GHC: a
-similar situation arises when using rank-2 types. For example, the
-core language of GHC also does not accept |g f| for
+However, while |(g f)| is ill-typed in \calc{}, it is accepted in \HaskeLL{}.
+The reason is that the $η$-expansion |g (\x -> f x)| \emph{is}
+typeable, and \HaskeLL{} perform this expansions during type
+inference. Such an $η$-expansion is not completely
+semantics-preserving as |\x -> g x| is always a well-defined value,
+even if |g| loops: this difference can be observed with Haskell's
+|seq| operator. Nevertheless, such $η$-expansions are already standard
+practice in \textsc{ghc}: a similar situation arises when using rank-2
+types. For example, the core language of \textsc{ghc} does not accept
+|g f| for
 \begin{code}
 g :: (forall a. (Eq a, Show a) => a -> Int) -> Char
 f :: forall a. (Show a, Eq a) => a -> Int
 \end{code}
-However, the surface language, again, accepts |g f|,
-and elaborates it into |g (/\a (d1:Eq a) (d2:Show a). f a d2 d1)| as
-well.
-\todo{Full
-disclosure: in Haskell, eta expansion can affect semantics, because of
-the presence of `seq`. But GHC already accepts this infelicity to gain
-the expressiveness, so we are adding nothing new.}
+The surface language, again, accepts |g f|, and elaborates it into |g
+(/\a (d1:Eq a) (d2:Show a) -> f a d2 d1)| as well. We simply extend this
+mechanism to linear types.
 
 \paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
 %% \begin{code}
