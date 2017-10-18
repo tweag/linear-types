@@ -65,7 +65,7 @@ NOPE: won't attempt to fix
 > conjunction).  The paper doesn't even mention it.  Is there a problem
 > with it?
 
-TODO
+Nope
 
 > Comments for author
 > -------------------
@@ -83,7 +83,7 @@ Fixed
 > page 5: When the paper sets up IO_L, I was asking why not thread the
 > world, which the paper eventually did.  Maybe forward-reference it?
 
-TODO
+Nope: we already do!
 
 > page 8: In the line of code "IOR :: World -o a ->_p IOR p a", I think
 > the second IOR should be IORes.
@@ -117,7 +117,7 @@ MAYBE
 > omega (0 stands for a variable absent in a branch."  I'm afraid I had
 > no idea what the paper was talking about here.
 
-TODO
+Done (simplified/rephrased)
 
 > page 15: I think the code for packed trees must use some Haskell
 > feature I don't know.  To me, "pack :: Tree -o Packed [Tree]" means
@@ -125,14 +125,14 @@ TODO
 > it appears that the type operator Packed is actually being indexed by
 > a list of trees?
 
-TODO: refer to the feature
+Done (also added the quotes to disambiguate with the list type)
 
 > page 15: In the code for packed trees, I think the linear arrows in
 > caseTree need to be unrestricted arrows.  Only one of the two arms is
 > going to be used, but the typing given promises they will both be
 > used.  I think one needs with to make this work in a linear way.
 
-TODO: Reviewer seems correct. ryan/aspiwack: please confirm.
+Fixed
 
 > section 6.3: I'm not sure that Rust's ownership types and linear
 > typing are as different as the paper makes them out to be.
@@ -143,14 +143,12 @@ MAYBE
 > multiplicity to support dependent types.  I wish the paper explained
 > this.
 
-MAYBE: add: Indeed, when checking a dependent type such as $(x:A) →
-B$, one must consider that $B$ makes no use of variables, thus
-multiply its type-checking context by $0$.
+Done by referring to McBride
 
 > I also didn't understand the brief discussion of lifetimes at
 > all.
 
-MAYBE
+MAYBE. [aspiwack] I don't think I can do better
 
 > Reaction to author response
 > ---------------------------

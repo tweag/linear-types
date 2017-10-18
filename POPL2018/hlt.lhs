@@ -51,6 +51,8 @@
 %format forM_ = "\varid{forM}\_"
 %format mapM_ = "\varid{mapM}\_"
 %format __ = "\_"
+%format ~ = "\mathop{''}"
+%format ~: = "\mathop{''\!:}"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
 \renewcommand\Conid[1]{\mathord{\textsf{#1}}}
@@ -1090,7 +1092,7 @@ informal discussion above.
 
   \figuresection{Datatype declaration}
   \begin{align*}
-    \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
+    \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} …    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
   \end{align*}
 
   \figuresection{Types}
@@ -1554,15 +1556,13 @@ constructed and destructed frequently in \textsc{ghc}'s type checker, and this
 accounts for most of the modifications to existing code.
 
 As suggested in \fref{sec:typing-contexts}, the multiplicities are an
-output of the algorithm. In order to infer the multiplicities of
-variables in the branches of a |case| expression we need a way to join
-the output of the branch. We use a supremum operation on
-multiplicities where $1∨0 = ω$ ($0$ stands for a variable absent
-in a branch).
+output of the type inference algorithm. In order to infer the
+multiplicities coming out of a |case| expression we need a way to
+aggregate the multiplicities coming out of the individual branches. To
+this effect, we compute, for every variable, the join of its
+multiplicity in each branch.
 
 Implementing \HaskeLL{}
-%% \manuel{which branch? link? JP: Linguistically ``this branch'' refers to the
-%%   case branch of the previous parag.}
 affects 1,152 lines of \textsc{ghc} (in subsystems of the compiler
 that together amount to more than 100k lines of code), including 444
 net extra lines. These figures support our claim that \HaskeLL{} is
@@ -1639,17 +1639,18 @@ serialised data at a fine grain without copying it.
 \vspace{-4mm}
 \begin{code}
 data Tree = Leaf Int | Branch Tree Tree
-pack    :: Tree ⊸ Packed [Tree]
-unpack  :: Packed [Tree] ⊸ Tree
-caseTree ::  Packed (Tree:r) -> _ p
-             (Packed (Int:r) -> _ p a) ⊸
-             (Packed (Tree:Tree:r) -> _ p a) ⊸ a
+pack    :: Tree ⊸ Packed ~[Tree]
+unpack  :: Packed ~[Tree] ⊸ Tree
+caseTree ::  Packed (Tree~:r) -> _ p
+             (Packed (Int~:r) -> _ p a) ->
+             (Packed (Tree~:Tree~:r) -> _ p a) -> a
 \end{code}
-%read :: Storable a => Packed (a:r) ⊸ (a, Packed r)
 \end{wrapfigure}
 %
 The interface on the right gives an example of type-safe, {\em read-only}
-access to serialised data for a particular datatype.
+access to serialised data for a particular datatype\footnote{This
+  interface uses type-level lists as can be found in Haskell's
+  \textsf{DataKind} extension}.
 %
 A |Packed| value is a pointer to raw bits (a bytestring), indexed by the
 types of the values contained within.  We define a {\em type-safe} serialisation
@@ -1710,7 +1711,7 @@ registers:
 \begin{wrapfigure}[8]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 \vspace{-6mm}
 \begin{code}
-sumLeaves :: Packed [Tree] -> Int
+sumLeaves :: Packed ~[Tree] -> Int
 sumLeaves p = fst (go p)
   where go p =  caseTree p 
                   read -- Leaf case
@@ -1728,7 +1729,7 @@ trusted code establishing its memory representation.
 
 In this read-only example, linearity was not essential, only phantom types.
 Next we consider an \textsc{API} for writing |Packed
-[Tree]| values bit by bit, where linearity is key.
+~[Tree]| values bit by bit, where linearity is key.
 %
 In particular, can we also implement |pack| using a public interface?
 %% \improvement{aspiwack: I don't think the type argument of |Packed| can
@@ -1758,7 +1759,7 @@ list of remaining things to be written, and (2) the type of the final value
 which will be initialised once those writes are performed.  For example, after
 we write the tag of a |Leaf| we are left with:
 %\begin{code}
-``|Needs [Int] Tree|'' ---
+``|Needs ~[Int] Tree|'' ---
 %\end{code}
 an {\em obligation} to write the |Int| field, and a {\em promise} to receive
 a |Tree| value at the end (albeit a packed one).
@@ -1773,7 +1774,7 @@ As with mutable arrays, this |write| operates in-place on the buffer, in spite
 being a pure function.
 %
 \begin{code}
-  write :: Storable a => a ⊸ Needs (a:r) t ⊸ Needs r t
+  write :: Storable a => a ⊸ Needs (a~:r) t ⊸ Needs r t
 \end{code}
 %
 When the list of outstanding writes is empty, we can retrive a readable packed buffer.
@@ -1781,19 +1782,19 @@ Just as when we froze arrays (\fref{sec:freezing-arrays}), the immutable value
 is {\em unrestricted}, and can be used multiple times:
 %
 \begin{code}
-  finish :: Needs [] t ⊸ Unrestricted (Packed [t])
+  finish :: Needs ~[] t ⊸ Unrestricted (Packed ~[t])
 \end{code}
 %
 Finalizing written values with |finish| works hand in hand with allocating new
 buffers in which to write data (similar to |newMArray| from \fref{sec:freezing-arrays}):
 %
 \begin{code}
-  newBuffer :: (Needs [a] a ⊸ Unrestricted b) ⊸ b
+  newBuffer :: (Needs ~[a] a ⊸ Unrestricted b) ⊸ b
 \end{code}
 %
 We also need to explicitly let go of linear input buffers we've exhausted.
 \begin{code}
-  done :: Packed [] ⊸ ()
+  done :: Packed ~[] ⊸ ()
 \end{code}
 
 The primitives |write|, |read|, |newBuffer|, |done|, and |finish| are {\em general}
@@ -1803,8 +1804,8 @@ Further, the module that defines |Tree| exports a datatype-specific way to
 %
 % startFoo :: Needs (Foo:r) t ⊸ Needs (Int:Double:r) t
 \begin{code}
-startLeaf    :: Needs (Tree : r) t ⊸ Needs (Int : r) t
-startBranch  :: Needs (Tree : r) t ⊸ Needs (Tree : Tree : r) t
+startLeaf    :: Needs (Tree ~: r) t ⊸ Needs (Int ~: r) t
+startBranch  :: Needs (Tree ~: r) t ⊸ Needs (Tree ~: Tree ~: r) t
 \end{code}
 Operationally, |start*| functions write only the tag, hiding the exact
 tag-encoding from the client, and leaving field-writes as future obligations.
@@ -1868,11 +1869,11 @@ below.
 \begin{code}
 module TreePublic (pack, unpack, writeLeaf, sumLeaves, mapLeaves)
 ...
-mapLeaves :: (Int->Int) -> Packed Tree ⊸ Packed Tree
+mapLeaves :: (Int->Int) -> Packed ~[Tree] ⊸ Packed ~[Tree]
 mapLeaves fn pt = newBuffer (extract ∘ go pt)
   where
     extract (inp,outp) = case done inp of () -> finish outp
-    go :: Packed (Tree:r) ⊸ Needs (Tree:r) t ⊸ (Packed r, Needs r t)
+    go :: Packed (Tree~:r) ⊸ Needs (Tree~:r) t ⊸ (Packed r, Needs r t)
     go p = caseTree p  (\p o ->  let (x, p') = read p  in ( p', writeLeaf (fn x) o))
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
 \end{code}
@@ -1890,7 +1891,7 @@ How would we build the same thing in Haskell without linear types?  It may appea
 that the ST monad is a suitable choice:
 
 \begin{code}
-writeST :: Storable a => a -> Needs' s (a:r) t -> ST s (Needs' s r t)  
+writeST :: Storable a => a -> Needs' s (a~:r) t -> ST s (Needs' s r t)
 \end{code}
 Here we use the same typestate associated with a |Needs| pointer, while also
 associating its mutable state with the |ST| session indexed by |s|.
@@ -1968,7 +1969,7 @@ give |caseTree| a more general type:
 
 \begin{code}
 caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
-  Packed (Tree:b) -> (Packed (Int:b) ⊸ res) -> (Packed (Tree:Tree:b) ⊸ res) -> res
+  Packed (Tree~:b) -> _ p (Packed (Int~:b) -> _ p res) -> (Packed (Tree~:Tree~:b) -> _ p res) -> res
 \end{code}
 
 This works because we do not need to {\em call} a function with |res| as
@@ -2734,8 +2735,8 @@ $1$ and $ω$.  But in fact \calc{} can readily be extended to
 more, following \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}. The general setting for \calc{} is an
 ordered-semiring of multiplicities (with a join operation for type
-inference).  In particular, in order to support dependent types, we
-additionally need a $0$ multiplicity.   We may want to add a
+inference).  In particular, in order to support dependent types,
+\citeauthor{mcbride_rig_106} needs a $0$ multiplicity.   We may also want to add a
 multiplicity for affine arguments (\ie  arguments which can be
 used \emph{at most once}).
 
