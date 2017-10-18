@@ -1540,7 +1540,7 @@ cost to this: we have less polymorphism than we might expect.
 \label{sec:impl}
 
 We implement \HaskeLL{} on top of the leading Haskell compiler,
-\textsc{ghc}, version 8.2\todo{fixme: url}\footnote{URL suppressed for anonymous review}.
+\textsc{ghc}, version 8.2\footnote{https://github.com/tweag/ghc/tree/linear-types}.
 The implementation modifies type inference and
 type-checking in the compiler. Neither the intermediate language~\cite{sulzmann_fc_2007}
 nor the run-time system are affected.
