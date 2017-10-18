@@ -917,8 +917,7 @@ able to declare data constructors with non-linear types, like this:
   f :: PLU (MArray Int) Int ⊸  MArray Int
 \end{code}
 Here we use \textsc{gadt}-style syntax to give an explicit type signature to the data
-constructor |PLU|, with mixed linearity. \improvement{Explain here that
-non-gadt syntax is linear}
+constructor |PLU|, with mixed linearity.
 Now, when \emph{constructing} a |PLU| pair the type of the constructor means
 that we must always supply an unrestricted second argument; and dually
 when \emph{pattern-matching} on |PLU| we are therefore free to use the second argument
