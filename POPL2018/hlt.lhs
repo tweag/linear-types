@@ -1513,7 +1513,7 @@ g :: (forall a. (Eq a, Show a) => a -> Int) -> Char
 f :: forall a. (Show a, Eq a) => a -> Int
 \end{code}
 The surface language, again, accepts |g f|, and elaborates it into |g
-(/\a (d1:Eq a) (d2:Show a) -> f a d2 d1)| as well. We simply extend this
+(\a (d1::Eq a) (d2::Show a) -> f a d2 d1)|. We simply extend this
 mechanism to linear types.
 
 \paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
@@ -1677,7 +1677,7 @@ corresponding to the two branches of the case expression.
 %
 Unlike the case expression, |caseTree| operates on the packed byte stream, reads
 a tag byte, advances the pointer past it, and returns a type-safe pointer to the
-fields (\eg |Packed [Int]| in the case of a leaf).
+fields (\eg |Packed ~[Int]| in the case of a leaf).
 %% \begin{code}
 %%   caseTree  (pack (Leaf 3))
 %%             (\ p::Packed [Int] -> ...)
@@ -1699,7 +1699,7 @@ values (|Int|, |Double|, etc) can be read one at a time with a lower-level
 |read| primitive, which can efficiently read out scalars and store them in
 registers:
 \begin{code}
-  read :: Storable a => Packed (a:r) ⊸ (a, Packed r)  
+  read :: Storable a => Packed (a~:r) ⊸ (a, Packed r)
 \end{code}
 %
 %% \begin{code}
@@ -1847,7 +1847,7 @@ Now we can allocate and initialize a complete tree --- equivalent to |Branch
 (Leaf 3) (Leaf 4)|, but without ever creating the non-serialised values --- as
 follows:
 \begin{code}
-newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed [Tree]
+newBuffer (finish ∘ writeLeaf 4 ∘ writeLeaf 3 ∘ startBranch) :: Packed ~[Tree]
 \end{code}
 
 Finally, we have what we need to build a map function that logically operates
