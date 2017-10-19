@@ -2737,7 +2737,7 @@ more, following \citet{ghica_bounded_2014} and
 \citet{mcbride_rig_2016}. The general setting for \calc{} is an
 ordered-semiring of multiplicities (with a join operation for type
 inference).  In particular, in order to support dependent types,
-\citeauthor{mcbride_rig_106} needs a $0$ multiplicity.   We may also want to add a
+\citeauthor{mcbride_rig_2016} needs a $0$ multiplicity.   We may also want to add a
 multiplicity for affine arguments (\ie  arguments which can be
 used \emph{at most once}).
 
