@@ -1413,9 +1413,9 @@ It is hard to reason on a lazy language with mutation. But what we
 show is that we are using mutation carefully enough so that
 they behave as pure data. To formalise this, we relate this
 semantics with mutation to our pure semantics above. Specifically, we
-show that they are \emph{bisimilar}. This\jp{this technique? this result?} is similar to\jp{use citep or fix the sentence}
-\citet{amani_cogent_2016}, who also have a language with linear types
-with both a pure and imperative semantics.
+show that they are \emph{bisimilar}.
+\citet{amani_cogent_2016} use a similar technique for a language with linear types
+and both a pure and imperative semantics.
 
 Bisimilarity allows us to lift the type-preservation and
 progress from the pure semantics. That is, writing $σ,τ$ for states of
