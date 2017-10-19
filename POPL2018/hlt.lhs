@@ -31,6 +31,7 @@
 %format .         = ". "
 %format forall a         = "∀" a
 %format _ (a)         = "_{" a "}"
+%format subscript (a)         = "\!\!_{" a "}"
 %format ω = "\omega"
 %format π = "\pi"
 %format ρ = "\rho"
@@ -1459,7 +1460,7 @@ data Pair a b where
   Pair :: a ⊸ b ⊸ Pair a b
 
 fst :: Pair a b -> a
-fst x = case _ ω x of Pair a b -> a
+fst x = case subscript ω x of Pair a b -> a
 \end{code}
 It is possible to do without $\varid{case}_ω$, and have only $\varid{case}_1$.
 Consider |fst| again.  We could instead have
@@ -1468,7 +1469,7 @@ data Pair p q a b where
   Pair :: a → _ p b → _ q Pair p q a b
 
 fst :: Pair 1 ω a b ⊸ a
-fst x = case _ 1 x of Pair a b -> a
+fst x = case subscript 1 x of Pair a b -> a
 \end{code}
 But now multiplicity polymorphism infects all basic datatypes (such
 as pairs), with knock-on consequences.  Moreover, |let| is annotated so it seems
