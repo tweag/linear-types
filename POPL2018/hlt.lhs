@@ -51,8 +51,8 @@
 %format forM_ = "\varid{forM}\_"
 %format mapM_ = "\varid{mapM}\_"
 %format __ = "\_"
-%format ~ = "\mathop{''}"
-%format ~: = "\mathop{''\!:}"
+%format ~ = "\mathop{{\kern 1pt}''}"
+%format ~: = "\mathop{{\kern 1pt}''\!\!:}"
 \def\mathindent{1em} % used by lhs2tex for indentation of code
 \renewcommand\Varid[1]{\mathord{\textsf{#1}}}
 \renewcommand\Conid[1]{\mathord{\textsf{#1}}}
