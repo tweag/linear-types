@@ -16,6 +16,8 @@
   \def\noeditingmarks{}
 }
 
+% Comment out for the submitted version, long version also has appendices
+\def\longversion{}
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
 %% SIGPLAN proceedings format should change 'acmsmall' to
@@ -1344,9 +1346,15 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 \label{sec:metatheory}
 
 In order to prove that our type system meets its stated goals, we
-introduce an operational semantics. The details are deferred to
-\fref{appendix:dynamics}, included in the anonymous\todo{FIXME}
-supplementary material submitted with the article.
+introduce an operational semantics.
+\ifx\longversion\undef{
+  The details can be found in the extended version of this
+  article.\todo{Arxiv citation}
+}
+\else{
+  The details are deferred to \fref{appendix:dynamics}.
+}
+\fi
 
 \paragraph{Of consuming exactly once}
 The operational semantics is a big-step operational semantics for
@@ -1354,8 +1362,11 @@ lazy evaluation in the style of \citet{launchbury_natural_1993}.
 Following
 \citet{gunter_partial-big-step_1993}, starting from a big-step evaluation
 relation $a⇓b$, we define \emph{partial derivations} and from there a
-\emph{partial evaluation} relation $a⇓^*b$ (see
-\fref{sec:partial-derivations}). Progress is then expressed as the
+\emph{partial evaluation} relation
+\ifx\longversion\undefined{$a⇓^*b$. }
+\else{$a⇓^*b$ (see \fref{sec:partial-derivations}). }
+\fi
+Progress is then expressed as the
 fact that a derivation of $a⇓^*b$ can always be extended.
 
 The operational semantics differs from
@@ -1390,7 +1401,10 @@ writing $a,b$ for states of the evaluation:
   Evaluation does not block. That is, for any partial evaluation
   $a⇓^*b$, where $a$ is well-typed, the derivation can be extended.
 \end{theorem}
-These theorems are proved in \fref{sec:denotational}.
+\ifx\longversion\undefined{These theorems are proved in the extended
+  version\todo{Reference to extended version}.}
+\else {These theorems are proved in \fref{sec:denotational}.}
+\fi
 
 \paragraph{In-place update \& typestate}
 Furthermore, linear types can be
@@ -1448,7 +1462,11 @@ reduce to a boolean test, is identical in either semantics.
   to the value $z$ with the pure semantics, and to the value $z'$ with
   the semantics with mutation, then $z=z'$.
 \end{theorem}
-These three theorems are proved in \fref{sec:bisimilarity}.
+\ifx\longversion\undefined{These three theorems are proved in the extended
+  version\todo{Reference to extended version}.}
+\else {These three theorems are proved in \fref{sec:bisimilarity}.}
+\fi
+
 
 \subsection{Design choices \& trade-offs}
 \label{sec:design-choices}
@@ -2914,7 +2932,7 @@ capabilities for safe, compiler-checked use, within pure code.
 %% Bibliography
 \bibliography{../PaperTools/bibtex/jp,../local}{}
 
-
+\ifx\longversion\undefined{}\else{
 %% Appendix
 \clearpage
 \appendix
@@ -3502,7 +3520,8 @@ extended so that one evaluates to |False| and the other to |True|.
   Because the semantics are deterministic, this is a direct
   consequence of bisimilarity.
 \end{proof}
-
+}
+\fi
 
 \end{document}
 
