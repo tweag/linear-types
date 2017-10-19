@@ -223,7 +223,7 @@ DONE
 > really consumes its second argument, or whether we have a sneaky
 > source of affinity here.
 
-TODO: (jp: don't understand)
+TODO (*1): (jp: don't understand) 
 
 > It would be interesting to consider whether the present work might
 > extend to legitimising some form of destructive update for linearly
@@ -459,7 +459,7 @@ DONE
 > I don't know what the authors mean here when they suggest that one such
 > "evaluate" a value.  Given "3" how does one "consume it exactly once"?
 
-MAYBE rename value to what?
+DUPLICATE (*1)
 
 > fig 1:  The type of runST was given as:
 > 
