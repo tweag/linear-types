@@ -1271,8 +1271,10 @@ relation:
 \item $1 + 1 = 1 + ω = ω + ω = ω$
 \end{itemize}
 \end{definition}
-Thus, multiplicities form a semi-ring (without a zero), which extends to a
-module structure on typing contexts.
+Thus, multiplicities form a semi-ring (without a zero), which extends
+to a module structure on typing contexts. We may want to have a
+stronger notion of equivalence for multiplicities, as we discuss in
+\fref{sec:design-choices}.
 
 Returning to the typing rules in \fref{fig:typing}, the rule (let) is like
 a combination of (abs) and (app).  Again, each $\flet$ binding is
@@ -1449,6 +1451,8 @@ reduce to a boolean test, is identical in either semantics.
 These three theorems are proved in \fref{sec:bisimilarity}.
 
 \subsection{Design choices \& trade-offs}
+\label{sec:design-choices}
+
 We could as well have picked different points in the design space for
 \calc{}. We review some of the choices we made in this section.
 
@@ -1517,7 +1521,7 @@ The surface language, again, accepts |g f|, and elaborates it into |g
 (\a (d1::Eq a) (d2::Show a) -> f a d2 d1)|. We simply extend this
 mechanism to linear types.
 
-\paragraph{Polymorphism} Consider the definition: ``|id x = x|''.
+\paragraph{Polymorphism \& multiplicities} Consider the definition: ``|id x = x|''.
 %% \begin{code}
 %% id x = x  
 %% \end{code}
@@ -1531,9 +1535,11 @@ But if we had a domain of multiplicities which includes
 $0$ (see \fref{sec:extending-multiplicities}), we would not be able to prove $x :_p Int ⊢ x : Int$, and rightly
 so because it is not the case that |id :: Int → _ 0 Int|.
 
-For now, we accept more conservative rules, in order to keep open the possiblity
-of extending the multiplicity domain later.  There is an up-front
-cost to this: we have less polymorphism than we might expect.
+More generally, we could type more programs if we added more laws
+relating variables in \fref{def:equiv-multiplicity}, such as $p+q=ω$,
+but this would prevent potential extensions to the set of
+multiplicities. For now, we accept the more conservative rules of
+\fref{def:equiv-multiplicity}.
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
