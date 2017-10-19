@@ -1965,7 +1965,6 @@ In fact, the type of a combinator like |caseTree| is a good fit for the recent
 \ghc{}~\cite{eisenberg_levity_2017}.  
 Thus we permit the branches of the |case| to return unlifted, unboxed types, and
 give |caseTree| a more general type:
-
 {
 \def\mathindent{0pt}
 \begin{code}
@@ -1973,7 +1972,6 @@ caseTree :: forall (rep :: RuntimeRep) (res :: TYPE rep) b.
   Packed (Tree~:b) -> _ p (Packed (Int~:b) -> _ p res) -> (Packed (Tree~:Tree~:b) -> _ p res) -> res
 \end{code}
 }
-
 This works because we do not need to {\em call} a function with |res| as
 argument (and thus unknown calling conventions) only return it.
 %
