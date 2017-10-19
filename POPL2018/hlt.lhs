@@ -2836,7 +2836,7 @@ other industrial projects.
   which enables machines in high-performance clusters to copy data
   from the address space in one process to that of a remote process
   directly, bypassing the kernel and even the
-  \textsc{cpu}, thereby avoiding any unnedded copy in the process.
+  \textsc{cpu}, thereby avoiding any unneeded copy in the process.
 
   One could treat a remote memory location as a low-level resource, to
   be accessed using an imperative {\sc api}. Using linear types, one
