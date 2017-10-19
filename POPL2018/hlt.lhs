@@ -1134,8 +1134,8 @@ multiplicity polymorphism.
 We use the following abbreviations:
 \(A → B ≝  A →_ω B\) and
 \(A ⊸ B ≝ A →_1 B\).
-
-datatype declarations (see \fref{fig:syntax}) are of the following form:
+%
+Datatype declarations (see \fref{fig:syntax}) are of the following form:
 \begin{align*}
   \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} ⋯    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
 \end{align*}
