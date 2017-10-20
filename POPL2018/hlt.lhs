@@ -2294,10 +2294,9 @@ via kinds''.
   In contrast, in a two-kind system, a function must declare the
   \emph{exact} linearity of its return value. Consequently, to make a
   function promotable from linear to unrestriced, its declaration must
-  use polymorphism over kinds. We show how this may look like below;
-  but first we need to discuss datatypes.
+  use polymorphism over kinds.
 
-  As seen in \fref{sec:programming-intro}, in \HaskeLL{} the reuse of linear
+  As seen in \fref{sec:programming-intro}, in \HaskeLL{} reuse of linear
   code extends to datatypes: the usual parametric datatypes (lists,
   pairs, etc.) work both with linear and unrestricted values. On the
   contrary, if linearity depends on the kind, then if a linear value
@@ -2334,16 +2333,12 @@ via kinds''.
 
   \paragraph{\textsc{Ats}} The \textsc{ats} language has a unique take
   on linear types \cite{zhu_linear-views_2005}, which can be
-  classified as linearity via kinds. In \textsc{ats}, there is a
-  notion of \emph{stateful views}: views are linear values which have
-  no run-time representation and are meant to track the state of
-  pointers (\emph{e.g.} whether they are initialised). Pointers
-  themselves remain unrestricted values, only the views are linear. In
-  order to store views inside datatypes, \textsc{ats} has a special
-  notion of so-called dataviewtypes. Which can be seen as linear
-  datatypes. There is no polymorphism between regular and linear
-  datatypes, but they are also compiled differently (dataviewtypes are
-  freed manually rather than by the garbage collector).
+  classified as linearity via kinds and does not have
+  polymorphism.\textsc{Ats} has a notion of \emph{stateful views}: views are
+  linear values without run-time representation and are meant to
+  track the state of pointers (\emph{e.g.} whether they are
+  initialised). Pointers themselves remain unrestricted values: only
+  views are linear.
 
   \paragraph{Dependent types}
   % It is easy to extend our system to any set of
@@ -2846,7 +2841,7 @@ other industrial projects.
   ultimately see the same values from the stream. If say one consumer
   reads in the stream first, the second consumer would see an
   empty stream --- not what the first consumer saw.
-
+%
   We have seen this very error several times in industrial projects,
   where the symptoms are bugs whose root cause are painful to track
   down. A linear type discipline would prevent such bugs.
