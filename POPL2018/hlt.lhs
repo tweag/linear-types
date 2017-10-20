@@ -2332,6 +2332,19 @@ via kinds''.
   already parameterized over a so-called
   levity~\cite{eisenberg_levity_2017}.
 
+  \paragraph{\textsc{Ats}} The \textsc{ats} language has a unique take
+  on linear types \cite{zhu_linear-views_2005}, which can be
+  classified as linearity via kinds. In \textsc{ats}, there is a
+  notion of \emph{stateful views}: views are linear values which have
+  no run-time representation and are meant to track the state of
+  pointers (\emph{e.g.} whether they are initialised). Pointers
+  themselves remain unrestricted values, only the views are linear. In
+  order to store views inside datatypes, \textsc{ats} has a special
+  notion of so-called dataviewtypes. Which can be seen as linear
+  datatypes. There is no polymorphism between regular and linear
+  datatypes, but they are also compiled differently (dataviewtypes are
+  freed manually rather than by the garbage collector).
+
   \paragraph{Dependent types}
   % It is easy to extend our system to any set of
   % ground multiplicities with a ring structure
