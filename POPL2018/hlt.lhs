@@ -2505,7 +2505,7 @@ see also the discussion in \fref{sec:fusion}.
 Because of this weak duality, we could have
 retrofitted uniqueness types to Haskell. But several points
 guided our choice of designing \HaskeLL{} around linear
-logic rather than uniqueness types: (a) functional languages have more use
+logic instead: (a) functional languages have more use
 for fusion than in-place update (if the fact that \textsc{ghc} has a cardinality
 analysis but no non-aliasing analysis is any indication); (b) there is a
 wealth of literature detailing the applications of linear
@@ -2544,7 +2544,7 @@ clearer path to implementation in \textsc{ghc}.
 % systems programming, with control over resources and latency, is still possible.
 
 In \HaskeLL{} we need to thread linear variables throughout the
-program (consider using several functions of type |T ⊸ T|).  Even
+program.  Even
 though this burden could be alleviated using syntactic sugar, Rust uses
 instead a type-system feature for this purpose: \emph{borrowing}.
 Borrowed values differ from owned values in that they can
