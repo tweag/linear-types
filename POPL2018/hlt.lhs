@@ -2321,7 +2321,7 @@ via kinds''.
   \end{code}
   Compared to our append function, the type of the above requires
   multiplicity polymorphism |p|. Additionnally, the above function
-  does cannot (and should not) mix linear and unrestricted
+  cannot (and should not) mix linear and unrestricted
   lists. Indeed because multiplicity is attached to the type of
   elements it must be the same for both arguments and the returned
   value.
