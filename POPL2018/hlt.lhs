@@ -17,7 +17,7 @@
 }
 
 % Comment out for the submitted version, long version also has appendices
-\def\longversion{}
+% \def\longversion{}
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
 %% SIGPLAN proceedings format should change 'acmsmall' to
@@ -1745,7 +1745,7 @@ registers:
 %% \end{code}
 
 \begin{wrapfigure}[8]{r}[0pt]{7.0cm} % lines, placement, overhang, width
-\vspace{-2mm}
+\vspace{-6mm}
 \begin{code}
 sumLeaves :: Packed ~[Tree] -> Int
 sumLeaves p = fst (go p)
