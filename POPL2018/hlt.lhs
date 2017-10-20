@@ -2240,8 +2240,6 @@ the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
-\improvement{Discuss the various support for linearity in Idris.}
-\improvement{Discuss ATS}
 \subsection{Linearity via arrows vs. linearity via kinds}
 \label{sec:lin-arrow}
 
