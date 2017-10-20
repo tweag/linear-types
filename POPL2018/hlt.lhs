@@ -2461,8 +2461,8 @@ Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
 
-Idris features uniqueness types, which have been used, in particular,
-to enforce communication
+Idris \cite{brady_idris_2013} features uniqueness types, which have
+been used, in particular, to enforce communication
 protocols~\cite{brady_uniqueness_2017}. Uniqueness types, in Idris,
 are being replaced by linear types based on
 \textsc{qtt}~\cite{atkey_qtt_2017}, a variant of
@@ -2628,7 +2628,7 @@ along.
 
 \paragraph{Idris's dependent indexed monad}
 %
-To go beyond simple regions, Idris introduces  a generic way to add typestate on top of a monad, the
+To go beyond simple regions, Idris \cite{brady_idris_2013} introduces  a generic way to add typestate on top of a monad, the
 |ST| indexed monad transformer\footnote{See \eg
   \url{http://docs.idris-lang.org/en/latest/st/index.html}. Where you
   will also discover that |ST| is actually defined in terms of a more
