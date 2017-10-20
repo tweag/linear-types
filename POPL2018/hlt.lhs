@@ -2542,11 +2542,6 @@ In \HaskeLL{} we need to thread linear variables throughout the
 program (consider using several functions of type |T ⊸ T|).  Even
 though this burden could be alleviated using syntactic sugar, Rust uses
 instead a type-system feature for this purpose: \emph{borrowing}.
-
-% If \texttt{T} is the type of some owned value, \texttt{\&T} is the
-% type of a borrowed value of type \texttt{T}.
-
-% JP: This notion is not used later.
 Borrowed values differ from owned values in that they can
 be used in an unrestricted fashion, albeit in a \emph{delimited
   scope}.
