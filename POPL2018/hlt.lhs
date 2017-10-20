@@ -2348,7 +2348,8 @@ via kinds''.
   operations on the file. While this is not a problem in our system,
   the function |P| is not expressible if |File| is intrinsically
   linear. Leaving the door open to dependent types is crucial to us,
-  as this is currently explored as a possible extension to \ghc{}.
+  as this is currently explored as a possible extension to
+  \ghc{}~\cite{weirich_dependent-haskell_2017}.
 
 % Linearity-on-arrow makes it possible to constrain any function to
 % use its arguments linearly, this is useful for the function writer,
