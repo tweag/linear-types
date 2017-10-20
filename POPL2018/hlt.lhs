@@ -2460,6 +2460,13 @@ Rust~\cite{matsakis_rust_2014}. \HaskeLL, on the other hand, is
 designed around linear types based on linear
 logic~\cite{girard_linear_1987}.
 
+Idris features uniqueness types, which have been used, in particular,
+to enforce communication
+protocols~\cite{brady_uniqueness_2017}. Uniqueness types, in Idris,
+are being replaced by linear types based on
+\textsc{qtt}~\cite{atkey_qtt_2017}, a variant of
+\citet{mcbride_rig_2016}.
+
 Linear types and uniqueness types are, at their core, dual: whereas a linear type is
 a contract that a function uses its argument exactly once
 even if the call's context can share a linear argument as many times as it
