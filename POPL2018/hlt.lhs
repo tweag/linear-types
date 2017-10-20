@@ -488,6 +488,16 @@ g x = f x
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
 in particular, |g| can pass that argument to |f|.
 
+When evaluating a value in head normal form does not terminate, this
+value is not considered to be consumed exactly once, making the
+looping function linear
+\begin{code}
+  loop :: a ⊸ b
+  loop x = loop x
+\end{code}
+If |loop u| is consumed exactly once (\emph{i.e.} never) then |u| is,
+vacuously, consumed exactly once.
+
 % A consequence of this definition is that an \emph{unrestricted} value,
 % \emph{i.e.} one which is not guaranteed to be used exactly once, such
 % as the argument of a regular function |g :: a -> b|, can freely be
