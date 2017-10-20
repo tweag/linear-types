@@ -1361,7 +1361,7 @@ In order to prove that our type system meets its stated goals, we
 introduce an operational semantics.
 \ifx\longversion\undef{
   The details can be found in the extended version of this
-  article.\todo{Arxiv citation}
+  article.\improvement{Arxiv citation}
 }
 \else{
   The details are deferred to \fref{appendix:dynamics}.
@@ -1414,7 +1414,7 @@ writing $a,b$ for states of the evaluation:
   $a⇓^*b$, where $a$ is well-typed, the derivation can be extended.
 \end{theorem}
 \ifx\longversion\undefined{These theorems are proved in the extended
-  version\todo{Reference to extended version}.}
+  version\improvement{Reference to extended version}.}
 \else {These theorems are proved in \fref{sec:denotational}.}
 \fi
 
@@ -1475,7 +1475,7 @@ reduce to a boolean test, is identical in either semantics.
   the semantics with mutation, then $z=z'$.
 \end{theorem}
 \ifx\longversion\undefined{These three theorems are proved in the extended
-  version\todo{Reference to extended version}.}
+  version\improvement{Reference to extended version}.}
 \else {These three theorems are proved in \fref{sec:bisimilarity}.}
 \fi
 
