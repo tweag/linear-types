@@ -692,7 +692,9 @@ other major benefit
 is in shrinking the trusted code base, because more library code (and it
 can be particularly gnarly code) is statically typechecked.  Clients who
 use only {\em immutable} arrays do not see the inner workings of the library, and will
-be unaffected.  Our second use-case has a much more direct impact on library clients.
+be unaffected. Of course, the functions of
+\fref{fig:linear-array-sigs} are still part of the trusted code base,
+in particular, they must not lie about linearity. Our second use-case has a much more direct impact on library clients.
 %
 %% \rn{I have mixed feelings about this.  What about the client of the mutable
 %%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
