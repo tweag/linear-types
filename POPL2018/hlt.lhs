@@ -2387,7 +2387,7 @@ via kinds''.
 %   control thanks this kind of polymorphism (see Simon's email):
 %   TYPE : Linearity -> KIND
 
-
+\paragraph{Linear values}
 Yet, an advantage of ``linearity via kinds'' is the possibility to directly
 declare the linearity of values returned by a function -- not just that
 of the argument of a function. In contrast, in our system if one wants
