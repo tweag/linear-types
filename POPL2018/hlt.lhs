@@ -953,7 +953,7 @@ poses no problem in practice.  Consider
   printHandle f = do
     { (f,Unrestricted b) <- atEOF f             -- |atEOF :: File ⊸ IOL 1 (File, Unrestricted Bool)|
     ;  if b then closeFile f                    -- |closeFile :: File ⊸ IOL ω ()|
-       else do  { (f,Unrestricted c) <- read f  -- |read :: File ⊸ IOL (File, Unrestricted Char)|
+       else do  { (f,Unrestricted c) <- read f  -- |read :: File ⊸ IOL 1 (File, Unrestricted Char)|
                 ; putChar c                     -- |putChar :: Char -> IOL ω ()|
                 ; printHandle f }}
 \end{code}
