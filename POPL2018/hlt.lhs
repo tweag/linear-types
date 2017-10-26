@@ -204,7 +204,7 @@
 \acmNumber{1}
 \acmArticle{1}
 \acmYear{2017}
-\acmMonth{1}
+\acmMonth{10}
 \acmDOI{10.1145/nnnnnnn.nnnnnnn}
 \startPage{1}
 
