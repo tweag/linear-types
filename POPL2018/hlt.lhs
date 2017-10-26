@@ -259,14 +259,12 @@
   \department{Department of Philosophy, Linguistics and Theory of Science}
   \streetaddress{Olof Wijksgatan 6}
   \city{Gothenburg}
-  % \state{VA}
   \postcode{41255}
   \country{Sweden}}
 \author{Mathieu Boespflug}
 \affiliation{%
   \institution{Tweag I/O}
   \city{Paris}
-  % \state{VA}
   \postcode{???}
   \country{France}
 }
@@ -274,8 +272,7 @@
 \affiliation{%
   \institution{Indiana University}
   \city{Bloomington}
-  % \state{VA}
-  % \postcode{???}
+  \state{IN}
   \country{USA}
 }
 \author{Simon Peyton Jones}
@@ -328,8 +325,6 @@
   \textsc{ghc}, the leading Haskell compiler, and demonstrate
   two kinds of applications of linear types:
   mutable data with pure interfaces;
-%  making side-effecting functions pure instead;
- % that otherwise would be considered to have side effects, pure;
   and enforcing protocols in \textsc{i/o}-performing functions. %
   \ifx\draftmode\undefined \else \vspace{-4mm} \fi
 \end{abstract}
@@ -498,37 +493,6 @@ looping function linear
 If |loop u| is consumed exactly once (\emph{i.e.} never) then |u| is,
 vacuously, consumed exactly once.
 
-% A consequence of this definition is that an \emph{unrestricted} value,
-% \emph{i.e.} one which is not guaranteed to be used exactly once, such
-% as the argument of a regular function |g :: a -> b|, can freely be
-% passed to |f|: |f| offers stronger guarantees than regular
-% functions. On the other hand a linear value |u|, such as the argument of
-% |f|, \emph{cannot} be passed to |g|: consuming |g u| may consume |u| several
-% times, or none at all, both violating the linearity guarantee that |u|
-% must be consumed exactly once.
-%
-% In light of this definition, suppose that we have |f :: a ⊸ b| and |g
-% :: b -> c|. Is |g (f x)| correct? The answer depends on the linearity
-% of |x|:
-% \begin{itemize}
-% \item If |x| is a linear variable, \emph{i.e.} it must be consumed
-%   exactly once, we can ensure that it's consumed exactly once by
-%   consuming |f| exactly once: it is the definition of linear
-%   functions. However, |g| does not guarantee that it will consume |f
-%   x| exactly once, irrespective of how |g (f x)| is consumed. So |g (f
-%   x)| cannot be well-typed.
-% \item If |x| is an unrestricted variable, on the other hand, there is
-%   no constraint on how |x| must be consumed. So |g (f x)| is perfectly
-%   valid. And it is, indeed, well-typed. Refer to \fref{sec:statics}
-%   for the details.
-% \end{itemize}
-%
-% In the same spirit, an unrestricted value |u| can never point to a
-% linear value |v|: if |u| is never consumed (which is a correct use of
-% an unrestricted value), then |v| will never be consumed either, which
-% is incorrect of a linear value.
-
-
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
 
@@ -675,27 +639,6 @@ the |ST| monad has disappeared altogether; it is the array \emph{itself}
 that must be single threaded, not the operations of a monad. That removes
 the unnecessary sequentialisation we mentioned earlier and opens the
 possibility of exploiting more parallelism at runtime.
-%
-\if{0}
-    In fact, {\em futures} (\ie par/pseq ~\cite{multicore-haskell}) are sufficient
-    for parallel updates to |MArray|s; we don't need threads.  These work well with
-    linear functions for splitting and joining array slices:
-
-    \noindent
-    %\begin{center}
-    \begin{minipage}{0.55 \textwidth}  
-    \hspace{-3mm}
-    \begin{code}
-    split :: Int -> MArray a ⊸ (MArray a, MArray a)
-    \end{code}
-    \end{minipage}%
-    \begin{minipage}{0.45 \textwidth}
-    \begin{code}
-    join  :: (MArray a, MArray a) ⊸ MArray a  
-    \end{code}
-    \end{minipage}
-    %\end{center}
-\fi{}
 
 Compared to the \textit{status quo} (using |ST| and |unsafeFreeze|), the
 other major benefit
@@ -705,10 +648,7 @@ use only {\em immutable} arrays do not see the inner workings of the library, an
 be unaffected. Of course, the functions of
 \fref{fig:linear-array-sigs} are still part of the trusted code base,
 in particular, they must not lie about linearity. Our second use-case has a much more direct impact on library clients.
-%
-%% \rn{I have mixed feelings about this.  What about the client of the mutable
-%%   array APIs?  Data.Vector.Mutable etc.  Also, there's the matter of safe
-%%   freezing like ``create''.}
+
 
 %\vspace{-1mm}
 \subsection{I/O protocols} \label{sec:io-protocols}
@@ -790,8 +730,7 @@ operations with the |IO| monad. But in fact it is often useful do
 to do so, because we can use types
 to witness the state of the resource, \eg, with separate
 types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
-% (which we can think of as a type-level state, or {\em typestate}~\cite{strom_typestate_1983})
-% JP: who cares?
+
 \subsection{Linear datatypes}
 \label{sec:linear-constructors}
 \label{sec:datatypes}
@@ -845,15 +784,6 @@ The same idea applies to all existing Haskell datatypes: in
 For example here is a declaration of \HaskeLL{}'s list type,
 whose constructor |(:)| uses linear arrows:
 
-%% \begin{wrapfigure}[4]{r}[0pt]{4cm} \vspace{-6mm} % lines, placement, overhang, width
-%% \begin{code}
-%% (++) :: [a] ⊸ [a] ⊸ [a]
-%% []      ++ ys = ys
-%% (x:xs)  ++ ys = x : (xs ++ ys)
-%% \end{code}
-%% \end{wrapfigure}
-%
-% \begin{wrapfigure}[8]{r}[0pt]{3.5cm} \vspace{-6mm}
 \begin{wrapfigure}[8]{r}[0pt]{4.5cm} % \vspace{-8mm}
 \begin{code}
 data [a] = [] | a : [a]
@@ -897,13 +827,6 @@ consumes |ys| twice, and so
 |f| needs an unrestricted arrow for that argument.
 \label{sec:compatibility}
 
-% The type of |(++)| tells us that if we have a list |xs| with
-% multiplicity $1$, appending any other list to it will never duplicate
-% any of the elements in |xs|, nor drop any element in
-% |xs|\footnote{This follows from parametricity.  In order to {\em free}
-%   linear list elements, we must pattern match on them to consume them,
-%   and thus must know their type (or have a type class instance).
-%  Likewise to copy them.}.
 
 Finally, we can use the very same pairs and lists
 types to contain linear values (such as mutable arrays) without
@@ -1645,11 +1568,6 @@ While \fref{sec:freezing-arrays} covered simple mutable arrays, we now
 turn to a related but more complicated application: operating directly on binary,
 serialised representations of algebraic datatypes
 (like \citet{vollmer_gibbon_2017} do).
-% and \cite{yang_compact_2015}.
-%
-%% Modern service-oriented software, running in data-centers, spends a great deal
-%% of time (de)serialising data received over the network.  
-%
 The motivation is that programs are increasingly decoupled into separate (cloud)
 services that communicate via serialised data in text or binary formats, carried
 by remote procedure calls.
@@ -1715,20 +1633,6 @@ corresponding to the two branches of the case expression.
 Unlike the case expression, |caseTree| operates on the packed byte stream, reads
 a tag byte, advances the pointer past it, and returns a type-safe pointer to the
 fields (\eg |Packed ~[Int]| in the case of a leaf).
-%% \begin{code}
-%%   caseTree  (pack (Leaf 3))
-%%             (\ p::Packed [Int] -> ...)
-%% \end{code}
-
-%% |caseFoo| abstracts over whether or not a {\em tag} value is included in the
-%% serialisation, if not, it becomes a cast and a |Foo| requires only 16 bytes.
-
-%% When handling datatypes with multiple constructors, their serialisations will
-%% first include a {\em tag} byte indicating which variant; but |Foo| is a product
-%% type, requiring only 16 bytes.
-
-%% A serialised |Foo| fills exactly 17 bytes, and |caseFoo| returns a reference to
-%% the 16-byte suffix containing the two fields.
 
 It is precisely to access multiple, consecutive fields that |Packed| is indexed
 by a {\em list} of types as its phantom type parameter.  Individual atomic
@@ -1738,11 +1642,6 @@ registers:
 \begin{code}
   read :: Storable a => Packed (a~:r) ⊸ (a, Packed r)
 \end{code}
-%
-%% \begin{code}
-%%   f :: Packed [Foo] -> Double
-%%   f p =  let  (n,p')   = read (caseFoo p);  (m,p'')  = read p' in fromIntegral n + m
-%% \end{code}
 
 \begin{wrapfigure}[8]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 \vspace{-6mm}
@@ -1768,24 +1667,9 @@ Next we consider an \textsc{API} for writing |Packed
 ~[Tree]| values bit by bit, where linearity is key.
 %
 In particular, can we also implement |pack| using a public interface?
-%% \improvement{aspiwack: I don't think the type argument of |Packed| can
-%%   quite be considered a typestate}
-
-%% Indeed, linearity and {typestate} are both key to to a safe \textsc{api} for
-%% manipulating serialised data.  But, as with arrays, linearity is only necessary
-%% for writing.  A read-only interface on serialised data can work fine without it.
 
 \subsubsection{Writing serialised data}
-%------------------------------------------
 
-%% The mutable arrays of \fref{sec:freezing-arrays} were homogenous --- with
-%% evenly-spaced, aligned elements.  In contrast, binary-serialised data structures
-%% contain primitive values of various widths, at unaligned byte-offsets.
-%
-%% A pointer into a buffer containing serialised output is similar to a constructor
-%% method for a regular heap object.  It must ensure that all fields are initialised, at
-%% the proper addresses and with values of the correct type.
-%
 To create a serialised data constructor, we must write a tag, followed by the
 fields.
 %
@@ -1799,10 +1683,6 @@ we write the tag of a |Leaf| we are left with:
 %\end{code}
 an {\em obligation} to write the |Int| field, and a {\em promise} to receive
 a |Tree| value at the end (albeit a packed one).
-%
-%% |Needs| is parameterised both by {\em obligations}, that an |Int| and then a
-%% |Double| must be written, and by the resulting, immutable value that will be
-%% available upon completing those writes (|Foo|).
 
 To write an individal number, we provide a primitive that shaves one
 element off the type-level list of obligations (a counterpart to |read|, above):
@@ -1852,30 +1732,8 @@ private code that defines |Tree|s, which has this minimal interface:
 module TreePrivate( Tree(..), caseTree, startLeaf, startBranch)
 module DataPacked( Packed, Needs, read, write, newBuffer, finish, done )
 \end{code}
-%
-%% After writing the two fields to |p| in this example, we need a way to finalize
-%% the operation and convert the write pointer to a read pointer:
-%
-%% Just as when we converted mutable arrays to immutable arrays, here the immutable
-%% |Foo| can be read multiple times.
-%
-%% It is not, however, a {\em normal} heap representation of |Foo|,
-%% but rather an isomorphic, serialised representation: |Packed [Foo]|.  Nevertheless,
-%% everything in a |Foo| can be read in a type-safe way directly from the
-%% serialised buffer.
-%
-%% These operations themselves go into the trusted codebase.  Internally, we choose
-%% a one-byte representation for the |Leaf|/|Branch| tags, and write these to the
-%% output stream, immediately before the left-to-right serialised fields.  Yet
-%% ``|write leafTag|'' would not suffice, as its type differs from |startLeaf| above.
-%% % it would be |Needs (Tag:r) t ⊸ Needs r t`
-%% A coercion is needed internally to reify the knowledge
-%% that ``a tag plus an integer equals a leaf record, and thus a tree''.
-%
 On top of the safe interface, we can of course define higher-level construction
 routines, such as for writing a complete |Leaf|:
-%
-%   writeLeaf n p = write n (startLeaf p)
 \begin{code}
   writeLeaf n = write n ∘ startLeaf 
 \end{code}
@@ -1914,13 +1772,7 @@ mapLeaves fn pt = newBuffer (extract ∘ go pt)
                        (\p o ->  let (p',o') = go p (writeBranch o) in go p' o')
 \end{code}
 %\end{wrapfigure}
-%The inner loop linearly updates a pair of a read- and write-pointer.
 
-%% \improvement{This section should assert that the abstraction is
-%%   practical to program with, even comfortable.}
-
-
-% \subsubsection{Linear vs. non-linear and compiler optimisations}
 \subsubsection{A version without linear types}\label{sec:st-cursors}
 
 How would we build the same thing in Haskell without linear types?  It may appear
@@ -1931,9 +1783,6 @@ writeST :: Storable a => a -> Needs' s (a~:r) t -> ST s (Needs' s r t)
 \end{code}
 Here we use the same typestate associated with a |Needs| pointer, while also
 associating its mutable state with the |ST| session indexed by |s|.
-%
-% As in \fref{sec:freezing-arrays}, we rely on using an unsafe
-% ... must extend the trusted code base.
 Unfortunately, not only do we have the same trouble with freezing in the absence
 of linearity (|unsafeFreeze|, \fref{sec:freezing-arrays}), we also
 have an {\em additional} problem not present with arrays:
@@ -1944,9 +1793,6 @@ deserialisation guarantee!
 For example, we can write a |Leaf| and a |Branch| to the same pointer in an
 interleaved fashion.  Both will place a tag at byte 0; but the leaf will place
 an integer in bytes 1-9, while the branch will place another tag at byte 1.
-%
-%% \Red{If we define a type-safe serialisation interface as one where every read at a
-%% type returns a whole value written at the same type, then this is a violation.}
 We can receive a corrupted 8-byte integer, clobbered by a tag from an
 interleaved ``alternate future''.
 
@@ -2023,10 +1869,6 @@ The basic premise of \fref{fig:pack-bench} is that a machine in the network
 receives, processes, and transmits serialized data (trees).
 %
 We consider two simple benchmarks: |sumLeaves| and |mapTree (+1)|.
-%% , a |fold| and a |map| respectively: (1) summing the
-%% leaves of a tree, and (2) adding one to the leaves of a tree, producing a new
-%% tree.
-%
 The baseline is the traditional approach: deserialise, transform, and reserialise,
 the ``unpack-repack'' line in the plots.  Compared to this baseline,
 {\em processing the data directly in its serialised form results in speedups of over
@@ -2050,72 +1892,6 @@ serialisation\footnote{A full, practical implementation should include growable
 %
 At depth 20, one copy of the tree takes around 10MB, and towards the right half
 of the plot we see tree size exceeding cache size.
-
-
-% -------------------------------
-{\if{0}
-    Let us look back to the array-freezing \textsc{api} of
-    \fref{sec:freezing-arrays}. And push the boundaries to a new range of
-    applications inspired by \citet{vollmer_gibbon_2017}.
-
-    \improvement{aspiwack: I've spent too much time being abstract about
-      the data-structure, I should have just gone with trees and rolled
-      with it}
-    The problem is the following: representing recursive data structure
-    not as linked data-structures but as a compact representation in a
-    binary array. There are various reasons for being interested in such a
-    representation:
-
-    \begin{itemize}
-    \item if data needs to be serialised and deserialised a lot (for
-      instance because it transits on the network) then it can be more
-      efficient to manage data in a serialised form (in this we can see
-      such a representation as an extension on the idea of \emph{compact
-        region}~\cite{yang_compact_2015})
-    \item such data representation also has a much smaller memory
-      footprint than a linked data structure
-      (\citeauthor{vollmer_gibbon_2017} report a $50\%$ to $70\%$
-      improvement on binary trees), linked representations are also less
-      cache-friendly
-    \item in such a data representation, there is no outgoing pointer, so
-      the garbage collector is free to treat the entire data structure as
-      binary data and not traverse the data
-    \end{itemize}
-
-    \Citeauthor{vollmer_gibbon_2017} realise such an implementation scheme
-    in a compiler for an \textsc{ml}-like language. Data structures are
-    compiled to a compact form, and traversal are transformed in
-    destination-passing style~\cite{larus_destination_1998}: building a
-    new data-structure is done by writing binary data left-to-right in an
-    array. \Citeauthor{vollmer_gibbon_2017}'s compiler targets a typed
-    language. With linear types we can represent their type system
-    directly in \HaskeLL{}. The challenges are:
-    \begin{itemize}
-    \item Taking the example of binary trees: we have to traverse the tree
-      in a particular order, indeed supposing that the tree is stored as
-      its prefix-traversal, the size of the left sub-tree is not known, so
-      it is not possible to access the right sub-tree without traversing
-      the left sub-tree.
-    \item It does not make sense to read from an array of binary data
-      until it is fully initialised. After it is initialised, data becomes
-      immutable.
-    \end{itemize}
-    We recognise similar problems to the array-freezing example of
-    \fref{sec:freezing-arrays}. However, there are further things to
-    consider: first, we cannot freeze a binary array before we have
-    completely initialised it, otherwise we would have an incomplete tree,
-    which would probably yield a dreaded \texttt{segfault}; also at any
-    given point we may have more than one data-structure to fill in (for
-    instance both branches of a tree may have yet to be filled) so we need
-    to index our arrays by a type-level list\footnote{Haskell has
-      type-level lists, which we use in the following. But in any language
-      with \textsc{ml}-style polymorphism, the type level list
-      $[a_1, …, a_n]$ can be represented by the type
-      $(a_1, (…, (a_n,())))$.}
-
-    \improvement{copy actual \textsc{api}}
-\fi{}}
-
 
 \subsection{Sockets with type-level state}
 \label{sec:sockets}
@@ -2268,19 +2044,6 @@ discovered that ``linearity via arrows'' has an edge over ``linearity
 via kinds''.
 
 
-%   Two kinds is also more easily compatible with using different
-% representations for linear and non-linear values, though this would
-% require that the conversion between linear and non-linear type be
-% explicit, the sub-kinding of Fo would severely limit this option. At
-% any rate, I doubt that this is immensly useful except in DSLs (in
-% which it can be highly)
-
-% JP: I think that this is largely orthogonal. Indeed the polymorphism
-% of the implementation is only linked to the polymorphism of
-% linearity. So this discussion is subsumed by the upcoming discussion
-% on polymorphism.
-
-
 \paragraph{Better code reuse}  When retrofitting linear types
   in an existing language, it is important to share has much code as
   possible between linear and non-linear code. In a system with
@@ -2349,14 +2112,6 @@ via kinds''.
   views are linear.
 
   \paragraph{Dependent types}
-  % It is easy to extend our system to any set of
-  % ground multiplicities with a ring structure
-  % (\fref{sec:extending-multiplicities}).
-  % In contrast,
-  % in a multiple-kind system, such extensions require \textit{ad-hoc}
-  % support. Indeed, affine types require changes in the subkinding
-  % system, which in turns may impact unification.
-  % JP: I do not think that this is true with the |Type p| view.
   Linearity on the arrow meshes better with dependent types (see
   \fref{sec:extending-multiplicities}).  Indeed, consider a typical
   predicate over files (|P : File → ∗|). It may need to mention its
@@ -2366,42 +2121,6 @@ via kinds''.
   linear. Leaving the door open to dependent types is crucial to us,
   as this is currently explored as a possible extension to
   \ghc{}~\cite{weirich_dependent-haskell_2017}.
-
-% Linearity-on-arrow makes it possible to constrain any function to
-% use its arguments linearly, this is useful for the function writer,
-% similarly to how parametricity can be. We also anticipate that we
-% can leverage programmers’ annotation to make linear functions always
-% inlinable.
-
-% JP: isn't so also for a kinding system?
-
-  % We also anticipate that we can leverage programmers’ annotation to
-  % make linear functions always inlinable.
-
-  % JP: probably not an
-  % advantage; the same can be done with kinds, probably. I believe
-  % the tradeoff is between unique/linear.
-
-  % We have applications where we implement something using unsafe
-  % primitive that are not linear we expose a safe API where the user
-  % has to use linear function. I don’t know how we could do the same
-  % using a two-kind system.
-  % JP: I do not understand this one.
-
-% \item Easier implementation. We managed to implement a working prototype of
-%   \textsc{ghc}, linearity-on-arrow, with reasonable effort. We attribute its
-%   relative simplicity to two factors.  First, we avoided tracking of the
-%   kind of types in the variables, which is a daunting task in \textsc{ghc}'s
-%   type-checker \jp{why?}.
-
-%   Second, \textsc{ghc} already supports impredicative dependent types
-%   and a wealth of unboxed or otherwise primitive types and kinds that
-%   cannot be substituted for polymorphic type arguments. Further extending
-%   the kind system is a complex endeavour which we could avoid entirely.
-
-%   JP: Probably, the implementation burden *itself* can be kept under
-%   control thanks this kind of polymorphism (see Simon's email):
-%   TYPE : Linearity -> KIND
 
 \paragraph{Linear values}
 Yet, an advantage of ``linearity via kinds'' is the possibility to directly
@@ -2450,11 +2169,6 @@ The essential differences between our system and that of
 multiplicity-polymorphism and datatypes. In particular our |case| rule
 is novel.
 
-% What we keep from
-% \citeauthor{mcbride_rig_2016}, is the typing rule of |case| (see
-% \fref{sec:statics})
-% JP: nope, there is no 'case' rule in mcbride_rig_2016
-
 The literature on so-called
 coeffects~\cite{petricek_coeffects_2013,brunel_coeffect_core_2014}
 uses type systems similar to \citeauthor{ghica_bounded_2014}, but
@@ -2468,7 +2182,6 @@ this work is not directly applicable to \calc.
 \label{sec:uniqueness}
 
 The literature
-% is awash with enforcing linearity not via linear types,
 contains many proposals for uniqueness (or ownership) types (in contrast with
 linear types).
 Prominent representative languages with uniqueness types include
@@ -2512,34 +2225,6 @@ conceptually simpler than uniqueness type systems, giving a
 clearer path to implementation in \textsc{ghc}.
 
 \paragraph{Rust \& Borrowing}
-% aspiwack: most of this looks irrelevant at this stage
-%
-% Rust \cite{matsakis_rust_2014} features a variant of uniquness typing, called
-% ownership typing. Like the original formulation of linear logic, in Rust, if a
-% type \texttt{T} stands for linear values, \Red{which are copied on function
-%   calls}, unrestricted values are denoted \texttt{RC<T>}, and duplication is
-% explicit.
-% %
-% \jp{It is not clear why this applies to Rust only and not other uniqueness typing systems.}
-% Rust addresses the problem of being mindful about
-% memory, resources, and latency, but this comes at a price: Rust,
-% as a programming language, is specifically optimised for writing
-% programs that are structured using the ``RAII''
-% pattern\footnote{Resource Acquisition Is Initialization: \url{https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization}}
-% (where resource lifetimes are tied directly or indirectly to stack
-% allocated objects that are freed when the control flow exits the
-% current lexical scope). Ordinary functional programs seldom fit this
-% particular resource acquisition pattern so end up being second class
-% citizens. For instance, tail-call optimization, crucial to the
-% operational behaviour of many functional programs, is not usually
-% sound. This is because resource liberation must be triggered when the
-% tail call returns.
-% %
-% \HaskeLL{} aims to hit a different point in the design space where
-% regular non-linear expressions are the norm, yet
-% % gracefully scaling up
-% investing extra effort to enforce invariants or perform low-level
-% systems programming, with control over resources and latency, is still possible.
 
 In \HaskeLL{} we need to thread linear variables throughout the
 program.  Even
@@ -2562,36 +2247,8 @@ unique values are the default. \HaskeLL{} aims to hit a different
 point in the design space where regular non-linear expressions are the
 norm, yet gracefully scaling up investing extra effort to enforce
 linearity invariants is possible.
-% Therefore, threading linear variable, being much less common, will not be as painful.
-% JP: but the reader we don't care; the focus here is on the linear
-% bits. Let not make excuses.
 Nevertheless, we discuss in \fref{sec:extending-multiplicities} how to
 extend \HaskeLL{} with borrowing.
-
-% aspiwack: also not too relevant in the current state of the paper
-%
-% \paragraph{Borrowing references in data structures}
-% In an imperative language, one often walks data structure, extract
-% references and pass them around. In Rust, the borrowing system
-% ensures that the passed reference does not outlive the datastructure
-% that it points to.
-
-% In a functional language, instead of extracting references, one will
-% use lenses to lift a modification function from a local subtree to a
-% global one. Thanks to garbage collection, there is already no risk of
-% dangling references, but one has to pay a runtime cost. By using
-% linear types one can avoid this cost.
-
-% Indeed, we can ensure that a modification function can have the type:
-% |Reference ⊸ Reference| and thus can be implemented with no need for
-% GC. At the same time, the lens library will use linear types and lift
-% local linear modifications to global linear modifications. Note that,
-% if the original object lives in the GC heap (and thus can be shared),
-% the same lens library can be used, but individual lifting of
-% modifications cannot be implemented by in-place update.
-% \rn{Is this text stale?  That is, from an earlier version of the paper that talked
-%   about the ``GC heap''?}
-
 
 \subsection{Linearity via monads}
 
@@ -2672,53 +2329,6 @@ comprehensive as Idris's. But it is conceivable to implement such an
 indexed monad transformer in Haskell. However, this is not an easy task,
 and we can anticipate that the error messages would be hard to stomach.
 
-% \subsection{Operational aspects of linear languages}
-
-% \unsure{This section will need a clean up, to be more in phase of what
-% we present in the evaluation section}
-
-% \Citet{wakeling_linearity_1991} produced a complete implementation of
-% a language with linear types, with the goal of improving 
-% performance. Their implementation features a separate linear heap, as
-% \fref{appendix:dynamics} where they allocate as much as possible in the
-% linear heap, as modelled by the strengthened semantics. However,
-% \citeauthor{wakeling_linearity_1991} did not obtain
-% consistent performance gains. On the other hand, they still manage to
-% reduce \textsc{gc} usage, which may be critical in distributed and
-% real-time environments, where latency that matters more than
-% throughput.
-
-% \citeauthor{wakeling_linearity_1991} propose to {\em not} attempt prompt freeing of
-% thunks; they only taking advantage of linearity for managing the lifetimes of
-% large arrays. Our approach is similar: we advocate exploiting linearity for
-% operational gains on large data structures (but not just arrays) stored
-% off-heap. We go further and leave the management of external (linear) data to
-% external code, only accessing it via an \textsc{api}. Yet, our language supports
-% an implementation where each individual constructor with multiplicity 1 can be
-% allocated on a linear heap, and deallocated when it is pattern matched.
-% Implementing this behaviour is left for future work.
-
-% \subsubsection{Garbage}
-% \citet{mogensen_types_1997} proposes a type system whose purpose is to
-% track the number of times that a value is used. They intend their
-% system to be used for inference instead of declaration. Thus, while
-% our main concern is the smooth integration with an existing lazy
-% functional language, they are not concerned with language design issues.
-% %
-% Besides, their system features both annotations on types
-% an certain variable bindings; while our type-system is related to
-% theirs it appears to be incomparable.
-
-% The work of \citet{igarashi_garbage_2000} uses the typesystem of
-% Mogensen to drive a garbage collection mechanism. Yet, their approach
-% is opposite to ours: while we aim to keep linear values
-% completely outside of garbage collection, they use the type
-% information at runtime to ensure that the GC does not follow dangling
-% pointers.
-% % JP: How can that even work?
-
-
-
 \section{Future work}
 
 \subsection{Controlling program optimisations}
@@ -2742,36 +2352,11 @@ innocuous change can prevent a critical inlining opportunity and have
 rippling catastrophic effects throughout the program.
 Such unpredictable behaviour justifies the folklore that high-level languages should be
 abandoned to gain precise control over program efficiency.
-%% Do not delete the above sentence without discussion.
 
 A remedy is to use the multiplicity annotations of \calc{} as
 cardinality \emph{declarations}. Formalising and implementing the
 integration of multiplicity annotations in the cardinality analysis is
 left as future work.
-
-
-% Another important optimisation for lazy languages is full-laziness,
-% which attempt to maximize sharing of sub-expressions. Unfortunately,
-% full-laziness is sometimes a pessimisation, as in the following example,
-% which is a simplified version of an issue that occurs in
-% practice with Haskell code\footnote{see http://www.well-typed.com/blog/2016/09/sharing-conduit/}:
-% \begin{code}
-% main = forM_ [1..5] (\i -> mapM_ print [1 .. N])
-% \end{code}
-% If |mapM_| is not inlined, then full-laziness transforms the above into
-% \begin{code}
-% main = let xs = [1 .. N] in forM_ [1..5]  (\i -> mapM_ print xs)
-% \end{code}
-% Even though one would expect the above program to use constant space
-% (because the list |[1..N]| is produced lazily), when the intermediate
-% list |[1..N]| is shared between runs of |mapM_ print [1 .. N]|, the
-% memory residency becomes proportional to |N|. We conjecture
-% that linearity annotations can be used to guide full-laziness:
-% arguments to linear functions should not be shared. Indeed, being used
-% only once, it always is more memory-efficient to re-create them at
-% each invokation. In this case, if |mapM_| is given the type |(a ⊸ IO
-% b) -> [a] ⊸ IO ()|, the compiler would see that sharing of |[1..N]|
-% should be avoided.
 
 \subsection{Extending multiplicities}
 \label{sec:extending-multiplicities}
@@ -3545,13 +3130,6 @@ extended so that one evaluates to |False| and the other to |True|.
 \fi
 
 \end{document}
-
-% safety proves that the mutable semantics is equivalent to a pure
-% semantics.
-% liveness proves that the primitives don't block on typestate (\eg in the
-% write primitive, we are never given an |Array|) (because typing is
-% preserved in the denotational semantics, hence the denotational
-% semantics can't block on a typestate).
 
 % Local Variables:
 % ispell-local-dictionary: "british"
