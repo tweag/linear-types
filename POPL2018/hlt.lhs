@@ -949,17 +949,21 @@ combinators of |IOL| can be used in the familiar way. The difference
 with the usual monad is that multiplicities may be mixed, but this
 poses no problem in practice.  Consider
 \begin{code}
-  do  { f <- openFile s   -- |openFile :: FilePath -> IOL 1 File|
-      ; d <- getDate      -- |getDate  :: IOL ω Date|
-      ; e[f,d] }
+  printHandle :: File ⊸ IO ω ()
+  printHandle f = do
+    { (f,Unrestricted b) <- atEOF f             -- |atEOF :: File ⊸ IOL 1 (File, Unrestricted Bool)|
+    ;  if b then closeFile f                    -- |closeFile :: File ⊸ IOL ω ()|
+       else do  { (f,Unrestricted c) <- read f  -- |read :: File ⊸ IOL (File, Unrestricted Char)|
+                ; putChar c                     -- |putChar :: Char -> IOL ω ()|
+                ; printHandle f }}
 \end{code}
-Here |openFile| returns a linear |File| that should be closed, but |getDate| returns
-an ordinary non-linear |Date|.  So this sequence of operations has mixed linearity.
-Nevertheless, we can combine them with |bindIOL| in the usual way:
+Here |atEOF| and |read| return a linear |File| that should be closed,
+but |close| and |putChar| return an ordinary non-linear |()|.  So this
+sequence of operations has mixed linearity.  Nevertheless, we can
+interpret the |do|-notation with |bindIOL| in the usual way:
 \begin{code}
-  openFile s `bindIOL` \f ->
-  getData    `bindIOL` \d ->
-  e[f,d]
+  read f     `bindIOL` \ (f,Unrestricted c) ->
+  putChar c  `bindIOL` \ __ -> …
 \end{code}
 Such an interpretation of the |do|-notation requires Haskell's
 \texttt{-XRebindableSyntax} extension, but if linear I/O becomes
