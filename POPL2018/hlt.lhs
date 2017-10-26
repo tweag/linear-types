@@ -266,7 +266,6 @@
 \affiliation{%
   \institution{Tweag I/O}
   \city{Paris}
-  \postcode{???}
   \country{France}
 }
 \author{Ryan R. Newton}
