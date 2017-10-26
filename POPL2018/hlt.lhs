@@ -370,6 +370,13 @@
 %% environment and commands, and keywords command.
 \maketitle
 
+\ifx\longversion\undef{
+}
+\else{
+  \it This paper appears in the Proceeding of the ACM Conference on Principles of Programming Languages (POPL) 2018.  This version includes an Appendix that gives an operational semantics for the core language, and proofs of the metatheoretical results stated in the paper.
+}
+\fi
+
 \section{Introduction}
 \label{sec:introduction}
 
