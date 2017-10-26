@@ -1,4 +1,5 @@
 % -*- latex -*-
+\pdfoutput=1 % for arxiv to compile with pdflatex
 
 %% For double-blind review submission
 % \documentclass[acmsmall,10pt,review,anonymous]{acmart}
