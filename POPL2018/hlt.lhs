@@ -17,7 +17,7 @@
 }
 
 % Comment out for the submitted version, long version also has appendices
-% \def\longversion{}
+\def\longversion{}
 
 %% Note: Authors migrating a paper from PACMPL format to traditional
 %% SIGPLAN proceedings format should change 'acmsmall' to
