@@ -2059,7 +2059,7 @@ via kinds''.
 
 
 \paragraph{Better code reuse}  When retrofitting linear types
-  in an existing language, it is important to share has much code as
+  in an existing language, it is important to share as much code as
   possible between linear and non-linear code. In a system with
   linearity on arrows, the subsumption relation (linear arrows subsume
   unrestricted arrows) and the scaling of context in the application
