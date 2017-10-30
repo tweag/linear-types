@@ -402,7 +402,8 @@ are these:
       rather than \emph{linearity in the kinds} (\fref{sec:lin-arrow}).
 \item Every function arrow can be declared linear, including those of
       constructor types. This results in datatypes which can store
-      both linear values, in addition to unrestricted ones (\fref{sec:datatypes}).
+      both linear values, in addition to unrestricted ones
+      (\fref{sec:datatypes}-\ref{sec:non-linear-constructors}).
 \item A benefit of linearity-on-the-arrow is that it naturally supports
       \emph{linearity polymorphism} (\fref{sec:lin-poly}).  This contributes
       to a smooth extension of Haskell by allowing many existing functions
@@ -463,7 +464,7 @@ Our definition is based on the type of the value concerned:
 \begin{definition}[Consume exactly once]~ \label{def:consume}
 \begin{itemize}
 \item To consume a value of atomic base type (like |Int| or |Ptr|) exactly once, just evaluate it.
-\item To consume a function exactly once, apply it to one argument, and consume its result exactly once.
+\item To consume a function value exactly once, apply it to one argument, and consume its result exactly once.
 \item To consume a pair exactly once, pattern-match on it, and consume each component exactly once.
 \item In general, to consume a value of an algebraic datatype exactly once, pattern-match on it,
   and consume all its linear components exactly once
@@ -487,16 +488,6 @@ g x = f x
 \end{code}
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
 in particular, |g| can pass that argument to |f|.
-
-When evaluating a value in head normal form does not terminate, this
-value is not considered to be consumed exactly once, making the
-looping function linear
-\begin{code}
-  loop :: a ⊸ b
-  loop x = loop x
-\end{code}
-If |loop u| is consumed exactly once (\emph{i.e.} never) then |u| is,
-vacuously, consumed exactly once.
 
 \subsection{Safe mutable arrays}
 \label{sec:freezing-arrays}
@@ -1507,6 +1498,27 @@ relating variables in \fref{def:equiv-multiplicity}, such as $p+q=ω$,
 but this would prevent potential extensions to the set of
 multiplicities. For now, we accept the more conservative rules of
 \fref{def:equiv-multiplicity}.
+
+\paragraph{Divergence.}  Consider this definition\footnote{
+|(repeat x)| returns the infinite list |[x,x,...]|.  The function
+|(++)| appends two lists, and has type |[a] ⊸ [a] ⊸ [a]|; we have not
+given a formal typing rule for recursive definitions, but its form is
+entirely standard.}:
+\begin{code}
+  f :: [Int] ⊸ [Int]
+  f xs = repeat 1 ++ xs
+\end{code}
+But wait!  Does |f| \emph{really} consume its argument |xs| exactly
+once? After all, |(repeat 1)| is infinite so |f| will never evaluate |xs|
+at all!
+
+In corner cases like this we look to metatheory.  Yes, the typing rules give
+the specified types for |(++)| and |f|.
+Yes, the operational claims guaranteed by the metatheory remain valid.
+Intuitively you may imagine it like this: linearity claims that \emph{if} you were consume
+the result of |f| completely, exactly once, then you would consume its argument once; but
+since the result of |f| is infinite we cannot consume it completely exactly once, so
+the claim holds vacuously.
 
 \section{Implementing \HaskeLL}
 \label{sec:implementation}
