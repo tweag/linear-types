@@ -511,7 +511,7 @@ array :: Int -> [(Int,a)] -> Array a
   unsafeFreeze :: MArray s a -> ST s (Array a)
 
   forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
-  runST :: (forall a. ST s a) -> a
+  runST :: (forall s. ST s a) -> a
 \end{code}
 \vspace{-4mm}
 \caption{Signatures for array primitives (current \textsc{ghc})}
@@ -530,7 +530,7 @@ array :: Int -> [(Int,a)] -> Array a
 array size pairs = runST
   (do  { ma <- newMArray size
        ; forM_ pairs (write ma)
-       ; return (unsafeFreeze ma) })
+       ; unsafeFreeze ma })
 \end{code}
 In the first line we allocate a mutable array, of type |MArray s a|.
 Then we iterate over the |pairs|, with |forM_|, updating the array in place
@@ -621,7 +621,7 @@ consumes its input).
 Three factors ensure that a unique |MArray| is needed
 in any given application |x = newMArray k|, and in turn that
 update-in-place is safe. First, |newMArray| introduces {\em only}
-a linear |ma :: MArray|.  Second, no function that
+a linear |ma :: MArray a|.  Second, no function that
 consumes an |MArray a| returns more than a {\em single} pointer to it;
 so |k| can never obtain two pointers to |ma|.  Third, |k| must wrap its
 result in |Unrestricted|. This third point means that even if |x| is used in an
@@ -922,14 +922,14 @@ In \fref{sec:io-protocols} we introduced the |IOL|
 monad.\footnote{|IOL p| is not a monad in the strict sense, because |p| and
   |q| can be different in |bindIOL|. However it is a relative
   monad~\cite{altenkirch_monads_2010}. The details, involving the
-  functor |data Mult p a = Mult :: a -> _ p Mult p a| and linear
+  functor |data Mult p a where { Mult :: a -> _ p Mult p a }| and linear
   arrows, are left as an exercise to the reader.}
 But how does it work?  |IOL|
 is just a generalisation of the |IO| monad, thus:
 \begin{code}
   type IOL p a
   returnIOL :: a -> _ p IOL p a
-  bindIOL   :: IO p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
+  bindIOL   :: IOL p a ⊸ (a -> _ p IOL q b) ⊸ IOL q b
 \end{code}
 The idea is that if |m :: IOL 1 t|, then |m| is an input/output
 computation that returns a linear value of type |t|.  But what does it mean to
@@ -969,7 +969,7 @@ Internally, hidden from clients, \textsc{ghc} actually implements |IO| as a func
 and that implementation too is illuminated by linearity, like so:
 \begin{code}
 data World
-newtype IOL p a = IOL (unIOL :: World ⊸ IORes p a)
+newtype IOL p a = IOL { unIOL :: World ⊸ IORes p a }
 data IORes p a where
   IOR :: World ⊸ a -> _ p IORes p a
 
