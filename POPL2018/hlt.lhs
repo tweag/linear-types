@@ -185,6 +185,10 @@
 \newcommand\HaskeLL{Linear Haskell\xspace{}}
 \newcommand\calc{{\ensuremath{λ^q_\to}}}
 
+% puts figures a bit closer to text, it sometimes felt eerily blank
+% without it
+% 15.0pt plus 8.0pt minus 5.0pt.
+\setlength{\textfloatsep}{10pt plus 4pt minus 5pt}
 
 %%%%%%%%%%%%%%%%% /Author's configuration %%%%%%%%%%%%%%%%%
 
@@ -776,11 +780,11 @@ we do not need a special non-linear pair}.
 
 The same idea applies to all existing Haskell datatypes: in
 \HaskeLL{} we treat all datatypes defined using legacy Haskell-98
-(non-GADT) syntax as defining constructors with linear arrows.
+(non-\textsc{gadt}) syntax as defining constructors with linear arrows.
 For example here is a declaration of \HaskeLL{}'s list type,
 whose constructor |(:)| uses linear arrows:
 
-\begin{wrapfigure}[8]{r}[0pt]{4.5cm} % \vspace{-8mm}
+\begin{wrapfigure}[8]{r}[0pt]{4.5cm}\vspace{-2mm}
 \begin{code}
 data [a] = [] | a : [a]
 \end{code}
@@ -1157,8 +1161,8 @@ multiplicities in $Γ$, and |u| once, yielding the multiplicies in
 $\Delta$.  But if the multiplicity $π$ on |u|'s function arrow is $ω$,
 then the function consumes its argument not once but $ω$ times, so all
 |u|'s free variables must also be used with multiplicity $ω$. We
-express this by taking the {\em product} of the multiplicities in $\Delta$ and $π$,
-thus $π\Delta$.  Finally we need to add together all the
+express this by {\em scaling} the multiplicities in $\Delta$ by $π$.
+Finally we need to add together all the
 multiplicities in $Γ$ and $π\Delta$; hence the context $Γ+πΔ$ in the
 conclusion of the rule.
 
@@ -1306,7 +1310,7 @@ relation $a⇓b$, we define \emph{partial derivations} and from there a
 \ifx\longversion\undefined{$a⇓^*b$. }
 \else{$a⇓^*b$ (see \fref{sec:partial-derivations}). }
 \fi
-Progress is then expressed as the
+Progress is expressed as the
 fact that a derivation of $a⇓^*b$ can always be extended.
 
 The operational semantics differs from
@@ -1317,11 +1321,11 @@ The operational semantics differs from
 \item Reduction is indexed by whether we intend to consume the term
   under consideration exactly once or an arbitrary number of times
 \item Variables in the environments are annotated by a multiplicity
-  ($1$ or $ω$), $ω$-variables are ordinary variables. When such a
-  variable is forced it is replaced by its value (to model lazy
-  sharing), but $1$-variables \emph{must be consumed exactly once}:
-  when they are forced, they are removed from the environment. So
-  reduction would get stuck if a 1-variable was used more than once.
+  ($1$ or $ω$), $ω$-variables are ordinary variables. When forced, an
+  $ω$-variable is replaced by its value (to model lazy sharing), but
+  $1$-variables \emph{must be consumed exactly once}: when forced,
+  they are removed from the environment. Reduction gets stuck if a
+  1-variable is used more than once.
 \end{itemize}
 Because the operational semantics gets stuck if a 1-variable is used
 more than once, the progress theorem
@@ -1331,8 +1335,13 @@ exactly once. The 1-variables are in fact used exactly once: it is a
 consequence of type preservation that evaluation of a closed term of a
 basic type (say |Bool|) returns an environment with no 1-variables.
 
-Our preservation and progress theorems then look like this,
-writing $a,b$ for states of the evaluation:
+Our preservation and progress theorems
+%
+\ifx\longversion\undefined{(proved in the extended
+  version~\cite{extended_version})}
+\else {(proved in \fref{sec:denotational})}
+\fi
+read as follows:
 
 \begin{theorem}[Type preservation]\label{thm:type-safety}
   If $a$ is well typed, and $a⇓b$, or $a⇓^*b$ then $b$ is well-typed.
@@ -1341,10 +1350,6 @@ writing $a,b$ for states of the evaluation:
   Evaluation does not block. That is, for any partial evaluation
   $a⇓^*b$, where $a$ is well-typed, the derivation can be extended.
 \end{theorem}
-\ifx\longversion\undefined{These theorems are proved in the extended
-  version~\cite{extended_version}.}
-\else {These theorems are proved in \fref{sec:denotational}.}
-\fi
 
 \paragraph{In-place update \& typestate}
 Furthermore, linear types can be
@@ -1386,7 +1391,7 @@ this evaluation with mutation:
   Evaluation does not block. That is, for any partial evaluation
   $σ⇓^*τ$, for $σ$ well-typed, the evaluation can be
   extended.
-
+  %
   In particular, typestates need not be checked dynamically.
 \end{theorem}
 
@@ -1402,10 +1407,6 @@ reduce to a boolean test, is identical in either semantics.
   to the value $z$ with the pure semantics, and to the value $z'$ with
   the semantics with mutation, then $z=z'$.
 \end{theorem}
-\ifx\longversion\undefined{These three theorems are proved in the extended
-  version~\cite{extended_version}.}
-\else {These three theorems are proved in \fref{sec:bisimilarity}.}
-\fi
 
 
 \subsection{Design choices \& trade-offs}
@@ -1787,8 +1788,6 @@ below.
 %\begin{wrapfigure}[12]{r}[0pt]{7.0cm} % lines, placement, overhang, width
 %\vspace{-6mm}
 \begin{code}
-module TreePublic (pack, unpack, writeLeaf, sumLeaves, mapLeaves)
-...
 mapLeaves :: (Int->Int) -> Packed ~[Tree] ⊸ Packed ~[Tree]
 mapLeaves fn pt = newBuffer (extract ∘ go pt)
   where
@@ -2377,7 +2376,7 @@ abandoned to gain precise control over program efficiency.
 
 A remedy is to use the multiplicity annotations of \calc{} as
 cardinality \emph{declarations}. Formalising and implementing the
-integration of multiplicity annotations in the cardinality analysis is
+integration of multiplicities in the cardinality analysis is
 left as future work.
 
 \subsection{Extending multiplicities}
