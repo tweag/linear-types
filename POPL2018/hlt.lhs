@@ -2893,7 +2893,7 @@ when annotated states are well-typed.
   Ξ ⊢ \flet Γ \fin (t,\termsOf{Σ}) : (A~{}_ρ\!⊗\multiplicatedTypes{Σ})‌
   $$
   Where $\flet Γ \fin e$ stands for the use of $Γ$ as a sequence of
-  let-bindings with the appropriate mulitplicity\footnote{We skip over
+  let-bindings with the appropriate multiplicity\footnote{We skip over
     the case of mutually recursive bindings in our presentation. But
     we can easily extend the formalism with then. Recursive bindings
     must be of multiplicity $ω$, and mutually recursive definition are
