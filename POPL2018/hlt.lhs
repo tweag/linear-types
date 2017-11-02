@@ -327,7 +327,7 @@
   \textsc{ghc}, the leading Haskell compiler, and demonstrate
   two kinds of applications of linear types:
   mutable data with pure interfaces;
-  and enforcing protocols in \textsc{i/o}-performing functions. %
+  and enforcing protocols in I/O-performing functions. %
   \ifx\draftmode\undefined \else \vspace{-4mm} \fi
 \end{abstract}
 
