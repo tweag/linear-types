@@ -9,7 +9,7 @@
 % \documentclass[acmsmall,10pt,review]{acmart}\settopmatter{printfolios=true}
 
 %% For final camera-ready submission
-\documentclass[acmsmall,10pt]{acmart}\settopmatter{}
+\documentclass[acmsmall,screen]{acmart}\settopmatter{}
 
 % TOGGLE ME to turn off all the commentary:
 \InputIfFileExists{no-editing-marks}{
