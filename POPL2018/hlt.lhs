@@ -227,7 +227,7 @@
 % \titlenote{with title note}             %% \titlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
-\subtitle{practical linearity in a higher-order polymorphic language}                     %% \subtitle is optional
+\subtitle{Practical Linearity in a Higher-Order Polymorphic Language}                     %% \subtitle is optional
 % \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
