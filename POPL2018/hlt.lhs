@@ -308,7 +308,6 @@
   backwards-compatibility and code reuse across linear and non-linear
   users of a library. Only then can the benefits of linear types
   permeate conventional functional programming.  Rather than bifurcate
-  % not just data; functions must also be bifurcated due to closures.
   types into linear and non-linear counterparts, we instead
   attach linearity to {\em function arrows}.  Linear functions can
   receive inputs from linearly-bound values, but can {\em also} operate over
@@ -321,8 +320,7 @@
   \textsc{ghc}, the leading Haskell compiler, and demonstrate
   two kinds of applications of linear types:
   mutable data with pure interfaces;
-  and enforcing protocols in I/O-performing functions. %
-  \ifx\draftmode\undefined \else \vspace{-4mm} \fi
+  and enforcing protocols in I/O-performing functions.
 \end{abstract}
 
 %% \if@ACM@review
