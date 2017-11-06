@@ -507,7 +507,8 @@ array :: Int -> [(Int,a)] -> Array a
   write :: MArray s a -> (Int, a) -> ST s ()
   unsafeFreeze :: MArray s a -> ST s (Array a)
 
-  forM_ :: Monad m => [a] -> (a -> m ()) -> m ()
+  forM_ ::  Monad m =>
+            [a] -> (a -> m ()) -> m ()
   runST :: (forall s. ST s a) -> a
 \end{code}
 \vspace{-4mm}
@@ -748,7 +749,7 @@ arguments.
 \vspace{-6mm}
 \begin{code}
 f1 :: (Int,Int) -> (Int,Int)
-f1 x = case x of (a,b) -> (a+a,0)
+f1 x = case x of (a,b) -> (a, a)
 
 f2 :: (Int,Int) ⊸ (Int,Int)
 f2 x = case x of (a,b) -> (b,a)
@@ -1670,11 +1671,11 @@ registers:
 \begin{code}
 sumLeaves :: Packed ~[Tree] -> Int
 sumLeaves p = fst (go p)
-  where go p =  caseTree p 
-                  read -- Leaf case
-                  (\p2 ->  let  (n,p3) = go p2
-                                (m,p4) = go p3
-                           in (n+m,p4))
+  where go  p =  caseTree p
+            read -- Leaf case
+            (\p2 ->  let  (n,p3) = go p2
+                          (m,p4) = go p3
+                     in (n+m,p4))
 \end{code}
 \end{wrapfigure}
 Putting it together, we can write a function that consumes serialised data, such
@@ -1827,11 +1828,9 @@ cumbersome as soon as several buffers are involved.
 \label{sec:cursor-benchmark}
 
 \begin{figure}
-  \hspace{-2mm}%
-  \begin{minipage}{1.04 \textwidth}
-  \hspace{-2mm}%
-  \includegraphics[width=0.5 \textwidth]{figures/sumtree_all_plot_baseline_unpack-repack.pdf}
-  \includegraphics[width=0.5 \textwidth]{figures/maptree_plot_baseline_unpack-repack.pdf}    
+  \begin{minipage}{\textwidth}
+  \includegraphics[width=0.49 \textwidth]{figures/sumtree_all_plot_baseline_unpack-repack.pdf}
+  \includegraphics[width=0.49 \textwidth]{figures/maptree_plot_baseline_unpack-repack.pdf}
   \end{minipage}
 \caption{Speedup of operating directly on serialised data, either using
   linear-types or the ST monad, as compared to fully unpacking, processing,
