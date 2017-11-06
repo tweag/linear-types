@@ -74,13 +74,6 @@
 \usepackage{textcomp}
 \usepackage{amssymb}
 \usepackage{cmll}
-\usepackage{hyperref}
-\hypersetup{
-    colorlinks,
-    linkcolor={red!50!black},
-    citecolor={blue!50!black},
-    urlcolor={blue!80!black}
-  }
 \usepackage{mathpartir}
 % \usepackage{fontspec}
 % \usepackage{unicode-math}
