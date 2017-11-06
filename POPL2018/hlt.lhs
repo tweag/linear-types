@@ -194,25 +194,20 @@
 
 %% Journal information (used by PACMPL format)
 %% Supplied to authors by publisher for camera-ready submission
+%%% The following is specific to POPL'18 and the paper
+%%% 'Linear Haskell: Practical Linearity in a Higher-Order Polymorphic Language'
+%%% by Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, and Arnaud Spiwack.
+%%%
+\setcopyright{acmlicensed}
+\acmPrice{}
+\acmDOI{10.1145/3158093}
+\acmYear{2018}
+\copyrightyear{2018}
 \acmJournal{PACMPL}
-\acmVolume{1}
-\acmNumber{1}
-\acmArticle{1}
-\acmYear{2017}
-\acmMonth{10}
-\acmDOI{10.1145/nnnnnnn.nnnnnnn}
-\startPage{1}
-
-
-
-%% Copyright information
-%% Supplied to authors (based on authors' rights management selection;
-%% see authors.acm.org) by publisher for camera-ready submission
-\setcopyright{none}             %% For review submission
-%\setcopyright{acmcopyright}
-%\setcopyright{acmlicensed}
-%\setcopyright{rightsretained}
-%\copyrightyear{2017}           %% If different from \acmYear
+\acmVolume{2}
+\acmNumber{POPL}
+\acmArticle{5}
+\acmMonth{1}
 
 
 %% Bibliography style
@@ -263,6 +258,7 @@
   \city{Paris}
   \country{France}
 }
+\email{m@@tweag.io}
 \author{Ryan R. Newton}
 \affiliation{%
   \institution{Indiana University}
@@ -270,16 +266,21 @@
   \state{IN}
   \country{USA}
 }
+\email{rrnewton@@indiana.edu}
 \author{Simon Peyton Jones}
 \affiliation{
   \institution{Microsoft Research}
   \city{Cambridge}
   \country{UK}
 }
+\email{simonpj@@microsoft.com}
 \author{Arnaud Spiwack}
 \affiliation{
   \institution{Tweag I/O}
+  \city{Paris}
+  \country{France}
 }
+\email{arnaud.spiwack@@tweag.io}
 
 % The default list of authors is too long for headers
 \renewcommand{\shortauthors}{J.-P. Bernardy, M. Boespflug, R. Newton,
