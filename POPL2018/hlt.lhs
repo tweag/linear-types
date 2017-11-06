@@ -519,7 +519,7 @@ array :: Int -> [(Int,a)] -> Array a
 \end{code}
 \vspace{-4mm}
 \caption{Signatures for array primitives (current \textsc{ghc})}
-{\vspace{-2.5mm}\hrulefill}
+{\vspace{-2.5mm}\hfill}
 \label{fig:array-sigs}
 \end{wrapfigure}
 %
@@ -563,7 +563,7 @@ arrow is used in a new array \textsc{api}, given in
 \fref{fig:linear-array-sigs}.
 %
 \begin{figure}[h]
-\hrulefill
+\hfill
 \vspace{-2mm}
 \begin{code}
   type MArray a
@@ -578,7 +578,7 @@ arrow is used in a new array \textsc{api}, given in
 \vspace{-5mm}
 \caption{Type signatures for array primitives (linear version), allowing
   in-place update.}
-{\vspace{-2.5mm}\hrulefill\vspace{-2.5mm}}
+{\vspace{-2.5mm}\hfill\vspace{-2.5mm}}
 \label{fig:linear-array-sigs}
 \end{figure}
 
@@ -679,7 +679,7 @@ in particular, they must not lie about linearity. Our second use-case has a much
 \caption{Types for linear file IO} \label{fig:io-linear}
 \end{minipage}
 \vspace{-2mm}
-\hrulefill
+\hfill
 \end{figure}
 
 Consider the \textsc{api} for files in \fref{fig:io-traditional}, where a
