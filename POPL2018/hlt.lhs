@@ -372,7 +372,7 @@
 %% environment and commands, and keywords command.
 \maketitle
 
-\ifx\longversion\undef{
+\ifx\longversion\undefined{
 }
 \else{
   \it This paper appears in the Proceeding of the ACM Conference on Principles of Programming Languages (POPL) 2018.  This version includes an Appendix that gives an operational semantics for the core language, and proofs of the metatheoretical results stated in the paper.
@@ -1291,7 +1291,7 @@ for |fst|.  But |swap| uses the components linearly, so we can use $\mathsf{case
 
 In order to prove that our type system meets its stated goals, we
 introduce an operational semantics.
-\ifx\longversion\undef{
+\ifx\longversion\undefined{
   The details can be found in the extended version of this
   article~\cite{extended_version}.
 }
