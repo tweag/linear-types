@@ -252,7 +252,7 @@
   \city{Gothenburg}
   \postcode{41255}
   \country{Sweden}}
-\email{jeanphilippe.bernardy@@gmail.com}
+\email{jean-philippe.bernardy@@gu.se}
 \author{Mathieu Boespflug}
 \affiliation{%
   \institution{Tweag I/O}
