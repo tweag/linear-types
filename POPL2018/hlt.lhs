@@ -247,7 +247,7 @@
 \author{Jean-Philippe Bernardy}
 \affiliation{%
   \institution{University of Gothenburg}
-  \department{Department of Philosophy, Linguistics and Theory of Science}
+  \department{Department of Philosophy, Linguistics and Theory of Science, Centre for Linguistic Theory and Studies in Probability}
   \streetaddress{Olof Wijksgatan 6}
   \city{Gothenburg}
   \postcode{41255}
@@ -2542,8 +2542,8 @@ capabilities for safe, compiler-checked use, within pure code.
     Commission}{https://erc.europa.eu/} through the \textsc{sage} project
   (Grant agreement
   no. \grantnum[http://www.sagestorage.eu]{ERC}{671500}), as well as
-  from \grantsponsor{VR}{Swedish Research Council}{https://www.vr.se/}
-  via the establishment of the Centre for Linguistic Theory and
+  from \grantsponsor{VR}{Swedish Research Council}{https://www.vr.se/} (project 2014-39)
+  for the establishment of the Centre for Linguistic Theory and
   Studies in Probability (\textsc{clasp}) at the University of Gothenburg.
   %
   We thank Manuel Chakravarty, Stephen Dolan and Peter Thiemann for their valuable
