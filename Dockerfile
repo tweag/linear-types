@@ -1,10 +1,20 @@
 # This is used to build an image "tweag/linear-types" on dockerhub
 # ----------------------------------------------------------------
+#
+# CHANGES
+#
+# v0.1.6
+# ------
+#
+# - Reject linear kind declarations
+# - Regular syntax for linear arrow is `(->.)`. Not backwards
+#   compatible! One now needs to use `-XUnicodeSytnax` in order to use
+#   the `(⊸)` syntax.
 
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
 FROM haskell:8.2.1
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 9cf8f718b26aeacd5b5fc95cfe583e6b78e48d2f
+ENV LINEAR_SHA 8182d67f8ef1fa163bd517fff848ab6a48b625e7
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
