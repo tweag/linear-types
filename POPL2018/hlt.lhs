@@ -431,7 +431,7 @@ template for similar work in other languages.  There is a rich
 literature on linear type systems, as we discuss in a long related
 work section (\fref{sec:related}).
 
-\section{Motivation and intuitions}
+\section{Motivation and Intuitions}
 \label{sec:programming-intro}
 
 Informally, \emph{a function is ``linear'' if it consumes its argument exactly once}.
@@ -454,7 +454,7 @@ We introduce our extension to Haskell, which we call \HaskeLL{}, by
 focusing on these two use-cases.  In doing so, we introduce a number
 of ideas that we flesh out in subsequent subsections.
 
-\subsection{Operational intuitions}
+\subsection{Operational Intuitions}
 \label{sec:consumed}
 
 We have said informally that \emph{``a linear function consumes its argument
@@ -495,7 +495,7 @@ g x = f x
 The type of |g| makes no particular guarantees about the way in which it uses |x|;
 in particular, |g| can pass that argument to |f|.
 
-\subsection{Safe mutable arrays}
+\subsection{Safe Mutable Arrays}
 \label{sec:freezing-arrays}
 
 The Haskell language provides immutable arrays, built with the function |array|\footnote{
@@ -654,7 +654,7 @@ in particular, they must not lie about linearity. Our second use-case has a much
 
 
 %\vspace{-1mm}
-\subsection{I/O protocols} \label{sec:io-protocols}
+\subsection{I/O Protocols} \label{sec:io-protocols}
 %\vspace{-1mm}
 
 \begin{figure}
@@ -734,7 +734,7 @@ to do so, because we can use types
 to witness the state of the resource, \eg, with separate
 types for an open or closed |File|. We show applications in \fref{sec:cursors} and \fref{sec:sockets}.
 
-\subsection{Linear datatypes}
+\subsection{Linear Datatypes}
 \label{sec:linear-constructors}
 \label{sec:datatypes}
 
@@ -840,7 +840,7 @@ upd (a1, a2) n  | n >= 10    = (write a1 n 'x', a2)
                 | otherwise  = (write a2 n 'o', a1)
 \end{code}
 
-\subsection{Unrestricted data constructors}
+\subsection{Unrestricted Data Constructors}
 \label{sec:non-linear-constructors}
 
 Suppose we want to pass a linear |MArray| and an unrestricted |Int| to a function |f|.
@@ -882,7 +882,7 @@ if a value of type |(Unrestricted t)| is consumed exactly once,
 that tells us nothing about how the argument of the data constructor is consumed:
 it may be consumed many times or not at all.
 
-\subsection{Multiplicity polymorphism}
+\subsection{Multiplicity Polymorphism}
 \label{sec:lin-poly}
 A linear function provides more guarantees to its caller than
 a non-linear one~---~it is more general.  But the higher-order
@@ -923,7 +923,7 @@ compiler, or indeed documentation tools, can even altogether hide
 linearity annotations from the programmer when this language
 extension is not turned on.
 
-\subsection{Linear input/output} \label{sec:linear-io}
+\subsection{Linear Input/Output} \label{sec:linear-io}
 
 In \fref{sec:io-protocols} we introduced the |IOL|
 monad.\footnote{|IOL p| is not a monad in the strict sense, because |p| and
@@ -990,7 +990,7 @@ result of the computation is captured by the |p| parameter of |IOL|,
 which is inherited by the specialised form of pair, |IORes| that an
 |IOL| computation returns.  All linearity checks are verified by the
 compiler, further reducing the size of the trusted code base.
-\subsection{Linearity and strictness}
+\subsection{Linearity and Strictness}
 
 It is tempting to assume that, since a linear function consumes its
 argument exactly once, then it must also be strict.  But not so!
@@ -1006,7 +1006,7 @@ consumed exactly once, and hence |x| is consumed exactly once.
 But |f| is certainly not strict: |f undefined| is not |undefined|.
 
 
-\section{\calc{}: a core calculus for \HaskeLL}
+\section{\calc{}: a Core Calculus for \HaskeLL}
 \label{sec:statics}
 \label{sec:calculus}
 
@@ -1098,7 +1098,7 @@ $p_1…p_n$; we write $π[π_1…π_n]$ for the substitution of $p_i$ by
 $π_i$ in $π$.
 
 % -------------------------------------------------
-\subsection{Static semantics}
+\subsection{Static Semantics}
 \label{sec:typing-contexts}
 
 %%% typing rule macros %%%
@@ -1245,7 +1245,7 @@ $(x :_ω A)+(x :_1 A) = x:_ω A$.
 Finally, abstraction and application for multiplicity polymorphism
 are handled straightforwardly by (m.abs) and (m.app).
 
-\subsection{Data constructors and case expressions}
+\subsection{Data Constructors and Case Expressions}
 \label{sec:typing-rules}
 
 The handling of data constructors and case expressions is a
@@ -1412,7 +1412,7 @@ reduce to a boolean test, is identical in either semantics.
 \end{theorem}
 
 
-\subsection{Design choices \& trade-offs}
+\subsection{Design Choices \& Trade-offs}
 \label{sec:design-choices}
 
 We could as well have picked different points in the design space for
@@ -1589,8 +1589,7 @@ In \fref{sec:industry}, we propose further applications for \HaskeLL, which we
 have not yet implemented, but which motivate this work.
 
 
-% \subsection{Serialised tree traversals}
-\subsection{Computing directly with serialised data}
+\subsection{Computing Directly with Serialised Data}
 %------------------------------------------------------------------
 \label{sec:cursors}
 
@@ -1708,7 +1707,7 @@ Next we consider an \textsc{API} for writing |Packed
 %
 In particular, can we also implement |pack| using a public interface?
 
-\subsubsection{Writing serialised data}
+\subsubsection{Writing Serialised Data}
 
 To create a serialised data constructor, we must write a tag, followed by the
 fields.
@@ -1811,7 +1810,7 @@ mapLeaves fn pt = newBuffer (extract ∘ go pt)
 \end{code}
 %\end{wrapfigure}
 
-\subsubsection{A version without linear types}\label{sec:st-cursors}
+\subsubsection{A Version Without Linear Types}\label{sec:st-cursors}
 
 How would we build the same thing in Haskell without linear types?  It may appear
 that the ST monad is a suitable choice:
@@ -1841,7 +1840,7 @@ turn need to have static, type-level identifiers.  That is, it would require
 {\em encoding} linearity after all, but in a way which would become very
 cumbersome as soon as several buffers are involved.
 
-\subsubsection{Benchmarking compiler optimisations}
+\subsubsection{Benchmarking Compiler Optimisations}
 \label{sec:cursor-benchmark}
 
 \begin{figure}
@@ -1929,7 +1928,7 @@ serialisation\footnote{A full, practical implementation should include growable
 At depth 20, one copy of the tree takes around 10MB, and towards the right half
 of the plot we see tree size exceeding cache size.
 
-\subsection{Sockets with type-level state}
+\subsection{Sockets with Type-Level State}
 \label{sec:sockets}
 
 The \textsc{bsd} socket \textsc{api} is a standard, if not \emph{the}
@@ -2008,7 +2007,7 @@ to the rules of a deterministic automaton. Each protocol can define
 it's own automaton, which is represented as a set of instances of
 a type class.
 
-\subsection{Pure bindings to impure \textsc{api}s}
+\subsection{Pure Bindings To Impure APIs}
 \label{sec:spritekit}
 
 In Haskell SpriteKit, \citet{chakravarty_spritekit_2017} have a different kind
@@ -2052,7 +2051,7 @@ the user of the interface, in order to enforced the above restriction.
 
 \section{Related work}
 \label{sec:related}
-\subsection{Linearity via arrows vs. linearity via kinds}
+\subsection{Linearity via Arrows vs. Linearity via Kinds}
 \label{sec:lin-arrow}
 
 There are two possible choices to indicate the distinction between
@@ -2172,7 +2171,7 @@ as explained in \fref{sec:linear-io}, the cost of the double negation
 almost entirely vanishes in the presence of an ambient monad.
 
 
-\subsection{Other variants of ``linearity on the arrow''}
+\subsection{Other Variants of ``Linearity on the Arrow''}
 \label{sec:related-type-systems}
 
 The \calc{} type system is heavily inspired from the work of
@@ -2210,7 +2209,7 @@ develops a Krivine-style realisability model for such a calculus. We are not
 aware of an account of Krivine realisability for lazy languages, hence
 this work is not directly applicable to \calc.
 
-\subsection{Uniqueness and ownership typing}
+\subsection{Uniqueness and Ownership Typing}
 \label{sec:uniqueness}
 
 The literature
@@ -2282,7 +2281,7 @@ linearity invariants is possible.
 Nevertheless, we discuss in \fref{sec:extending-multiplicities} how to
 extend \HaskeLL{} with borrowing.
 
-\subsection{Linearity via monads}
+\subsection{Linearity via Monads}
 
 \citet{launchbury_st_1995} taught us
 a conceptually simple approach to lifetimes: the |ST| monad. It has
@@ -2361,9 +2360,9 @@ comprehensive as Idris's. But it is conceivable to implement such an
 indexed monad transformer in Haskell. However, this is not an easy task,
 and we can anticipate that the error messages would be hard to stomach.
 
-\section{Future work}
+\section{Future Work}
 
-\subsection{Controlling program optimisations}
+\subsection{Controlling Program Optimisations}
 \label{sec:fusion}
 Inlining is a cornerstone of program optimisation, exposing
 opportunities for many program transformations. Yet not every function can
@@ -2390,7 +2389,7 @@ cardinality \emph{declarations}. Formalising and implementing the
 integration of multiplicities in the cardinality analysis is
 left as future work.
 
-\subsection{Extending multiplicities}
+\subsection{Extending Multiplicities}
 \label{sec:extending-multiplicities}
 
 For the sake of this article, we use only multiplicities
@@ -2432,7 +2431,7 @@ the program. In particular, it is clear that calls within the argument
 of |borrow| are not tail: a shortcoming of borrowing that we mentioned
 in \fref{sec:uniqueness}.
 
-\subsection{Future industrial applications}
+\subsection{Future Industrial Applications}
 \label{sec:industry}
 Our own work in an industrial context triggered our efforts to add
 linear types to \textsc{ghc}. We were originally motivated by
@@ -2574,7 +2573,7 @@ capabilities for safe, compiler-checked use, within pure code.
 %% Appendix
 \clearpage
 \appendix
-\section{Semantics and soundness of \calc{}}
+\section{Semantics and Soundness of \calc{}}
 \label{appendix:dynamics}
 
 In accordance with our stated goals in \fref{sec:introduction}, we are
@@ -2640,7 +2639,7 @@ $a⇓?$. We call $a⇓^*b$ the \emph{partial evaluation relation}, and, by
 contrast, $a⇓b$ is sometimes referred to as the the \emph{complete
   evaluation relation}.
 
-\subsection{Ordinary semantics}
+\subsection{Ordinary Semantics}
 
 Our semantics, which we often call \emph{ordinary} to constrast it
 with the denotational semantics of \fref{sec:denotational}, follows
@@ -2771,7 +2770,7 @@ The details of the ordinary evaluation relation are given in
   \label{fig:dynamics}
 \end{figure}
 
-\subsection{Denotational semantics}
+\subsection{Denotational Semantics}
 \label{sec:denotational}
 
 \begin{figure}
@@ -3020,7 +3019,7 @@ will only consider the evaluation of well-typed states.
   \end{itemize}
 \end{proof}
 
-\subsection{Bisimilarity and all that}
+\subsection{Bisimilarity and All That}
 \label{sec:bisimilarity}
 
 The crux of our metatheory is that the two semantics are
