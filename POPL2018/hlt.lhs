@@ -1664,10 +1664,18 @@ registers:
   read :: Storable a => Packed (a~:r) ⊸ (a, Packed r)
 \end{code}
 
-\pagebreak % for alignment
+\ifx\longversion\undefined{
+  \pagebreak % for alignment
+}
+\else{}
+\fi
 
 \begin{wrapfigure}[8]{r}[0pt]{7.0cm} % lines, placement, overhang, width
-\vspace{-2mm}
+\ifx\longversion\undefined
+{\vspace{-2mm}}
+\else
+{\vspace{-5mm}}
+\fi
 \begin{code}
 sumLeaves :: Packed ~[Tree] -> Int
 sumLeaves p = fst (go p)
