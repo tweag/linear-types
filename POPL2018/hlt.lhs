@@ -220,14 +220,23 @@
 
 \begin{document}
 
+\newcommand{\thetitle}{Linear Haskell}
+\newcommand{\thesubtitle}{Practical Linearity in a Higher-Order Polymorphic Language}
+\newcommand{\headingtitle}{\thetitle: \thesubtitle}
+
 %% Title information
-\title{Linear Haskell}       %% [Short Title] is optional;
-                                        %% when present, will be used in
-                                        %% header instead of Full Title.
+\title[\headingtitle]{\thetitle}
+   %% [Short Title] is optional;
+   %% when present, will be used in
+   %% header instead of Full Title.
+% note: the mandated style in headers is Title: Subtitle. The [short
+% title] option is used to make the header compliant
+
+
 % \titlenote{with title note}             %% \titlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
-\subtitle{Practical Linearity in a Higher-Order Polymorphic Language}                     %% \subtitle is optional
+\subtitle{\thesubtitle}                     %% \subtitle is optional
 % \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
