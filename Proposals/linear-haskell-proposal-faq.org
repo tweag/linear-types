@@ -109,7 +109,7 @@ complication.
 
 Nevertheless, affine types are sufficient for abstractions based on
 ownership, as long as you don't care about prompt deallocation
-(mutable arrays on the GC heap are a good exemple).
+(mutable arrays on the GC heap are a good example).
 
 To recover prompt deallocation, Rust relies on bespoke mechanism
 (lifetime analysis) and code generation to an essentially linear
@@ -118,10 +118,10 @@ Haskell at the moment.
 
 Use-cases which do not rely on uniqueness, such as Samuel Gelinaux's
 [[https://www.spiria.com/en/blog/desktop-software/making-non-manifold-models-unrepresentable][3D-printable model example]] (which he also implemented with our
-prototype [[https://github.com/gelisam/linear-examples][here]]) may not accomodate affinity so well.
+prototype [[https://github.com/gelisam/linear-examples][here]]) may not accommodate affinity so well.
 
 Offering affine types in addition to linear types would probably be
-worthwhile but we prefer to focus on the simples core. And add more
+worthwhile but we prefer to focus on the minimal core. And add more
 multiplicities in a later proposal.
 
 * Do linear types guarantee resource safety?
@@ -130,7 +130,7 @@ No. Linear types only gives a type to functions which consume their
 argument exactly once when their result is consumed exactly once.
 
 Having linear types is powerful, and makes it possible to write
-[[resource-safe abstractions]]. But this is not an intrinseque quality of
+[[resource-safe abstractions]]. But this is not an intrinsic quality of
 the type system.
 
 * Will base be modified to use linear types?
@@ -144,11 +144,11 @@ functions is well-validated before it is submitted for integration.
 
 * Will adding linear types fragment the libraries ecosystem?
 
-The centerpiece of our design is to avoid most code
+The centrepiece of our design is to avoid most code
 duplication. Crucially the same types can be used in linear and
 non-linear contexts. In particular our [[https://github.com/tweag/linear-base/][~linear-base~]] library uses the
-same types as ~base~. So libraries developped with ~linear-base~ will
-be compatible with libraries developped with ~base~.
+same types as ~base~. So libraries developed with ~linear-base~ will
+be compatible with libraries developed with ~base~.
 
 Of course, some functionality may be duplicated to leverage linear
 types. But we except less duplication and fragmentation than
