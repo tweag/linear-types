@@ -77,7 +77,7 @@ a linear type. It should be typed as follows:
     :: Exception e
     => IO (Unrestricted a) -> (e -> IO (Unrestricted a)) -> IO (Unrestricted a)
 #+END_SRC
-It means that neither the body nor the handler of ~catch~ can capture
+This means that neither the body nor the handler of ~catch~ can capture
 linear variables. Otherwise, you could lose track of them.
 
 If, say, the body of ~catch~ was linear, we could write:
