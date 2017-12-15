@@ -164,9 +164,10 @@ Not at first. When it happens it will be as a separate proposal to the
 Core library Committee (CLC), if at all.
 
 Before we are ready to make a proposal, users should put linear types
-to work and share idioms via a [[https://github.com/tweag/linear-base/][linearly typed library]], driven by the
-ecosystem. Anyone could, in a future proposal to the CLC, propose for
-some of these idioms to be standardized in base.
+to work and share idioms via a [[https://github.com/tweag/linear-base/][linearly typed library]], uploaded to
+Hackage, and driven by the ecosystem. Anyone could, in a future
+proposal to the CLC, propose for some of these idioms to be
+standardized in base.
 
 * Will adding linear types fragment the libraries ecosystem?
 
