@@ -3,6 +3,11 @@
 #
 # CHANGES
 #
+# v0.1.7
+# ------
+#
+# - Ship stack 1.6.1
+#
 # v0.1.6
 # ------
 #
@@ -44,3 +49,15 @@ RUN apt-get update -y && \
     rm -rf $GHCBUILD && \
     apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7 $SYSBUILDDEPS # && \
     rm -rf /var/lib/apt/lists/*
+
+# XXX: the next layer is a temporary workaround waiting for upstream
+# images to ship in haskell images: see
+# https://github.com/freebroccolo/docker-haskell/issues/65 )
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -f /usr/local/bin/stack && \
+    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v1.6.1/stack-1.6.1-linux-x86_64-static.tar.gz -o stack.tar.gz && \
+    tar -xf stack.tar.gz -C /usr/local/bin --strip-components=1 && \
+    /usr/local/bin/stack config set system-ghc --global true && \
+    apt-get purge -y --auto-remove curl && \
+    rm -rf  /var/lib/apt/lists/* /stack.tar.gz
