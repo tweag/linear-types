@@ -104,8 +104,8 @@ only partial.
 
 In fact, linear functions have the property that if their result is
 consumed with multiplicity X, then their argument is also consumed
-with multiplicity X. Whatever choice of multiplicity we add to the
-language. Which can be internalised in the language as follows
+with multiplicity X. Whatever we choose X to mean. Which can be
+internalised in the language as follows
 #+BEGIN_SRC haskell
   data Mult (p :: Multiplicity) (a :: *) where
     Mult :: a :p-> Multp p a
