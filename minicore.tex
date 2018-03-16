@@ -280,6 +280,8 @@ See \fref{fig:typing}.\improvement{Explain in English the basic idea
 
 \section{Examples}
 
+\subsection{Equations}
+
 Take, as an example, the following Linear Haskell function:
 \begin{verbatim}
 data Colour = { Red; Green; Blue }
@@ -318,6 +320,60 @@ This is well typed because (focusing on the case of \verb+p2+)
 This example illustrates that, even in a multi-argument equation
 setting, the compiled code is linear when all the equations,
 individually, are linear.
+
+\subsection{Unrestricted fields}
+
+The following is well-typed:
+\begin{verbatim}
+data Foo where
+  Foo :: A ->. B -> C
+
+f = \ (x ::('One) Foo) ->
+  case(1) x of z
+  { Foo a b -> (z, b) }
+\end{verbatim}
+It is well typed because
+\begin{itemize}
+\item $a$ is a linear field, hence imposes that the multiplicity of
+  $a$ (here $0$) and the multiplicity of the case binder $z$
+  (here $1$) sum to $1$, which holds
+\item $b$ is an unrestricted field, hence imposes that the
+  multiplicity of $b$ ($1$) plus $ω$ times the multiplicity of $z$
+  ($1$) equals $ω$ (times $1$ since this is a linear case). That is
+  $1+ω1=ω$ which holds.
+\end{itemize}
+
+\subsection{Wildcard}
+
+The following is ill-typed
+\begin{verbatim}
+f = \ (x ::('One) Foo) ->
+  case(1) x of z
+  { WILDCARD -> True }
+\end{verbatim}
+Because the multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
+multiplicity of the case binder $z$ ($0$) does not equal $1$.
+
+This follows intuition as $x$ really isn't being consumed ($x$ is forced
+to head normal form, but if it has subfield they will never get
+normalised, hence this program is rightly rejected).
+
+This also follows our intended semantics, as $f$ amounts to
+duplicating a value of an arbitrary type, which is not possible in
+general.
+
+\subsection{Duplication}
+
+The following is ill-typed
+\begin{verbatim}
+data Foo = Foo A
+
+f = \ (x ::('One) Foo) ->
+  case(1) x of z
+  { Foo a -> (z, a) }
+\end{verbatim}
+Because both $z$ and $a$ are used in the branch, hence their
+multiplicities sum to $ω$, but it should be $1$.
 
 \section{Typechecking linear Mini-Core}
 
