@@ -162,6 +162,9 @@ In Core, it has an additional binder
 $$
 \casebind t z {c_k  x₁ … x_{n_k} → u_k}
 $$
+\improvement{Case expressions don't need to have all the
+  constructors. They can also have a wildcard pattern, which we need
+  to explain.}
 
 The additional variable $z$, called the case binder, is used in a
 variety of optimisation passes, and also represents variable patterns.
@@ -274,6 +277,47 @@ See \fref{fig:typing}.\improvement{Explain in English the basic idea
   \caption{Typing rules}
   \label{fig:typing}
 \end{figure}
+
+\section{Examples}
+
+Take, as an example, the following Linear Haskell function:
+\begin{verbatim}
+data Colour = { Red; Green; Blue }
+
+f :: Colour ->. Colour ->. Colour
+f Red q = q
+f p Green = p
+f Blue q = q
+\end{verbatim}
+This is compiled in Core as
+\begin{verbatim}
+f = \ (p ::('One) Colour) (q ::('One) Colour) ->
+  case(1) p of p2
+  { Red -> q;
+    WILDCARD ->
+     case(1) q of q2
+     { Green -> p2;
+     WILDCARD ->
+       case(1) p2 of p3 { Blue -> q2 }
+  }}
+\end{verbatim}
+This is well typed because (focusing on the case of \verb+p2+)
+\begin{itemize}
+\item In the \verb+Red+ branch, no variables are introduced by the
+  constructor\improvement{There maybe be a missing bit here, in the rules,
+    as typeset, this also means that I can use p2
+    unrestrictedly. This does not actually seem incorrect, surprising
+    thought it is, but it may be worth checking. }
+\item In the \verb+WILDCARD+ branch, we see \verb+WILDCARD+ as a
+  variable which can't be referenced, from the rules we get that the
+  multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
+  multiplicity of \verb+p2+ must be $1$. Which is the case as $p2$ is
+  used linearly in each branch.
+\end{itemize}
+
+This example illustrates that, even in a multi-argument equation
+setting, the compiled code is linear when all the equations,
+individually, are linear.
 
 \section{Typechecking linear Mini-Core}
 
