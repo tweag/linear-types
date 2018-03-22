@@ -253,9 +253,16 @@ The syntax is modified to include case binders. See
 \subsection{Static Semantics}
 \label{sec:typing-contexts}
 
-See \fref{fig:typing}.\improvement{Explain in English the basic idea
-  of the case rule with case binder.}\improvement{Todo: typing rule for
+See \fref{fig:typing}.\improvement{Todo: typing rule for
   wildcard pattern.}
+
+Explanation of the case rule. We make sure that every field $x$ is
+used appropriately. The scrutinee comes with multiplicity $π$, and
+thus each $x$ has to have $πμ$ usages. But each use of the scrutinee
+variable $z$ causes $νμ$ usages of $x$. Thus, the constraint
+$ρ+νμ=πμ$. (Note: if there is no field, then we're always good; the
+tag of the constructor is forced, and thus it does not matter how many
+times we use $z$.)
 
 
 %%% typing rule macros %%%
@@ -295,7 +302,7 @@ See \fref{fig:typing}.\improvement{Explain in English the basic idea
   \end{mathpar}
 
   \caption{Typing rules.
-  In the case rule: the scrutinee comes with multiplicity $π$, and thus each $x$ has to be used with multiplicity $πμ$. But; each use of the scrutinee variable causes $νμ$ usages $x$. Thus, the constraint $ρ+νμ=πμ$.
+
 
 }
   \label{fig:typing}
