@@ -444,7 +444,7 @@ The typechecking algorithm, $\typeof{t}$, takes as an input a Linear
 Core term $t$, and returns a pair of
 \begin{itemize}
 \item The type of the term
-\item A mapping of every variable to its multiplicity\jp{minimal multiplicity? (in the sense of $ρ ⩽ π$)}
+\item A mapping of every variable to its number of usages ($ρ$). Later on we check that usages are compatible with the declared multiplicity $π$. ($ρ ⩽ π$)
 \end{itemize}
 
 We assume that the variables are properly $α$-renamed, so that there
