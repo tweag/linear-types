@@ -269,16 +269,12 @@ times we use $z$.)
 \improvement{Use a named substitution instead of directly $[π_1…π_n]$,
   in the case rule. For clarity.}
 \improvement{Define multiplicity equality as a judgement.}
-\improvement{Well-typedness of case alternatives as a separate judgement}
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
-      Δ, z:_{ν_k} D~π_1~…~π_n, x₁:_{ρ_1} A_i, …, x_{n_k}:_{ρ_{n_k}} A_{n_k} ⊢ u_k : C \\
-      ρ_1+ν_kμ_1[π_1…π_n]=πμ_1[π_1…π_n]\quad…\quad ρ_{n_k}+ν_kμ_{n_k}[π_1…π_n]=πμ_{n_k}[π_1…π_n]\\
-      \text{$c_k : ∀p₁…p_n. A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}\\
-      \text{for each $1 ⩽ k ⩽ m$}}
+      \text{$Δ ⊢_π c_k  x₁ … x_{n_k} → u_k : C$ for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
@@ -291,9 +287,9 @@ times we use $z$.)
 
     \apprule
 
-    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c_k : A_1 →_{μ_1} … →_{μ_{n-1}}
+    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c : A_1 →_{μ_1} … →_{μ_{n-1}}
         A_n →_{μ_n} D~p_1~…~p_n$ constructor}}
-    {ωΓ+\sum_i μ_i[π₁…π_n]Δ_i ⊢ c_k  t₁ … t_n : D~π₁~…~π_n}\text{con}
+    {ωΓ+\sum_i μ_i[π₁…π_n]Δ_i ⊢ c  t₁ … t_n : D~π₁~…~π_n}\text{con}
 
     \caserule
 
@@ -305,6 +301,12 @@ times we use $z$.)
 
     \inferrule{Γ ⊢ t :  ∀p. A}
     {Γ ⊢ t π  :  A[π/p]}\text{m.app}
+
+    \inferrule{
+      \text {$c : A_1 →_{μ_1} … →_{μ_{r-1}} A_n →_{μ_n} D~p_1~…~p_r$ constructor}\\
+      Δ, z:_{ν} D π_1…π_n, x₁:_{ρ_1} A_i, …, x_{n}:_{ρ_{n}} A_{n} ⊢ u : C \\
+      ρ_1+νμ_1[π_1…π_r]=πμ_1[π_1…π_r]\quad…\quad ρ_{n}+νμ_{n}[π_1…π_r]=πμ_{n}[π_1…π_r]
+    }{Γ ⊢_π c  x₁ … x_{n} → u : C}
   \end{mathpar}
 
   \caption{Typing rules.}
@@ -328,13 +330,13 @@ f Blue q = q
 This is compiled in Core as
 \begin{verbatim}
 f = \ (p ::('One) Colour) (q ::('One) Colour) ->
-  case(1) p of p2
+  case p of (p2 ::('One) Colour)
   { Red -> q;
     WILDCARD ->
-     case(1) q of q2
+     case q of (q2 ::('One) Colour)
      { Green -> p2;
      WILDCARD ->
-       case(1) p2 of p3 { Blue -> q2 }
+       case p2 of (p3 ::('One) Colour) { Blue -> q2 }
   }}
 \end{verbatim}
 This is well typed because (focusing on the case of \verb+p2+)
