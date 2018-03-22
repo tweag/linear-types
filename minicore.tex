@@ -294,7 +294,10 @@ See \fref{fig:typing}.\improvement{Explain in English the basic idea
     {Γ ⊢ t π  :  A[π/p]}\text{m.app}
   \end{mathpar}
 
-  \caption{Typing rules}
+  \caption{Typing rules.
+  In the case rule: the scrutinee comes with multiplicity $π$, and thus each $x$ has to be used with multiplicity $πμ$. But; each use of the scrutinee variable causes $νμ$ usages $x$. Thus, the constraint $ρ+νμ=πμ$.
+
+}
   \label{fig:typing}
 \end{figure}
 
