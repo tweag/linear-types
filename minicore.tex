@@ -197,6 +197,8 @@ usual. This is equivalent to having an exhaustive case expression, with
 
 \section{Linear Mini-Core}
 
+\improvement{Modify syntax to put the $π$ on the column.}
+
 \subsection{Syntax}
 \newcommand{\pip}{\kern 1.18em || }
 \label{sec:syntax}
@@ -264,14 +266,18 @@ $ρ+νμ=πμ$. (Note: if there is no field, then we're always good; the
 tag of the constructor is forced, and thus it does not matter how many
 times we use $z$.)
 
+\improvement{Use a named substitution instead of directly $[π_1…π_n]$,
+  in the case rule. For clarity.}
+\improvement{Define multiplicity equality as a judgement.}
+\improvement{Well-typedness of case alternatives as a separate judgement}
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
-      Δ, z:_ν D~π_1~…~π_n, x₁:_{πρ_1} A_i, …, x_{n_k}:_{πρ_{n_k}} A_{n_k} ⊢ u_k : C \\
-      ρ_1+νμ_1[π_1…π_n]=πμ_1[π_1…π_n]\quad…\quad ρ_{n_k}+νμ_{n_k}[π_1…π_n]=πμ_{n_k}[π_1…π_n]\\
-      \text{$c_k : A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}\\
+      Δ, z:_{ν_k} D~π_1~…~π_n, x₁:_{ρ_1} A_i, …, x_{n_k}:_{ρ_{n_k}} A_{n_k} ⊢ u_k : C \\
+      ρ_1+ν_kμ_1[π_1…π_n]=πμ_1[π_1…π_n]\quad…\quad ρ_{n_k}+ν_kμ_{n_k}[π_1…π_n]=πμ_{n_k}[π_1…π_n]\\
+      \text{$c_k : ∀p₁…p_n. A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}\\
       \text{for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
@@ -407,7 +413,7 @@ multiplicities sum to $ω$, but it should be $1$.
 
 \newcommand{\type}[1]{\mathsf{type}(#1)}
 \newcommand{\mult}[1]{\mathsf{mult}(#1)}
-\newcommand{\typeof}[1]{\mathsf{typeOf}(#1)}
+\newcommand{\typeof}[1]{\mathsf{lint}(#1)}
 
 It may appear that typechecking the case rule requires guessing
 multiplicities $ν$ and $ρ_i$ so that they verify the appropriate
