@@ -260,13 +260,32 @@ The syntax is modified to include case binders. See
 See \fref{fig:typing}.\improvement{Todo: typing rule for
   wildcard pattern.}
 
-Explanation of the case rule. We make sure that every field $x$ is
-used appropriately. The scrutinee comes with multiplicity $π$, and
-thus each $x$ has to have $πμ$ usages. But each use of the scrutinee
-variable $z$ causes $νμ$ usages of $x$. Thus, the constraint
-$ρ+νμ=πμ$. (Note: if there is no field, then we're always good; the
+\paragraph{Typing case alternatives}
+
+The meaning of a case expression with multiplicity $π$ is that
+consuming the resulting value of the case expression exactly once,
+will consume the scrutinee with multiplicity $π$ (that is: exactly
+once if $π=1$ and without any restriction if $π=ω$). This $π$ is the
+subscript in $⊢_π$ in the alternative typing judgement.
+
+To consume the scrutiny with multiplicity $π$, we must, by definition,
+consume every field $x$, whose multiplicity, as a field, is $μ$, with
+multiplicity $πμ$.
+
+This is where the story ends in \calc{}. But, in Linear Core, we can
+also use the case binder. Every time the case binder $z$ (which stands
+for the scrutinee) is consumed once, we consume, implicitly, $x$ with
+multiplicity $μ$. Therefore the multiplicity of $x$ plus $μ$ times the
+multiplicity of $z$ must equal $πμ$. Which is what $ρ+νμ = πμ$ stands
+for in the rule.
+
+There is one such constraint per field. And, since $μ$ can be
+parametric, a substitution $σ$ is applied.
+
+Note: if the constructor $c$ has no field, then we're always good; the
 tag of the constructor is forced, and thus it does not matter how many
-times we use $z$.)
+times we use $z$.\improvement{We may try and make this argument
+  clearer, but I don't have an idea for the moment}
 
 \improvement{Define multiplicity equality as a judgement.}
 
@@ -488,3 +507,5 @@ The algorithm is as follows (main cases only):\improvement{Explain multiplicity
 % Local Variables:
 % ispell-local-dictionary: "british"
 % End:
+
+%  LocalWords:  scrutinee
