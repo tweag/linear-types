@@ -61,6 +61,7 @@
 \newcommand{\fin}{ \mathsf{in} }
 \newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
+\newcommand{\wildcard}{\_}
 
 %% Metatheory
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
@@ -163,9 +164,6 @@ In Core, it has an additional binder
 $$
 \casebind t z {c_k  x₁ … x_{n_k} → u_k}
 $$
-\improvement{Case expressions don't need to have all the
-  constructors. They can also have a wildcard pattern, which we need
-  to explain.}
 
 The additional variable $z$, called the case binder, is used in a
 variety of optimisation passes, and also represents variable patterns.
@@ -178,6 +176,24 @@ at the same time as the variables from the pattern: it would violate
 linearity. Additionally the case binder is typically used with
 different multiplicity in different branches. And all these rules must
 also handle the case where $π$ is chosen to be a variable $p$.
+
+\subsection{Case branches}
+
+Branches of a case expression, in Core, differ from the article
+description of \calc{} in two ways.
+\begin{description}
+\item[Non-exhaustive] The left-hand-side of branches, in Core, need to be
+  distinct constructors, but, contrary to \calc{}, Core doesn't
+  require that the case expression be exhaustive: there may be missing
+  patterns.
+\item[Wildcard] The left-hand side of one of the branches can be a
+  wildcard pattern, written $\wildcard$.
+\end{description}
+
+Non-exhaustive case expressions do not cause any additional problem:
+pattern-matching failure simply raise an imprecise exception as
+usual. This is equivalent to having exhaustive case expression, with
+\verb+error+ as their right-hand side.
 
 \section{Linear Mini-Core}
 
@@ -238,7 +254,9 @@ The syntax is modified to include case binders. See
 \label{sec:typing-contexts}
 
 See \fref{fig:typing}.\improvement{Explain in English the basic idea
-  of the case rule with case binder.}
+  of the case rule with case binder.}\improvement{Todo: typing rule for
+  wildcard pattern.}
+
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
@@ -246,7 +264,8 @@ See \fref{fig:typing}.\improvement{Explain in English the basic idea
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
       Δ, z:_ν D~π_1~…~π_n, x₁:_{πρ_1} A_i, …, x_{n_k}:_{πρ_{n_k}} A_{n_k} ⊢ u_k : C \\
       ρ_1+νμ_1[π_1…π_n]=πμ_1[π_1…π_n]\quad…\quad ρ_{n_k}+νμ_{n_k}[π_1…π_n]=πμ_{n_k}[π_1…π_n]\\
-      \text{for each $c_k : A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}}
+      \text{$c_k : A_1 →_{μ_1} … →_{μ_{n_k-1}} A_{n_k} →_{μ_{n_k}} D~p_1~…~p_n$}\\
+      \text{for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
