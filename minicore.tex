@@ -392,14 +392,34 @@ Linear Core.
 
 \subsection{Representation}
 
-Core, in \textsc{ghc}, attaches its type to every variable (let's call
+Core, in \textsc{ghc}, attaches its type to every variable $x$ (let's call
 it $\type{x}$). Similarly, in Linear Core, variables come with a
-multiplicity ($\mult{x}$). Contrary to $\type{x}$, which is used both
-at binding and call sites, $\mult{x}$ will only be used\jp{What does ``used'' mean in this context? In the algorithm it seems that every occurence of $x$ refers to $\mult{x}$. Perhaps this is a mistake?} at binding
-site.
+multiplicity ($\mult{x}$).
 
-The multiplicity index on a case expression is represented by
-$\mult{z}$, where $z$ is the case-binder.
+\begin{itemize}
+\item $λ_π x : A. u$ is represented as $λ x. u$ such that $\type{x}=A$
+  and $\mult{x} = π$
+\item $\casebind[π] u z {…}$ is represented as
+  $\casebind u z {…}$ such that $\mult{z}=π$
+\end{itemize}
+
+Contrary to $\type{x}$, which is used both at binding and call sites,
+$\mult{x}$ will only be used\jp{What does ``used'' mean in this
+  context? In the algorithm it seems that every occurence of $x$
+  refers to $\mult{x}$. Perhaps this is a mistake?} at binding site.
+
+\subsection{Terminology \& notations}
+
+A mapping is a finite-support partial function.\improvement{Explain
+  sum, scaling, and join for mapping.}
+\begin{itemize}
+\item We write $k ↦ v$ for the mapping defined only on $k$, with value
+  $v$.
+\item For two mapping $m₁$ and $m₂$ \emph{with disjoint supports}, we
+  write $m₁,m₂$ for the mapping defined the obvious way on the union
+  of their supports.
+\end{itemize}
+
 
 \subsection{Algorithm sketch}
 
@@ -410,12 +430,14 @@ Core term $t$, and returns a pair of
 \item A mapping of every variable to its multiplicity\jp{minimal multiplicity?}
 \end{itemize}
 
-The algorithm is as follows (main cases only):\improvement{Explain
-  sum, scaling, and join for mapping. Explain multiplicity
+We assume that the variables are properly $α$-renamed, so that there
+is no variable shadowing.
+
+The algorithm is as follows (main cases only):\improvement{Explain multiplicity
   ordering. Explain how zero-usage is handled. Explain how empty cases
   are handled.}
 \begin{itemize}
-\item $\typeof{x} = (\type{x}, x ↦ \mult{x})$ \jp{shouldn't it be  $x ↦ 1$ ?}
+\item $\typeof{x} = (\type{x}, x ↦ 1)$
 \item $\typeof{u v} = (B, m_u + πm_v)$ where
   $(A →_π B, m_u)=\typeof{u}$ and $(A, m_v)=\typeof{v}$
 \item $\typeof{λ_π x : A. u}=(A →_π B, m)$ where $(B, (x ↦ ρ, m)) =
@@ -424,8 +446,9 @@ The algorithm is as follows (main cases only):\improvement{Explain
       v_k}}=(A,πm_u + ⋁_{k=1}^m m_k)$, where the $c_k : B_1^k
   →_{μ_1^k} … B_{n_k}→_{μ_{n_k}^k} → D$ are constructors of
   the data type $D$, $(m_u, D) = \typeof{u}$, $(A, (z ↦ ν^k, x_1 ↦
-  ρ_1^k, …, {ρ}_{n_k}^k, m_k)) = \typeof{v_k}$ and $ρ_i^k+ν^kμ_i^k =
-  πμ_i^k$ for all $i$ and $k$.\jp{brain explodes, what about giving one or two special cases for $c_k$ types?}
+  ρ_1^k, …, {ρ}_{n_k}^k, m_k)) = \typeof{v_k}$ and $ρ_i^k+ν^kμ_i^k ⩽
+  πμ_i^k$ for all $i$ and $k$.\jp{brain explodes, what about giving
+    one or two special cases for $c_k$ types?}
 \end{itemize}
 
 \end{document}
