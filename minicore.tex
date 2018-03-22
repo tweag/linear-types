@@ -340,10 +340,7 @@ f = \ (p ::('One) Colour) (q ::('One) Colour) ->
 This is well typed because (focusing on the case of \verb+p2+)
 \begin{itemize}
 \item In the \verb+Red+ branch, no variables are introduced by the
-  constructor\improvement{There maybe be a missing bit here, in the rules,
-    as typeset, this also means that I can use p2
-    unrestrictedly. This does not actually seem incorrect, surprising
-    thought it is, but it may be worth checking. }
+  constructor.
 \item In the \verb+WILDCARD+ branch, we see \verb+WILDCARD+ as a
   variable which can't be referenced, from the rules we get that the
   multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
