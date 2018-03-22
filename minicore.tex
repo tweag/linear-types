@@ -265,8 +265,8 @@ See \fref{fig:typing}.\improvement{Todo: typing rule for
 The meaning of a case expression with multiplicity $π$ is that
 consuming the resulting value of the case expression exactly once,
 will consume the scrutinee with multiplicity $π$ (that is: exactly
-once if $π=1$ and without any restriction if $π=ω$). This $π$ is the
-subscript in $⊢_π$ in the alternative typing judgement.
+once if $π=1$ and without any restriction if $π=ω$). This is the $π$
+in $⊢_π^σ$ in the alternative typing judgement.
 
 To consume the scrutiny with multiplicity $π$, we must, by definition,
 consume every field $x$, whose multiplicity, as a field, is $μ$, with
@@ -293,7 +293,8 @@ times we use $z$.\improvement{We may try and make this argument
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
-      \text{$Δ ⊢_π c_k  x₁ … x_{n_k} → u_k : C$ for each $1 ⩽ k ⩽ m$}}
+      σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
+      \text{$Δ ⊢_π^σ c_k  x₁ … x_{n_k} → u_k : C$ for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
 %%% /macros %%%
 
@@ -324,10 +325,9 @@ times we use $z$.\improvement{We may try and make this argument
 
     \inferrule{
       \text {$c : A_1 →_{μ_1} … →_{μ_{r-1}} A_n →_{μ_n} D~p_1~…~p_r$ constructor}\\
-      σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
-      Δ, z:_{ν} D π_1…π_n, x₁:_{ρ_1} A_i, …, x_{n}:_{ρ_{n}} A_{n} ⊢ u : C \\
+      Δ, z:_{ν} \substituted{(D p_1…p_n)}{σ}, x₁:_{ρ_1} A_i, …, x_{n}:_{ρ_{n}} A_{n} ⊢ u : C \\
       ρ_1+ν\substituted{μ_1}{σ}=π\substituted{μ_1}{σ}\quad…\quad ρ_{n}+ν\substituted{μ_{n}}{σ}=π\substituted{μ_{n}}{σ}
-    }{Γ ⊢_π c  x₁ … x_{n} → u : C}
+    }{Γ ⊢_π^σ c  x₁ … x_{n} → u : C}\text{alt.constructor}
   \end{mathpar}
 
   \caption{Typing rules.}
