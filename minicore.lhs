@@ -1,3 +1,5 @@
+% -*- latex -*-
+
 \documentclass{article}
 
 \usepackage[backend=biber,citestyle=authoryear,style=alphabetic]{biblatex}
@@ -46,11 +48,49 @@
 \frefformat{plain}{\fancyrefappendixlabelprefix}{{\frefappendixname}\fancyrefdefaultspacing#1}
 \Frefformat{plain}{\fancyrefappendixlabelprefix}{{\Frefappendixname}\fancyrefdefaultspacing#1}
 
+%% Lhs2tex
+
+%include polycode.fmt
+%format .         = ". "
+%format forall a         = "∀" a
+%format _ (a)         = "_{" a "}"
+%format subscript (a)         = "\!\!_{" a "}"
+%format ω = "\omega"
+%format π = "\pi"
+%format ρ = "\rho"
+%format ⅋ = "\parr"
+%format :-> = ":↦"
+%format ->. = "⊸"
+%format DataPacked = "\Conid{Data.Packed}"
+%subst keyword a = "\mathsf{" a "}"
+%format mediumSpace = "\hspace{0.6cm}"
+%format bigSpace = "\hspace{2cm}"
+%format allocT = "alloc_T"
+%format freeT = "free_T"
+%format copyT = "copy_T"
+%format IOL = "\varid{IO}_{\varid{L}}"
+%format returnIOL = "\varid{return}_{\varid{IO}_{\varid{L}}}"
+%format bindIOL = "\varid{bind}_{\varid{IO}_{\varid{L}}}"
+%format `bindIOL` = "~`" bindIOL "\!`\,{}~"
+%format unIOL = "\varid{unIO}_{\varid{L}}"
+%format forM_ = "\varid{forM}\_"
+%format mapM_ = "\varid{mapM}\_"
+%format WILDCARD = "\_"
+%format __ = "\_"
+%format ~ = "\mathop{{\kern 1pt}''}"
+%format ~: = "\mathop{{\kern 1pt}''\!\!:}"
+\renewcommand\Varid[1]{\mathord{\textsf{#1}}}
+\renewcommand\Conid[1]{\mathord{\textsf{#1}}}
+%subst keyword a = "\mathbf{" a "}"
+
+%% /lhs2tex
+
 \usepackage{xspace}
 \newcommand{\ghc}{\textsc{ghc}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
 
+%% Metatheory
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\casebind}[4][]{\mathsf{case}_{#1} #2 \mathsf{of} #3 \{#4\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -65,7 +105,6 @@
 
 \newcommand{\substXWithU}[2]{#2/#1}
 \newcommand{\substituted}[2]{#1[#2]}
-%% Metatheory
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
@@ -354,26 +393,26 @@ times we use $z$.\improvement{We may try and make the argument in this note
 \subsection{Equations}
 
 Take, as an example, the following Linear Haskell function:
-\begin{verbatim}
+\begin{code}
 data Colour = { Red; Green; Blue }
 
 f :: Colour ->. Colour ->. Colour
-f Red q = q
-f p Green = p
-f Blue q = q
-\end{verbatim}
+f  Red   q      = q
+f  p     Green  = p
+f  Blue  q      = q
+\end{code}
 This is compiled in Core as
-\begin{verbatim}
-f = \ (p ::('One) Colour) (q ::('One) Colour) ->
-  case p of (p2 ::('One) Colour)
-  { Red -> q;
-    WILDCARD ->
-     case q of (q2 ::('One) Colour)
-     { Green -> p2;
-     WILDCARD ->
-       case p2 of (p3 ::('One) Colour) { Blue -> q2 }
+\begin{code}
+f = \ (p ::(~One) Colour) (q ::(~One) Colour) ->
+  case p of (p2 ::(~One) Colour)
+  { Red       -> q
+  ; WILDCARD  ->
+      case q of (q2 ::(~One) Colour)
+      { Green     -> p2
+      ; WILDCARD  ->
+          case p2 of (p3 ::(~One) Colour) { Blue -> q2 }
   }}
-\end{verbatim}
+\end{code}
 This is well typed because (focusing on the case of \verb+p2+)
 \begin{itemize}
 \item In the \verb+Red+ branch, no variables are introduced by the
@@ -392,14 +431,14 @@ individually, are linear.
 \subsection{Unrestricted fields}
 
 The following is well-typed:
-\begin{verbatim}
+\begin{code}
 data Foo where
   Foo :: A ->. B -> C
 
-f = \ (x ::('One) Foo) ->
-  case(1) x of z
+f = \ (x ::(~One) Foo) ->
+  case x of (z ::(~One) Foo)
   { Foo a b -> (z, b) }
-\end{verbatim}
+\end{code}
 It is well typed because
 \begin{itemize}
 \item $a$ is a linear field, hence imposes that the multiplicity of
@@ -414,11 +453,11 @@ It is well typed because
 \subsection{Wildcard}
 
 The following is ill-typed
-\begin{verbatim}
-f = \ (x ::('One) Foo) ->
+\begin{code}
+f = \ (x ::(~One) Foo) ->
   case(1) x of z
   { WILDCARD -> True }
-\end{verbatim}
+\end{code}
 Because the multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
 multiplicity of the case binder $z$ ($0$) does not equal $1$.
 
@@ -433,13 +472,13 @@ general.
 \subsection{Duplication}
 
 The following is ill-typed
-\begin{verbatim}
+\begin{code}
 data Foo = Foo A
 
-f = \ (x ::('One) Foo) ->
+f = \ (x ::(~One) Foo) ->
   case(1) x of z
   { Foo a -> (z, a) }
-\end{verbatim}
+\end{code}
 Because both $z$ and $a$ are used in the branch, hence their
 multiplicities sum to $ω$, but it should be $1$.
 
