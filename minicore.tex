@@ -239,7 +239,8 @@ The syntax is modified to include case binders. See
 
   \figuresection{Case alternatives}
   \begin{align*}
-    b & ::= c  x₁ … x_n → u
+    b & ::= & c  x₁ … x_n → u
+      & \pip \wildcard → u
   \end{align*}
 
   \figuresection{Terms}
@@ -333,6 +334,10 @@ times we use $z$.\improvement{We may try and make the argument in this note
       Δ, z:_{ν} \substituted{(D p_1…p_n)}{σ}, x₁:_{ρ_1} A_i, …, x_{n}:_{ρ_{n}} A_{n} ⊢ u : C \\
       ρ_1+ν\substituted{μ_1}{σ}=π\substituted{μ_1}{σ}\quad…\quad ρ_{n}+ν\substituted{μ_{n}}{σ}=π\substituted{μ_{n}}{σ}
     }{Γ ⊢_π^σ c  x₁ … x_{n} → u : C}\text{alt.constructor}
+
+    \inferrule{
+      Δ, z:_{π} \substituted{(D p_1…p_n)}{σ} ⊢ u : C
+    }{Γ ⊢_π^σ \wildcard → u : C}\text{alt.wildcard}
   \end{mathpar}
 
   \caption{Typing rules.}
