@@ -237,6 +237,11 @@ The syntax is modified to include case binders. See
     \end{align*}
   \end{minipage}
 
+  \figuresection{Case alternatives}
+  \begin{align*}
+    b & ::= c  x₁ … x_n → u
+  \end{align*}
+
   \figuresection{Terms}
   \begin{align*}
     e,s,t,u & ::= x & \text{variable} \\
@@ -245,7 +250,7 @@ The syntax is modified to include case binders. See
             & \pip λp. t & \text{multiplicity abstraction} \\
             & \pip t π & \text{multiplicity application} \\
             & \pip c t₁ … t_n & \text{data construction} \\
-            & \pip \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k}  & \text{case} \\
+            & \pip \casebind[π] t z {b_k}  & \text{case} \\
             & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
   \end{align*}
 
@@ -294,8 +299,8 @@ times we use $z$.\improvement{We may try and make this argument
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
       σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
-      \text{$Δ ⊢_π^σ c_k  x₁ … x_{n_k} → u_k : C$ for each $1 ⩽ k ⩽ m$}}
-    {πΓ+Δ ⊢ \casebind[π] t z {c_k  x₁ … x_{n_k} → u_k} : C}\text{case}}
+      \text{$Δ ⊢_π^σ b_k : C$ for each $1 ⩽ k ⩽ m$}}
+    {πΓ+Δ ⊢ \casebind[π] t z {b_k} : C}\text{case}}
 %%% /macros %%%
 
 \begin{figure}
