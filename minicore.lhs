@@ -108,6 +108,8 @@
 \newcommand{\termsOf}[1]{\mathnormal{terms}(#1)}
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
+
+\newcommand{\letjoin}[2]{\mathsf{letjoin}\ {#1}\ \mathsf{in}\ #2 }
 %% /Metatheory
 
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
@@ -337,6 +339,46 @@ times we use $z$.\improvement{We may try and make the argument in this note
 
 \improvement{Define multiplicity equality as a judgement.}
 
+\paragraph{Typing Join Points}
+
+A program which starts its life as linear may be transformed by the
+optimiser to use a join point. In this example, both |p| and |q| are
+used linearly.
+
+\begin{code}
+  case y of y'
+  { A -> p-q
+  ; B -> p+q
+  ; C -> p+q
+  ; D -> p*q }
+\end{code}
+
+After the join point |p+q| is identified, are |p| and |q| still used linearly?
+We want to answer affirmatively so that this transformation is still valid
+for linear bindings.
+
+\begin{code}
+join j = p+q in
+  case y of y'
+  { A -> p-q
+  ; B -> j
+  ; C -> j
+  ; D -> p*q }
+\end{code}
+
+As such, we type join bindings differently to normal let bindings. The join
+variable |j| is not given an explicit multiplicity. When we see an occurence of
+|j| we instead use the multiplicities of |j|s RHS in order to decide the linearity
+of the variables. It is as if we inline |j| into each call site.
+In this example, as |p| and |q| are both used linearly in |j|, we create
+the substitution $\{ p \mapsto 1; q \mapsto 1 \}$. Then when |j| is used
+in the branches we use this substituion to report the linearity of |p| and |q|
+as necessary.
+
+
+
+
+
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
 \newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
@@ -554,6 +596,29 @@ The algorithm is as follows (main cases only):\improvement{Explain multiplicity
   πμ_i^k$ for all $i$ and $k$.\jp{brain explodes, what about giving
     one or two special cases for $c_k$ types?}
 \end{itemize}
+
+\subsubsection{Join Rec}
+The proposed core linting rules to real with joinrec and them modified variable
+rule is as follows (as proposed by JP and just transcribed from the email).
+
+There are two contexts. $\Gamma$ is the normal mapping from variables to types
+whilst $\gamma$ maps join variables to a substitution. In the letjoin rule,
+we type the body of the let after extending $\gamma$ with the multiplicities of
+the body of the join variable.
+
+Then we also modify the variable rule in order to obey the substitution.
+
+
+\begin{mathpar}
+    \inferrule{\gamma \Gamma, (x \sim \delta): A \vdash t : B \\ \delta \Gamma \vdash u : A}
+              { \gamma \Gamma \vdash \letjoin{x : A = u}{t : B}} \\
+
+    \inferrule{\delta(x) \subseteq \gamma(x)}
+              {\gamma\Gamma, (x \sim \delta) : A \vdash x : A }
+\end{mathpar}
+
+
+
 
 \end{document}
 
