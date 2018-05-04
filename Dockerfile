@@ -3,6 +3,15 @@
 #
 # CHANGES
 #
+# v0.1.8
+# ------
+#
+# - Merged with v8.5 master
+# - Fix #7: `(->)` and `(⊸)` are no longer considered equal by the
+#   type checker.
+# - Fixing #7 introduced some regression. It is possible to write even
+#   Haskell 98 code which doesn't type-check. See #33 and #34.
+#
 # v0.1.7
 # ------
 #
@@ -19,7 +28,7 @@
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
 FROM haskell:8.2.1
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 8182d67f8ef1fa163bd517fff848ab6a48b625e7
+ENV LINEAR_SHA 3b323b11f27ae66ddc25e99937107a70c8398165
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
@@ -27,7 +36,7 @@ ENV LC_ALL   C.UTF-8
 ENV LANGUAGE C.UTF-8
 
 ENV GHCBUILD /tmp/ghc_linear
-ENV SYSBUILDDEPS  autoconf automake make wget xz-utils libtool ncurses-dev
+ENV SYSBUILDDEPS  autoconf automake make wget xz-utils libtool ncurses-dev python3
 ENV SYSRUNDEPS  libgmp-dev
 # Already installed: gcc g++ tar
 
@@ -41,11 +50,12 @@ RUN apt-get update -y && \
     cd $GHCBUILD && git remote add tweag https://github.com/tweag/ghc.git && \
     git fetch tweag && \
     git checkout $LINEAR_SHA && \
+    git submodule sync && \
     git submodule update --init --recursive && \
     echo "BuildFlavour = quick" > $GHCBUILD/mk/build.mk && \
     cat $GHCBUILD/mk/build.mk.sample >> $GHCBUILD/mk/build.mk && \
     cd $GHCBUILD && ./boot && ./configure && \
-    cd $GHCBUILD make -j6 && make install && \
+    make -j6 && make install && \
     rm -rf $GHCBUILD && \
     apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7 $SYSBUILDDEPS # && \
     rm -rf /var/lib/apt/lists/*
