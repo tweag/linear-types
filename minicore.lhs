@@ -344,7 +344,7 @@ The syntax is modified to include case binders. See
   \label{fig:contexts}
 \end{figure}
 
-\improvement{consider breaking the let rule in two (let and letrec)
+\improvement{consider breaking the let syntax in two (let and letrec)
   with a single entry in the let, and multiple in the letrec}
 
 \subsection{Static Semantics}
