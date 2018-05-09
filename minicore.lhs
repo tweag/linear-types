@@ -347,7 +347,7 @@ The syntax is modified to include case binders. See
 \improvement{consider breaking the let syntax in two (let and letrec)
   with a single entry in the let, and multiple in the letrec}
 
-\subsection{Static Semantics}
+\subsection{Static semantics}
 \label{sec:typing-contexts}
 
 See \fref{fig:typing}. The typing rules depend on an equality on
@@ -381,7 +381,7 @@ tag of the constructor is forced, and thus it does not matter how many
 times we use $z$.\improvement{We may try and make the argument in this note
   clearer, but I don't have an idea for the moment}
 
-\paragraph{Typing Join Points}
+\paragraph{Typing join points}
 
 A program which starts its life as linear may be transformed by the
 optimiser to use a join point. In this example, both |p| and |q| are
