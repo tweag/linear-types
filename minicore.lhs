@@ -194,10 +194,6 @@ issues.
 \improvement{Maybe we should give a typing rule for (mutally)
   recursive lets. Despite it probably being messy.}
 
-\improvement{Another difference which needs to be documented is join
-  points. Operating hypothesis for the moment: join points should be
-  typed similarly to the case binder.}
-
 \subsection{The case-binder}
 
 In \calc{}, the case construction has the form
@@ -241,6 +237,48 @@ Non-exhaustive case expressions do not cause any additional problem:
 a pattern-matching failure simply raises an imprecise exception as
 usual. This is equivalent to having an exhaustive case expression, with
 \verb+error+ as the right-hand side of the wildcard pattern.
+
+\subsection{Join points}
+\label{sec:join-points}
+
+Core uses a special form of let binders, called join points, to factor
+code that would be duplicated by desugaring or simplifying. However,
+code using join points is typically not well-typed when simply
+interpreting join as let binders (at least not with the usual typing
+rule for let bindings).
+
+For instance consider the following
+\begin{code}
+  f  (Just False)  (Just False)  = e1
+  f  __            __            = e2
+\end{code}
+
+It would desugar to:
+\begin{code}
+f = \ x y ->
+  join fail = e2 in
+    case x of x'
+    { Just j -> case j of j'
+      { False -> case y of y'
+        { Just k -> case k of k'
+          { False  -> e1
+          ; True   -> fail }
+        ; Nothing -> fail }
+      ; True -> fail }
+    ; Nothing -> fail }
+\end{code}
+
+The regular typing rule for let binders requires |fail| to be used
+linearly in every branch, but it isn't: |fail| is not used at all in
+the |False -> e1| branch. The regular typing rule for let binders also
+enforces that the linear free variables in |e2| are not used at
+all. But |e1| necessarily has exactly the same linear free variables
+as |e2|, hence the linear free variables of |e2| are all used in the
+|False -> e1| branch.
+
+On the other hand, notice that if we'd inline |fail| and duplicate
+|e2| everywhere, the term would indeed be well-typed. So, we have to
+teach the linter that using |fail| is the same thing as using |e2|.
 
 \section{Linear Mini-Core}
 
@@ -626,4 +664,4 @@ Then we also modify the variable rule in order to obey the substitution.
 % ispell-local-dictionary: "british"
 % End:
 
-%  LocalWords:  scrutinee
+%  LocalWords:  scrutinee inlining desugaring desugar
