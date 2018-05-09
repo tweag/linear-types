@@ -109,7 +109,7 @@
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
-\newcommand{\letjoin}[2]{\mathsf{letjoin}\ {#1}\ \mathsf{in}\ #2 }
+\newcommand{\letjoin}[2]{\mathsf{join}\ {#1}\ \mathsf{in}\ #2 }
 %% /Metatheory
 
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
@@ -406,7 +406,7 @@ join j = p+q in
 
 As such, we type join bindings differently to normal let bindings. The join
 variable |j| is not given an explicit multiplicity. When we see an occurence of
-|j| we instead use the multiplicities of |j|s RHS in order to decide the linearity
+|j| we instead use the multiplicities of |j|'s \textsc{rhs} in order to decide the linearity
 of the variables. It is as if we inline |j| into each call site.
 In this example, as |p| and |q| are both used linearly in |j|, we create
 the substitution $\{ p \mapsto 1; q \mapsto 1 \}$. Then when |j| is used
