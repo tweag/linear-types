@@ -282,8 +282,6 @@ teach the linter that using |fail| is the same thing as using |e2|.
 
 \section{Linear Mini-Core}
 
-\improvement{Modify syntax to put the $π$ on the column.}
-
 \subsection{Syntax}
 \newcommand{\pip}{\kern 1.18em || }
 \label{sec:syntax}
