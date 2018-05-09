@@ -350,7 +350,9 @@ The syntax is modified to include case binders. See
 \subsection{Static Semantics}
 \label{sec:typing-contexts}
 
-See \fref{fig:typing}.
+See \fref{fig:typing}. The typing rules depend on an equality on
+multiplicities as well as an ordering on context, which are defined in
+Figure~\ref{fig:equality-ordering}.
 
 \paragraph{Typing case alternatives}
 
@@ -378,8 +380,6 @@ Note: if the constructor $c$ has no field, then we're always good; the
 tag of the constructor is forced, and thus it does not matter how many
 times we use $z$.\improvement{We may try and make the argument in this note
   clearer, but I don't have an idea for the moment}
-
-\improvement{Define multiplicity equality as a judgement.}
 
 \paragraph{Typing Join Points}
 
@@ -431,6 +431,9 @@ variable typing rule \emph{var.join}.
 \improvement{TODO: describe the $Δ⩽Γ$}
 \improvement{TODO: explain how the variable rule uses context ordering
 rather than sum. And why it's just a more general definition.}
+\improvement{Explain: 0 is not a multiplicity in the formalism, so $0⩽π$
+  must be understood formally, rather than a statement about multiplicities.}
+\improvement{Add rules for 0 in equations for $+$ and $*$.}
 \begin{figure}
   \begin{mathpar}
     \varrule
@@ -476,6 +479,68 @@ rather than sum. And why it's just a more general definition.}
   \caption{Typing rules.}
 
   \label{fig:typing}
+\end{figure}
+
+\begin{figure}
+  \figuresection{Multiplicity equality}
+
+  \begin{mathpar}
+    \inferrule{ }{π=π}\text{eq.refl}
+
+    \inferrule{π=ρ}{ρ=π}\text{eq.sym}
+
+    \inferrule{π=ρ \\ ρ=μ}{π=μ}\text{eq.trans}
+
+    \inferrule{ }{1+1 = ω}
+
+    \inferrule{ }{1+ω = ω}
+
+    \inferrule{ }{ω+ω = ω}
+
+    \inferrule{ }{π+ρ = ρ+π}
+
+    \inferrule{ }{π+(ρ+μ) = (π+ρ)+μ}
+
+    \inferrule{ }{πρ = ρπ}
+
+    \inferrule{ }{π(ρμ) = (πρ)μ}
+
+    \inferrule{ }{1π = π}
+
+    \inferrule{ }{(π+ρ)μ = πμ+ρμ}
+
+    \inferrule{ π=π' \\ ρ=ρ'}{π+ρ = π'+ρ'}\text{eq.plus.compat}
+
+    \inferrule{ π=π' \\ ρ=ρ'}{πρ = π'ρ'}\text{eq.mult.compat}
+  \end{mathpar}
+  \figuresection{Multiplicity ordering}
+
+  \begin{mathpar}
+    \inferrule{ }{π⩽π}\text{sub.sym}
+
+    \inferrule{π⩽ρ \\ ρ⩽μ}{π⩽μ}\text{sub.trans}
+
+    \inferrule{ }{1 ⩽ ω}
+
+    \inferrule{ }{0 ⩽ ω}
+
+    \inferrule{ π⩽π' \\ ρ⩽ρ'}{π+ρ ⩽ π'+ρ'}\text{sub.plus.compat}
+
+    \inferrule{ π⩽π' \\ ρ⩽ρ'}{πρ ⩽ π'ρ'}\text{sub.mult.compat}
+
+    \inferrule{ π=π' \\ ρ=ρ'\\ π ⩽ ρ}{ π'⩽ρ'}\text{sub.eq.compat}
+  \end{mathpar}
+  \figuresection{Context ordering}
+
+  \begin{mathpar}
+    \inferrule{ }{– ⩽ –}\text{sub.ctx.empty}
+
+    \inferrule{ Γ⩽Δ \\ 0 ⩽ π }{ Γ⩽Δ, x:_π A }\text{sub.ctx.zero}
+
+    \inferrule{ Γ⩽Δ \\ π ⩽ ρ}{ Γ,x:_π A ⩽ Δ,x:_ρ A}\text{sub.ctx.cons}
+  \end{mathpar}
+  \caption{Equality and ordering rules}
+  \label{fig:equality-ordering}
 \end{figure}
 
 \section{Examples}
