@@ -422,13 +422,15 @@ variable typing rule \emph{var.join}.
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
-\newcommand{\varrule}{\inferrule{ }{ωΓ + x :_1 A ⊢ x : A}\text{var}}
+\newcommand{\varrule}{\inferrule{x:_1 A ⩽ Γ}{Γ ⊢ x : A}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
       σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
       \text{$Δ;z;D p_1…p_n ⊢_π^σ b_k : C$ for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k} : C}\text{case}}
 %%% /macros %%%
 \improvement{TODO: describe the $Δ⩽Γ$}
+\improvement{TODO: explain how the variable rule uses context ordering
+rather than sum. And why it's just a more general definition.}
 \begin{figure}
   \begin{mathpar}
     \varrule
