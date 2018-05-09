@@ -329,13 +329,13 @@ The syntax is modified to include case binders. See
   \figuresection{Terms}
   \begin{align*}
     e,s,t,u & ::= x & \text{variable} \\
-            & \pip λ_π (x{:}A). t & \text{abstraction} \\
+            & \pip λ (x{:_π}A). t & \text{abstraction} \\
             & \pip t s & \text{application} \\
             & \pip λp. t & \text{multiplicity abstraction} \\
             & \pip t π & \text{multiplicity application} \\
             & \pip c t₁ … t_n & \text{data construction} \\
-            & \pip \casebind[π] t z {b_k}  & \text{case} \\
-            & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let} \\
+            & \pip \casebind t {z :_π A}{b_k}  & \text{case} \\
+            & \pip \flet x_1 :_π A₁ = t₁ … x_n :_π A_n = t_n \fin u & \text{let} \\
             & \pip \letjoin{x :_Δ A = t}{u} & \text{join point}
   \end{align*}
 
@@ -426,7 +426,7 @@ variable typing rule \emph{var.join}.
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
       σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
       \text{$Δ;z;D p_1…p_n ⊢_π^σ b_k : C$ for each $1 ⩽ k ⩽ m$}}
-    {πΓ+Δ ⊢ \casebind[π] t z {b_k} : C}\text{case}}
+    {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k} : C}\text{case}}
 %%% /macros %%%
 \improvement{TODO: describe the $Δ⩽Γ$}
 \begin{figure}
@@ -437,7 +437,7 @@ variable typing rule \emph{var.join}.
     {\Gamma, x :_Δ A \vdash x : A }\text{var.join}
 
     \inferrule{Γ, x :_{π} A  ⊢   t : B}
-    {Γ ⊢ λ_π (x{:}A). t  :  A  →_π  B}\text{abs}
+    {Γ ⊢ λ (x{:_π}A). t  :  A  →_π  B}\text{abs}
 
     \apprule
 
@@ -449,7 +449,7 @@ variable typing rule \emph{var.join}.
     \caserule
 
     \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{π} A₁ …  x_n:_{π} A_n ⊢ u : C }
-    { Δ+π\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+    { Δ+π\sum_i Γ_i ⊢ \flet x_1 :_π A_1 = t₁  …  x_n :_π A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{\Gamma, x :_Δ A \vdash t : B \\ Δ \vdash u : A}
               { \Gamma \vdash \letjoin{x :_Δ A = u}{t : B}}\text{join}
@@ -544,7 +544,7 @@ It is well typed because
 The following is ill-typed
 \begin{code}
 f = \ (x ::(~One) Foo) ->
-  case(1) x of z
+  case x of (z ::(~One) Foo)
   { WILDCARD -> True }
 \end{code}
 Because the multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
@@ -592,9 +592,9 @@ it $\type{x}$). Similarly, in Linear Core, variables come with a
 multiplicity ($\mult{x}$).
 
 \begin{itemize}
-\item $λ_π x : A. u$ is represented as $λ x. u$ such that $\type{x}=A$
+\item $λ x :_π A. u$ is represented as $λ x. u$ such that $\type{x}=A$
   and $\mult{x} = π$
-\item $\casebind[π] u z {…}$ is represented as
+\item $\casebind u {z ::_π A} {…}$ is represented as
   $\casebind u z {…}$ such that $\mult{z}=π$
 \end{itemize}
 
