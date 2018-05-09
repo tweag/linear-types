@@ -335,7 +335,8 @@ The syntax is modified to include case binders. See
             & \pip t π & \text{multiplicity application} \\
             & \pip c t₁ … t_n & \text{data construction} \\
             & \pip \casebind[π] t z {b_k}  & \text{case} \\
-            & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let}
+            & \pip \flet[π] x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{let} \\
+            & \pip \letjoin{x :_Δ A = t}{u} & \text{join point}
   \end{align*}
 
   \caption{Syntax of \calc{}}
@@ -448,7 +449,7 @@ variable typing rule \emph{var.join}.
     { Δ+π\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
 
     \inferrule{\Gamma, x :_Δ A \vdash t : B \\ Δ \vdash u : A}
-              { \Gamma \vdash \letjoin{x : A = u}{t : B}}\text{join}
+              { \Gamma \vdash \letjoin{x :_Δ A = u}{t : B}}\text{join}
 
     \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
     {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
