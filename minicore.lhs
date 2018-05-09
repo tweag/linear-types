@@ -633,11 +633,11 @@ The algorithm is as follows (main cases only):\improvement{Explain multiplicity
   \typeof{u}$ and $ρ ⩽ π$.
 \item $\typeof{\casebind[π] u z {c_k  x₁ … x_{n_k} →
       v_k}}=(A,πm_u + ⋁_{k=1}^m m_k)$, where the $c_k : B_1^k
-  →_{μ_1^k} … B_{n_k}→_{μ_{n_k}^k} → D$\jp{syntax error in this type} are constructors of
+  →_{μ_1^k} … →_{μ_{n_k}^k} B_{n_k}→ D$ are constructors of
   the data type $D$, $(m_u, D) = \typeof{u}$, $(A, (z ↦ ν^k, x_1 ↦
   ρ_1^k, …, {ρ}_{n_k}^k, m_k)) = \typeof{v_k}$ and $ρ_i^k+ν^kμ_i^k ⩽
-  πμ_i^k$ for all $i$ and $k$.\jp{brain explodes, what about giving
-    one or two special cases for $c_k$ types?}
+  πμ_i^k$ for all $i$ and $k$.\improvement{Expand using branch type
+    checking. Also explain that we need to check the multiplicity of $x_i$.}
 \end{itemize}
 
 \end{document}
