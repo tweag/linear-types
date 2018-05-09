@@ -16,3 +16,4 @@
 *.tex
 /ICFP2017/acmart.cls
 comment.cut
+!minicore.tex
