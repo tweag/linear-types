@@ -322,8 +322,8 @@ The syntax is modified to include case binders. See
 
   \figuresection{Case alternatives}
   \begin{align*}
-    b & ::= & c  x₁ … x_n → u
-      & \pip \wildcard → u
+    b & ::= c  x₁ … x_n → u & \text{data constructor} \\
+      & \pip \wildcard → u & \text{wildcard}
   \end{align*}
 
   \figuresection{Terms}
