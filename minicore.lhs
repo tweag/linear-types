@@ -425,10 +425,13 @@ as necessary.
       \text{$Δ;z;D p_1…p_n ⊢_π^σ b_k : C$ for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind[π] t z {b_k} : C}\text{case}}
 %%% /macros %%%
-
+\improvement{TODO: describe the $Δ⩽Γ$}
 \begin{figure}
   \begin{mathpar}
     \varrule
+
+    \inferrule{Δ ⩽ Γ}
+    {\Gamma, x :_Δ A \vdash x : A }\text{var.join}
 
     \inferrule{Γ, x :_{π} A  ⊢   t : B}
     {Γ ⊢ λ_π (x{:}A). t  :  A  →_π  B}\text{abs}
@@ -444,6 +447,9 @@ as necessary.
 
     \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{π} A₁ …  x_n:_{π} A_n ⊢ u : C }
     { Δ+π\sum_i Γ_i ⊢ \flet[π] x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{let}
+
+    \inferrule{\Gamma, x :_Δ A \vdash t : B \\ Δ \vdash u : A}
+              { \Gamma \vdash \letjoin{x : A = u}{t : B}}\text{join}
 
     \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
     {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
@@ -634,29 +640,6 @@ The algorithm is as follows (main cases only):\improvement{Explain multiplicity
   πμ_i^k$ for all $i$ and $k$.\jp{brain explodes, what about giving
     one or two special cases for $c_k$ types?}
 \end{itemize}
-
-\subsubsection{Join Rec}
-The proposed core linting rules to real with joinrec and them modified variable
-rule is as follows (as proposed by JP and just transcribed from the email).
-
-There are two contexts. $\Gamma$ is the normal mapping from variables to types
-whilst $\gamma$ maps join variables to a substitution. In the letjoin rule,
-we type the body of the let after extending $\gamma$ with the multiplicities of
-the body of the join variable.
-
-Then we also modify the variable rule in order to obey the substitution.
-
-
-\begin{mathpar}
-    \inferrule{\gamma \Gamma, (x \sim \delta): A \vdash t : B \\ \delta \Gamma \vdash u : A}
-              { \gamma \Gamma \vdash \letjoin{x : A = u}{t : B}} \\
-
-    \inferrule{\delta(x) \subseteq \gamma(x)}
-              {\gamma\Gamma, (x \sim \delta) : A \vdash x : A }
-\end{mathpar}
-
-
-
 
 \end{document}
 
