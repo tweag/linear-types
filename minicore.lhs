@@ -404,17 +404,16 @@ join j = p+q in
   ; D -> p*q }
 \end{code}
 
-As such, we type join bindings differently to normal let bindings. The join
-variable |j| is not given an explicit multiplicity. When we see an occurence of
-|j| we instead use the multiplicities of |j|'s \textsc{rhs} in order to decide the linearity
-of the variables. It is as if we inline |j| into each call site.
-In this example, as |p| and |q| are both used linearly in |j|, we create
-the substitution $\{ p \mapsto 1; q \mapsto 1 \}$. Then when |j| is used
-in the branches we use this substituion to report the linearity of |p| and |q|
-as necessary.
-
-
-
+As such, we type join bindings differently to normal let bindings. The
+join variable |j| is not given an explicit multiplicity. When we see
+an occurence of |j| we instead record the multiplicities of |j|'s
+right-hand side. We then type check call sites of |j| as if we inlined
+|j| and replaced it with its right-hand side.  In this example, as |p|
+and |q| are both used linearly in |j|, we record
+$p :_1 Int, q :_1 Int$ (in the rule \emph{join}). Then when |j| is
+used in the branches we use these multiplicities to check the
+linearity of |p| and |q| as necessary. This is the role of the extra
+variable typing rule \emph{var.join}.
 
 
 %%% typing rule macros %%%
