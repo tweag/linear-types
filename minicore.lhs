@@ -280,6 +280,12 @@ On the other hand, notice that if we'd inline |fail| and duplicate
 |e2| everywhere, the term would indeed be well-typed. So, we have to
 teach the linter that using |fail| is the same thing as using |e2|.
 
+Note: adding the ($\&$, "With") operator from linear logic would
+improve the typing of an ``if'' function, but it won't help in this
+case. Indeed the type system really needs to track the correlation
+between the various case conditions to figure out which linear
+variables are used when.
+
 \section{Linear Mini-Core}
 
 \subsection{Syntax}
