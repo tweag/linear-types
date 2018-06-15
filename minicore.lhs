@@ -714,6 +714,62 @@ The algorithm is as follows (main cases only):\improvement{Explain multiplicity
     checking. Also explain that we need to check the multiplicity of $x_i$.}
 \end{itemize}
 
+\section{Type inference}
+\improvement{Todos: change document, add some structure viz inference
+  vs core, syntax for this section.}
+\info{Remarks: adding variables with type schemes doesn't change
+  inference; we don't model bidirectional type information
+  propagation, which \textsc{ghc} will perform in practice, and
+  without it, it may be hard to type anything, and it may add
+  complications to inference.}
+
+\newcommand{\infstate}[4]{⟨#1,#2,#3,#4⟩} % constraint, type, usage, term
+
+\begin{figure}
+  \begin{mathpar}
+
+    \inferrule{ }{Γ,x:α⊢\infstate{∅}{(x↦1)}{α}{x}}
+
+    \inferrule
+    { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
+      Γ⊢\infstate{C_v}{U_v}{τ_v}{v}\\
+      α,p\mbox{ fresh} }
+    { Γ⊢\infstate{C_u∪C_v∪\{t_u = t_v →_p α\}}{C_u+p×C_v}{α}{u v} }
+
+    \inferrule
+    { Γ,x:α⊢\infstate{C}{(U,x↦π)}{τ}{u}\\
+      α,p\mbox{ fresh} }
+    { Γ⊢\in \infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{u}}
+
+  \end{mathpar}
+  \caption{Inference rules}
+  \label{fig:inference-rules}
+\end{figure}
+
+  Example: composition
+
+  \inferrule
+  { \inferrule
+    { \inferrule
+      { \inferrule
+        { Γ ⊢ \infstate{∅}{(f↦1)}{α_f}{f}
+          \inferrule
+          { Γ ⊢ \infstate{∅}{(g↦1)}{α_g}{g}\\
+            Γ ⊢ \infstate{∅}{(x↦1)}{α_x}{x} }
+          { Γ ⊢ \infstate{\{α_g=α_x→_p α_{g x}\}}{(g↦1,x↦p)}{α_{g x}}{g x} } }
+        { Γ = f:α_f, g:α_g, x:α_x ⊢ \infstate{\{α_g=α_x→_p α_{g x},
+            α_f=α_{g x}→_q α_{f(g x)}\}}{(f↦1,g↦q,x↦qp)}{α_{f(g x)}}{f (g x)} } }
+      { f:α_f, g:α_g ⊢ \infstate{\{α_g=α_x→_p α_{g x},
+            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r \}}{(f↦1, g↦q)}{α_x→_r
+            α_{f(g x)}}{λx. f (g x)} } }
+    { f:α_f ⊢ \infstate{\{α_g=α_x→_p α_{g x},
+            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r, q⩽s \}}{(f↦1)}{α_g→_s
+            α_x→_r α_{f(g x)}}{λg x. f (g x)} }
+  }
+  { ⊢ \infstate{\{α_g=α_x→_p α_{g x},
+            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r, q⩽s, 1⩽t \}}{()}{α_f →_t α_g→_s
+            α_x→_r α_{f(g x)}}{λf g x. f (g x)}}
+
 \end{document}
 
 % Local Variables:
