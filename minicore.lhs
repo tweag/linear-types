@@ -313,7 +313,7 @@ The syntax is modified to include case binders. See
   \begin{minipage}{0.3 \textwidth} \centering
   \figuresection{Contexts}
   \begin{align*}
-    Γ,Δ & ::=  (x :_{μ} A), Γ ~||~ –
+    Γ,Δ & ::=  (x :_{μ} A), Γ ~||~ (x :_{Δ} A), Γ ~||~ –
   \end{align*}
   \end{minipage}
 \\[3mm]
