@@ -3,6 +3,15 @@
 #
 # CHANGES
 #
+# v0.1.9
+# ------
+# - More recent v8.5
+# - Basic implementation of multiplicity polymorphism
+# - Linear functions are no longer automatically η-expanded
+# - Data constructors are multiplicity polymorphic when used as terms (fixes #33 and #34)
+# - Core lint understand linear types (it is still very fragile)
+# - Fix compatibility of linear-base
+#
 # v0.1.8
 # ------
 #
@@ -28,7 +37,7 @@
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
 FROM haskell:8.2.1
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 3b323b11f27ae66ddc25e99937107a70c8398165
+ENV LINEAR_SHA 739d059259cbfa4d3394141d338690580e98f1a4
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
