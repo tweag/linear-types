@@ -215,7 +215,11 @@
 
 See Figure~\ref{fig:inference-rules}.
 
-Example: composition
+Examples are simplified by inlining syntactic unification constraint
+immediately, in order to focus on the linearity constraints, and gain
+horizontal space.
+
+Example: composition\improvement{The $Γ$ is incorrect, fix!}
 
 \vspace{1cm}
 
@@ -227,18 +231,14 @@ Example: composition
           \inferrule
           { Γ ⊢ \infstate{∅}{(g↦1)}{α_g}{g}\\
             Γ ⊢ \infstate{∅}{(x↦1)}{α_x}{x} }
-          { Γ ⊢ \infstate{\{α_g=α_x→_p α_{g x}\}}{(g↦1,x↦p)}{α_{g x}}{g x} } }
-        { Γ = f:α_f, g:α_g, x:α_x ⊢ \infstate{\{α_g=α_x→_p α_{g x},
-            α_f=α_{g x}→_q α_{f(g x)}\}}{(f↦1,g↦q,x↦qp)}{α_{f(g x)}}{f (g x)} } }
-      { f:α_f, g:α_g ⊢ \infstate{\{α_g=α_x→_p α_{g x},
-            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r \}}{(f↦1, g↦q)}{α_x→_r
+          { Γ ⊢ \infstate{∅}{(g↦1,x↦p)}{α_x→_p α_{g x}}{g x} } }
+        { Γ = f:α_{g x}→_q α_{f(g x)}, g:α_x→_p α_{g x}, x:α_x ⊢ \infstate{∅}{(f↦1,g↦q,x↦qp)}{α_{f(g x)}}{f (g x)} } }
+      { f:α_{g x}→_q α_{f(g x)}, g:α_x→_p α_{g x} ⊢ \infstate{\{qp⩽r \}}{(f↦1, g↦q)}{α_x→_r
             α_{f(g x)}}{λx. f (g x)} } }
-    { f:α_f ⊢ \infstate{\{α_g=α_x→_p α_{g x},
-            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r, q⩽s \}}{(f↦1)}{α_g→_s
+    { f:α_{g x}→_q α_{f(g x)} ⊢ \infstate{\{qp⩽r, q⩽s \}}{(f↦1)}{(α_x→_p α_{g x})→_s
             α_x→_r α_{f(g x)}}{λg x. f (g x)} }
   }
-  { ⊢ \infstate{\{α_g=α_x→_p α_{g x},
-            α_f=α_{g x}→_q α_{f(g x)}, qp⩽r, q⩽s, 1⩽t \}}{()}{α_f →_t α_g→_s
+  { ⊢ \infstate{\{qp⩽r, q⩽s, 1⩽t \}}{()}{(α_{g x}→_q α_{f(g x)}) →_t (α_x→_p α_{g x})→_s
             α_x→_r α_{f(g x)}}{λf g x. f (g x)}}
 
 \vspace{1cm}
