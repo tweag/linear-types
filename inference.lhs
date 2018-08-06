@@ -184,6 +184,8 @@
 
 \section{Type inference}
 
+Principle: \emph{multiplicity polymorphism is always declared, never inferred.}
+
 \info{Remarks: adding variables with type schemes doesn't change
   inference; we don't model bidirectional type information
   propagation, which \textsc{ghc} will perform in practice, and
