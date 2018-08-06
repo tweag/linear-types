@@ -190,23 +190,32 @@
   without it, it may be hard to type anything, and it may add
   complications to inference.}
 
+The general idea is to count the number of occurences of each variable
+and add appropriate constraints at the binding site. Consequently we
+do not in fact put the bindings mutiplicity of a variable in Γ. The
+map from variable names to multiplicities are ranged by
+$U$. Constraint sets are ranged by $C$
+
+Constraints can in general be equalities or inequalities --- equality
+constraint can come from type unification.
+
 \newcommand{\infstate}[4]{#4 : #3 \leadsto ⟨#1,#2⟩} % constraint, usage, type, term
 
 \begin{figure}
   \begin{mathpar}
 
-    \inferrule{ }{Γ,x:α⊢\infstate{∅}{(x↦1)}{α}{x}}
+    \inferrule{ }{Γ,x:α⊢\infstate{α=τ}{(x↦1)}{τ}{x}}
 
     \inferrule
     { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
       Γ⊢\infstate{C_v}{U_v}{τ_v}{v}\\
       α,p\mbox{ fresh} }
-    { Γ⊢\infstate{C_u∪C_v∪\{t_u = t_v →_p α\}}{C_u+p×C_v}{α}{u v} }
+    { Γ⊢\infstate{C_u∪C_v∪\{t_u = t_v →_p α\}}{U_u+p×U_v}{α}{u v} }
 
     \inferrule
     { Γ,x:α⊢\infstate{C}{(U,x↦π)}{τ}{u}\\
       α,p\mbox{ fresh} }
-    { Γ⊢\in \infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{λx. u}}
+    { Γ⊢\infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{λx. u}}
 
   \end{mathpar}
   \caption{Inference rules}
@@ -251,6 +260,53 @@ b→_pb$ with $1=p$, so the expression $f (λx. x)$ would fail to
 type-check as $1≠ω$. Instead, the generated constraint is $1⩽p$, $p$
 is then unified to $ω$, and we are left with checking that $1⩽ω$ which
 holds.
+
+\subsection{Solving constraints}
+
+(DRAFT)
+
+At some well chosen points, (ie. top-level bindings) GHC does
+generalisation. Traditionally this can mean to introduce universal
+quantification in types, instead of keeping (meta)variables around.
+
+When generalising, we won't however introduce any
+multiplicity-polymorphism.  Instead all variables will be instanciated
+with an expression compatible with the constraints, if such expression
+exists.
+
+More precisely, we propose the following strategy for multiplicities:
+We attempt to solve (all) multiplicity constraints using a general
+algorithm (see below), which proposes a solution $σ$. If they are not
+solvable, then we report a type error.  If they are solvable, we check
+if any meta variable $p$ appears in the generalised type
+candidate. If, a variable is constrained with an equality in $σ$, we
+simply set it to its value. Failing this, if a variable $p$ is
+constrained from below ($π ≤ p$ exists in $σ$), we set $p$ to
+$ω$. Failing this, if a variable is constrained from above ($p ≤ π$
+exists in $σ$), then we set $p = π$ (potentially introducing more
+metavariables to eliminate). Failing this, $p$ is free, but we set it
+to $ω$ --- no generalisation.
+
+When all variables are fixed, we re-check that $σ$ is still a
+solution. If it isn't, then we report a type error. This type error
+can potentially suggest a more general type to the user, which would
+typecheck if they'd write it explicitly.
+
+
+The solver algorithm would remove all sum expression and then run a
+standard solver (AC).  How to remove such constraints? The
+system can introduce sums if a variable has several occurences, as in:
+($π + ρ ≤ p$). In such a case we can replace the constraint by $ρ=ω$
+--- if we find a solution with this new constraint, then we know that
+$π + ρ ≤ p$ is also satisfied. If we don't find a solution then we can
+indicate to the user that we made a simplificating assumption when
+reporting the error. (In a first instance we can forbid users to write sum)
+
+TODO: what to do if the user wrote a sum?  Unfortunately the user may
+have written a sums explicitly. Perhaps in this case, if the type of
+the function is available at the binding site, we can locally check
+that the constraint is satisfied using heuristics.
+
 
 \end{document}
 
