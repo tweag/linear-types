@@ -45,8 +45,8 @@ ENV LC_ALL   C.UTF-8
 ENV LANGUAGE C.UTF-8
 
 ENV GHCBUILD /tmp/ghc_linear
-ENV SYSBUILDDEPS  autoconf automake make wget xz-utils libtool ncurses-dev python3
-ENV SYSRUNDEPS  libgmp-dev
+ENV SYSBUILDDEPS  autoconf automake wget libtool ncurses-dev python3
+ENV SYSRUNDEPS  libgmp-dev xz-utils make
 # Already installed: gcc g++ tar
 
 # Clone and build, but don't store the build dir OR the extra version
