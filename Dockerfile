@@ -3,6 +3,20 @@
 #
 # CHANGES
 #
+# v0.1.10
+# -------
+#
+# - Merge with recent v8.7 (2018-11-08)
+# - Using linear types requires -XLinearTypes
+# - Stabilise Core's handling of linear types
+# - Fix unboxed tuples and sums
+# - Without -XLinearTypes, GADTs with regular arrows are linear
+# - Pattern synonyms in linear positions will raise an error
+# - View patterns in linear positions will raise an error
+# - Lazy patterns in linear positions will raise an error
+# - Fix desugaring of do-notation
+# - Many minor bug fixes
+#
 # v0.1.9
 # ------
 # - More recent v8.5
@@ -35,9 +49,9 @@
 #   the `(⊸)` syntax.
 
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
-FROM haskell:8.2.1
+FROM haskell:8.4.3
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 739d059259cbfa4d3394141d338690580e98f1a4
+ENV LINEAR_SHA 16ac2b7d4e7af3b33342f82e6ecb7754272927af
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
@@ -45,7 +59,7 @@ ENV LC_ALL   C.UTF-8
 ENV LANGUAGE C.UTF-8
 
 ENV GHCBUILD /tmp/ghc_linear
-ENV SYSBUILDDEPS  autoconf automake wget libtool ncurses-dev python3
+ENV SYSBUILDDEPS  autoconf automake wget libtool ncurses-dev python3 happy alex
 ENV SYSRUNDEPS  libgmp-dev xz-utils make
 # Already installed: gcc g++ tar
 
@@ -66,7 +80,7 @@ RUN apt-get update -y && \
     cd $GHCBUILD && ./boot && ./configure && \
     make -j6 && make install && \
     rm -rf $GHCBUILD && \
-    apt-get purge -y --auto-remove cabal-install-2.0 ghc-8.2.1 happy-1.19.5 alex-3.1.7 $SYSBUILDDEPS # && \
+    apt-get purge -y --auto-remove cabal-install ghc $SYSBUILDDEPS # && \
     rm -rf /var/lib/apt/lists/*
 
 # XXX: the next layer is a temporary workaround waiting for upstream
