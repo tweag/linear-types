@@ -98,6 +98,7 @@
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
+\newcommand{\letrec}[1][]{\mathsf{let}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
 \newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
@@ -238,14 +239,23 @@ a pattern-matching failure simply raises an imprecise exception as
 usual. This is equivalent to having an exhaustive case expression, with
 \verb+error+ as the right-hand side of the wildcard pattern.
 
-\subsection{Join points}
+\subsection{Let binders}
 \label{sec:join-points}
 
-Core uses a special form of let binders, called join points, to factor
-code that would be duplicated by desugaring or simplifying. However,
-code using join points is typically not well-typed when simply
-interpreting join as let binders (at least not with the usual typing
-rule for let bindings).
+Core-to-core passes play with let-binders in many ways (they are
+floated out, or in, several can be factored into one, they can be
+inlined in some of their sites. Join points, for instance combine many
+of these characteristics).
+
+Some of these are fundamentally incompatible with standard linear
+logic rules. But they remain semantic persevering, hence,
+semantically, they preserve linearity. Therefore, these
+transformations must be modelled in the Core typing rules, even if
+this means unusual typing rules.
+
+We'd like to stress out that these rules for typing let binders only
+apply to core. Let binders in the surface language behave as in the
+paper and in linear logic, which is much easier to reason about.
 
 For instance consider the following
 \begin{code}
@@ -268,9 +278,9 @@ f = \ x y ->
     ; Nothing -> fail }
 \end{code}
 
-The regular typing rule for let binders requires |fail| to be used
+The standard typing rule for let-binders requires |fail| to be used
 linearly in every branch, but it isn't: |fail| is not used at all in
-the |False -> e1| branch. The regular typing rule for let binders also
+the |False -> e1| branch. The standard typing rule for let-binders also
 enforces that the linear free variables in |e2| are not used at
 all. But |e1| necessarily has exactly the same linear free variables
 as |e2|, hence the linear free variables of |e2| are all used in the
@@ -280,11 +290,15 @@ On the other hand, notice that if we'd inline |fail| and duplicate
 |e2| everywhere, the term would indeed be well-typed. So, we have to
 teach the linter that using |fail| is the same thing as using |e2|.
 
-Note: adding the ($\&$, "With") operator from linear logic would
-improve the typing of an ``if'' function, but it won't help in this
-case. Indeed the type system really needs to track the correlation
-between the various case conditions to figure out which linear
-variables are used when.
+Note: the typing rule for let-binders in linear mini-core can encoded
+in linear logic, which justifies the claim that it preserves
+linearity. However, this encoding is \emph{not} macro-expressible (to
+the best of our knowledge), therefore this typing rule strictly
+increases the expressiveness of linear mini-core.
+
+Note: this only affect non-recursive let-binders. Recursive lets have
+all their binders at multiplicity $ω$ (it isn't clear that a meaning
+could be given to a non-$ω$ recursive definition).
 
 \section{Linear Mini-Core}
 
@@ -339,8 +353,8 @@ The syntax is modified to include case binders. See
             & \pip t π & \text{multiplicity application} \\
             & \pip c t₁ … t_n & \text{data construction} \\
             & \pip \casebind t {z :_π A}{b_k}  & \text{case} \\
-            & \pip \flet x_1 :_π A₁ = t₁ … x_n :_π A_n = t_n \fin u & \text{let} \\
-            & \pip \letjoin{x :_Δ A = t}{u} & \text{join point}
+            & \pip \flet x : A = t \fin u & \text{let} \\
+            & \pip \letrec x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{letrec}
   \end{align*}
 
   \caption{Syntax of \calc{}}
@@ -385,11 +399,11 @@ tag of the constructor is forced, and thus it does not matter how many
 times we use $z$.\improvement{We may try and make the argument in this note
   clearer, but I don't have an idea for the moment}
 
-\paragraph{Typing join points}
+\paragraph{Typing let-binders}
 
 A program which starts its life as linear may be transformed by the
-optimiser to use a join point. In this example, both |p| and |q| are
-used linearly.
+optimiser to use a join point (a special form of let-binder). In this
+example, both |p| and |q| are used linearly.
 
 \begin{code}
   case y of y'
@@ -412,16 +426,18 @@ join j = p+q in
   ; D -> p*q }
 \end{code}
 
-As such, we type join bindings differently to normal let bindings. The
-join variable |j| is not given an explicit multiplicity. When we see
-an occurence of |j| we instead record the multiplicities of |j|'s
-right-hand side. We then type check call sites of |j| as if we inlined
-|j| and replaced it with its right-hand side.  In this example, as |p|
-and |q| are both used linearly in |j|, we record
-$p :_1 Int, q :_1 Int$ (in the rule \emph{join}). Then when |j| is
-used in the branches we use these multiplicities to check the
+Therefore, the join variable |j| is not given an explicit
+multiplicity. When we see an occurence of |j| we instead record the
+multiplicities of |j|'s right-hand side. We then type check call sites
+of |j| as if we inlined |j| and replaced it with its right-hand side.
+In this example, as |p| and |q| are both used linearly in |j|, we
+record $p :_1 Int, q :_1 Int$ (in the rule \emph{let}). Then when |j|
+is used in the branches we use these multiplicities to check the
 linearity of |p| and |q| as necessary. This is the role of the extra
-variable typing rule \emph{var.join}.
+variable typing rule \emph{var.alias}.
+
+Similar examples can be built with float-out, common-subexpression
+elimination, and inlining. At least.
 
 
 %%% typing rule macros %%%
@@ -442,7 +458,7 @@ rather than sum. And why it's just a more general definition.}
     \varrule
 
     \inferrule{Δ ⩽ Γ}
-    {\Gamma, x :_Δ A \vdash x : A }\text{var.join}
+    {\Gamma, x :_Δ A \vdash x : A }\text{var.alias}
 
     \inferrule{Γ, x :_{π} A  ⊢   t : B}
     {Γ ⊢ λ (x{:_π}A). t  :  A  →_π  B}\text{abs}
@@ -456,11 +472,11 @@ rather than sum. And why it's just a more general definition.}
 
     \caserule
 
-    \inferrule{Γ_i   ⊢  t_i  : A_i  \\ Δ, x₁:_{π} A₁ …  x_n:_{π} A_n ⊢ u : C }
-    { Δ+π\sum_i Γ_i ⊢ \flet x_1 :_π A_1 = t₁  …  x_n :_π A_n = t_n  \fin u : C}\text{let}
+    \inferrule{Γ_i, x₁:_ω A₁ …  x_n:_ω A_n ⊢  t_i  : A_i  \\ Δ, x₁:_ω A₁ …  x_n:_ω A_n ⊢ u : C }
+    { Δ+ω\sum_i Γ_i ⊢ \flet x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{letrec}
 
-    \inferrule{\Gamma, x :_Δ A \vdash t : B \\ Δ \vdash u : A}
-              { \Gamma \vdash \letjoin{x :_Δ A = u}{t : B}}\text{join}
+    \inferrule{Δ \vdash u : A \\\Gamma, x :_Δ A \vdash t : B}
+              { \Gamma \vdash \flet x : A = u \fin t : B}\text{let}
 
     \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
     {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
