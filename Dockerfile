@@ -3,6 +3,18 @@
 #
 # CHANGES
 #
+# v1.0.0
+# -------
+#
+# - Based on the submission https://phabricator.haskell.org/D5401 (first iteration)
+# - Which is based on a v8.7 from 2018-11-30
+# - Many bug fixes
+#
+# v0.1.11
+# -------
+#
+# - Fix broken installation in v0.1.10
+#
 # v0.1.10
 # -------
 #
@@ -49,9 +61,9 @@
 #   the `(⊸)` syntax.
 
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
-FROM haskell:8.4.3
+FROM haskell:8.6.2
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 16ac2b7d4e7af3b33342f82e6ecb7754272927af
+ENV LINEAR_SHA 756b38ab5ff0749f57d4a97cb3b6d03ddb34edfa
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
@@ -79,18 +91,10 @@ RUN apt-get update -y && \
     cat $GHCBUILD/mk/build.mk.sample >> $GHCBUILD/mk/build.mk && \
     cd $GHCBUILD && ./boot && ./configure && \
     make -j6 && make install && \
+    echo "== Remove GHC sources ==" && \
     rm -rf $GHCBUILD && \
+    echo "== Remove /opt GHC installation ==" && \
+    rm -rfv /opt/ghc && rm -rfv /opt/cabal && \
+    echo "== Cleanup apt packages ==" && \
     apt-get purge -y --auto-remove cabal-install ghc $SYSBUILDDEPS # && \
     rm -rf /var/lib/apt/lists/*
-
-# XXX: the next layer is a temporary workaround waiting for upstream
-# images to ship in haskell images: see
-# https://github.com/freebroccolo/docker-haskell/issues/65 )
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -f /usr/local/bin/stack && \
-    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v1.6.1/stack-1.6.1-linux-x86_64-static.tar.gz -o stack.tar.gz && \
-    tar -xf stack.tar.gz -C /usr/local/bin --strip-components=1 && \
-    /usr/local/bin/stack config set system-ghc --global true && \
-    apt-get purge -y --auto-remove curl && \
-    rm -rf  /var/lib/apt/lists/* /stack.tar.gz
