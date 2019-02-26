@@ -3,6 +3,12 @@
 #
 # CHANGES
 #
+# v1.0.1
+# ------
+#
+# - Many bug fixes
+# - Constructors have one multiplicity variable per argument
+#
 # v1.0.0
 # -------
 #
@@ -63,7 +69,7 @@
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
 FROM haskell:8.6.2
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 756b38ab5ff0749f57d4a97cb3b6d03ddb34edfa
+ENV LINEAR_SHA 85b5ddfc536c2cbb514e054a2e34bd11ca9f4b08
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
@@ -81,7 +87,7 @@ ENV SYSRUNDEPS  libgmp-dev xz-utils make
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends $SYSBUILDDEPS $SYSRUNDEPS && \
-    git clone --recursive git://git.haskell.org/ghc.git $GHCBUILD && \
+    git clone --recursive https://gitlab.haskell.org/ghc/ghc.git $GHCBUILD && \
     cd $GHCBUILD && git remote add tweag https://github.com/tweag/ghc.git && \
     git fetch tweag && \
     git checkout $LINEAR_SHA && \
