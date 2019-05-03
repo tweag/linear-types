@@ -2,6 +2,10 @@
 # ----------------------------------------------------------------
 #
 # CHANGES
+# v1.0.2
+# ------
+#
+# - Many, many bug fixes
 #
 # v1.0.1
 # ------
@@ -69,7 +73,7 @@
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
 FROM haskell:8.6.2
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 85b5ddfc536c2cbb514e054a2e34bd11ca9f4b08
+ENV LINEAR_SHA 60babe64a2a96fe739ddda003fa25dcb2b22f9e3
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
