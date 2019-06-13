@@ -2,6 +2,11 @@
 # ----------------------------------------------------------------
 #
 # CHANGES
+# v1.0.3
+# ------
+#
+# - Even more bug fixes
+#
 # v1.0.2
 # ------
 #
@@ -71,9 +76,9 @@
 #   the `(⊸)` syntax.
 
 # Debian+GHC+stack. See: https://hub.docker.com/_/haskell/
-FROM haskell:8.6.2
+FROM haskell:8.6.5
 # Commit hash of GHC+linear-types in the repository github.com/tweag/ghc
-ENV LINEAR_SHA 60babe64a2a96fe739ddda003fa25dcb2b22f9e3
+ENV LINEAR_SHA 0971e23ea379ad311666c0da777012e7a09c92d1
 
 # Happy problems without these:
 ENV LANG     C.UTF-8
@@ -91,6 +96,7 @@ ENV SYSRUNDEPS  libgmp-dev xz-utils make
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends $SYSBUILDDEPS $SYSRUNDEPS && \
+    stack install happy && \
     git clone --recursive https://gitlab.haskell.org/ghc/ghc.git $GHCBUILD && \
     cd $GHCBUILD && git remote add tweag https://github.com/tweag/ghc.git && \
     git fetch tweag && \
