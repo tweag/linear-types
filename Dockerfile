@@ -2,6 +2,11 @@
 # ----------------------------------------------------------------
 #
 # CHANGES
+# v1.0.4
+# ------
+#
+# - Fix docker image for Stack 2.x
+#
 # v1.0.3
 # ------
 #
@@ -113,4 +118,7 @@ RUN apt-get update -y && \
     rm -rfv /opt/ghc && rm -rfv /opt/cabal && \
     echo "== Cleanup apt packages ==" && \
     apt-get purge -y --auto-remove cabal-install ghc $SYSBUILDDEPS # && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    touch /usr/local/bin/haddock
+
+# Stack 2+ fails if there is no haddock file besides the ghc executable. Quickfix: create an empty such file.
