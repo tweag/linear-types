@@ -117,7 +117,7 @@ RUN apt-get update -y && \
     echo "== Remove /opt GHC installation ==" && \
     rm -rfv /opt/ghc && rm -rfv /opt/cabal && \
     echo "== Cleanup apt packages ==" && \
-    apt-get purge -y --auto-remove cabal-install ghc $SYSBUILDDEPS # && \
+    apt-get purge -y --auto-remove cabal-install ghc $SYSBUILDDEPS && \
     rm -rf /var/lib/apt/lists/* && \
     touch /usr/local/bin/haddock
 
