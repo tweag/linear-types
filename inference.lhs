@@ -282,7 +282,7 @@ holds.
 
 \subsection{Solving constraints}
 
-(DRAFT)
+(Very rough DRAFT)
 
 At some well chosen points, (ie. top-level bindings) GHC does
 generalisation. Traditionally this can mean to introduce universal
