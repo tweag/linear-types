@@ -187,10 +187,8 @@
 Principle: \emph{multiplicity polymorphism is always declared, never inferred.}
 
 \info{Remarks: adding variables with type schemes doesn't change
-  inference; we don't model bidirectional type information
-  propagation, which \textsc{ghc} will perform in practice, and
-  without it, it may be hard to type anything, and it may add
-  complications to inference.}
+  inference; algorithm is bidirectional we use $u:τ$ for inference and
+  $u⇐τ$ for checking.}
 
 The general idea is to count the number of occurences of each variable
 and add appropriate constraints at the binding site. Consequently we
@@ -202,22 +200,40 @@ Constraints can in general be equalities or inequalities --- equality
 constraint can come from type unification.
 
 \newcommand{\infstate}[4]{#4 : #3 \leadsto ⟨#1,#2⟩} % constraint, usage, type, term
+\newcommand{\checkstate}[4]{#4 ⇐ #3 \leadsto ⟨#1,#2⟩} % constraint, usage, type, term
 
 \begin{figure}
   \begin{mathpar}
 
-    \inferrule{ }{Γ,x:α⊢\infstate{α=τ}{(x↦1)}{τ}{x}}
+    \inferrule{ }{Γ,x:α⊢\infstate{∅}{(x↦1)}{α}{x}}
 
     \inferrule
     { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
       Γ⊢\infstate{C_v}{U_v}{τ_v}{v}\\
       α,p\mbox{ fresh} }
-    { Γ⊢\infstate{C_u∪C_v∪\{t_u = t_v →_p α\}}{U_u+p×U_v}{α}{u v} }
+    { Γ⊢\infstate{C_u∪C_v∪\{τ_u = τ_v →_p α\}}{U_u+p×U_v}{α}{u v} }
 
     \inferrule
     { Γ,x:α⊢\infstate{C}{(U,x↦π)}{τ}{u}\\
       α,p\mbox{ fresh} }
     { Γ⊢\infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{λx. u}}
+
+    \inferrule{ }{Γ,x:α⊢\checkstate{\{α=τ\}}{(x↦1)}{τ}{x}}
+
+    \inferrule
+    { Γ⊢\infstate{C_u}{U_u}{τ_v→_π τ_r}{u}\\
+      Γ⊢\checkstate{C_v}{U_v}{τ_v}{v}}
+    { Γ⊢\checkstate{C_u∪C_v∪\{τ_r = τ\}}{U_u+π×U_v}{τ}{u v} }
+
+    \inferrule
+    { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
+      Γ⊢\infstate{C_v}{U_v}{τ_v}{v}\\
+      α,p\mbox{ fresh}\\ τ_u\textrm{is not of the form} t_1→p_1 t_2}
+    { Γ⊢\checkstate{C_u∪C_v∪\{τ_u = τ_v →_p τ\}}{U_u+p×U_v}{τ}{u v} }
+
+    \inferrule
+    { Γ,x:τ_x⊢\checkstate{C}{(U,x↦π_x)}{τ}{u} }
+    { Γ⊢\checkstate{C∪\{π_x ⩽ π\}}{U}{τ_x →_π τ}{λx. u}}
 
   \end{mathpar}
   \caption{Inference rules}
@@ -230,7 +246,8 @@ Examples are simplified by inlining syntactic unification constraint
 immediately, in order to focus on the linearity constraints, and gain
 horizontal space.
 
-Example: composition\improvement{The $Γ$ is incorrect, fix!}
+Example: composition\improvement{The $Γ$ is incorrect, fix! Doesn't
+  benefit from bidirectionality.}
 
 \vspace{1cm}
 
