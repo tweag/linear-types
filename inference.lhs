@@ -91,6 +91,7 @@
 \newcommand{\ie}{\textit{i.e.}\xspace}
 
 %% Metatheory
+\newcommand{\ite}[3]{\mathsf{if} {#1} \mathsf{then} #2 \mathsf{else} #3}
 \newcommand{\case}[3][]{\mathsf{case}_{#1} #2 \mathsf{of} \{#3\}^m_{k=1}}
 \newcommand{\casebind}[4][]{\mathsf{case}_{#1} #2 \mathsf{of} #3 \{#4\}^m_{k=1}}
 \newcommand{\data}{\mathsf{data} }
@@ -187,11 +188,12 @@
 Principle: \emph{multiplicity parametric\footnote{there is of coure a form of inclusion polymorphism going on when inferring ω}
   polymorphism is always declared, never inferred.}
 
-\info{Remarks: adding variables\jp{I do not understand this
-    remark. Are we talking about multiplicity variables? (Guessing
-    not?) What objection is this ``remark'' replying to?} with type
+\info{Remarks: adding variables with type
   schemes doesn't change inference; the algorithm is bidirectional we
   use $u:τ$ for inference and $u⇐τ$ for checking.}
+\jp{I do not understand the first
+    remark. Are we talking about multiplicity variables? (Guessing
+    not?) What objection is this ``remark'' replying to?}
 
 The general idea is to count the number of occurences of each variable
 and add appropriate constraints at the binding site. Consequently we
@@ -221,6 +223,13 @@ constraints can come from type unification.
       α,p\mbox{ fresh} }
     { Γ⊢\infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{λx. u}}
 
+    \inferrule
+    { Γ⊢\checkstate{C_b}{U_b}{\mathsf{Bool}}{b}\\
+      Γ⊢\infstate{C_t}{U_t}{τ_t}{t}\\
+      Γ⊢\infstate{C_e}{U_e}{τ_e}{e}
+    }
+    { Γ⊢\infstate{C_b∪C_t∪C_e∪\{τ_t=τ_e\}}{U_b+(U_t∨U_e)}{τ_t}{\ite{b}{t}{e}}}
+
     \inferrule{ }{Γ,x:α⊢\checkstate{\{α=τ\}}{(x↦1)}{τ}{x}}
 
     \inferrule
@@ -237,6 +246,13 @@ constraints can come from type unification.
     \inferrule
     { Γ,x:τ_x⊢\checkstate{C}{(U,x↦π_x)}{τ}{u} }
     { Γ⊢\checkstate{C∪\{π_x ⩽ π\}}{U}{τ_x →_π τ}{λx. u}}
+
+    \inferrule
+    { Γ⊢\checkstate{C_b}{U_b}{\mathsf{Bool}}{b}\\
+      Γ⊢\checkstate{C_t}{U_t}{τ}{t}\\
+      Γ⊢\checkstate{C_e}{U_e}{τ}{e}
+    }
+    { Γ⊢\checkstate{C_b∪C_t∪C_e}{U_b+(U_t∨U_e)}{τ}{\ite{b}{t}{e}}}
 
   \end{mathpar}
   \caption{Inference rules}
