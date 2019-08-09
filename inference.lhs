@@ -110,6 +110,7 @@
 \newcommand{\multiplicatedTypes}[1]{\bigotimes(#1)}
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
+\newcommand{\letb}[2]{\mathsf{let}\ {#1}\ \mathsf{in}\ #2 }
 \newcommand{\letjoin}[2]{\mathsf{join}\ {#1}\ \mathsf{in}\ #2 }
 %% /Metatheory
 
@@ -224,6 +225,13 @@ constraints can come from type unification.
     { Γ⊢\infstate{C∪\{π ⩽ p\}}{U}{α →_p τ}{λx. u}}
 
     \inferrule
+    { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
+      Γ,x:τ_u⊢\infstate{C_v}{U_v}{τ_v}{v}
+    } % No need to check multiplicity for x: it's considered to have
+      % multiplicity ω
+    { Γ⊢\infstate{C_u∪C_v}{ω×U_u + U_v}{τ_v}{\letb{x=u}{v}} }
+
+    \inferrule
     { Γ⊢\checkstate{C_b}{U_b}{\mathsf{Bool}}{b}\\
       Γ⊢\infstate{C_t}{U_t}{τ_t}{t}\\
       Γ⊢\infstate{C_e}{U_e}{τ_e}{e}
@@ -253,6 +261,13 @@ constraints can come from type unification.
       Γ⊢\checkstate{C_e}{U_e}{τ}{e}
     }
     { Γ⊢\checkstate{C_b∪C_t∪C_e}{U_b+(U_t∨U_e)}{τ}{\ite{b}{t}{e}}}
+
+    \inferrule
+    { Γ⊢\infstate{C_u}{U_u}{τ_u}{u}\\
+      Γ,x:τ_u⊢\checkstate{C_v}{U_v}{τ}{v}
+    } % No need to check multiplicity for x: it's considered to have
+      % multiplicity ω
+    { Γ⊢\checkstate{C_u∪C_v}{ω×U_u + U_v}{τ}{\letb{x=u}{v}} }
 
   \end{mathpar}
   \caption{Inference rules}
