@@ -111,6 +111,8 @@
 \newcommand{\ta}[2]{γ(#1)(#2)}
 
 \newcommand{\letjoin}[2]{\mathsf{join}\ {#1}\ \mathsf{in}\ #2 }
+
+\newcommand{\usage}[1]{ \leadsto \{ #1 \}}
 %% /Metatheory
 
 \newcommand{\figuresection}[1]{\par \addvspace{1em} \textbf{\sf #1}}
@@ -347,13 +349,20 @@ The syntax is modified to include case binders. See
             & \pip t π & \text{multiplicity application} \\
             & \pip c t₁ … t_n & \text{data construction} \\
             & \pip \casebind t {z :_π A}{b_k}  & \text{case} \\
-            & \pip \flet x : A = t \fin u & \text{let} \\
-            & \pip \letrec x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{letrec}
+            & \pip \flet x :_U A = t \fin u & \text{let} \\
+            & \pip \letrec x_1 :_{U_1} A₁ = t₁ … x_n :_{U_n} A_n = t_n \fin u & \text{letrec}
   \end{align*}
 
   \figuresection{Judgements}    % Typing judgement, multiplicity
                                 % equality, submultiplicity judgement,
-                                % usage environment subtyping
+                                % usage environment subtyping,
+                                % judgement for case branches (note:
+                                % we can simplify the judgement for
+                                % branches by not passing the
+                                % substitution (instead passing D 𝜋_1
+                                % … 𝜋_n) in the judgement, and compute
+                                % the substitution in the constructor
+                                % branch case)
 
   \caption{Syntax of \calc{}}
   \label{fig:syntax}
@@ -439,12 +448,14 @@ elimination, and inlining. At least.
 
 
 %%% typing rule macros %%%
-\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \\   Δ ⊢ u : A}{Γ+πΔ ⊢ t u  :  B}\text{app}}
-\newcommand{\varrule}{\inferrule{x:_1 A ⩽ Γ}{Γ ⊢ x : A}\text{var}}
-\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \\
+\newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \usage{U}\\   Γ ⊢ u
+    : A \usage{V}}{Γ ⊢ t u  :  B \usage{U+𝜋V}}\text{app}}
+\newcommand{\varrule}{\inferrule{x ∈ Γ}{Γ ⊢ x : A \usage{x↦ 1}}\text{var}}
+\newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \usage{U} \\
       σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
-      \text{$Δ;z;D p_1…p_n ⊢_π^σ b_k : C$ for each $1 ⩽ k ⩽ m$}}
-    {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k} : C}\text{case}}
+      \text{$Γ;z;D p_1…p_n ⊢_π^σ b_k : C \usage{V_k}$ for each $1 ⩽ k ⩽ m$}}
+    {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k}
+      \usage{𝜋U+\bigvee_k V_k}}\text{case}}
 %%% /macros %%%
 \improvement{TODO: explain how the variable rule uses context ordering
 rather than sum. And why it's just a more general definition.}
@@ -456,31 +467,33 @@ rather than sum. And why it's just a more general definition.}
     \varrule
 
     \inferrule{Δ ⩽ Γ}
-    {\Gamma, x :_Δ A \vdash x : A }\text{var.alias}
+    {\Gamma, x :_U A \vdash x : A \usage{U}}\text{var.alias}
 
-    \inferrule{Γ, x :_{π} A  ⊢   t : B}
-    {Γ ⊢ λ (x{:_π}A). t  :  A  →_π  B}\text{abs}
+    \inferrule{Γ, x : A  ⊢   t : B \usage{x↦𝜇, U} \\ 𝜇 ⩽ 𝜋}
+    {Γ ⊢ λ (x{:_π}A). t  :  A  →_π  B \usage{U}}\text{abs}
 
     \apprule
 
-    \inferrule{Δ_i ⊢ t_i : A_i \\ \text {$c : A_1 →_{μ_1} … →_{μ_{n-1}}
+    \inferrule{Γ ⊢ t_i : A_i \usage{U_i}\\ \text {$c : A_1 →_{μ_1} … →_{μ_{n-1}}
         A_n →_{μ_n} D~p_1~…~p_n$ constructor}\\
         σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n}}
-    {ωΓ+\sum_i \substituted{μ_i}{σ}Δ_i ⊢ c  t₁ … t_n : D~π₁~…~π_n}\text{con}
+    {Γ ⊢ c  t₁ … t_n : D~π₁~…~π_n
+      \usage{\sum_i \substituted{μ_i}{σ}U_i}}\text{con}
 
     \caserule
 
-    \inferrule{Γ_i, x₁:_ω A₁ …  x_n:_ω A_n ⊢  t_i  : A_i  \\ Δ, x₁:_ω A₁ …  x_n:_ω A_n ⊢ u : C }
-    { Δ+ω\sum_i Γ_i ⊢ \flet x_1 : A_1 = t₁  …  x_n : A_n = t_n  \fin u : C}\text{letrec}
+    \inferrule{Γ, x₁:_{U_1} A₁ …  x_n:_{U_n} A_n ⊢  t_i  : A_i \usage{U_i} \\ Γ, x₁:_{U_1} A₁ …  x_n:_{U_n} A_n ⊢ u : C \usage{V}}
+    { Γ ⊢ \flet x_1 :_{U_1} A_1 = t₁  …  x_n :_{U_n} A_n =
+      t_n  \fin u : C \usage{V}}\text{letrec}
 
-    \inferrule{Δ \vdash u : A \\\Gamma, x :_Δ A \vdash t : B}
-              { \Gamma \vdash \flet x : A = u \fin t : B}\text{let}
+    \inferrule{Γ \vdash u : A \usage{U}\\\Gamma, x :_U A \vdash t : B \usage{V}}
+              { \Gamma \vdash \flet x :_U A = u \fin t : B \usage{V}}\text{let}
 
-    \inferrule{Γ ⊢  t : A \\ \text {$p$ fresh for $Γ$}}
-    {Γ ⊢ λp. t : ∀p. A}\text{m.abs}
+    \inferrule{Γ ⊢  t : A \usage{U}\\ \text {$p$ fresh for $Γ$}}
+    {Γ ⊢ λp. t : ∀p. A \usage{U}}\text{m.abs}
 
-    \inferrule{Γ ⊢ t :  ∀p. A}
-    {Γ ⊢ t π  :  \substituted{A}{\substXWithU{p}{π}}}\text{m.app}
+    \inferrule{Γ ⊢ t :  ∀p. A \usage{U}}
+    {Γ ⊢ t π  :  \substituted{A}{\substXWithU{p}{π}} \usage{U}}\text{m.app}
 
     \inferrule{
       \text {$c : A_1 →_{μ_1} … →_{μ_{r-1}} A_n →_{μ_n} D~p_1~…~p_r$ constructor}\\
