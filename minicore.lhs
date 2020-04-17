@@ -320,12 +320,17 @@ The syntax is modified to include case binders. See
   \end{align*}
   \figuresection{Contexts}
   \begin{align*}
-    Γ,Δ & ::=  (x :_{μ} A), Γ ~||~ (x :_{Δ} A), Γ ~||~ –
+    Γ,Δ & ::=  (x : A), Γ ~||~ (x :_{Δ} A), Γ ~||~ –
   \end{align*}
-    \figuresection{Datatype declaration}
-    \begin{align*}
-      \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} …    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
-    \end{align*}
+  \figuresection{Usage}
+  \begin{align*}
+    U,V & ::=  x ↦ 𝜇 ~||~ –
+  \end{align*}
+
+  \figuresection{Datatype declaration}
+  \begin{align*}
+    \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} …    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
+  \end{align*}
 
   \figuresection{Case alternatives}
   \begin{align*}
@@ -345,6 +350,10 @@ The syntax is modified to include case binders. See
             & \pip \flet x : A = t \fin u & \text{let} \\
             & \pip \letrec x_1 : A₁ = t₁ … x_n : A_n = t_n \fin u & \text{letrec}
   \end{align*}
+
+  \figuresection{Judgements}    % Typing judgement, multiplicity
+                                % equality, submultiplicity judgement,
+                                % usage environment subtyping
 
   \caption{Syntax of \calc{}}
   \label{fig:syntax}
