@@ -98,7 +98,7 @@
 \newcommand{\inl}{\mathsf{inl} }
 \newcommand{\inr}{\mathsf{inr} }
 \newcommand{\flet}[1][]{\mathsf{let}_{#1} }
-\newcommand{\letrec}[1][]{\mathsf{let}_{#1} }
+\newcommand{\letrec}[1][]{\mathsf{let\ rec}_{#1} }
 \newcommand{\fin}{ \mathsf{in} }
 \newcommand{\varid}[1]{\ensuremath{\Varid{#1}}}
 \newcommand{\susp}[1]{⟦#1⟧}
