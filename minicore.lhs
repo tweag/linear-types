@@ -310,33 +310,22 @@ The syntax is modified to include case binders. See
 \fref{fig:syntax}.
 
 \begin{figure}
-  \begin{minipage}{0.4 \textwidth} \centering
   \figuresection{Multiplicities}
   \begin{align*}
     π,μ &::= 1 ~||~ ω ~||~ p ~||~ π+μ ~||~ π·μ
   \end{align*}
-  \end{minipage}
-\\[3mm]
-  \begin{minipage}{0.4 \textwidth} \centering
   \figuresection{Types}
   \begin{align*}
   A,B ::= A →_π B ~||~  ∀p. A ~||~ D~p_1~…~p_n
   \end{align*}
-  \end{minipage}
-\\[3mm]
-  \begin{minipage}{0.3 \textwidth} \centering
   \figuresection{Contexts}
   \begin{align*}
     Γ,Δ & ::=  (x :_{μ} A), Γ ~||~ (x :_{Δ} A), Γ ~||~ –
   \end{align*}
-  \end{minipage}
-\\[3mm]
-  \begin{minipage}{0.6\linewidth} \centering
     \figuresection{Datatype declaration}
     \begin{align*}
       \data D~p_1~…~p_n~\mathsf{where} \left(c_k : A₁ →_{π₁} …    A_{n_k} →_{π_{n_k}} D\right)^m_{k=1}
     \end{align*}
-  \end{minipage}
 
   \figuresection{Case alternatives}
   \begin{align*}
