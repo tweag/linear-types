@@ -353,7 +353,7 @@ The syntax is modified to include case binders. See
             & \pip \letrec x_1 :_{U_1} A₁ = t₁ … x_n :_{U_n} A_n = t_n \fin u & \text{letrec}
   \end{align*}
 
-  \figuresection{Judgements}    % Sum and scaling of usage environment
+  \figuresection{Judgements}
   \begin{align*}
     & Γ ⊢ t :  A  \usage{U} & \text{typing judgement} \\
     & Γ;z;D 𝜋_1…𝜋_n ⊢_π b : C \usage{U} & \text{case-alternative typing judgement} \\
@@ -361,6 +361,12 @@ The syntax is modified to include case binders. See
     & 𝜋 ⩽ 𝜇 & \text{sub-multiplicity judgement} \\
     & 0 ⩽ 𝜇 & \text{nullable multiplicity judgement} \\
     & U ⩽ V & \text{sub-usage-environment judgement} \\
+  \end{align*}
+
+  \figuresection{Macros}
+  \begin{align*}
+    & U + V & \text{Usage environment sum} \\
+    & 𝜋V & \text{Usage environment scaling} \\
   \end{align*}
 
   \caption{Syntax of \calc{}}
@@ -571,7 +577,24 @@ rather than sum. And why it's just a more general definition.}
 
     \inferrule{ U⩽V \\ π ⩽ ρ}{ Γ,x ↦ 𝜋 ⩽ Δ,x ↦ ρ}\text{sub.ctx.cons}
   \end{mathpar}
-  \caption{Equality and ordering rules}
+
+  \figuresection{Usage environment operations}
+  \begin{mathpar}
+    \left\{\begin{array}{lclll}
+             U &+& (x ↦ 𝜋, V) & = x ↦ 𝜋, (U + V) & \text{if $x∉U$}\\
+             (x ↦ 𝜋, U) &+& V & = x ↦ 𝜋, (U + V) & \text{if $x∉V$}\\
+             (x ↦ 𝜋, U) &+& (x ↦ 𝜇, V) & = x ↦ (𝜋+𝜇), (U + V) & \\
+             – &+& – & = – & \\
+           \end{array}\right.
+
+    \left\{
+      \begin{array}{lll}
+        𝜋(x ↦ 𝜇, U) & = x ↦ 𝜋𝜇, 𝜋U & \\
+        𝜋– & = – & \\
+      \end{array}\right.
+  \end{mathpar}
+
+  \caption{Operations on multiplicity}
   \label{fig:equality-ordering}
 \end{figure}
 
