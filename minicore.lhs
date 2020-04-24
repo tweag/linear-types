@@ -353,15 +353,10 @@ The syntax is modified to include case binders. See
             & \pip \letrec x_1 :_{U_1} A₁ = t₁ … x_n :_{U_n} A_n = t_n \fin u & \text{letrec}
   \end{align*}
 
-  \figuresection{Judgements}    % judgement for case branches (note:
-                                % we can simplify the judgement for
-                                % branches by not passing the
-                                % substitution (instead passing D 𝜋_1
-                                % … 𝜋_n) in the judgement, and compute
-                                % the substitution in the constructor
-                                % branch case)
+  \figuresection{Judgements}    % Sum and scaling of usage environment
   \begin{align*}
     & Γ ⊢ t :  A  \usage{U} & \text{typing judgement} \\
+    & Γ;z;D 𝜋_1…𝜋_n ⊢_π b : C \usage{U} & \text{case-alternative typing judgement} \\
     & 𝜋 = 𝜇 & \text{multiplicity equality} \\
     & 𝜋 ⩽ 𝜇 & \text{sub-multiplicity judgement} \\
     & 0 ⩽ 𝜇 & \text{nullable multiplicity judgement} \\
@@ -456,10 +451,10 @@ elimination, and inlining. At least.
     : A \usage{V}}{Γ ⊢ t u  :  B \usage{U+𝜋V}}\text{app}}
 \newcommand{\varrule}{\inferrule{x ∈ Γ}{Γ ⊢ x : A \usage{x↦ 1}}\text{var}}
 \newcommand{\caserule}{\inferrule{Γ   ⊢  t  : D~π_1~…~π_n \usage{U} \\
-      σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
-      \text{$Γ;z;D p_1…p_n ⊢_π^σ b_k : C \usage{V_k}$ for each $1 ⩽ k ⩽ m$}}
+      \text{$Γ;z;D p_1…p_n ⊢_π b_k : C \usage{V_k}$ for each $1 ⩽ k
+        ⩽ m$} \\ V_k ⩽ V \text{ for each $1 ⩽ k ⩽ m$}}
     {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k}
-      \usage{𝜋U+\bigvee_k V_k}}\text{case}}
+      \usage{𝜋U+V}}\text{case}}
 %%% /macros %%%
 \improvement{TODO: explain how the variable rule uses context ordering
 rather than sum. And why it's just a more general definition.}
@@ -501,13 +496,16 @@ rather than sum. And why it's just a more general definition.}
 
     \inferrule{
       \text {$c : A_1 →_{μ_1} … →_{μ_{r-1}} A_n →_{μ_n} D~p_1~…~p_r$ constructor}\\
-      Δ, z:_{ν} \substituted{(D p_1…p_n)}{σ}, x₁:_{ρ_1} A_i, …, x_{n}:_{ρ_{n}} A_{n} ⊢ u : C \\
-      ρ_1+ν\substituted{μ_1}{σ}=π\substituted{μ_1}{σ}\quad…\quad ρ_{n}+ν\substituted{μ_{n}}{σ}=π\substituted{μ_{n}}{σ}
-    }{Γ;z;D p_1…p_r ⊢_π^σ c  x₁ … x_{n} → u : C}\text{alt.constructor}
+      σ = \substXWithU{p₁}{π₁}, … , \substXWithU{p_n}{π_n} \\
+      V = x_1 ↦ 𝜋\substituted{μ_1}{σ}, …, x_n ↦ \substituted{𝜇_n}{𝜎}\\
+      Δ, z:_{V} D 𝜋_1…𝜋_n, x₁: A_i, …, x_{n}: A_{n} ⊢ u : C \usage{x_1 ↦ 𝜌_1, …, x_n ↦ 𝜌_n, U}\\
+      ρ_1 ⩽ π\substituted{μ_1}{σ}\quad…\quad ρ_{n} ⩽ π\substituted{μ_{n}}{σ}
+    }{Γ;z;D 𝜋_1…𝜋_r ⊢_π^σ c  x₁ … x_{n} → u : C \usage{U}}\text{alt.constructor}
 
     \inferrule{
-      Δ, z:_{π} \substituted{(D p_1…p_n)}{σ} ⊢ u : C
-    }{Γ;z;D p_1…p_n ⊢_π^σ \wildcard → u : C}\text{alt.wildcard}
+      Δ, z:D 𝜋_1…𝜋_n  ⊢ u : C \usage{z↦𝜇, U} \\
+      𝜇 ⩽ 𝜋
+    }{Γ;z;D 𝜋_1…𝜋_n ⊢_π \wildcard → u : C \usage{U}}\text{alt.wildcard}
   \end{mathpar}
 
   \caption{Typing rules.}
