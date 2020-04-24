@@ -353,16 +353,20 @@ The syntax is modified to include case binders. See
             & \pip \letrec x_1 :_{U_1} A₁ = t₁ … x_n :_{U_n} A_n = t_n \fin u & \text{letrec}
   \end{align*}
 
-  \figuresection{Judgements}    % Typing judgement, multiplicity
-                                % equality, submultiplicity judgement,
-                                % usage environment subtyping,
-                                % judgement for case branches (note:
+  \figuresection{Judgements}    % judgement for case branches (note:
                                 % we can simplify the judgement for
                                 % branches by not passing the
                                 % substitution (instead passing D 𝜋_1
                                 % … 𝜋_n) in the judgement, and compute
                                 % the substitution in the constructor
                                 % branch case)
+  \begin{align*}
+    & Γ ⊢ t :  A  \usage{U} & \text{typing judgement} \\
+    & 𝜋 = 𝜇 & \text{multiplicity equality} \\
+    & 𝜋 ⩽ 𝜇 & \text{sub-multiplicity judgement} \\
+    & 0 ⩽ 𝜇 & \text{nullable multiplicity judgement} \\
+    & U ⩽ V & \text{sub-usage-environment judgement} \\
+  \end{align*}
 
   \caption{Syntax of \calc{}}
   \label{fig:syntax}
