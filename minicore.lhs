@@ -564,14 +564,14 @@ rather than sum. And why it's just a more general definition.}
 
     \inferrule{ π=π' \\ ρ=ρ'\\ π ⩽ ρ}{ π'⩽ρ'}\text{sub.eq.compat}
   \end{mathpar}
-  \figuresection{Context ordering}
+  \figuresection{Usage environment ordering}
 
   \begin{mathpar}
     \inferrule{ }{– ⩽ –}\text{sub.ctx.empty}
 
-    \inferrule{ Γ⩽Δ \\ 0 ⩽ π }{ Γ⩽Δ, x:_π A }\text{sub.ctx.zero}
+    \inferrule{ U⩽V \\ 0 ⩽ π }{ U⩽V, x ↦ π}\text{sub.ctx.zero}
 
-    \inferrule{ Γ⩽Δ \\ π ⩽ ρ}{ Γ,x:_π A ⩽ Δ,x:_ρ A}\text{sub.ctx.cons}
+    \inferrule{ U⩽V \\ π ⩽ ρ}{ Γ,x ↦ 𝜋 ⩽ Δ,x ↦ ρ}\text{sub.ctx.cons}
   \end{mathpar}
   \caption{Equality and ordering rules}
   \label{fig:equality-ordering}
