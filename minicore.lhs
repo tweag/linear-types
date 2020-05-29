@@ -183,19 +183,29 @@
 
 \maketitle
 
-\section{Differences between Core and the \calc{}}
+This document is the specification of Core's linear types as they are
+being implemented in GHC. To enable Core linting for linear types in
+GHC use \verb|-dlinear-core-lint|.
 
-The goal of this note is to document the differences between \calc{},
-as described in the \href{https://arxiv.org/abs/1710.09756}{Linear
-  Haskell} paper, and Core, the intermediate language of \textsc{ghc}.
+This document is the authoritative specification of linear Core lint,
+and will remain so until linear Core lint has become stable enough and
+is merged into \verb|-dcore-lint|. In which case the specification in
+this document will be merged with the ghc specification in the main
+repository.
 
-We shall omit, for the time being, the minor differences, such as the
-absence of polymorphism on types (\calc{} focuses on polymorphism of
-multiplicities), as we don't anticipate that they cause additional
-issues.
+The specification in this document is a simplified version of the
+whole Core, focusing on the parts which interact with linearity.
 
-\improvement{Maybe we should give a typing rule for (mutally)
-  recursive lets. Despite it probably being messy.}
+This document is hosted on the wiki at
+\url{https://gitlab.haskell.org/ghc/ghc/-/wikis/linear-types/implementation}.
+
+The sources are \url{https://github.com/tweag/linear-types/blob/master/minicore.lhs}.
+
+\section{Differences between Linear Core and \calc{}}
+
+This section summarises the main differences between the Core
+specification and the \calc{} calculus described in the Linear Haskell
+paper.
 
 \subsection{The case-binder}
 
@@ -219,9 +229,8 @@ compilation of deep pattern matching.
 
 A difficulty is that for linear case, the case binder cannot be used
 at the same time as the variables from the pattern: it would violate
-linearity. Additionally the case binder is typically used with
-different multiplicities in different branches. And all these rules must
-also handle the case where $π$ is chosen to be a variable $p$.
+linearity. Additionally the case binder is typically used in some, but
+not all branches.
 
 \subsection{Case branches}
 
@@ -249,11 +258,11 @@ floated out, or in, several can be factored into one, they can be
 inlined in some of their sites. Join points, for instance combine many
 of these characteristics).
 
-Some of these are fundamentally incompatible with standard linear
-logic rules. But they remain semantic persevering, hence,
-semantically, they preserve linearity. Therefore, these
-transformations must be modelled in the Core typing rules, even if
-this means unusual typing rules.
+Some of these transformations are fundamentally incompatible with
+standard linear logic rules for let-binders. But they remain semantic
+persevering, hence, semantically, they preserve linearity. Therefore,
+these transformations must be modelled in the Core typing rules, even
+if this means unusual typing rules.
 
 We'd like to stress out that these rules for typing let binders only
 apply to core. Let binders in the surface language behave as in the
@@ -293,10 +302,11 @@ On the other hand, notice that if we'd inline |fail| and duplicate
 teach the linter that using |fail| is the same thing as using |e2|.
 
 Note: the typing rule for let-binders in linear mini-core can encoded
-in linear logic, which justifies the claim that it preserves
-linearity. However, this encoding is \emph{not} macro-expressible (to
-the best of our knowledge), therefore this typing rule strictly
-increases the expressiveness of linear mini-core.
+in linear logic, \emph{e.g.} with lambda-lifting, which justifies the
+claim that it preserves linearity. However, this encoding is
+\emph{not} macro-expressible (to the best of our knowledge), therefore
+this typing rule strictly increases the expressiveness of linear
+mini-core.
 
 Note: this only affect non-recursive let-binders. Recursive lets have
 all their binders at multiplicity $ω$ (it isn't clear that a meaning
@@ -374,42 +384,12 @@ The syntax is modified to include case binders. See
   \label{fig:contexts}
 \end{figure}
 
-\improvement{consider breaking the let syntax in two (let and letrec)
-  with a single entry in the let, and multiple in the letrec}
-
 \subsection{Static semantics}
 \label{sec:typing-contexts}
 
 See \fref{fig:typing}. The typing rules depend on an equality on
-multiplicities as well as an ordering on context, which are defined in
-Figure~\ref{fig:equality-ordering}.
-
-\paragraph{Typing case alternatives}
-
-The meaning of a case expression with multiplicity $π$ is that
-consuming the resulting value of the case expression exactly once,
-will consume the scrutinee with multiplicity $π$ (that is: exactly
-once if $π=1$ and without any restriction if $π=ω$). This is the $π$
-in $⊢_π^σ$ in the alternative typing judgement.
-
-To consume the scrutiny with multiplicity $π$, we must, by definition,
-consume every field $x$, whose multiplicity, as a field, is $μ$, with
-multiplicity $πμ$.
-
-This is where the story ends in \calc{}. But, in Linear Core, we can
-also use the case binder. Every time the case binder $z$ (which stands
-for the scrutinee) is consumed once, we consume, implicitly, $x$ with
-multiplicity $μ$. Therefore the multiplicity of $x$ plus $μ$ times the
-multiplicity of $z$ must equal $πμ$. Which is what $ρ+νμ = πμ$ stands
-for in the rule.
-
-There is one such constraint per field. And, since $μ$ can be
-parametric, a substitution $σ$ is applied.
-
-Note: if the constructor $c$ has no field, then we're always good; the
-tag of the constructor is forced, and thus it does not matter how many
-times we use $z$.\improvement{We may try and make the argument in this note
-  clearer, but I don't have an idea for the moment}
+multiplicities as well as an ordering, and operations on context,
+which are defined in Figure~\ref{fig:equality-ordering}.
 
 \paragraph{Typing let-binders}
 
@@ -419,31 +399,34 @@ example, both |p| and |q| are used linearly.
 
 \begin{code}
   case y of y'
-  { A -> p-q
-  ; B -> p+q
-  ; C -> p+q
-  ; D -> p*q }
+  {  A  ->  p-q
+  ;  B  ->  p+q
+  ;  C  ->  p+q
+  ;  D  ->  p*q
+  }
 \end{code}
 
-After the join point |p+q| is identified, are |p| and |q| still used linearly?
-We want to answer affirmatively so that this transformation is still valid
-for linear bindings.
+Let's say that we want to transform |p+q| into a join-point call, we
+need the following to be linear in |p| and |q|.
 
 \begin{code}
 join j = p+q in
   case y of y'
-  { A -> p-q
-  ; B -> j
-  ; C -> j
-  ; D -> p*q }
+  {  A  ->  p-q
+  ;  B  ->  j
+  ;  C  ->  j
+  ;  D  ->  p*q
+  }
 \end{code}
 
-Therefore, the join variable |j| is not given an explicit
-multiplicity. When we see an occurence of |j| we instead record the
-multiplicities of |j|'s right-hand side. We then type check call sites
-of |j| as if we inlined |j| and replaced it with its right-hand side.
+To this effect, the join variable |j| is not annotated with a
+multiplicity, instead, it is annotated with the usage of
+variables in its right-hand side (we call this annotation a
+\emph{usage environment}). We then type check call sites
+of |j| as if we inlined |j| and replaced it with its right-hand side:
+the computed usage of call to |j| is its usage annotation.
 In this example, as |p| and |q| are both used linearly in |j|, we
-record $p :_1 Int, q :_1 Int$ (in the rule \emph{let}). Then when |j|
+record $p ↦ 1, q ↦ 1$ (in the rule \emph{let}). Then when |j|
 is used in the branches we use these multiplicities to check the
 linearity of |p| and |q| as necessary. This is the role of the extra
 variable typing rule \emph{var.alias}.
@@ -451,6 +434,14 @@ variable typing rule \emph{var.alias}.
 Similar examples can be built with float-out, common-subexpression
 elimination, and inlining. At least.
 
+\paragraph{Typing case alternatives}
+
+In a constructor-pattern alternative $c  x₁ … x_{n} → u$, the case
+binder $z$ really is an alias for $c  x₁ … x_{n} → u$, it is therefore
+type-checked as if it were $\flet z = c  x₁ … x_{n} \fin u$.
+
+Note: as a consequence, if the constructor $c$ has no field
+(\emph{i.e.} $n=0$), $z$ is unrestricted.
 
 %%% typing rule macros %%%
 \newcommand{\apprule}{\inferrule{Γ ⊢ t :  A →_π B  \usage{U}\\   Γ ⊢ u
@@ -462,11 +453,6 @@ elimination, and inlining. At least.
     {πΓ+Δ ⊢ \casebind t {z :_π D~π_1~…~π_n} {b_k}
       \usage{𝜋U+V}}\text{case}}
 %%% /macros %%%
-\improvement{TODO: explain how the variable rule uses context ordering
-rather than sum. And why it's just a more general definition.}
-\improvement{Explain: 0 is not a multiplicity in the formalism, so $0⩽π$
-  must be understood formally, rather than a statement about multiplicities.}
-\improvement{Add rules for 0 in equations for $+$ and $*$.}
 \begin{figure}
   \begin{mathpar}
     \varrule
@@ -599,11 +585,10 @@ rather than sum. And why it's just a more general definition.}
 \end{figure}
 
 \section{Examples}
-\improvement{Explain wildcard rule in English in Sec 2.2. And adapt
-  example explanation.}
+
 \subsection{Equations}
 
-Take, as an example, the following Linear Haskell function:
+The following Linear Haskell function:
 \begin{code}
 data Colour = { Red; Green; Blue }
 
@@ -612,7 +597,7 @@ f  Red   q      = q
 f  p     Green  = p
 f  Blue  q      = q
 \end{code}
-This is compiled in Core as
+is compiled in Core as
 \begin{code}
 f = \ (p ::(~One) Colour) (q ::(~One) Colour) ->
   case p of (p2 ::(~One) Colour)
@@ -624,20 +609,6 @@ f = \ (p ::(~One) Colour) (q ::(~One) Colour) ->
           case p2 of (p3 ::(~One) Colour) { Blue -> q2 }
   }}
 \end{code}
-This is well typed because (focusing on the case of \verb+p2+)
-\begin{itemize}
-\item In the \verb+Red+ branch, no variables are introduced by the
-  constructor.
-\item In the \verb+WILDCARD+ branch, we see \verb+WILDCARD+ as a
-  variable which can't be referenced, from the rules we get that the
-  multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
-  multiplicity of \verb+p2+ must be $1$. Which is the case as $p2$ is
-  used linearly in each branch.
-\end{itemize}
-
-This example illustrates that, even in a multi-argument equation
-setting, the compiled code is linear when all the equations,
-individually, are linear.
 
 \subsection{Unrestricted fields}
 
@@ -650,16 +621,6 @@ f = \ (x ::(~One) Foo) ->
   case x of (z ::(~One) Foo)
   { Foo a b -> (z, b) }
 \end{code}
-It is well typed because
-\begin{itemize}
-\item $a$ is a linear field, hence imposes that the multiplicity of
-  $a$ (here $0$) and the multiplicity of the case binder $z$
-  (here $1$) sum to $1$, which holds
-\item $b$ is an unrestricted field, hence imposes that the
-  multiplicity of $b$ ($1$) plus $ω$ times the multiplicity of $z$
-  ($1$) equals $ω$ (times $1$ since this is a linear case). That is
-  $1+ω1=ω$ which holds.
-\end{itemize}
 
 \subsection{Wildcard}
 
@@ -669,16 +630,6 @@ f = \ (x ::(~One) Foo) ->
   case x of (z ::(~One) Foo)
   { WILDCARD -> True }
 \end{code}
-Because the multiplicity of \verb+WILDCARD+ (necessarily $0$) plus the
-multiplicity of the case binder $z$ ($0$) does not equal $1$.
-
-This follows intuition as $x$ really isn't being consumed ($x$ is forced
-to head normal form, but if it has subfield they will never get
-normalised, hence this program is rightly rejected).
-
-This also follows our intended semantics, as $f$ amounts to
-duplicating a value of an arbitrary type, which is not possible in
-general.
 
 \subsection{Duplication}
 
@@ -690,81 +641,6 @@ f = \ (x ::(~One) Foo) ->
   case(1) x of z
   { Foo a -> (z, a) }
 \end{code}
-Because both $z$ and $a$ are used in the branch, hence their
-multiplicities sum to $ω$, but it should be $1$.
-
-\section{Typechecking linear Mini-Core}
-
-\newcommand{\type}[1]{\mathsf{type}(#1)}
-\newcommand{\mult}[1]{\mathsf{mult}(#1)}
-\newcommand{\typeof}[1]{\mathsf{lint}(#1)}
-
-It may appear that typechecking the case rule requires guessing
-multiplicities $ν$ and $ρ_i$ so that they verify the appropriate
-constraint given from the context. But it is in fact not the case as
-the multiplicity will be an output of the type-checker.
-
-In this section we shall sketch how type-checking can be performed on
-Linear Core.
-
-\subsection{Representation}
-
-Core, in \textsc{ghc}, attaches its type to every variable $x$ (let's call
-it $\type{x}$). Similarly, in Linear Core, variables come with a
-multiplicity ($\mult{x}$).
-
-\begin{itemize}
-\item $λ x :_π A. u$ is represented as $λ x. u$ such that $\type{x}=A$
-  and $\mult{x} = π$
-\item $\casebind u {z ::_π A} {…}$ is represented as
-  $\casebind u z {…}$ such that $\mult{z}=π$
-\end{itemize}
-
-Contrary to $\type{x}$, which is used both at binding and call sites,
-$\mult{x}$ will only be used at binding site.
-
-\subsection{Terminology \& notations}
-
-A mapping is a finite-support partial function.\improvement{Explain
-  sum, scaling, and join for mapping.}
-\begin{itemize}
-\item We write $k ↦ v$ for the mapping defined only on $k$, with value
-  $v$.
-\item For two mapping $m₁$ and $m₂$ \emph{with disjoint supports}, we
-  write $m₁,m₂$ for the mapping defined the obvious way on the union
-  of their supports.
-\end{itemize}
-
-
-\subsection{Algorithm sketch}
-
-The typechecking algorithm, $\typeof{t}$, takes as an input a Linear
-Core term $t$, and returns a pair of
-\begin{itemize}
-\item The type of the term
-\item A mapping of every variable to its number of usages ($ρ$). Later on we check that usages are compatible with the declared multiplicity $π$. ($ρ ⩽ π$)
-\end{itemize}
-
-We assume that the variables are properly $α$-renamed, so that there
-is no variable shadowing.
-
-The algorithm is as follows (main cases only):\improvement{Explain multiplicity
-  ordering. Explain how zero-usage is handled. Explain how empty cases
-  are handled.}
-\begin{itemize}
-\item $\typeof{x} = (\type{x}, x ↦ 1)$
-\item $\typeof{u v} = (B, m_u + πm_v)$ where
-  $(A →_π B, m_u)=\typeof{u}$ and $(A, m_v)=\typeof{v}$
-\item $\typeof{λ_π x : A. u}=(A →_π B, m)$ where $(B, (x ↦ ρ, m)) =
-  \typeof{u}$ and $ρ ⩽ π$.
-\item $\typeof{\casebind[π] u z {c_k  x₁ … x_{n_k} →
-      v_k}}=(A,πm_u + ⋁_{k=1}^m m_k)$, where the $c_k : B_1^k
-  →_{μ_1^k} … →_{μ_{n_k}^k} B_{n_k}→ D$ are constructors of
-  the data type $D$, $(m_u, D) = \typeof{u}$, $(A, (z ↦ ν^k, x_1 ↦
-  ρ_1^k, …, {ρ}_{n_k}^k, m_k)) = \typeof{v_k}$ and $ρ_i^k+ν^kμ_i^k ⩽
-  πμ_i^k$ for all $i$ and $k$.\improvement{Expand using branch type
-    checking. Also explain that we need to check the multiplicity of $x_i$.}
-\end{itemize}
 
 \end{document}
 
