@@ -177,7 +177,7 @@
 
 \title{Linear Mini-Core}
 
-\author{J.-P. Bernardy, M. Boespflug, R. Newton, S. Peyton Jones, and
+\author{J.-P. Bernardy, R. Eisenberg, M. Boespflug, R. Newton, S. Peyton Jones, and
   A. Spiwack}
 \date{}
 
