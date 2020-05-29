@@ -12,9 +12,9 @@ clean:
 	lhs2TeX -o $@ $<
 
 %.pdf: %.tex PaperTools/bibtex/jp.bib local.bib
-	cd $(dir $<) && xelatex $(notdir $*)
+	cd $(dir $<) && xelatex -halt-on-error $(notdir $*)
 	cd $(dir $<) && biber $(notdir $*)
-	cd $(dir $<) && xelatex $(notdir $*)
+	cd $(dir $<) && xelatex -halt-on-error  $(notdir $*)
 
 %.tex: %.org
 	bin/org-to-tex.sh $*.org
